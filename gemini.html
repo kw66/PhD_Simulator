@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研究生模拟器 by 落星峦</title>
+    <!-- 引入 Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #dfe6e9;
+            --panel-bg: #ffffff;
+            --text: #2d3436;
+            --accent-green: #00b894;
+            --accent-red: #ff7675;
+            --accent-yellow: #fdcb6e;
+            --accent-blue: #0984e3;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 通用按钮样式 */
+        .btn {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-green { background: linear-gradient(135deg, #55efc4, #00b894); }
+        .btn-red { background: linear-gradient(135deg, #ff7675, #d63031); }
+        .btn-yellow { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #2d3436; }
+
+        /* 布局 */
+        #game-container {
+            display: none; /* 初始隐藏 */
+            width: 1200px;
+            height: 95vh;
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            gap: 15px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 开始界面 */
+        #start-screen {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            max-width: 600px;
+            margin: auto;
+        }
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .role-card {
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .role-card:hover { border-color: var(--primary); background: #f0f0ff; }
+        .role-card.selected { border-color: var(--primary); background: #e0e0ff; transform: scale(1.05); }
+
+        /* 左侧栏：属性 & Buff & 成果 */
+        #left-col {
+            grid-column: 1;
+            grid-row: 1 / span 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .stat-row { margin-bottom: 10px; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 2px; }
+        .progress-bar { height: 10px; background: #dfe6e9; border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.5s; }
+        .fill-san { background: var(--accent-red); }
+        .fill-res { background: var(--accent-blue); }
+        .fill-soc { background: var(--accent-green); }
+        .fill-fav { background: #fd79a8; }
+        
+        #buff-list, #paper-list { overflow-y: auto; flex-grow: 1; }
+        .buff-item { font-size: 0.85em; background: #ffeaa7; padding: 5px; margin-bottom: 5px; border-radius: 4px; color: #d35400; }
+        .paper-record { background: #f1f2f6; padding: 8px; margin-bottom: 5px; border-radius: 6px; font-size: 0.85em; border-left: 4px solid var(--primary); }
+
+        /* 中间栏：信息 & 日志 & 操作 */
+        #mid-col {
+            grid-column: 2;
+            grid-row: 1 / span 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #info-panel { height: 80px; display: flex; justify-content: space-between; align-items: center; background: #e3f2fd; border: 1px solid #90caf9; }
+        #log-panel { flex-grow: 1; overflow-y: auto; font-family: monospace; font-size: 0.95em; background: #fafafa; border: 1px solid #eee; }
+        .log-entry { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #eee; }
+        .log-date { color: #888; font-weight: bold; margin-right: 5px; }
+        .log-event { color: #2d3436; }
+        .log-result { color: #d63031; font-weight: bold; }
+        
+        #action-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; }
+
+        /* 右侧栏：论文工作站 */
+        #right-col {
+            grid-column: 3;
+            grid-row: 1 / span 3;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+        .paper-slot {
+            background: #fff;
+            border: 2px dashed #b2bec3;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .paper-slot.active { border-style: solid; border-color: var(--primary); }
+        .paper-detail { width: 100%; text-align: left; font-size: 0.9em; }
+        .paper-stats { display: flex; justify-content: space-between; margin: 5px 0; font-weight: bold; color: #636e72; }
+        .paper-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+
+        /* 自定义弹窗 */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-title { font-size: 1.5em; color: var(--primary); margin-bottom: 15px; }
+        .modal-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .choice-btn { background: #f1f2f6; border: 1px solid #dfe6e9; padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; transition: 0.2s; }
+        .choice-btn:hover { background: #e3f2fd; border-color: var(--primary); }
+
+        /* 商店物品 */
+        .shop-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        
+        /* 隐藏类 */
+        .hidden { display: none !important; }
+        .highlight-text { color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- 开始界面 -->
+    <div id="start-screen">
+        <h1><i class="fas fa-graduation-cap"></i> 研究生模拟器</h1>
+        <p>by 落星峦</p>
+        <p style="color:#636e72; font-size:0.9em; margin-bottom:20px;">
+            体验真实的科研生涯，发论文，搞关系，保住发际线！<br>
+            目标：达到科研分要求毕业。硕士需1分，博士需7分。
+        </p>
+        <h3>请选择你的出身：</h3>
+        <div class="role-grid" id="role-container">
+            <!-- JS 生成角色卡片 -->
+        </div>
+        <button class="btn btn-green" style="font-size:1.2em; padding:10px 30px;" onclick="startGame()">
+            <i class="fas fa-play"></i> 开始新的生涯
+        </button>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-container" class="hidden">
+        <!-- 左侧：属性 -->
+        <div class="panel" id="left-col">
+            <h3><i class="fas fa-user-circle"></i> 个人属性</h3>
+            <div class="stat-row">
+                <div class="stat-label"><span>SAN值 (精神)</span> <span id="val-san">20/20</span></div>
+                <div class="progress-bar"><div class="progress-fill fill-san" id="bar-san"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>科研能力</span> <span id="val-res">1/20</span></div>
+                <div class="progress-bar"><div class="progress-fill fill-res" id="bar-res"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>社交能力</span> <span id="val-soc">1/20</span></div>
+                <div class="progress-bar"><div class="progress-fill fill-soc" id="bar-soc"></div></div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-label"><span>导师好感度</span> <span id="val-fav">1/20</span></div>
+                <div class="progress-bar"><div class="progress-fill fill-fav" id="bar-fav"></div></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <div style="font-weight:bold; color:var(--accent-yellow); text-shadow: 0 1px 1px rgba(0,0,0,0.2);">
+                    <i class="fas fa-coins"></i> <span id="val-gold">1</span>
+                </div>
+                <button class="btn btn-yellow" onclick="openShop()"><i class="fas fa-shopping-cart"></i> 商店</button>
+            </div>
+
+            <hr style="width:100%; border:0; border-top:1px solid #eee;">
+            
+            <h4><i class="fas fa-bolt"></i> Buff 列表</h4>
+            <div id="buff-list"></div>
+
+            <hr style="width:100%; border:0; border-top:1px solid #eee;">
+
+            <h4><i class="fas fa-scroll"></i> 科研成果</h4>
+            <div style="font-size:0.85em; margin-bottom:5px; display:flex; justify-content:space-between;">
+                <span>A类: <b id="cnt-a">0</b> B类: <b id="cnt-b">0</b> C类: <b id="cnt-c">0</b></span>
+            </div>
+            <div style="font-size:0.85em; margin-bottom:10px;">
+                总科研分: <b id="cnt-score">0</b> | 总引用: <b id="cnt-cite">0</b>
+            </div>
+            <div id="paper-list"></div>
+        </div>
+
+        <!-- 中间：信息 & 日志 & 操作 -->
+        <div class="panel" id="mid-col">
+            <div id="info-panel" class="panel">
+                <div>
+                    <div style="font-size:1.2em; font-weight:bold; color:var(--primary);" id="date-display">第1年 第1月</div>
+                    <div style="font-size:0.9em; color:#636e72;" id="deadline-display">剩余毕业时间: 35个月</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:bold;" id="goal-display">目标: 硕士毕业 (科研分≥1)</div>
+                </div>
+            </div>
+
+            <div id="log-panel" class="panel">
+                <div class="log-entry">
+                    <span class="log-date">系统:</span>
+                    <span class="log-event">欢迎来到研究生模拟器！请关注你的SAN值、金币和毕业要求。</span>
+                </div>
+            </div>
+
+            <div id="action-panel" class="panel">
+                <button class="btn" id="btn-read" onclick="doAction('read')"><i class="fas fa-book-open"></i> 看论文 (持续)</button>
+                <button class="btn" id="btn-work" onclick="doAction('work')"><i class="fas fa-briefcase"></i> 打工 (持续)</button>
+                <button class="btn" id="btn-idea" onclick="doAction('idea')"><i class="fas fa-lightbulb"></i> 想idea (持续)</button>
+                <button class="btn" id="btn-exp" onclick="doAction('exp')"><i class="fas fa-flask"></i> 做实验 (持续)</button>
+                <button class="btn" id="btn-write" onclick="doAction('write')"><i class="fas fa-pen-fancy"></i> 写论文 (持续)</button>
+                <button class="btn btn-red" onclick="nextMonth()"><i class="fas fa-calendar-alt"></i> 进入下一个月</button>
+            </div>
+        </div>
+
+        <!-- 右侧：论文工作站 -->
+        <div class="panel" id="right-col">
+            <h3><i class="fas fa-laptop-code"></i> 论文工作站</h3>
+            <div id="slots-container"></div>
+        </div>
+    </div>
+
+    <!-- 弹窗模态框 -->
+    <div id="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title" class="modal-title">标题</h3>
+            <div id="modal-body">内容</div>
+            <div id="modal-options" class="modal-options"></div>
+        </div>
+    </div>
+
+    <script>
+        // ================= 常量与配置 =================
+        const ROLES = [
+            { id: 0, name: "大多数", desc: "没有任何属性变化", stats: {} },
+            { id: 1, name: "院士转世", desc: "科研能力初始+5", stats: { res: 5 } },
+            { id: 2, name: "社交达人", desc: "社交能力初始+5", stats: { soc: 5 } },
+            { id: 3, name: "富可敌国", desc: "金币值初始+5", stats: { gold: 5 } },
+            { id: 4, name: "导师子女", desc: "导师好感度初始+5", stats: { fav: 5 } },
+            { id: 5, name: "天选之人", desc: "全属性初始+2", stats: { res: 2, soc: 2, fav: 2, gold: 2 } }
+        ];
+
+        const SHOP_ITEMS = [
+            { id: 'chair', name: '人体工学椅', price: 10, type: 'perm', desc: '每月SAN值+1', limit: 1 },
+            { id: 'rent_gpu', name: '租GPU服务器', price: 2, type: 'temp', desc: '下次做实验多做1次', limit: -1 }, // -1 无限
+            { id: 'buy_gpu', name: '购买GPU服务器', price: 12, type: 'perm', desc: '每次做实验多做1次', limit: -1 },
+            { id: 'keyboard', name: '机械键盘', price: 8, type: 'perm', desc: '每次写论文变为SAN值-3', limit: 1 },
+            { id: 'screen', name: '4K显示器', price: 8, type: 'perm', desc: '读论文变为SAN值-1', limit: 1 },
+            { id: 'coffee', name: '冰美式', price: 1, type: 'instant', desc: 'SAN值+2', limit: 1, reset: true }, // reset: true 每月重置
+            { id: 'polish', name: '论文润色服务', price: 3, type: 'temp', desc: '下次论文写作分数+5', limit: 1, reset: true }
+        ];
+
+        const PAPER_TITLES_A = ["Deep", "Robust", "Adaptive", "Neural", "Graph", "Attention", "Transformer", "Learning", "Vision", "Language", "Generative", "Diffusion", "Large", "Model", "Optimization", "Reinforcement"];
+        const PAPER_TITLES_B = ["Network", "System", "Analysis", "Framework", "Study", "Algorithm", "Mechanism", "Application"];
+        
+        // ================= 游戏状态 =================
+        let state = {
+            role: null,
+            date: { year: 1, month: 1 },
+            degree: 'master', // master, phd
+            stats: { san: 20, res: 1, soc: 1, fav: 1, gold: 1 },
+            limits: { san: 20, res: 20, soc: 20, fav: 20 },
+            buffs: [], // { id, type, val, duration: 'perm'/'temp'/'one_time' }
+            papers: [], // { id, title, idea, exp, write, status, reviewMonth, type, score, reviewRes, citations, slotId }
+            slots: [ { id: 0, active: true, paperId: null } ], // 初始1个槽
+            history: [],
+            shopCounts: {}, // 记录购买次数
+            flags: {}, // 记录特殊事件触发情况 (relationship, events)
+            actionDone: false, // 本月持续操作是否已做
+            statsHistory: { tea_gift: 0 } // 辅助记录
+        };
+
+        // ================= 初始化 =================
+        function initRoles() {
+            const container = document.getElementById('role-container');
+            ROLES.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'role-card';
+                div.innerHTML = `<h4>${r.name}</h4><p style="font-size:0.8em">${r.desc}</p>`;
+                div.onclick = () => selectRole(div, r);
+                container.appendChild(div);
+            });
+        }
+        let selectedRoleObj = null;
+        function selectRole(el, role) {
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedRoleObj = role;
+        }
+
+        function startGame() {
+            if (!selectedRoleObj) return alert("请先选择一个角色！");
+            
+            // 应用角色初始属性
+            if (selectedRoleObj.stats.res) state.stats.res += selectedRoleObj.stats.res;
+            if (selectedRoleObj.stats.soc) state.stats.soc += selectedRoleObj.stats.soc;
+            if (selectedRoleObj.stats.fav) state.stats.fav += selectedRoleObj.stats.fav;
+            if (selectedRoleObj.stats.gold) state.stats.gold += selectedRoleObj.stats.gold;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'grid'; // 修正为 grid
+            document.getElementById('game-container').classList.remove('hidden');
+            
+            updateUI();
+            log("游戏开始", `角色：${selectedRoleObj.name}，目标：硕士毕业。`);
+        }
+
+        // ================= 核心逻辑：UI 更新 =================
+        function updateUI() {
+            // 属性条
+            updateBar('san', state.stats.san, state.limits.san);
+            updateBar('res', state.stats.res, state.limits.res);
+            updateBar('soc', state.stats.soc, state.limits.soc);
+            updateBar('fav', state.stats.fav, state.limits.fav);
+            document.getElementById('val-gold').innerText = state.stats.gold;
+
+            // 信息栏
+            let totalMonths = (state.date.year - 1) * 12 + state.date.month;
+            let limitMonths = state.degree === 'master' ? 36 : 60;
+            let remain = limitMonths - totalMonths;
+            document.getElementById('date-display').innerText = `第${state.date.year}年 第${state.date.month}月`;
+            document.getElementById('deadline-display').innerText = `剩余毕业时间: ${remain}个月`;
+            
+            let goalText = state.degree === 'master' ? "硕士毕业 (科研分≥1)" : "博士毕业 (科研分≥7)";
+            document.getElementById('goal-display').innerText = `目标: ${goalText}`;
+
+            // Buff显示
+            renderBuffs();
+
+            // 成果
+            renderPapers();
+
+            // 工作站
+            renderSlots();
+
+            // 按钮状态
+            const continuousBtns = ['btn-read', 'btn-work', 'btn-idea', 'btn-exp', 'btn-write'];
+            continuousBtns.forEach(id => {
+                document.getElementById(id).disabled = state.actionDone;
+            });
+
+            // 检查槽位解锁
+            checkSlotUnlock();
+        }
+
+        function updateBar(key, val, max) {
+            let pct = (val / max) * 100;
+            if(pct > 100) pct = 100;
+            if(pct < 0) pct = 0;
+            document.getElementById(`bar-${key}`).style.width = `${pct}%`;
+            document.getElementById(`val-${key}`).innerText = `${val}/${max}`;
+        }
+
+        function log(event, result) {
+            const panel = document.getElementById('log-panel');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-date">${state.date.year}年${state.date.month}月:</span> <span class="log-event">${event}</span> <span class="log-result">${result}</span>`;
+            panel.insertBefore(div, panel.firstChild); // 最新日志在最上? 不，通常日志在下，但这里为了方便看最新的插在最前
+            // 还是插在最后然后滚动到底部符合直觉
+            // panel.appendChild(div);
+            // panel.scrollTop = panel.scrollHeight;
+        }
+
+        // ================= 核心逻辑：动作系统 =================
+        function modifyStat(key, val) {
+            state.stats[key] += val;
+            if (key !== 'gold') { // 金币无上限
+                if (state.stats[key] > state.limits[key]) state.stats[key] = state.limits[key];
+            }
+            // 结局检查在 updateUI 或 nextMonth 中统一处理，或者这里处理
+            // 为防止频繁弹窗，放在 nextMonth 或特定触发点更好，但SAN<0需要立即反馈
+            if (key === 'san' && state.stats.san < 0) checkEnding();
+            if (key === 'fav' && state.stats.fav < 0) checkEnding();
+            if (key === 'gold' && state.stats.gold < 0) checkEnding();
+        }
+
+        // 持续性操作
+        function doAction(type) {
+            if (state.actionDone) return;
+            
+            // 检查选择论文逻辑 (idea, exp, write 需要选论文)
+            if (['idea', 'exp', 'write'].includes(type)) {
+                // 筛选可用论文
+                let available = state.papers.filter(p => p.status === 'writing');
+                if (available.length === 0) {
+                    alert("没有正在撰写的论文，请先在论文工作站开启新论文！");
+                    return;
+                }
+                showPaperSelect(type, available);
+                return;
+            }
+
+            // 直接执行的持续操作
+            executeAction(type);
+        }
+
+        function showPaperSelect(type, list) {
+            // 弹窗选择论文
+            let titleMap = { 'idea': '想Idea', 'exp': '做实验', 'write': '写论文' };
+            let options = list.map(p => {
+                return `<button class="choice-btn" onclick="executeAction('${type}', ${p.id}); closeModal();">
+                    <b>${p.title}</b><br>
+                    Idea: ${p.idea} | Exp: ${p.exp} | Write: ${p.write}
+                </button>`;
+            }).join('');
+            showModal(`选择论文进行${titleMap[type]}`, options);
+        }
+
+        function executeAction(type, paperId = null) {
+            state.actionDone = true;
+            let resText = "";
+            let sanCost = 0;
+
+            if (type === 'read') {
+                sanCost = hasBuff('screen') ? 1 : 2;
+                modifyStat('san', -sanCost);
+                addBuff({ name: '读论文灵感', type: 'idea_val', val: 1, duration: 'temp' });
+                state.flags.readCount = (state.flags.readCount || 0) + 1;
+                resText = `SAN-${sanCost}，下次想Idea分数+1`;
+                if (state.flags.readCount % 10 === 0) {
+                    modifyStat('res', 1);
+                    resText += "，累计阅读10次，科研能力+1！";
+                }
+            } else if (type === 'work') {
+                sanCost = 5;
+                modifyStat('san', -sanCost);
+                modifyStat('gold', 2);
+                resText = `SAN-${sanCost}，金币+2`;
+            } else {
+                // 针对论文的操作
+                let paper = state.papers.find(p => p.id === paperId);
+                let baseSan = { 'idea': 2, 'exp': 3, 'write': 4 };
+                sanCost = baseSan[type];
+                
+                // 特殊Buff修正消耗
+                if (type === 'write' && hasBuff('keyboard')) sanCost = 3;
+
+                // 检查前置条件
+                if (type === 'exp' && paper.idea <= 0) {
+                    state.actionDone = false; // 回退
+                    alert("Idea分数为0，无法做实验！");
+                    return;
+                }
+                if (type === 'write' && paper.exp <= 0) {
+                    state.actionDone = false;
+                    alert("实验分数为0，无法写论文！");
+                    return;
+                }
+
+                modifyStat('san', -sanCost);
+
+                // 计算次数 Buff
+                let times = 1 + getBuffVal(`${type}_times`); // 默认1次 + buff
+                if (type === 'exp') {
+                    // 消耗临时buff
+                    consumeBuff('exp_times'); 
+                }
+                // 想idea/写论文 次数buff通常是永久的或者是事件给的，这里逻辑统一
+                if(type === 'idea') consumeBuff('idea_times');
+                if(type === 'write') consumeBuff('write_times');
+
+                let totalInc = 0;
+                let logDetails = [];
+
+                for (let i = 0; i < times; i++) {
+                    // 计算单次分数
+                    // 规则: 随机生成科研分0.5倍到1.5倍 + 0-5随机数
+                    let base = Math.round(state.stats.res * (0.5 + Math.random()) + Math.random() * 5);
+                    
+                    // 应用分数 Buff (加法和乘法)
+                    let mult = getBuffMult(`${type}_score`); // 默认为1
+                    let add = getBuffVal(`${type}_score`); // 默认为0
+                    
+                    let finalScore = Math.round(base * mult + add);
+                    
+                    // 更新论文分数 (取高值)
+                    let oldScore = paper[type];
+                    if (finalScore > oldScore) {
+                        paper[type] = finalScore;
+                        totalInc = finalScore; // 记录最后一次更新的值用于显示，或者显示最大值
+                        logDetails.push(`更新为${finalScore}`);
+                    } else {
+                        logDetails.push(`Roll点${finalScore}未超过当前${oldScore}`);
+                    }
+                }
+                // 消耗分数类临时buff
+                consumeBuff(`${type}_score`); 
+                consumeBuff(`${type}_mult`);
+
+                resText = `SAN-${sanCost}。操作了${times}次。结果: ${logDetails.join(', ')}`;
+            }
+
+            updateUI();
+            let actionNames = { 'read': '看论文', 'work': '打工', 'idea': '想Idea', 'exp': '做实验', 'write': '写论文' };
+            log(actionNames[type], resText);
+        }
+
+        // ================= 核心逻辑：论文与审稿 =================
+        function generatePaperTitle() {
+            let len = 5 + Math.floor(Math.random() * 4); // 5-8
+            let words = [];
+            for(let i=0; i<len; i++) {
+                let pool = Math.random() > 0.3 ? PAPER_TITLES_A : PAPER_TITLES_B;
+                words.push(pool[Math.floor(Math.random() * pool.length)]);
+            }
+            return words.join(" ");
+        }
+
+        function createPaper(slotId) {
+            if (state.actionDone) { alert("本月已操作过！"); return; }
+            // 开启新论文算瞬时操作？规则说：开启新论文是瞬时操作。
+            // 但需要空槽。
+            let slot = state.slots.find(s => s.id === slotId);
+            let pid = Date.now();
+            let paper = {
+                id: pid,
+                title: generatePaperTitle(),
+                idea: 0, exp: 0, write: 0,
+                status: 'writing', // writing, reviewing, published
+                reviewMonth: 0,
+                citations: 0,
+                slotId: slotId
+            };
+            state.papers.push(paper);
+            slot.paperId = pid;
+            updateUI();
+            log("开启新论文", `题目：${paper.title}`);
+        }
+
+        function submitPaper(pid, type) {
+            // type: A, B, C
+            let paper = state.papers.find(p => p.id === pid);
+            if (paper.idea === 0 || paper.exp === 0 || paper.write === 0) {
+                alert("Idea, 实验, 写作分数均不能为0！");
+                return;
+            }
+            
+            paper.status = 'reviewing';
+            paper.target = type; // 'A', 'B', 'C'
+            paper.reviewStart = totalMonths();
+            updateUI();
+            log("投稿论文", `题目：${paper.title}，投递 ${type} 类会议。进入漫长的审稿期...`);
+        }
+
+        function abandonPaper(pid) {
+            if(!confirm("确定要放弃这篇论文吗？将清空进度。")) return;
+            let pIdx = state.papers.findIndex(p => p.id === pid);
+            let paper = state.papers[pIdx];
+            let slot = state.slots.find(s => s.id === paper.slotId);
+            slot.paperId = null;
+            state.papers.splice(pIdx, 1);
+            updateUI();
+            log("放弃论文", `已废弃 ${paper.title}`);
+        }
+
+        function processReviews() {
+            // 检查处于 reviewing 状态的论文
+            let currentM = totalMonths();
+            state.papers.filter(p => p.status === 'reviewing').forEach(p => {
+                if (currentM - p.reviewStart >= 4) {
+                    // 出结果
+                    finishReview(p);
+                }
+            });
+        }
+
+        function finishReview(paper) {
+            // 生成3个审稿人
+            let reviewers = [];
+            let rTypes = [
+                { id: 'normal', name: '普通审稿人', p: 0.4 },
+                { id: 'soft', name: '心软审稿人', p: 0.1 },
+                { id: 'senior', name: '资深大牛', p: 0.1 },
+                { id: 'malice', name: '恶意小同行', p: 0.1 },
+                { id: 'gpt', name: 'GPT审稿人', p: 0.2 },
+                { id: 'q40', name: '40个问题', p: 0.1 }
+            ];
+            
+            for(let i=0; i<3; i++) {
+                let rand = Math.random();
+                let acc = 0;
+                let type = rTypes[0];
+                for(let t of rTypes) {
+                    acc += t.p;
+                    if (rand <= acc) { type = t; break; }
+                }
+                reviewers.push(type);
+            }
+
+            // 计算总分
+            let totalScore = paper.idea + paper.exp + paper.write;
+            let scores = []; // 1 (accept), 0 (border), -1 (reject)
+            let opinions = [];
+
+            reviewers.forEach(r => {
+                let s = -1; // default reject
+                let thresholdAccept, thresholdBorder;
+                
+                // 逻辑判定
+                if (['B', 'C'].includes(paper.target)) {
+                    // B/C 统一标准
+                    // B: <30 R, 30-50 B, >50 A
+                    // C: <15 R, 15-30 B, >30 A
+                    let thresholds = paper.target === 'B' ? [30, 50] : [15, 30];
+                    if (totalScore >= thresholds[1]) s = 1;
+                    else if (totalScore >= thresholds[0]) s = 0;
+                    else s = -1;
+                } else {
+                    // A类 复杂逻辑
+                    if (r.id === 'soft') { if(totalScore>=60) s=1; else if(totalScore>=40) s=0; }
+                    else if (r.id === 'gpt') { if(totalScore>=80) s=1; else if(totalScore>=40) s=0; }
+                    else if (r.id === 'malice' || r.id === 'q40') { if(totalScore>=90) s=1; else if(totalScore>=80) s=0; }
+                    else { if(totalScore>=70) s=1; else if(totalScore>=50) s=0; } // Normal & Senior
+                }
+                scores.push(s);
+                
+                // 生成意见 & 改进
+                let op = "";
+                if (r.id === 'q40') op = "我有40个问题。";
+                else {
+                    let pool = s===1 ? ["创新性强", "实验扎实"] : (s===-1 ? ["缺乏创新", "实验不足"] : ["需要修改", "解释不清"]);
+                    op = pool[Math.floor(Math.random()*pool.length)];
+                }
+                opinions.push(`${r.name}: ${op} (${s===1?'Accept':(s===0?'Border':'Reject')})`);
+
+                // 改进效果
+                if (r.id === 'normal') { improvePaper(paper, 3); }
+                if (r.id === 'senior') { improvePaper(paper, 6); }
+            });
+
+            // 最终判定
+            let sumScores = scores.reduce((a,b)=>a+b, 0);
+            let outcome = 'reject';
+            if (sumScores >= 3) outcome = 'best'; // 3个1? 规则: 分数为3 -> Best Paper
+            else if (sumScores === 2) outcome = 'oral';
+            else if (sumScores >= 0) outcome = 'poster';
+            else outcome = 'reject';
+
+            // 弹窗展示结果
+            let resHTML = `
+                <p>论文总分: ${totalScore} (Idea:${paper.idea} Exp:${paper.exp} Write:${paper.write})</p>
+                <div style="text-align:left; background:#f1f2f6; padding:10px; border-radius:8px; margin:10px 0;">
+                    ${opinions.map(o=>`<div>${o}</div>`).join('')}
+                </div>
+                <h3 style="color:${outcome==='reject'?'red':'green'}">最终结果: ${outcome.toUpperCase()}</h3>
+            `;
+
+            // 处理结果
+            if (outcome === 'reject') {
+                paper.status = 'writing'; // 解锁
+                paper.reviewStart = 0;
+                resHTML += "<p>论文被拒，已退回工作站，可继续修改。</p>";
+            } else {
+                // 中稿
+                paper.status = 'published';
+                paper.outcome = outcome;
+                paper.finalScore = paper.idea + paper.exp + paper.write; // 记录发表时的分数(可能被审稿人加分)
+                
+                // 收益
+                let rewards = getRewards(paper.target, outcome);
+                modifyStat('fav', rewards.fav);
+                modifyStat('san', rewards.san);
+
+                // 首次中稿奖励
+                let isFirst = state.papers.filter(p=>p.status==='published').length === 1;
+                if(isFirst) modifyStat('res', 1);
+                if(isFirst && paper.target === 'A') modifyStat('res', 1);
+
+                // 释放槽位
+                let slot = state.slots.find(s => s.id === paper.slotId);
+                slot.paperId = null;
+
+                resHTML += `<p>收益: 导师好感+${rewards.fav}, SAN+${rewards.san}</p>`;
+                
+                // 触发开会
+                setTimeout(() => triggerConference(paper), 500); // 稍后触发
+            }
+
+            showModal("论文审稿结果", resHTML);
+            // 这里不加关闭按钮，点击外部或下一步自动处理，模态框一般带确认按钮
+            document.getElementById('modal-options').innerHTML = `<button class="btn" onclick="closeModal()">确定</button>`;
+        }
+
+        function improvePaper(p, val) {
+            let keys = ['idea', 'exp', 'write'];
+            let k = keys[Math.floor(Math.random()*3)];
+            p[k] += val;
+        }
+
+        function getRewards(type, outcome) {
+            // A/B/C Poster: Fav+2/1/0, SAN+6/3/2
+            // Oral: Fav+3/1/0, SAN+8/4/2
+            // Best: Fav+4/2/1, SAN+12/5/3
+            let baseFav = type==='A'?2:(type==='B'?1:0);
+            let baseSan = type==='A'?6:(type==='B'?3:2);
+            if(outcome === 'oral') { baseFav+=1; baseSan+=2; if(type==='C') baseFav=0; /* C oral fav 0? Rule says 0 */ } 
+            // wait, strict rules:
+            // Poster: A(2,6), B(1,3), C(0,2)
+            // Oral: A(3,8), B(1,4), C(0,2) -> Rule says C Oral Fav 0
+            // Best: A(4,12), B(2,5), C(1,3)
+            
+            if (outcome === 'poster') return { fav: (type==='A'?2:type==='B'?1:0), san: (type==='A'?6:type==='B'?3:2) };
+            if (outcome === 'oral') return { fav: (type==='A'?3:type==='B'?1:0), san: (type==='A'?8:type==='B'?4:2) };
+            if (outcome === 'best') return { fav: (type==='A'?4:type==='B'?2:1), san: (type==='A'?12:type==='B'?5:3) };
+            return {fav:0, san:0};
+        }
+
+        // ================= 核心逻辑：Buff与商店 =================
+        function openShop() {
+            let html = SHOP_ITEMS.map(item => {
+                let count = state.shopCounts[item.id] || 0;
+                let disabled = (item.limit !== -1 && count >= item.limit) || state.stats.gold < item.price;
+                if (item.reset && !state.shopCounts[item.id + '_month_' + totalMonths()]) disabled = state.stats.gold < item.price; // 每月限购重置逻辑
+                
+                return `<div class="shop-item">
+                    <div><b>${item.name}</b> (${item.price}金) <br> <span style="font-size:0.8em; color:#666">${item.desc}</span></div>
+                    <button class="btn btn-yellow" ${disabled ? 'disabled' : ''} onclick="buyItem('${item.id}')">购买</button>
+                </div>`;
+            }).join('');
+            showModal("商店", html);
+        }
+
+        function buyItem(id) {
+            let item = SHOP_ITEMS.find(i => i.id === id);
+            modifyStat('gold', -item.price);
+            
+            // 记录购买
+            state.shopCounts[id] = (state.shopCounts[id] || 0) + 1;
+            if (item.reset) state.shopCounts[id + '_month_' + totalMonths()] = true;
+
+            // 效果
+            if (id === 'chair') addBuff({ name: '人体工学椅', type: 'san_regen', val: 1, duration: 'perm' });
+            if (id === 'rent_gpu') addBuff({ name: '租GPU', type: 'exp_times', val: 1, duration: 'temp' });
+            if (id === 'buy_gpu') addBuff({ name: '自有GPU', type: 'exp_times', val: 1, duration: 'perm' });
+            if (id === 'keyboard') addBuff({ name: '机械键盘', type: 'keyboard', val: 1, duration: 'perm' }); // 特殊标记
+            if (id === 'screen') addBuff({ name: '4K显示器', type: 'screen', val: 1, duration: 'perm' });
+            if (id === 'coffee') modifyStat('san', 2);
+            if (id === 'polish') addBuff({ name: '润色', type: 'write_score', val: 5, duration: 'temp' });
+
+            log("购买物品", `花费${item.price}金币购买了${item.name}。${item.desc}`);
+            closeModal(); // 简单起见，购买后关闭，或者刷新
+            updateUI();
+        }
+
+        function addBuff(buff) {
+            // buff: { name, type, val, duration }
+            // 同类叠加逻辑在 calculation 时处理，这里只管存
+            state.buffs.push(buff);
+        }
+
+        function hasBuff(type) {
+            return state.buffs.some(b => b.type === type);
+        }
+
+        function getBuffVal(type) {
+            // 加法
+            return state.buffs.filter(b => b.type === type).reduce((acc, b) => acc + b.val, 0);
+        }
+        
+        function getBuffMult(type) {
+            // 乘法，默认1
+            // 假设 buff type 如 'idea_mult'
+            let mults = state.buffs.filter(b => b.type === type.replace('_score', '_mult')); 
+            // 这里的命名需要对应。比如 "上次找大牛交流" -> idea分数乘以1.25 -> type: 'idea_mult', val: 1.25
+            if (mults.length === 0) return 1;
+            return mults.reduce((acc, b) => acc * b.val, 1);
+        }
+
+        function consumeBuff(type) {
+            // 移除 temp buff
+            // 注意：一次性移除所有同类temp? 规则示例：临时buff+临时buff=做3次。说明一次消耗掉所有临时buff。
+            state.buffs = state.buffs.filter(b => !(b.type === type && b.duration === 'temp'));
+            // 也要移除对应的 mult buff
+            let multType = type.replace('_score', '_mult').replace('_times', '_mult_times'); // 命名有点乱，简化处理
+            if (type.includes('_score')) {
+                 state.buffs = state.buffs.filter(b => !(b.type === type.replace('_score', '_mult') && b.duration === 'temp'));
+            }
+        }
+
+        // ================= 核心逻辑：时间推进 =================
+        function nextMonth() {
+            // 1. 发工资 & 消耗
+            let salary = state.degree === 'master' ? 1 : 3;
+            modifyStat('gold', salary - 1);
+            modifyStat('san', 1 + getBuffVal('san_regen'));
+            
+            // 2. 论文分数衰减
+            state.papers.filter(p => p.status === 'writing' || p.status === 'reviewing').forEach(p => {
+                if (p.idea > 1) p.idea -= 1;
+                if (p.exp > 1) p.exp -= 1;
+            });
+
+            // 3. 引用数增长
+            updateCitations();
+
+            // 4. 推进月份
+            state.date.month++;
+            if (state.date.month > 12) {
+                state.date.month = 1;
+                state.date.year++;
+            }
+            state.actionDone = false; // 重置操作
+
+            log("进入下个月", `时间流逝。工资+${salary}, 开销-1, 休息SAN+1。`);
+            
+            // 5. 检查转博
+            checkPhDTransfer();
+
+            // 6. 检查审稿结果
+            processReviews();
+
+            // 7. 触发事件
+            triggerMonthlyEvents();
+
+            updateUI();
+            checkEnding(); // 再次检查结局（如时间到）
+        }
+
+        function totalMonths() {
+            return (state.date.year - 1) * 12 + state.date.month;
+        }
+
+        function updateCitations() {
+            state.papers.filter(p => p.status === 'published').forEach(p => {
+                let totalScore = p.finalScore;
+                let inc = 0;
+                let m = totalMonths(); // 实际上应该记录发表时间，简化为每月计算
+                
+                // 增长规则: A(1mo), B(3mo), C(6mo)
+                // 用全月数取模来判断是否增长
+                if (p.target === 'A') inc = totalScore / 10;
+                if (p.target === 'B' && m % 3 === 0) inc = totalScore / 10;
+                if (p.target === 'C' && m % 6 === 0) inc = totalScore / 10;
+
+                if (inc > 0) {
+                    if (p.outcome === 'oral') inc *= 1.5;
+                    if (p.outcome === 'best') inc *= 5;
+                    p.citations += Math.round(inc);
+                }
+            });
+        }
+
+        // ================= 核心逻辑：事件系统 =================
+        function triggerMonthlyEvents() {
+            let m = state.date.month;
+            let y = state.date.year;
+            
+            // 奖学金 (每年1月, 2年起)
+            if (y > 1 && m === 1) {
+                let req = [0, 1, 3, 6, 9][y-1]; // Index mapping: y2->req[1]=1
+                let prize = (y >= 4) ? 10 : 5;
+                let score = getResearchScore();
+                if (score >= req) {
+                    modifyStat('gold', prize);
+                    showModal("奖学金评定", `恭喜！你的科研分达到${req}，获得奖学金${prize}金币！`);
+                    log("奖学金", `获得${prize}金币`);
+                } else {
+                    showModal("奖学金评定", `很遗憾，你的科研分${score}未达到${req}，错失奖学金。`);
+                    log("奖学金", "落选");
+                }
+            }
+
+            // 教师节 (每年9月, 题目说每年第2个月是教师节? "每年的第2个月为固定的教师节事件")
+            // 按照题目要求: 每年的第2个月
+            if (m === 2) {
+                showEventModal("教师节到了", "你准备送导师什么礼物？", [
+                    { txt: "什么也不送", res: "导师满意度-1", act: () => modifyStat('fav', -1) },
+                    { txt: "赠送茶叶 (1金)", res: "导师满意度+1", act: () => { if(checkGold(1)) { modifyStat('fav', 1); } } },
+                    { txt: "赠送邮票 (3金)", res: "导师满意度+2", act: () => { if(checkGold(3)) { modifyStat('fav', 2); } } }
+                ]);
+                return;
+            }
+
+            // 随机事件 (每2个月，从第2个月开始... 第2个月是教师节，那第4, 6, 8...)
+            // 题目: "第2个月开始，每2个月首先会弹出随机事件框"
+            // 2, 4, 6, 8, 10, 12... 
+            // 但2月固定教师节。所以4, 6, 8, 10, 12 触发随机。
+            if (m % 2 === 0 && m !== 2) {
+                triggerRandomEvent();
+            }
+        }
+
+        function triggerRandomEvent() {
+            const events = [
+                // 1
+                {
+                    title: "导师派你指导本科生毕设",
+                    opts: [
+                        { txt: "残忍拒绝", res: "导师好感-1", act: () => modifyStat('fav', -1) },
+                        { txt: "亲力亲为", res: "SAN-3, 50%概率科研+1", act: () => {
+                            modifyStat('san', -3);
+                            if(Math.random()<0.5) { modifyStat('res', 1); log("随机事件", "收获迷弟迷妹，科研+1"); }
+                        }},
+                        { txt: "让师弟师妹去", res: "社交判定", act: () => {
+                            if(state.stats.soc < 6) { modifyStat('soc', -1); log("随机事件", "师弟师妹颇有微词，社交-1"); }
+                            else log("随机事件", "成功分忧");
+                        }}
+                    ]
+                },
+                // 2
+                {
+                    title: "导师让你帮他审稿",
+                    opts: [
+                        { txt: "没时间拒绝", res: "导师好感-1", act: () => modifyStat('fav', -1) },
+                        { txt: "认真审稿", res: "SAN-2, 50%下次Idea+4", act: () => {
+                            modifyStat('san', -2);
+                            if(Math.random()<0.5) { addBuff({type:'idea_score', val:4, duration:'temp'}); log("随机事件", "得到启发"); }
+                        }},
+                        { txt: "交给师弟师妹", res: "社交判定", act: () => {
+                             if(state.stats.soc < 6) { modifyStat('soc', -1); }
+                        }}
+                    ]
+                },
+                // 3: 生病
+                {
+                    title: "突然感冒了",
+                    opts: [
+                        { txt: "强撑", res: "50% SAN-8", act: () => { if(Math.random()<0.5) modifyStat('san', -8); } },
+                        { txt: "买感冒药 (2金)", res: "金币-2", act: () => checkGold(2) },
+                        { txt: "去医院 (4金)", res: "SAN+2, 金币-4", act: () => { if(checkGold(4)) modifyStat('san', 2); } }
+                    ]
+                },
+                // 4: 项目 (稍微简化逻辑以适应篇幅，核心保留)
+                {
+                    title: "导师安排你做项目",
+                    opts: [
+                        { txt: "横向项目", res: "SAN-7, Fav+1, Gold+5", act: () => { modifyStat('san', -7); modifyStat('fav', 1); modifyStat('gold', 5); } },
+                        { txt: "纵向项目", res: "SAN-5, Fav+1, Res+1", act: () => { modifyStat('san', -5); modifyStat('fav', 1); modifyStat('res', 1); } },
+                        { txt: "拒绝", res: "Res判定扣好感", act: () => {
+                            if(state.stats.res<6) modifyStat('fav', -2);
+                            else if(state.stats.res<12) modifyStat('fav', -1);
+                        }},
+                        { txt: "让师弟师妹分担", res: "Social判定", act: () => {
+                            if(state.stats.soc<6) { modifyStat('san', -2); modifyStat('soc', -1); }
+                            else if(state.stats.soc<12) modifyStat('san', -2);
+                        }}
+                    ]
+                },
+                // 5: 谈话
+                {
+                    title: "导师找你谈话",
+                    opts: [
+                        { txt: "准备科研进展", res: "50% Fav-1 / 50% Next Idea+5", act: () => {
+                            if(Math.random()<0.5) modifyStat('fav', -1);
+                            else addBuff({type:'idea_score', val:5, duration:'temp'});
+                        }},
+                        { txt: "询问科研", res: "Fav>=6 Res+1", act: () => {
+                            if(state.stats.fav>=6) modifyStat('res', 1); else modifyStat('fav', -1);
+                        }},
+                        { txt: "要去实习", res: "Fav>=6 Gold+5...", act: () => {
+                            if(state.stats.fav>=6) { modifyStat('san', -6); modifyStat('gold', 5); addBuff({type:'exp_score', val:5, duration:'temp'}); }
+                            else modifyStat('fav', -1);
+                        }}
+                    ]
+                },
+                // 6: 组会
+                {
+                    title: "实验室召开组会",
+                    opts: [
+                        { txt: "讲解深奥论文", res: "Res>=6 Fav+1", act: () => { if(state.stats.res>=6) modifyStat('fav', 1); else modifyStat('fav', -1); } },
+                        { txt: "讲解系列论文", res: "SAN-3, 50% Fav+2", act: () => { modifyStat('san', -3); if(Math.random()<0.5) modifyStat('fav', 2); } },
+                        { txt: "偷偷水过去", res: "50% Fav-1", act: () => { if(Math.random()<0.5) modifyStat('fav', -1); } }
+                    ]
+                },
+                // 7: 团建
+                {
+                    title: "实验室组织团建",
+                    opts: [
+                        { txt: "打羽毛球", res: "SAN+2", act: () => modifyStat('san', 2) },
+                        { txt: "德州扑克", res: "50% 金币+5/50% 金币-5", act: () => { modifyStat('gold', Math.random()<0.5?5:-5); } },
+                        { txt: "KTV", res: "Social+1", act: () => modifyStat('soc', 1) },
+                        { txt: "聚餐", res: "SAN+5, 50% 金币-3", act: () => { modifyStat('san', 5); if(Math.random()<0.5) modifyStat('gold', -3); } }
+                    ]
+                },
+                // 8: 经费
+                {
+                    title: "导师经费充足",
+                    opts: [
+                        { txt: "买GPU服务器", res: "50% 永久实验次数+1", act: () => { if(Math.random()<0.5) addBuff({type:'exp_times', val:1, duration:'perm'}); } },
+                        { txt: "发劳务费", res: "Fav判定", act: () => { let g = state.stats.fav<6?2:(state.stats.fav<12?4:8); modifyStat('gold', g); } },
+                        { txt: "装修工位", res: "Idea/Write分+1", act: () => { addBuff({type:'idea_score', val:1, duration:'perm'}); addBuff({type:'write_score', val:1, duration:'perm'}); } }
+                    ]
+                },
+                // 9: 新知识
+                {
+                    title: "学点新知识",
+                    opts: [
+                        { txt: "基础知识", res: "Res<4 Res+1", act: () => { if(state.stats.res<4) modifyStat('res', 1); } },
+                        { txt: "代码知识", res: "Exp分+1", act: () => addBuff({type:'exp_score', val:1, duration:'perm'}) },
+                        { txt: "最新技术", res: "Idea分+1", act: () => addBuff({type:'idea_score', val:1, duration:'perm'}) },
+                        { txt: "深奥知识", res: "Write分+1", act: () => addBuff({type:'write_score', val:1, duration:'perm'}) }
+                    ]
+                },
+                // 10: 同门合作
+                {
+                    title: "同门找你合作",
+                    opts: [
+                        { txt: "学术交流", res: "Next Idea *0.5 或 +5", act: () => { if(Math.random()<0.5) addBuff({type:'idea_mult', val:0.5, duration:'temp'}); else addBuff({type:'idea_score', val:5, duration:'temp'}); } },
+                        { txt: "互挂论文", res: "50% 下次引用*2", act: () => { if(Math.random()<0.5) { /* 暂时略过复杂引用逻辑，只加buff */ log("合作", "下次中稿引用翻倍(逻辑未实装)"); } } },
+                        { txt: "婉拒", res: "无", act: () => {} },
+                        { txt: "全面合作", res: "Soc判定增加次数", act: () => { 
+                            if(state.stats.soc<6) {} // fail
+                            else if(state.stats.soc<12) addBuff({type:'idea_times', val:1, duration:'temp'});
+                            else { addBuff({type:'idea_times', val:1, duration:'temp'}); addBuff({type:'write_times', val:1, duration:'temp'}); }
+                        }}
+                    ]
+                },
+                // 12: 抢一作
+                {
+                    title: "导师想要抢你一作",
+                    opts: [
+                        { txt: "诉苦", res: "无事发生", act: () => {} },
+                        { txt: "劝说抢师弟", res: "Soc-1", act: () => modifyStat('soc', -1) },
+                        { txt: "据理力争", res: "无事发生", act: () => {} },
+                        { txt: "以死相逼", res: "Fav-1", act: () => modifyStat('fav', -1) }
+                    ]
+                },
+                // 13: 服务器坏了
+                {
+                    title: "服务器坏了",
+                    opts: [
+                        { txt: "催导师修", res: "Exp分-2 (每次)", act: () => addBuff({type:'exp_score', val:-2, duration:'perm'}) },
+                        { txt: "举报同门", res: "Soc-2", act: () => modifyStat('soc', -2) },
+                        { txt: "自己修", res: "概率SAN-3或事故", act: () => {
+                            if(Math.random()<0.5) modifyStat('san', -3);
+                            else { addBuff({type:'exp_mult', val:0, duration:'temp'}); modifyStat('soc', -1); modifyStat('san', -3); }
+                        }},
+                        { txt: "淘宝修", res: "概率金币-2或-4", act: () => {
+                            if(Math.random()<0.5) checkGold(2);
+                            else { checkGold(4); modifyStat('san', -2); }
+                        }}
+                    ]
+                }
+            ];
+            
+            // 额外事件 11 (Soc>=6)
+            if(state.stats.soc >= 6) {
+                events.push({
+                    title: "师兄师姐找你合作",
+                    opts: [
+                        { txt: "观望", res: "无", act: () => {} },
+                        { txt: "浅浅合作", res: "Next Idea+10", act: () => addBuff({type:'idea_score', val:10, duration:'temp'}) },
+                        { txt: "深入合作", res: "Res+1", act: () => modifyStat('res', 1) },
+                        { txt: "拜入门下", res: "Res+1, Write分+3 (每次)", act: () => { modifyStat('res', 1); addBuff({type:'write_score', val:3, duration:'perm'}); } }
+                    ]
+                });
+            }
+
+            let evt = events[Math.floor(Math.random() * events.length)];
+            showEventModal(evt.title, "请做出选择：", evt.opts);
+        }
+
+        function showEventModal(title, body, opts) {
+            let html = opts.map((o, idx) => `
+                <button class="choice-btn" onclick="handleEventOption(${idx})">
+                    <b>${o.txt}</b> <br> <span style="font-size:0.8em; color:#666">预期结果: ${o.res}</span>
+                </button>
+            `).join('');
+            
+            // 将当前事件存入临时全局，以便回调
+            window.currentEventOpts = opts;
+            
+            showModal(title, `<p>${body}</p><div class="modal-options">${html}</div>`);
+            document.getElementById('modal-options').innerHTML = html; // Override standard display
+        }
+
+        window.handleEventOption = function(idx) {
+            let opt = window.currentEventOpts[idx];
+            opt.act(); // 执行效果
+            log("随机事件", `选择了: ${opt.txt}`);
+            closeModal();
+            updateUI();
+        }
+
+        function checkGold(cost) {
+            if(state.stats.gold >= cost) {
+                modifyStat('gold', -cost);
+                return true;
+            } else {
+                alert("金币不足！");
+                return false;
+            }
+        }
+
+        // ================= 开会系统 =================
+        function triggerConference(paper) {
+            let payOpts = [
+                { txt: "自己出钱 (4金)", act: () => { if(checkGold(4)) nextConfStep(); } },
+                { txt: "导师报销 (Fav-2)", act: () => { modifyStat('fav', -2); nextConfStep(); } },
+                { txt: "请人代开 (1金)", act: () => { if(checkGold(1)) log("开会", "请人代开，无事发生"); closeModal(); } }
+            ];
+            
+            // 包装
+            let html = payOpts.map((o, i) => `<button class="choice-btn" onclick="confPay(${i})">${o.txt}</button>`).join('');
+            window.confPayOpts = payOpts;
+            showModal("论文被接收！", "<p>你要去参加会议吗？</p>" + html);
+            document.getElementById('modal-options').innerHTML = html;
+        }
+
+        window.confPay = function(idx) {
+            window.confPayOpts[idx].act();
+        }
+
+        function nextConfStep() {
+            // 随机3个选项
+            let pool = [
+                { txt: "顺便旅游", res: "SAN+6", act: () => { modifyStat('san', 6); state.flags.travel = (state.flags.travel||0)+1; } },
+                { txt: "茶歇+晚宴", res: "SAN+1, Soc+1", act: () => { modifyStat('san', 1); modifyStat('soc', 1); state.flags.tea = (state.flags.tea||0)+1; } },
+                { txt: "同行交流", res: "Next Exp次数+3", act: () => addBuff({type:'exp_times', val:3, duration:'temp'}) },
+                { txt: "广泛交流", res: "Next Idea次数+3", act: () => addBuff({type:'idea_times', val:3, duration:'temp'}) },
+                { txt: "找大牛交流", res: "Next Idea Mult 1.25", act: () => addBuff({type:'idea_mult', val:1.25, duration:'temp'}) },
+                { txt: "找企业交流", res: "Next Exp Mult 1.25", act: () => addBuff({type:'exp_mult', val:1.25, duration:'temp'}) },
+                { txt: "找同学合作", res: "Next Exp分+5", act: () => addBuff({type:'exp_score', val:5, duration:'temp'}) }
+            ];
+
+            if(state.stats.soc >= 6) {
+                pool.push({ txt: "找大牛合作", res: "Next Write+8, Soc+1", act: () => { addBuff({type:'write_score', val:8, duration:'temp'}); modifyStat('soc', 1); state.flags.bigshot = true; } });
+                pool.push({ txt: "好看异性学者", res: "SAN+5, Soc+1", act: () => { modifyStat('san', 5); modifyStat('soc', 1); state.flags.pretty = (state.flags.pretty||0)+1; } });
+                pool.push({ txt: "聪慧异性学者", res: "SAN+1, Soc+1, Next Idea+2次", act: () => { modifyStat('san', 1); modifyStat('soc', 1); addBuff({type:'idea_times', val:2, duration:'temp'}); state.flags.smart = (state.flags.smart||0)+1; } });
+            }
+
+            // 进阶选项
+            if(state.flags.bigshot) {
+                pool.push({ txt: "和大牛深入合作", res: "Next Write+10", act: () => { addBuff({type:'write_score', val:10, duration:'temp'}); state.flags.deep_bigshot = (state.flags.deep_bigshot||0)+1; } });
+            }
+            if(state.flags.pretty >= 1 && !state.flags.lover) {
+                pool.push({ txt: "再见好看学者", res: "SAN+8, MaxSAN+3", act: () => { modifyStat('san', 8); state.limits.san += 3; state.flags.pretty++; } });
+            }
+            if(state.flags.smart >= 1 && !state.flags.lover) {
+                pool.push({ txt: "再见聪慧学者", res: "SAN+1, Res+1", act: () => { modifyStat('san', 1); modifyStat('res', 1); state.flags.smart++; } });
+            }
+
+            // 恋人/联合培养
+            if(state.stats.soc >= 12 && state.flags.pretty >= 2 && !state.flags.lover) {
+                pool.push({ txt: "成为恋人(好看)", res: "SAN满, Regen+3, Max+4", act: () => { 
+                    state.stats.san = state.limits.san; 
+                    addBuff({type:'san_regen', val:3, duration:'perm'});
+                    state.limits.san += 4;
+                    state.flags.lover = true;
+                    log("成就", "喜结良缘");
+                }});
+            }
+            if(state.stats.soc >= 12 && state.flags.smart >= 2 && !state.flags.lover) {
+                pool.push({ txt: "成为恋人(聪慧)", res: "Res+1, Perm +1次操作", act: () => {
+                    modifyStat('san', 1); modifyStat('res', 1);
+                    addBuff({type:'idea_times', val:1, duration:'perm'});
+                    addBuff({type:'exp_times', val:1, duration:'perm'});
+                    addBuff({type:'write_times', val:1, duration:'perm'});
+                    state.flags.lover = true;
+                    log("成就", "喜结良缘");
+                }});
+            }
+            if(state.stats.res >= 12 && state.flags.deep_bigshot >= 1 && !state.flags.joint) {
+                pool.push({ txt: "导师大牛联合培养", res: "Write分+10(每次)", act: () => {
+                    addBuff({type:'write_score', val:10, duration:'perm'});
+                    state.flags.joint = true;
+                }});
+            }
+
+            // 随机选3个
+            let choices = [];
+            for(let i=0; i<3; i++) {
+                if(pool.length === 0) break;
+                let idx = Math.floor(Math.random()*pool.length);
+                choices.push(pool[idx]);
+                pool.splice(idx, 1);
+            }
+
+            showEventModal("会议现场", "你打算做什么？", choices);
+        }
+
+        // ================= 辅助函数 =================
+        function checkSlotUnlock() {
+            let res = state.stats.res;
+            let current = state.slots.length;
+            let target = 1;
+            if(res >= 6) target = 2;
+            if(res >= 12) target = 3;
+            if(res >= 18) target = 4;
+            
+            if (target > current) {
+                state.slots.push({ id: current, active: true, paperId: null });
+                showModal("能力提升", "科研能力提升，解锁了一个新的论文槽位！");
+                renderSlots();
+            }
+        }
+
+        function getResearchScore() {
+            return state.papers.filter(p => p.status === 'published').reduce((sum, p) => {
+                let s = p.target === 'A' ? 4 : (p.target === 'B' ? 2 : 1);
+                return sum + s;
+            }, 0);
+        }
+
+        function checkPhDTransfer() {
+            let y = state.date.year;
+            let score = getResearchScore();
+            if (state.degree === 'master' && !state.flags.rejectedPhD) {
+                let canTransfer = (y === 2 && state.date.month === 12 && score >= 2) || (y === 3 && state.date.month === 12 && score >= 3);
+                if (canTransfer) {
+                    showModal("转博机会", "你达到了转博要求，是否转为博士？<br>毕业要求将变为：5年内科研分≥7。", null);
+                    document.getElementById('modal-options').innerHTML = `
+                        <button class="choice-btn" onclick="confirmPhD(true)">是，我要深造</button>
+                        <button class="choice-btn" onclick="confirmPhD(false)">否，我想早点毕业</button>
+                    `;
+                }
+            }
+        }
+
+        function confirmPhD(yes) {
+            if (yes) {
+                state.degree = 'phd';
+                state.flags.phd = true;
+                log("生涯变更", "你选择了转博。前路漫漫！");
+            } else {
+                state.flags.rejectedPhD = true;
+                log("生涯变更", "你放弃了转博机会。");
+            }
+            closeModal();
+            updateUI();
+        }
+
+        // ================= 渲染函数 =================
+        function renderBuffs() {
+            let div = document.getElementById('buff-list');
+            div.innerHTML = '';
+            // 合并同类显示逻辑略复杂，这里简单列表展示
+            // 优化：合并同名
+            let map = {};
+            state.buffs.forEach(b => {
+                let k = b.name + (b.duration==='temp'?'(临时)':'(永久)');
+                if(!map[k]) map[k] = { ...b, count: 1, k: k };
+                else { map[k].val += b.val; map[k].count++; }
+            });
+
+            for(let key in map) {
+                let b = map[key];
+                let d = document.createElement('div');
+                d.className = 'buff-item';
+                let valStr = b.val > 0 ? `+${b.val}` : `${b.val}`;
+                if (b.type.includes('mult')) valStr = `x${b.val}`;
+                d.innerText = `${b.k}: ${valStr}`;
+                div.appendChild(d);
+            }
+        }
+
+        function renderPapers() {
+            let list = document.getElementById('paper-list');
+            list.innerHTML = '';
+            let a=0, b=0, c=0, score=0, cite=0;
+            state.papers.filter(p => p.status === 'published').forEach(p => {
+                if(p.target==='A') { a++; score+=4; }
+                if(p.target==='B') { b++; score+=2; }
+                if(p.target==='C') { c++; score+=1; }
+                cite += p.citations;
+
+                let d = document.createElement('div');
+                d.className = 'paper-record';
+                d.innerHTML = `<b>[${p.target}] ${p.title}</b> <br> Score:${p.finalScore} Cite:${p.citations} (${p.outcome})`;
+                list.appendChild(d);
+            });
+            document.getElementById('cnt-a').innerText = a;
+            document.getElementById('cnt-b').innerText = b;
+            document.getElementById('cnt-c').innerText = c;
+            document.getElementById('cnt-score').innerText = score;
+            document.getElementById('cnt-cite').innerText = cite;
+        }
+
+        function renderSlots() {
+            let container = document.getElementById('slots-container');
+            container.innerHTML = '';
+            state.slots.forEach(slot => {
+                let div = document.createElement('div');
+                div.className = 'paper-slot' + (slot.paperId ? ' active' : '');
+                
+                if (!slot.paperId) {
+                    div.innerHTML = `<button class="btn btn-green" onclick="createPaper(${slot.id})"><i class="fas fa-plus"></i> 开启新论文</button>`;
+                } else {
+                    let p = state.papers.find(pp => pp.id === slot.paperId);
+                    if (p.status === 'writing') {
+                        div.innerHTML = `
+                            <div class="paper-detail">
+                                <div style="font-weight:bold; margin-bottom:5px;">${p.title}</div>
+                                <div class="paper-stats">Idea: ${p.idea} | Exp: ${p.exp} | Write: ${p.write}</div>
+                                <div style="font-size:0.8em; color:#b2bec3;">状态: 撰写中</div>
+                                <div class="paper-actions">
+                                    <button class="btn" style="font-size:0.8em" onclick="submitPaper(${p.id}, 'A')">投A (4分)</button>
+                                    <button class="btn" style="font-size:0.8em" onclick="submitPaper(${p.id}, 'B')">投B (2分)</button>
+                                    <button class="btn" style="font-size:0.8em" onclick="submitPaper(${p.id}, 'C')">投C (1分)</button>
+                                    <button class="btn btn-red" style="font-size:0.8em" onclick="abandonPaper(${p.id})">放弃</button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (p.status === 'reviewing') {
+                        let wait = totalMonths() - p.reviewStart;
+                        div.innerHTML = `
+                            <div class="paper-detail">
+                                <b>${p.title}</b>
+                                <div style="color:orange; margin:10px 0;">审稿中 (${wait}/4月)</div>
+                                <div style="font-size:0.8em">已锁死，无法操作</div>
+                            </div>
+                        `;
+                    }
+                }
+                container.appendChild(div);
+            });
+        }
+
+        // ================= 结局判定 =================
+        function checkEnding() {
+            let endTitle = "";
+            let endDesc = "";
+            let isEnd = false;
+
+            // 失败结局
+            if (state.stats.san < 0) { isEnd=true; endTitle="不堪重负"; endDesc="你的精神崩溃了，被送进了医院。"; }
+            else if (state.stats.fav < 0) { isEnd=true; endTitle="被退学"; endDesc="导师对你忍无可忍，你被退学了。"; }
+            else if (state.stats.gold < 0) { isEnd=true; endTitle="穷困潦倒"; endDesc="你破产了，无法维持生计。"; }
+            
+            // 时间到
+            else {
+                let limit = state.degree === 'master' ? 36 : 60;
+                let now = totalMonths();
+                if (now > limit) {
+                    isEnd = true;
+                    // 检查毕业条件
+                    let score = getResearchScore();
+                    let target = state.degree === 'master' ? 1 : 7;
+                    
+                    if (score < target) {
+                        endTitle = "延毕劝退"; endDesc = "你未能达到毕业要求，遗憾离场。";
+                    } else {
+                        // 成功毕业
+                        if (state.degree === 'master') {
+                            if (score >= 4) { endTitle = "优秀硕士"; endDesc = "你以优异的成绩硕士毕业！"; }
+                            else { endTitle = "硕士毕业"; endDesc = "你顺利拿到了硕士学位。"; }
+                        } else {
+                            // 博士多结局
+                            let aCount = state.papers.filter(p => p.status === 'published' && p.target === 'A').length;
+                            let cites = parseInt(document.getElementById('cnt-cite').innerText);
+                            
+                            if (aCount >= 5 && cites > 2000 && state.flags.joint) { endTitle = "未来院士"; endDesc = "去大牛组当副教授，前途无量！"; }
+                            else if (aCount >= 5 && cites > 1000 && state.flags.joint) { endTitle = "学术之星"; endDesc = "去大牛组飞升疾走。"; }
+                            else if (aCount >= 5 && cites > 1000) { endTitle = "我就是导师"; endDesc = "留校任教副教授。"; }
+                            else if (aCount >= 4 && cites > 500) { endTitle = "青椒"; endDesc = "留校飞升疾走。"; }
+                            else if (aCount >= 3) { endTitle = "优秀博士"; endDesc = "你发表了多篇A类论文，光荣毕业。"; }
+                            else { endTitle = "博士毕业"; endDesc = "你终于熬出了头，获得了博士学位。"; }
+                        }
+                    }
+                }
+            }
+
+            if (isEnd) {
+                showEnding(endTitle, endDesc);
+            }
+        }
+
+        function showEnding(title, desc) {
+            let feats = [];
+            if (state.flags.lover) feats.push("喜结良缘");
+            if (state.stats.gold > 20) feats.push("家财万贯");
+            if (state.stats.res > 10 && state.stats.soc > 10 && state.stats.fav > 10 && state.stats.gold > 10) feats.push("六边形战士");
+            if (state.stats.res >= 20) feats.push("诺奖选手");
+            if (state.stats.soc >= 20) feats.push("交际花");
+            if (state.stats.fav >= 20) feats.push("铁杆师生");
+            if (state.stats.san >= 20) feats.push("精力满满");
+            // 百发百中? 需记录reject次数
+            if (state.flags.tea >= 3) feats.push("我爱茶歇");
+            if (state.flags.travel >= 3) feats.push("公费旅游");
+            if (state.papers.filter(p=>p.status==='published').length >= 10) feats.push("论文机器");
+
+            let html = `
+                <h1 style="color:var(--primary)">${title}</h1>
+                <p>${desc}</p>
+                <div style="text-align:left; background:#eee; padding:15px; border-radius:10px; margin:20px 0;">
+                    <h4>生涯成就:</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        ${feats.length ? feats.map(f=>`<span style="background:gold; padding:3px 8px; border-radius:4px;">${f}</span>`).join('') : "无"}
+                    </div>
+                </div>
+                <button class="btn btn-green" onclick="location.reload()">我要重开</button>
+            `;
+            // 覆盖整个屏幕
+            document.getElementById('game-container').innerHTML = ''; // 清空
+            document.getElementById('start-screen').style.display = 'block';
+            document.getElementById('start-screen').innerHTML = html;
+        }
+
+        // ================= 弹窗控制 =================
+        function showModal(title, bodyHTML) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = bodyHTML;
+            document.getElementById('modal-options').innerHTML = `<button class="btn" onclick="closeModal()">关闭</button>`;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        // 启动逻辑
+        initRoles();
+
+    </script>
+</body>
+</html>
