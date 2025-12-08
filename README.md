@@ -5,4 +5,4 @@ Gemini 3 pro就差点意思了，调了好几天都不行，特别是debug，总
 deepseek和kimi也稍微尝试了下，总体来说略差于gemini吧，但也有优势之处。
 GPT5.1也稍微尝试了下，初步感觉和gemini差不多。
 
-需要做的就是想好游戏逻辑，提问不要很混乱就行。提问见promopt.txt。
+需要做的就是想好游戏逻辑，提问不要很混乱就行。提问见promopt.txt。gemini生成的版本见gemini.html。
