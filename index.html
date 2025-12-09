@@ -7,8 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- LeanCloud SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.2/dist/av-min.js"></script>
-    <style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>     <style>
         :root {
             --primary-color: #6c5ce7;
             --secondary-color: #a29bfe;
@@ -1669,322 +1668,156 @@
             };
         }
 
-        // ==================== 统计系统 ====================
-        const STATS_CONFIG = {
-            appId: 'NJx2MyUXZVtxBzlWKzQAoprR-gzGzoHsz',
-            appKey: 'CVkn5hN1wzStb6vcDT8oZK4V',
-            serverURL: 'https://njx2myux.lc-cn-n1-shared.com'
-        };
+		// ==================== 统计系统（Supabase）====================
+		const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
+		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yemVqem15enVneHR5cnpmY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDYyMTUsImV4cCI6MjA4MDg4MjIxNX0.lx9W0v9KpRPmQR0kdxCSWVks_az5rLCr7D3JI2efeM4';
 
-        let statsInitialized = false;
+		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+		let statsInitialized = true;
 		let statsCache = null;
 		let statsCacheTime = 0;
-		const CACHE_DURATION = 5 * 60 * 1000; // 缓存5分钟
+		const CACHE_DURATION = 5 * 60 * 1000;
 		let visitStatsCache = null;
 		let visitStatsCacheTime = 0;
 
-        function initStats() {
-            if (statsInitialized) return;
-            try {
-                AV.init({
-                    appId: STATS_CONFIG.appId,
-                    appKey: STATS_CONFIG.appKey,
-                    serverURL: STATS_CONFIG.serverURL
-                });
-                statsInitialized = true;
-                console.log('统计系统初始化成功');
-                recordVisit();
-            } catch (e) {
-                console.error('统计系统初始化失败:', e);
-            }
-        }
+		function initStats() {
+			recordVisit();
+			loadGlobalStatsDisplay();
+			console.log('Supabase 统计系统已启用');
+		}
 
-        async function recordVisit() {
-            if (!statsInitialized) return;
-            try {
-                const visitorKey = 'graduate_simulator_visitor';
-                const isNewVisitor = !localStorage.getItem(visitorKey);
-                
-                const Visit = AV.Object.extend('SiteVisits');
-                const visit = new Visit();
-                visit.set('type', 'pv');
-                visit.set('url', window.location.hostname);
-                visit.set('timestamp', new Date());
-                await visit.save();
-                
-                if (isNewVisitor) {
-                    const uvVisit = new Visit();
-                    uvVisit.set('type', 'uv');
-                    uvVisit.set('url', window.location.hostname);
-                    uvVisit.set('timestamp', new Date());
-                    await uvVisit.save();
-                    localStorage.setItem(visitorKey, 'true');
-                }
-            } catch (e) {
-                console.error('记录访问失败:', e);
-            }
-        }
-
-		async function getVisitStats() {
-			// 检查缓存
-			if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
-				console.log('使用缓存的访问统计');
-				return visitStatsCache;
-			}
-			
-			if (!statsInitialized) return { pv: 0, uv: 0 };
+		async function recordVisit() {
 			try {
-				const pvQuery = new AV.Query('SiteVisits');
-				pvQuery.equalTo('type', 'pv');
-				const pvCount = await pvQuery.count();
+				const visitorKey = 'graduate_simulator_visitor';
+				const isNewVisitor = !localStorage.getItem(visitorKey);
 				
-				const uvQuery = new AV.Query('SiteVisits');
-				uvQuery.equalTo('type', 'uv');
-				const uvCount = await uvQuery.count();
+				await supabase.from('SiteVisits').insert({ 
+					type: 'pv', 
+					url: window.location.hostname 
+				});
 				
-				// 保存缓存
-				visitStatsCache = { pv: pvCount, uv: uvCount };
-				visitStatsCacheTime = Date.now();
-				
-				return visitStatsCache;
+				if (isNewVisitor) {
+					await supabase.from('SiteVisits').insert({ 
+						type: 'uv', 
+						url: window.location.hostname 
+					});
+					localStorage.setItem(visitorKey, 'true');
+				}
 			} catch (e) {
-				console.error('获取访问统计失败:', e);
-				return visitStatsCache || { pv: 0, uv: 0 }; // 失败时返回旧缓存
+				console.error('记录访问失败:', e);
 			}
 		}
 
-        // 记录结局 - 分正逆位
-        async function recordEnding(endingType, endingTitle) {
-            if (!statsInitialized) return;
-            try {
-                const Ending = AV.Object.extend('GameEndings');
-                const ending = new Ending();
-                ending.set('type', endingType);
-                ending.set('title', endingTitle);
-                ending.set('character', gameState.character);
-                ending.set('isReversed', gameState.isReversed);
-                ending.set('totalMonths', gameState.totalMonths);
-                ending.set('totalScore', gameState.totalScore);
-                ending.set('paperA', gameState.paperA);
-                ending.set('paperB', gameState.paperB);
-                ending.set('paperC', gameState.paperC);
-                ending.set('url', window.location.hostname);
-                await ending.save();
-                console.log('结局已记录:', endingTitle, gameState.isReversed ? '(逆位)' : '(正位)');
-            } catch (e) {
-                console.error('记录结局失败:', e);
-            }
-        }
+		async function getVisitStats() {
+			if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
+				return visitStatsCache;
+			}
+			
+			try {
+				const { count: pv } = await supabase
+					.from('SiteVisits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'pv');
+					
+				const { count: uv } = await supabase
+					.from('SiteVisits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'uv');
+				
+				visitStatsCache = { pv: pv || 0, uv: uv || 0 };
+				visitStatsCacheTime = Date.now();
+				return visitStatsCache;
+			} catch (e) {
+				console.error('获取访问统计失败:', e);
+				return visitStatsCache || { pv: 0, uv: 0 };
+			}
+		}
 
-        // 记录成就 - 分正逆位
-        async function recordAchievements(achievements) {
-            if (!statsInitialized || achievements.length === 0) return;
-            try {
-                const Achievement = AV.Object.extend('GameAchievements');
-                for (const ach of achievements) {
-                    const achievement = new Achievement();
-                    achievement.set('name', ach);
-                    achievement.set('character', gameState.character);
-                    achievement.set('isReversed', gameState.isReversed);
-                    achievement.set('url', window.location.hostname);
-                    await achievement.save();
-                }
-                console.log('成就已记录:', achievements);
-            } catch (e) {
-                console.error('记录成就失败:', e);
-            }
-        }
+		async function recordEnding(endingType, endingTitle) {
+			try {
+				await supabase.from('GameEndings').insert({
+					type: endingType,
+					title: endingTitle,
+					character: gameState.character,
+					isReversed: gameState.isReversed,
+					totalMonths: gameState.totalMonths,
+					totalScore: gameState.totalScore,
+					paperA: gameState.paperA,
+					paperB: gameState.paperB,
+					paperC: gameState.paperC
+				});
+				console.log('结局已记录:', endingTitle);
+			} catch (e) {
+				console.error('记录结局失败:', e);
+			}
+		}
 
-        // 获取全局统计数据 - 分正逆位
+		async function recordAchievements(achievements) {
+			if (!achievements || achievements.length === 0) return;
+			
+			try {
+				const records = achievements.map(ach => ({
+					name: ach,
+					character: gameState.character,
+					isReversed: gameState.isReversed
+				}));
+				
+				await supabase.from('GameAchievements').insert(records);
+				console.log('成就已记录:', achievements);
+			} catch (e) {
+				console.error('记录成就失败:', e);
+			}
+		}
+
 		async function getGlobalStats() {
-			// 检查缓存
 			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
-				console.log('使用缓存的全球统计');
 				return statsCache;
 			}
 			
-			if (!statsInitialized) return null;
 			try {
 				const stats = {
 					normal: { endings: {}, achievements: {}, characterEndings: {} },
 					reversed: { endings: {}, achievements: {}, characterEndings: {} }
 				};
-
-				// 获取所有结局数据
-				let skip = 0;
-				const batchSize = 1000;
-				while (true) {
-					const endingQuery = new AV.Query('GameEndings');
-					endingQuery.limit(batchSize);
-					endingQuery.skip(skip);
-					const endings = await endingQuery.find();
+				
+				const { data: endings } = await supabase
+					.from('GameEndings')
+					.select('type, character, isReversed');
+				
+				const HARD_ENDINGS = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+				
+				(endings || []).forEach(e => {
+					const mode = e.isReversed ? 'reversed' : 'normal';
+					stats[mode].endings[e.type] = (stats[mode].endings[e.type] || 0) + 1;
 					
-					if (endings.length === 0) break;
-					
-					endings.forEach(e => {
-						const type = e.get('type');
-						const isReversed = e.get('isReversed') || false;
-						const character = e.get('character');
-						const mode = isReversed ? 'reversed' : 'normal';
-						
-						stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
-						
-						if (!stats[mode].characterEndings[character]) {
-							stats[mode].characterEndings[character] = { total: 0, hard: 0 };
-						}
-						stats[mode].characterEndings[character].total++;
-						if (HARD_ENDINGS.includes(type)) {
-							stats[mode].characterEndings[character].hard++;
-						}
-					});
-					
-					skip += batchSize;
-					if (endings.length < batchSize) break;
-				}
-
-				// 获取所有成就数据
-				skip = 0;
-				while (true) {
-					const achievementQuery = new AV.Query('GameAchievements');
-					achievementQuery.limit(batchSize);
-					achievementQuery.skip(skip);
-					const achievements = await achievementQuery.find();
-					
-					if (achievements.length === 0) break;
-					
-					achievements.forEach(a => {
-						const name = a.get('name');
-						const isReversed = a.get('isReversed') || false;
-						const mode = isReversed ? 'reversed' : 'normal';
-						stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
-					});
-					
-					skip += batchSize;
-					if (achievements.length < batchSize) break;
-				}
-
-				// 保存缓存
+					if (!stats[mode].characterEndings[e.character]) {
+						stats[mode].characterEndings[e.character] = { total: 0, hard: 0 };
+					}
+					stats[mode].characterEndings[e.character].total++;
+					if (HARD_ENDINGS.includes(e.type)) {
+						stats[mode].characterEndings[e.character].hard++;
+					}
+				});
+				
+				const { data: achievements } = await supabase
+					.from('GameAchievements')
+					.select('name, isReversed');
+				
+				(achievements || []).forEach(a => {
+					const mode = a.isReversed ? 'reversed' : 'normal';
+					stats[mode].achievements[a.name] = (stats[mode].achievements[a.name] || 0) + 1;
+				});
+				
 				statsCache = stats;
 				statsCacheTime = Date.now();
-				
 				return stats;
 			} catch (e) {
 				console.error('获取统计失败:', e);
-				// API 超限时返回旧缓存
-				if (statsCache) {
-					console.log('API受限，使用旧缓存');
-					return statsCache;
-				}
-				return null;
+				return statsCache || null;
 			}
 		}
 
-        // 计算角色难度（基于通关率排名）
-        function calculateCharacterDifficulty(stats) {
-            const difficultyData = {};
-            const allCharacterRates = [];
-
-            // 收集所有12个角色（6正位+6逆位）的通关率
-            characters.forEach(char => {
-                // 正位
-                const normalData = stats.normal.characterEndings[char.id] || { total: 0, hard: 0 };
-                const normalRate = normalData.total >= 5 ? normalData.hard / normalData.total : null;
-                allCharacterRates.push({
-                    id: char.id,
-                    isReversed: false,
-                    rate: normalRate,
-                    total: normalData.total,
-                    hard: normalData.hard
-                });
-
-                // 逆位
-                const reversedData = stats.reversed.characterEndings[char.id] || { total: 0, hard: 0 };
-                const reversedRate = reversedData.total >= 5 ? reversedData.hard / reversedData.total : null;
-                allCharacterRates.push({
-                    id: char.id,
-                    isReversed: true,
-                    rate: reversedRate,
-                    total: reversedData.total,
-                    hard: reversedData.hard
-                });
-            });
-
-            // 筛选有数据的角色并按通关率排序（从高到低）
-            const validRates = allCharacterRates.filter(c => c.rate !== null);
-            validRates.sort((a, b) => b.rate - a.rate);
-
-            // 根据排名分配难度星级（1-12）
-            // 通关率最高的是难度1，最低的是难度12
-            validRates.forEach((char, index) => {
-                const rank = index + 1; // 1到validRates.length
-                // 将排名映射到难度星级
-                // 如果有n个有效角色，第1名难度=1*12/n，最后一名难度=12
-                const difficulty = Math.ceil(rank * 12 / validRates.length);
-                const key = `${char.id}_${char.isReversed ? 'reversed' : 'normal'}`;
-                difficultyData[key] = {
-                    stars: Math.min(12, Math.max(1, difficulty)),
-                    rate: char.rate,
-                    total: char.total,
-                    hard: char.hard,
-                    rank: rank,
-                    totalRanked: validRates.length
-                };
-            });
-
-            // 为没有足够数据的角色标记为未知
-            allCharacterRates.forEach(char => {
-                const key = `${char.id}_${char.isReversed ? 'reversed' : 'normal'}`;
-                if (!difficultyData[key]) {
-                    difficultyData[key] = {
-                        stars: null,
-                        rate: null,
-                        total: char.total,
-                        hard: char.hard,
-                        rank: null,
-                        totalRanked: validRates.length
-                    };
-                }
-            });
-
-            return difficultyData;
-        }
-
-        // 生成难度星星HTML
-        function renderDifficultyStars(stars) {
-            if (stars === null) {
-                return '<span class="no-data">数据不足</span>';
-            }
-
-            let html = '';
-            const fullStars = Math.floor(stars / 2);
-            const halfStar = stars % 2 === 1;
-            const emptyStars = 6 - fullStars - (halfStar ? 1 : 0);
-
-            for (let i = 0; i < fullStars; i++) {
-                html += '<i class="fas fa-star"></i>';
-            }
-            if (halfStar) {
-                html += '<i class="far fa-star"></i>';
-            }
-            for (let i = 0; i < emptyStars; i++) {
-                html += '<i class="far fa-star" style="opacity:0.3;"></i>';
-            }
-
-            return html;
-        }
-
-        // 获取难度等级标签
-        function getDifficultyBadge(stars) {
-            if (stars === null) return '<span class="difficulty-badge unknown">?</span>';
-            if (stars >= 11) return '<span class="difficulty-badge legendary">传说</span>';
-            if (stars >= 9) return '<span class="difficulty-badge nightmare">噩梦</span>';
-            if (stars >= 7) return '<span class="difficulty-badge expert">专家</span>';
-            if (stars >= 5) return '<span class="difficulty-badge hard">困难</span>';
-            if (stars >= 3) return '<span class="difficulty-badge normal">普通</span>';
-            return '<span class="difficulty-badge easy">简单</span>';
-        }
-		
-		// 加载全局统计显示
 		async function loadGlobalStatsDisplay() {
 			const panel = document.getElementById('global-stats-panel');
 			const loading = document.getElementById('stats-loading');
@@ -1992,23 +1825,20 @@
 			
 			panel.style.display = 'block';
 			
-			// 加载访问量
 			const visitStats = await getVisitStats();
 			const pvEl = document.getElementById('busuanzi_value_site_pv');
 			const uvEl = document.getElementById('busuanzi_value_site_uv');
 			if (pvEl) pvEl.textContent = visitStats.pv || 0;
 			if (uvEl) uvEl.textContent = visitStats.uv || 0;
 			
-			// 加载游戏统计
 			const stats = await getGlobalStats();
 			
 			if (!stats) {
-				loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计服务繁忙，请稍后刷新</span>';
+				loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载中...</span>';
 				document.getElementById('total-games-value').textContent = 0;
 				return;
 			}
 			
-			// 计算总游玩次数（正位+逆位的所有结局数）
 			let totalGames = 0;
 			for (const count of Object.values(stats.normal.endings)) {
 				totalGames += count;
@@ -2018,21 +1848,17 @@
 			}
 			document.getElementById('total-games-value').textContent = totalGames;
 			
-			// 计算角色难度
 			characterDifficultyData = calculateCharacterDifficulty(stats);
 			
 			loading.style.display = 'none';
 			content.style.display = 'block';
 			
-			// 渲染正位统计
 			renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
-			
-			// 渲染逆位统计
 			renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
 			
-			// 重新渲染角色卡片以显示难度
 			renderCharacterGrid();
 		}
+
 
         function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
             // 计算总数
