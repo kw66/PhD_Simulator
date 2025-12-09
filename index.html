@@ -1844,6 +1844,7 @@
         function getReviewResult(reviewer, grade, score) {
             let thresholds;
             if (grade === 'A') {
+                // A类论文：根据审稿人类型设置不同阈值
                 switch (reviewer.type) {
                     case 'kind': thresholds = { reject: 40, borderline: 60 }; break;
                     case 'normal': case 'expert': thresholds = { reject: 50, borderline: 70 }; break;
@@ -1851,9 +1852,21 @@
                     case 'hostile': case 'questions': thresholds = { reject: 80, borderline: 90 }; break;
                 }
             } else if (grade === 'B') {
-                thresholds = { reject: 30, borderline: 50 };
+                // B类论文：根据审稿人类型设置不同阈值
+                switch (reviewer.type) {
+                    case 'kind': thresholds = { reject: 20, borderline: 40 }; break;
+                    case 'normal': case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
+                    case 'gpt': thresholds = { reject: 20, borderline: 60 }; break;
+                    case 'hostile': case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
+                }
             } else {
-                thresholds = { reject: 15, borderline: 30 };
+                // C类论文：根据审稿人类型设置不同阈值
+                switch (reviewer.type) {
+                    case 'kind': thresholds = { reject: 10, borderline: 20 }; break;
+                    case 'normal': case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
+                    case 'gpt': thresholds = { reject: 15, borderline: 40 }; break;
+                    case 'hostile': case 'questions': thresholds = { reject: 25, borderline: 40 }; break;
+                }
             }
 
             let decision, reviewScore;
