@@ -1760,8 +1760,9 @@
             paper.reviewing = true;
             paper.reviewMonths = 4;
             paper.submittedGrade = grade;
+            paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore; // 记录投稿时总分
 
-            addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${grade}类会议`, '进入4个月审稿期');
+            addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${grade}类会议`, `总分${paper.submittedScore}，进入4个月审稿期`);
             renderPaperSlots();
         }
 
@@ -1783,8 +1784,9 @@
         function processPaperResult(slot) {
             const paper = gameState.papers[slot];
             const grade = paper.submittedGrade;
-            
-            // 记录改进前的分数
+            const submittedScore = paper.submittedScore; // 使用投稿时记录的分数
+    
+            // 记录当前分数（用于显示改进效果）
             const beforeScores = {
                 idea: paper.ideaScore,
                 exp: paper.expScore,
@@ -1794,11 +1796,11 @@
 
             // 生成审稿人
             const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
-            
-            // 计算结果（使用改进前的分数评审）
+    
+            // 计算结果（使用投稿时的分数评审）
             let totalReviewScore = 0;
             const results = reviewers.map(reviewer => {
-                const result = getReviewResult(reviewer, grade, beforeScores.total);
+                const result = getReviewResult(reviewer, grade, submittedScore);
                 totalReviewScore += result.score;
                 return { reviewer, ...result };
             });
@@ -1893,7 +1895,7 @@
             
             let html = `<div style="margin-bottom:12px;font-size:0.9rem;">
                 <strong>论文：</strong>${paper.title.substring(0, 30)}${paper.title.length > 30 ? '...' : ''}<br>
-                <strong>投稿：</strong>${grade}类会议 | <strong>评审时总分：</strong>${beforeScores.total}
+                <strong>投稿：</strong>${grade}类会议 | <strong>投稿时总分：</strong>${paper.submittedScore}
             </div><div style="margin-bottom:12px;">`;
             
             results.forEach(r => {
@@ -2864,22 +2866,152 @@
         }
 
         function showPhDOptionModal() {
-            showModal('🎓 转博选择',
-                `<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
-                 <p>是否选择继续攻读博士学位？</p>
-                 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
-                [
-                    { text: '硕士毕业', class: 'btn-info', action: () => { closeModal(); triggerEnding('master'); }},
-                    { text: '📚 转为博士', class: 'btn-primary', action: () => {
-                        gameState.degree = 'phd';
-                        gameState.maxYears = 5;
-                        addLog('转博', '选择继续攻读博士学位', '毕业要求更新为科研分≥7');
-                        closeModal();
-                        updateAllUI();
-                    }}
-                ]
-            );
-        }
+			showModal('🎓 转博选择',
+				`<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
+				 <p>是否选择继续攻读博士学位？</p>
+				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
+				[
+					{ text: '硕士毕业', class: 'btn-info', action: () => { closeModal(); triggerEnding('master'); }},
+					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
+						gameState.degree = 'phd';
+						gameState.maxYears = 5;
+						closeModal();
+						
+						// 触发转博渡劫效果
+						setTimeout(() => showPhDTribulationModal(), 200);
+					}}
+				]
+			);
+		}
+
+		// 转博渡劫弹窗
+		function showPhDTribulationModal() {
+			const character = gameState.character;
+			let effectName = '';
+			let effectDesc = '';
+			let bonusDetails = [];
+			
+			// 根据角色计算加成
+			switch (character) {
+				case 'genius': // 院士转世
+					effectName = '🔬 学术天赋觉醒';
+					effectDesc = '院士转世的血脉开始沸腾，科研直觉大幅提升！';
+					gameState.research = Math.min(20, gameState.research + 2);
+					bonusDetails.push('科研能力 +2');
+					break;
+					
+				case 'social': // 社交达人
+					effectName = '🤝 人脉网络激活';
+					effectDesc = '社交达人的魅力全面绽放，人际关系更上一层楼！';
+					gameState.social = Math.min(20, gameState.social + 2);
+					bonusDetails.push('社交能力 +2');
+					break;
+					
+				case 'rich': // 富可敌国
+					effectName = '💰 财富倍增术';
+					effectDesc = '富可敌国的底蕴显现，金币储备瞬间翻倍！';
+					const oldGold = gameState.gold;
+					gameState.gold = gameState.gold * 2;
+					bonusDetails.push(`金币 ${oldGold} → ${gameState.gold} (×2)`);
+					break;
+					
+				case 'teacher-child': // 导师子女
+					effectName = '👨‍👧 血脉共鸣';
+					effectDesc = '导师子女的身份优势凸显，师生关系更加亲密！';
+					gameState.favor = Math.min(20, gameState.favor + 2);
+					bonusDetails.push('导师好感度 +2');
+					break;
+					
+				case 'chosen': // 天选之人
+					effectName = '⭐ 查缺补漏';
+					effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
+					const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
+					const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
+					gameState.research = Math.min(20, maxStat);
+					gameState.social = Math.min(20, maxStat);
+					gameState.favor = Math.min(20, maxStat);
+					if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
+					if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
+					if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
+					if (bonusDetails.length === 0) bonusDetails.push('属性已达最优，无需补齐');
+					break;
+					
+				case 'normal': // 大多数
+				default:
+   				 effectName = '🔥 我命由我不由天';
+   				 effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
+   				 const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
+  				  gameState.research = Math.min(20, gameState.research * 2);
+  				  gameState.social = Math.min(20, gameState.social * 2);
+  				  gameState.favor = Math.min(20, gameState.favor * 2);
+  				  gameState.gold = gameState.gold * 2;
+  				  bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
+  				  bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
+  				  bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
+  				  bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
+  				  break;
+			}
+			
+			// 检查科研能力解锁
+			checkResearchUnlock(true);
+			
+			const html = `
+				<div style="text-align:center;">
+					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
+					<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+						渡劫成功！
+					</div>
+					<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
+						恭喜突破硕士境界，晋升博士修炼者！
+					</div>
+				</div>
+				
+				<div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(102,126,234,0.3);">
+					<div style="text-align:center;margin-bottom:12px;">
+						<div style="font-size:1.3rem;font-weight:700;color:#667eea;margin-bottom:5px;">${effectName}</div>
+						<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
+					</div>
+					<div style="background:white;border-radius:8px;padding:12px;">
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">✨ 获得加成 ✨</div>
+						<div style="display:flex;flex-direction:column;gap:6px;">
+							${bonusDetails.map(detail => `
+								<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:6px;font-size:0.9rem;font-weight:500;color:var(--success-color);">
+									<i class="fas fa-arrow-up"></i> ${detail}
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				</div>
+				
+				<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
+					<div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 新的修炼目标</div>
+					<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
+					<div style="color:var(--text-secondary);">修炼年限：5年</div>
+				</div>
+			`;
+			
+			// 添加动画样式
+			if (!document.getElementById('tribulation-style')) {
+				const style = document.createElement('style');
+				style.id = 'tribulation-style';
+				style.textContent = `
+					@keyframes pulse {
+						0%, 100% { transform: scale(1); opacity: 1; }
+						50% { transform: scale(1.1); opacity: 0.8; }
+					}
+				`;
+				document.head.appendChild(style);
+			}
+			
+			showModal('⚡ 转博渡劫', html, [
+				{ text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
+					addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
+					closeModal();
+					updateAllUI();
+					renderPaperSlots();
+				}}
+			]);
+		}
 
         // ==================== 游戏结局 ====================
         function triggerEnding(type) {
