@@ -621,6 +621,423 @@
         @media (max-width: 1100px) { .game-container { grid-template-columns: 1fr; } }
 
         .hidden { display: none !important; }
+		
+		        /* ==================== 移动端适配 ==================== */
+        @media (max-width: 768px) {
+            /* 开始界面优化 */
+            .start-container {
+                padding: 15px;
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .game-title {
+                font-size: 1.6rem;
+            }
+
+            .game-intro {
+                font-size: 0.8rem;
+                padding: 10px;
+            }
+
+            .character-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .character-card {
+                padding: 10px;
+            }
+
+            .character-card .icon {
+                font-size: 1.5rem;
+            }
+
+            .character-card .name {
+                font-size: 0.9rem;
+            }
+
+            .character-card .desc {
+                font-size: 0.7rem;
+            }
+
+            .character-card .bonus {
+                font-size: 0.65rem;
+                padding: 4px 6px;
+            }
+
+            .character-card .awaken-info {
+                padding: 4px 6px;
+            }
+
+            .character-card .awaken-info div:first-child {
+                font-size: 0.6rem;
+            }
+
+            .character-card .awaken-info div:last-child {
+                font-size: 0.55rem;
+            }
+
+            .start-btn {
+                font-size: 0.95rem;
+                padding: 10px 25px;
+            }
+
+            /* 游戏主界面优化 */
+            #game-screen {
+                padding: 5px;
+            }
+
+            .game-container {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .panel {
+                padding: 10px;
+                border-radius: 12px;
+            }
+
+            .panel-title {
+                font-size: 0.85rem;
+                padding-bottom: 6px;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            /* 毕业信息栏 */
+            .graduation-info-compact {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+
+            .graduation-info-compact .date-time {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .graduation-info-compact .date-badge,
+            .graduation-info-compact .remaining-badge,
+            .graduation-info-compact .target-badge {
+                font-size: 0.75rem;
+                padding: 3px 8px;
+            }
+
+            /* 存档读档按钮 */
+            .panel-title .btn {
+                padding: 2px 6px !important;
+                font-size: 0.65rem !important;
+            }
+
+            /* 属性栏 */
+            .attribute-bar {
+                margin-bottom: 6px;
+            }
+
+            .attribute-label {
+                font-size: 0.75rem;
+            }
+
+            .progress-bar {
+                height: 8px;
+            }
+
+            .gold-display {
+                padding: 8px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .gold-display .gold-info {
+                font-size: 0.85rem;
+            }
+
+            /* 科研成果栏 */
+            .research-summary {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px;
+            }
+
+            .research-stat {
+                padding: 4px;
+            }
+
+            .research-stat .label {
+                font-size: 0.6rem;
+            }
+
+            .research-stat .value {
+                font-size: 0.85rem;
+            }
+
+            .paper-list {
+                max-height: 120px;
+            }
+
+            .paper-item {
+                padding: 6px;
+            }
+
+            .paper-item .title {
+                font-size: 0.7rem;
+            }
+
+            .paper-item .meta {
+                font-size: 0.65rem;
+            }
+
+            .paper-promotions {
+                gap: 2px !important;
+            }
+
+            .paper-promotions .btn {
+                padding: 1px 4px !important;
+                font-size: 0.55rem !important;
+            }
+
+            /* 日志栏 */
+            .log-content {
+                height: 200px;
+                padding: 6px;
+            }
+
+            .log-entry {
+                padding: 5px 7px;
+                margin-bottom: 4px;
+                font-size: 0.75rem;
+            }
+
+            .log-entry .date {
+                font-size: 0.7rem;
+            }
+
+            .log-entry .result {
+                font-size: 0.7rem;
+            }
+
+            /* Buff栏 */
+            .buff-list {
+                max-height: 60px;
+                gap: 4px;
+            }
+
+            .buff-tag {
+                padding: 2px 5px;
+                font-size: 0.6rem;
+            }
+
+            /* 操作栏 - 关键优化 */
+            .action-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+            }
+
+            .action-btn {
+                padding: 12px 8px;
+                font-size: 0.75rem;
+                min-height: 60px;
+            }
+
+            .action-btn i {
+                font-size: 1.2rem;
+            }
+
+            .action-cost {
+                font-size: 0.55rem;
+            }
+
+            /* 论文工作站 */
+            .paper-slots {
+                gap: 8px;
+            }
+
+            .paper-slot {
+                padding: 8px;
+            }
+
+            .paper-slot .slot-header {
+                margin-bottom: 5px;
+            }
+
+            .paper-slot .slot-title {
+                font-size: 0.8rem;
+            }
+
+            .paper-slot .paper-title {
+                font-size: 0.7rem;
+            }
+
+            .reviewing-badge {
+                font-size: 0.6rem;
+                padding: 2px 5px;
+            }
+
+            .paper-scores {
+                gap: 4px;
+                margin-bottom: 5px;
+            }
+
+            .score-box {
+                padding: 4px;
+            }
+
+            .score-box .label {
+                font-size: 0.55rem;
+            }
+
+            .score-box .value {
+                font-size: 0.8rem;
+            }
+
+            .paper-total {
+                padding: 4px;
+                font-size: 0.75rem;
+                margin-bottom: 5px;
+            }
+
+            .paper-actions {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 4px;
+            }
+
+            .paper-actions .btn {
+                padding: 6px 4px;
+                font-size: 0.65rem;
+            }
+
+            .new-paper-btn {
+                padding: 12px;
+                font-size: 0.8rem;
+            }
+
+            /* 弹窗优化 */
+            .modal {
+                max-width: 95%;
+                max-height: 90vh;
+                padding: 15px;
+                margin: 10px;
+                border-radius: 12px;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+                margin-bottom: 12px;
+            }
+
+            .modal-content {
+                font-size: 0.85rem;
+                margin-bottom: 12px;
+            }
+
+            .modal-buttons {
+                gap: 6px;
+            }
+
+            .modal-buttons .btn {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+                flex: 1;
+                min-width: 0;
+            }
+
+            /* 商店优化 */
+            .shop-item {
+                padding: 6px 8px;
+                flex-wrap: wrap;
+            }
+
+            .shop-item-name {
+                font-size: 0.8rem;
+            }
+
+            .shop-item-desc {
+                font-size: 0.65rem;
+            }
+
+            .shop-item-price {
+                font-size: 0.75rem;
+            }
+
+            .shop-item-action .btn {
+                padding: 3px 8px;
+                font-size: 0.7rem;
+            }
+
+            /* 全局统计面板 */
+            #global-stats-panel {
+                padding: 10px;
+            }
+
+            #global-stats-panel h4 {
+                font-size: 0.85rem;
+            }
+
+            #ending-stats, #achievement-stats {
+                gap: 4px;
+            }
+
+            #ending-stats > div, #achievement-stats > div {
+                font-size: 0.6rem;
+                padding: 3px 6px;
+            }
+
+            /* 访问统计 */
+            #visitor-stats {
+                font-size: 0.7rem;
+                padding-top: 12px;
+                margin-top: 15px;
+            }
+        }
+
+        /* 超小屏幕（小于 400px） */
+        @media (max-width: 400px) {
+            .character-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-btn {
+                min-height: 55px;
+            }
+
+            .research-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-buttons .btn {
+                width: 100%;
+            }
+        }
+
+        /* 触摸优化 - 增大点击区域 */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .character-card {
+                min-height: 100px;
+            }
+
+            .action-btn {
+                min-height: 65px;
+            }
+
+            .paper-actions .btn {
+                min-height: 40px;
+            }
+        }
+		
     </style>
 </head>
 
@@ -813,6 +1230,32 @@
         </div>
     </div>
 	
+    <!-- ↓↓↓ 在这里插入移动端快捷栏 ↓↓↓ -->
+
+    <!-- 移动端底部快捷栏 -->
+    <div class="mobile-quick-bar" id="mobile-quick-bar">
+        <button class="quick-btn" onclick="scrollToPanel('action-panel')">
+            <i class="fas fa-gamepad"></i>
+            <span>操作</span>
+        </button>
+        <button class="quick-btn" onclick="scrollToPanel('workstation-panel')">
+            <i class="fas fa-file-alt"></i>
+            <span>论文</span>
+        </button>
+        <button class="quick-btn" onclick="scrollToPanel('attributes-panel')">
+            <i class="fas fa-chart-bar"></i>
+            <span>属性</span>
+        </button>
+        <button class="quick-btn" onclick="openShop()">
+            <i class="fas fa-store"></i>
+            <span>商店</span>
+        </button>
+        <button class="quick-btn next-month-btn" onclick="nextMonth()">
+            <i class="fas fa-forward"></i>
+            <span>下月</span>
+        </button>
+    </div>
+
     <script>
         // ==================== 游戏数据 ====================
         const characters = [
@@ -3958,7 +4401,15 @@
             }
             return a;
         }
+        // ↓↓↓ 在这里插入移动端辅助函数 ↓↓↓
 
+        // 滚动到指定面板
+        function scrollToPanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
         // ==================== 启动游戏 ====================
         document.addEventListener('DOMContentLoaded', init);
     </script>
