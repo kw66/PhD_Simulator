@@ -1441,7 +1441,13 @@
     		'monthly_san', 'exp_times', 'write_san_reduce', 'read_san_reduce',
     		'idea_bonus', 'exp_bonus', 'write_bonus', 'idea_times', 'write_times', 'citation_multiply'
 		];
-		
+		// 所有成就列表
+		const ALL_ACHIEVEMENTS = [
+		    '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
+		    '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
+		    '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
+		    '📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
+		];
         // 商店物品
         const shopItems = [
             { id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
@@ -1718,12 +1724,7 @@
             }
             endingStatsDiv.innerHTML = endingHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无数据</span>';
             
-            const allAchievements = [
-                '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
-                '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
-                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器', 
-				'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
-            ];
+            const allAchievements = ALL_ACHIEVEMENTS;
             
             const achievementStatsDiv = document.getElementById('achievement-stats');
             let achievementHtml = '';
@@ -4040,12 +4041,7 @@
 
         function showEndingModal(title, desc, emoji) {
             const achievements = collectAchievements();
-            const allAchievements = [
-                '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
-                '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
-                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
-				'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
-            ];
+            const allAchievements = ALL_ACHIEVEMENTS;
             const locked = allAchievements.filter(x => !achievements.includes(x));
 
             let html = `<div style="text-align:center;margin-bottom:15px;">
@@ -4440,7 +4436,7 @@
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
-							triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],  // 👈 这里缺少逗号！
+							triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],
 							coffeeBoughtCount: save.coffeeBoughtCount || 0
 						};
                         
