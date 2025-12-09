@@ -2739,6 +2739,18 @@
 
         // ==================== 开会系统 ====================
         function showConferenceModal(grade) {
+            // 计算实际消耗
+            const favorCost = gameState.favor >= 6 ? 1 : 2;
+            const proxyCost = gameState.social >= 6 ? 0 : 1;
+    
+            // 动态生成按钮文字
+            const favorText = gameState.favor >= 6 
+                ? '👨‍🏫 导师报销（好感度-1）' 
+                : '👨‍🏫 导师报销（好感度-2）';
+            const proxyText = gameState.social >= 6 
+                ? '👥 请同学代参加（免费）' 
+                : '👥 请人代参加（金钱-1）';
+    
             showModal('🎓 开会选择', '<p>恭喜论文被接收！需要参加学术会议进行展示。请选择参会方式：</p>', [
                 { text: '💰 自己出钱（金钱-4）', class: 'btn-warning', action: () => {
                     addLog('开会', '自己出钱参加学术会议', '金钱-4');
@@ -2747,17 +2759,25 @@
                         setTimeout(showConferenceEventModal, 200);
                     }
                 }},
-                { text: '👨‍🏫 导师报销（好感度-2）', class: 'btn-info', action: () => {
-                    addLog('开会', '导师报销参加学术会议', '导师好感度-2');
+                { text: favorText, class: 'btn-info', action: () => {
+                    const result = gameState.favor >= 6 
+                        ? '导师爽快报销，好感度-1' 
+                        : '导师好感度-2';
+                    addLog('开会', '导师报销参加学术会议', result);
                     closeModal();
-                    if (changeFavor(-2)) {
+                    if (changeFavor(-favorCost)) {
                         setTimeout(showConferenceEventModal, 200);
                     }
                 }},
-                { text: '👥 请人代参加（金钱-1）', class: 'btn-primary', action: () => {
-                    addLog('开会', '请人代为参加学术会议', '金钱-1');
-                    closeModal();
-                    changeGold(-1);
+                { text: proxyText, class: 'btn-primary', action: () => {
+                    if (gameState.social >= 6) {
+                        addLog('开会', '请同学代为参加学术会议', '同学义气帮忙，免费');
+                        closeModal();
+                    } else {
+                        addLog('开会', '请人代为参加学术会议', '金钱-1');
+                        closeModal();
+                        changeGold(-proxyCost);
+                    }
                 }}
             ]);
         }
