@@ -1636,7 +1636,7 @@
             if (!statsInitialized) return null;
             try {
                 const endingQuery = new AV.Query('GameEndings');
-                endingQuery.limit(1000);
+                endingQuery.limit(100000);
                 const endings = await endingQuery.find();
                 
                 const endingStats = {};
@@ -1646,7 +1646,7 @@
                 });
                 
                 const achievementQuery = new AV.Query('GameAchievements');
-                achievementQuery.limit(1000);
+                achievementQuery.limit(100000);
                 const achievements = await achievementQuery.find();
                 
                 const achievementStats = {};
