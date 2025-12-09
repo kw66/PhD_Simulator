@@ -1635,26 +1635,49 @@
         async function getGlobalStats() {
             if (!statsInitialized) return null;
             try {
-                const endingQuery = new AV.Query('GameEndings');
-                endingQuery.limit(100000);
-                const endings = await endingQuery.find();
-                
+                // 使用更大的 limit 或分页查询
                 const endingStats = {};
-                endings.forEach(e => {
-                    const type = e.get('type');
-                    endingStats[type] = (endingStats[type] || 0) + 1;
-                });
-                
-                const achievementQuery = new AV.Query('GameAchievements');
-                achievementQuery.limit(100000);
-                const achievements = await achievementQuery.find();
-                
                 const achievementStats = {};
-                achievements.forEach(a => {
-                    const name = a.get('name');
-                    achievementStats[name] = (achievementStats[name] || 0) + 1;
-                });
-                
+        
+                // 分页获取所有结局数据
+                let skip = 0;
+                const batchSize = 1000;
+                while (true) {
+                    const endingQuery = new AV.Query('GameEndings');
+                    endingQuery.limit(batchSize);
+                    endingQuery.skip(skip);
+                    const endings = await endingQuery.find();
+                    
+                    if (endings.length === 0) break;
+                    
+                    endings.forEach(e => {
+                        const type = e.get('type');
+                        endingStats[type] = (endingStats[type] || 0) + 1;
+                    });
+                    
+                    skip += batchSize;
+                    if (endings.length < batchSize) break;
+                }
+        
+                // 分页获取所有成就数据
+                skip = 0;
+                while (true) {
+                    const achievementQuery = new AV.Query('GameAchievements');
+                    achievementQuery.limit(batchSize);
+                    achievementQuery.skip(skip);
+                    const achievements = await achievementQuery.find();
+                    
+                    if (achievements.length === 0) break;
+                    
+                    achievements.forEach(a => {
+                        const name = a.get('name');
+                        achievementStats[name] = (achievementStats[name] || 0) + 1;
+                    });
+                    
+                    skip += batchSize;
+                    if (achievements.length < batchSize) break;
+                }
+        
                 return { endings: endingStats, achievements: achievementStats };
             } catch (e) {
                 console.error('获取统计失败:', e);
