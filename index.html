@@ -1677,6 +1677,11 @@
         };
 
         let statsInitialized = false;
+		let statsCache = null;
+		let statsCacheTime = 0;
+		const CACHE_DURATION = 5 * 60 * 1000; // 缓存5分钟
+		let visitStatsCache = null;
+		let visitStatsCacheTime = 0;
 
         function initStats() {
             if (statsInitialized) return;
@@ -1720,23 +1725,33 @@
             }
         }
 
-        async function getVisitStats() {
-            if (!statsInitialized) return { pv: 0, uv: 0 };
-            try {
-                const pvQuery = new AV.Query('SiteVisits');
-                pvQuery.equalTo('type', 'pv');
-                const pvCount = await pvQuery.count();
-                
-                const uvQuery = new AV.Query('SiteVisits');
-                uvQuery.equalTo('type', 'uv');
-                const uvCount = await uvQuery.count();
-                
-                return { pv: pvCount, uv: uvCount };
-            } catch (e) {
-                console.error('获取访问统计失败:', e);
-                return { pv: 0, uv: 0 };
-            }
-        }
+		async function getVisitStats() {
+			// 检查缓存
+			if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
+				console.log('使用缓存的访问统计');
+				return visitStatsCache;
+			}
+			
+			if (!statsInitialized) return { pv: 0, uv: 0 };
+			try {
+				const pvQuery = new AV.Query('SiteVisits');
+				pvQuery.equalTo('type', 'pv');
+				const pvCount = await pvQuery.count();
+				
+				const uvQuery = new AV.Query('SiteVisits');
+				uvQuery.equalTo('type', 'uv');
+				const uvCount = await uvQuery.count();
+				
+				// 保存缓存
+				visitStatsCache = { pv: pvCount, uv: uvCount };
+				visitStatsCacheTime = Date.now();
+				
+				return visitStatsCache;
+			} catch (e) {
+				console.error('获取访问统计失败:', e);
+				return visitStatsCache || { pv: 0, uv: 0 }; // 失败时返回旧缓存
+			}
+		}
 
         // 记录结局 - 分正逆位
         async function recordEnding(endingType, endingTitle) {
@@ -1781,74 +1796,88 @@
         }
 
         // 获取全局统计数据 - 分正逆位
-        async function getGlobalStats() {
-            if (!statsInitialized) return null;
-            try {
-                const stats = {
-                    normal: { endings: {}, achievements: {}, characterEndings: {} },
-                    reversed: { endings: {}, achievements: {}, characterEndings: {} }
-                };
+		async function getGlobalStats() {
+			// 检查缓存
+			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
+				console.log('使用缓存的全球统计');
+				return statsCache;
+			}
+			
+			if (!statsInitialized) return null;
+			try {
+				const stats = {
+					normal: { endings: {}, achievements: {}, characterEndings: {} },
+					reversed: { endings: {}, achievements: {}, characterEndings: {} }
+				};
 
-                // 获取所有结局数据
-                let skip = 0;
-                const batchSize = 1000;
-                while (true) {
-                    const endingQuery = new AV.Query('GameEndings');
-                    endingQuery.limit(batchSize);
-                    endingQuery.skip(skip);
-                    const endings = await endingQuery.find();
-                    
-                    if (endings.length === 0) break;
-                    
-                    endings.forEach(e => {
-                        const type = e.get('type');
-                        const isReversed = e.get('isReversed') || false;
-                        const character = e.get('character');
-                        const mode = isReversed ? 'reversed' : 'normal';
-                        
-                        stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
-                        
-                        // 按角色统计
-                        if (!stats[mode].characterEndings[character]) {
-                            stats[mode].characterEndings[character] = { total: 0, hard: 0 };
-                        }
-                        stats[mode].characterEndings[character].total++;
-                        if (HARD_ENDINGS.includes(type)) {
-                            stats[mode].characterEndings[character].hard++;
-                        }
-                    });
-                    
-                    skip += batchSize;
-                    if (endings.length < batchSize) break;
-                }
+				// 获取所有结局数据
+				let skip = 0;
+				const batchSize = 1000;
+				while (true) {
+					const endingQuery = new AV.Query('GameEndings');
+					endingQuery.limit(batchSize);
+					endingQuery.skip(skip);
+					const endings = await endingQuery.find();
+					
+					if (endings.length === 0) break;
+					
+					endings.forEach(e => {
+						const type = e.get('type');
+						const isReversed = e.get('isReversed') || false;
+						const character = e.get('character');
+						const mode = isReversed ? 'reversed' : 'normal';
+						
+						stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
+						
+						if (!stats[mode].characterEndings[character]) {
+							stats[mode].characterEndings[character] = { total: 0, hard: 0 };
+						}
+						stats[mode].characterEndings[character].total++;
+						if (HARD_ENDINGS.includes(type)) {
+							stats[mode].characterEndings[character].hard++;
+						}
+					});
+					
+					skip += batchSize;
+					if (endings.length < batchSize) break;
+				}
 
-                // 获取所有成就数据
-                skip = 0;
-                while (true) {
-                    const achievementQuery = new AV.Query('GameAchievements');
-                    achievementQuery.limit(batchSize);
-                    achievementQuery.skip(skip);
-                    const achievements = await achievementQuery.find();
-                    
-                    if (achievements.length === 0) break;
-                    
-                    achievements.forEach(a => {
-                        const name = a.get('name');
-                        const isReversed = a.get('isReversed') || false;
-                        const mode = isReversed ? 'reversed' : 'normal';
-                        stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
-                    });
-                    
-                    skip += batchSize;
-                    if (achievements.length < batchSize) break;
-                }
+				// 获取所有成就数据
+				skip = 0;
+				while (true) {
+					const achievementQuery = new AV.Query('GameAchievements');
+					achievementQuery.limit(batchSize);
+					achievementQuery.skip(skip);
+					const achievements = await achievementQuery.find();
+					
+					if (achievements.length === 0) break;
+					
+					achievements.forEach(a => {
+						const name = a.get('name');
+						const isReversed = a.get('isReversed') || false;
+						const mode = isReversed ? 'reversed' : 'normal';
+						stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
+					});
+					
+					skip += batchSize;
+					if (achievements.length < batchSize) break;
+				}
 
-                return stats;
-            } catch (e) {
-                console.error('获取统计失败:', e);
-                return null;
-            }
-        }
+				// 保存缓存
+				statsCache = stats;
+				statsCacheTime = Date.now();
+				
+				return stats;
+			} catch (e) {
+				console.error('获取统计失败:', e);
+				// API 超限时返回旧缓存
+				if (statsCache) {
+					console.log('API受限，使用旧缓存');
+					return statsCache;
+				}
+				return null;
+			}
+		}
 
         // 计算角色难度（基于通关率排名）
         function calculateCharacterDifficulty(stats) {
@@ -1974,7 +2003,7 @@
 			const stats = await getGlobalStats();
 			
 			if (!stats) {
-				loading.innerHTML = '<span style="color:var(--text-secondary);">暂无统计数据</span>';
+				loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计服务繁忙，请稍后刷新</span>';
 				document.getElementById('total-games-value').textContent = 0;
 				return;
 			}
