@@ -625,8 +625,10 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器</h1>
-            <p class="game-author">by 落星峦</p>
+            <h1 class="game-title">🎓 研究生模拟器 <span style="font-size:0.5em;font-weight:400;">v1.0</span></h1>
+            <p class="game-author">作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a></p>
+            <p class="game-author">项目地址：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a></p>
+            <p class="game-author">测试人员：雁栖湖</p>
             
             <div class="game-intro">
                 <p>📚 <strong>欢迎来到研究生模拟器！</strong>体验研究生生涯，平衡科研、生活和人际关系，努力发表论文，最终顺利毕业。</p>
@@ -1187,18 +1189,44 @@
             if (gameState.publishedPapers.length === 0) {
                 paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>';
             } else {
-                paperList.innerHTML = gameState.publishedPapers.map(p => `
+                paperList.innerHTML = gameState.publishedPapers.map((p, index) => `
                     <div class="paper-item grade-${p.grade}">
                         <div class="title">${p.title}</div>
                         <div class="meta">
                             <span>${p.grade}类|${p.acceptType}</span>
-                            <span>分:${p.score} 引:${p.citations}</span>
+                            <span>分:${p.score} 引:${p.citations}${p.citationMultiplier > 1 ? ' (×' + p.citationMultiplier.toFixed(2) + ')' : ''}</span>
+                        </div>
+                        <div class="paper-promotions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;">
+                            <button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}" 
+                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+                                onclick="promotePaper(${index}, 'arxiv')" 
+                                ${p.promotions?.arxiv ? 'disabled' : ''}>
+                                ${p.promotions?.arxiv ? '✓arxiv' : '挂arxiv'}
+                            </button>
+                            <button class="btn ${p.promotions?.github ? '' : 'btn-success'}" 
+                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+                                onclick="promotePaper(${index}, 'github')" 
+                                ${p.promotions?.github ? 'disabled' : ''}>
+                                ${p.promotions?.github ? '✓开源' : 'github开源'}
+                            </button>
+                            <button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}" 
+                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+                                onclick="promotePaper(${index}, 'xiaohongshu')" 
+                                ${p.promotions?.xiaohongshu ? 'disabled' : ''}>
+                                ${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
+                            </button>
+                            <button class="btn ${p.promotions?.quantumbit ? '' : (p.grade === 'A' ? 'btn-warning' : '')}" 
+                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || p.grade !== 'A' ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+                                onclick="promotePaper(${index}, 'quantumbit')" 
+                                ${p.promotions?.quantumbit || p.grade !== 'A' ? 'disabled' : ''}
+                                title="${p.grade !== 'A' ? '仅A类论文可用' : ''}">
+                                ${p.promotions?.quantumbit ? '✓量子位' : (p.grade !== 'A' ? '量子位(仅A类)' : '量子位封面')}
+                            </button>
                         </div>
                     </div>
                 `).join('');
             }
         }
-
         // 获取操作消耗
         function getActionCosts() {
             const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
@@ -1558,11 +1586,11 @@
                     let decayInfo = [];
                     if (paper.ideaScore > 1) {
                         paper.ideaScore--;
-                        decayInfo.push(`idea-1→${paper.ideaScore}`);
+                        decayInfo.push(`idea-1`);
                     }
                     if (paper.expScore > 1) {
                         paper.expScore--;
-                        decayInfo.push(`实验-1→${paper.expScore}`);
+                        decayInfo.push(`实验-1`);
                     }
                     if (decayInfo.length > 0) {
                         const status = paper.reviewing ? '(审稿中)' : '';
@@ -1633,10 +1661,94 @@
                     let gain = Math.round(paper.score / 10);
                     if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
                     if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
+                    // 应用推广倍率
+                    gain = Math.round(gain * (paper.citationMultiplier || 1));
                     paper.citations += gain;
                     gameState.totalCitations += gain;
                 }
             });
+        }
+
+        // 论文推广功能
+        function promotePaper(index, type) {
+            const paper = gameState.publishedPapers[index];
+            if (!paper) return;
+    
+            // 初始化promotions（兼容旧存档）
+            if (!paper.promotions) {
+                paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
+            }
+            if (!paper.citationMultiplier) paper.citationMultiplier = 1;
+    
+            if (paper.promotions[type]) return; // 已激活
+    
+            const typeNames = {
+                arxiv: '挂arxiv',
+                github: 'github开源',
+                xiaohongshu: '小红书宣传',
+                quantumbit: '量子位封面'
+            };
+    
+            let result = '';
+            let canProceed = true;
+            
+            switch(type) {
+                case 'arxiv':
+                    if (gameState.san - 3 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.arxiv = true;
+                    paper.citationMultiplier *= 1.25;
+                    result = 'SAN值-3，论文引用速度×1.25';
+                    canProceed = changeSan(-3);
+                    break;
+                case 'github':
+                    if (gameState.san - 6 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少6点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.github = true;
+                    paper.citationMultiplier *= 1.5;
+                    result = 'SAN值-6，论文引用速度×1.5';
+                    canProceed = changeSan(-6);
+                    break;
+                case 'xiaohongshu':
+                    if (gameState.san - 3 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.xiaohongshu = true;
+                    paper.citationMultiplier *= 1.25;
+                    result = 'SAN值-3，论文引用速度×1.25';
+                    canProceed = changeSan(-3);
+                    break;
+                case 'quantumbit':
+                    if (paper.grade !== 'A') {
+                        showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    if (gameState.gold - 10 < 0) {
+                        showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.quantumbit = true;
+                    paper.citations += 100;
+                    gameState.totalCitations += 100;
+                    result = '金钱-10，论文引用+100';
+                    canProceed = changeGold(-10);
+                    break;
+            }
+    
+            if (canProceed) {
+                addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
+                updateAllUI();
+            }
         }
 
         // ==================== 论文投稿与审稿 ====================
@@ -1892,7 +2004,9 @@
 
             const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
             gameState.publishedPapers.push({
-                title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0
+    	title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
+    	promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+    	citationMultiplier: 1
             });
 
             gameState.papers[slot] = null;
