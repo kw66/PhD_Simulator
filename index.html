@@ -624,6 +624,43 @@
 		
 		        /* ==================== 移动端适配 ==================== */
         @media (max-width: 768px) {
+		
+            /* 左侧栏调整顺序 */
+            .left-column {
+                display: flex;
+                flex-direction: column;
+            }
+
+            #graduation-panel {
+                order: 1;
+            }
+
+            #attributes-panel {
+                order: 2;
+            }
+
+            #research-panel {
+                order: 3;
+            }
+
+            /* 中间栏调整顺序 */
+            .middle-column {
+                display: flex;
+                flex-direction: column;
+            }
+
+            #action-panel {
+                order: 1;
+            }
+
+            #buff-panel {
+                order: 2;
+            }
+
+            #log-panel {
+                order: 3;
+            }
+			
             /* 开始界面优化 */
             .start-container {
                 padding: 15px;
