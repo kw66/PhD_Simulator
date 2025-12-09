@@ -1632,7 +1632,14 @@
             }
 
             // 事件触发
-            if (gameState.year >= 2 && gameState.month === 1) {
+            if (gameState.month === 1) {
+                // 寒假事件（日历1月，过年）
+                triggerWinterVacationEvent();
+            } else if (gameState.month === 7) {
+                // 暑假事件（日历7月）
+                triggerSummerVacationEvent();
+            } else if (gameState.month === 9 && gameState.year >= 2) {
+                // 奖学金事件（每学年开始，9月，第2年起）
                 triggerScholarshipEvent();
             } else if (gameState.month % 2 === 0) {
                 if (gameState.month === 2) {
@@ -1648,7 +1655,42 @@
             updateAllUI();
             renderPaperSlots();
         }
+		
+		function triggerWinterVacationEvent() {
+   		 showModal('❄️ 寒假', 
+    		    `<p>寒假到了！回家过年，收到了长辈的压岁钱，好好休息一下吧～</p>
+     		    <div style="text-align:center;font-size:2rem;margin:15px 0;">🧧🏠🎆</div>`,
+     		   [{ 
+      		      text: '🎊 新年快乐！', 
+       		     class: 'btn-accent', 
+        		    action: () => {
+        		        gameState.gold += 1;
+         		       gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+         		       addLog('❄️ 寒假', '回家过年', '压岁钱+1，SAN值+2');
+           		     closeModal();
+          		      updateAllUI();
+       		     }
+      		  }]
+ 		   );
+		}
 
+		function triggerSummerVacationEvent() {
+   		 showModal('☀️ 暑假', 
+     		   `<p>暑假来啦！虽然科研不能停，但可以稍微放松一下，调整状态～</p>
+      		   <div style="text-align:center;font-size:2rem;margin:15px 0;">🏖️🍉🌴</div>`,
+      		  [{ 
+          		  text: '😎 好好休息！', 
+          		  class: 'btn-success', 
+          		  action: () => {
+           		     gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+           		     addLog('☀️ 暑假', '暑假休息', 'SAN值+3');
+          		      closeModal();
+          		      updateAllUI();
+      		      }
+  		      }]
+  		  );
+		}
+		
         function updateCitations() {
             gameState.publishedPapers.forEach(paper => {
                 paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
