@@ -636,11 +636,11 @@
             }
 
             #attributes-panel {
-                order: 2;
+                order: 3;
             }
 
             #research-panel {
-                order: 3;
+                order: 2;
             }
 
             /* 中间栏调整顺序 */
@@ -654,11 +654,11 @@
             }
 
             #buff-panel {
-                order: 2;
+                order: 3;
             }
 
             #log-panel {
-                order: 3;
+                order: 2;
             }
 			
             /* 开始界面优化 */
@@ -1082,10 +1082,13 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器 <span style="font-size:0.5em;font-weight:400;">v1.1</span></h1>
-            <p class="game-author">作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a></p>
-            <p class="game-author">项目地址：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a></p>
-            <p class="game-author">测试人员：雁栖湖</p>
+            <p class="game-author">
+                作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
+                &nbsp;|&nbsp;
+                项目：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a>
+                &nbsp;|&nbsp;
+                测试：雁栖湖
+            </p>
             
             <div class="game-intro">
                 <p>📚 <strong>欢迎来到研究生模拟器！</strong>体验研究生生涯，平衡科研、生活和人际关系，努力发表论文，最终顺利毕业。</p>
@@ -1162,6 +1165,7 @@
                             <span class="remaining-badge"><i class="fas fa-hourglass-half"></i> 剩余<span id="remaining-time">36</span>月</span>
                         </div>
                         <span class="target-badge" id="graduation-target">🎯 硕士：科研分≥1</span>
+                        <button class="btn btn-danger" style="padding:3px 10px;font-size:0.7rem;" onclick="confirmRestart()"><i class="fas fa-redo"></i> 重开</button>
                     </div>
                 </div>
 
