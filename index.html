@@ -1082,6 +1082,7 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
+			<h1 class="game-title">🎓 研究生模拟器</h1>
             <p class="game-author">
                 作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
                 &nbsp;|&nbsp;
@@ -3974,7 +3975,19 @@
 
             showModal('🎮 游戏结束', html, [{ text: '🔄 我要重开', class: 'btn-primary', action: restartGame }]);
         }
-
+		
+		// ==================== 重开确认 ====================
+		function confirmRestart() {
+		    showModal('⚠️ 确认重开', 
+		        '<p>确定要重新开始游戏吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">当前游戏进度将丢失！</p>', 
+		        [
+		            { text: '取消', class: 'btn-info', action: closeModal },
+		            { text: '确定重开', class: 'btn-danger', action: restartGame }
+		        ]
+		    );
+		}
+		
+		
         function restartGame() {
             closeModal();
             selectedCharacter = null;
