@@ -1288,7 +1288,10 @@
             <div class="middle-column">
                 <!-- 游戏日志栏 -->
                 <div class="panel" id="log-panel" style="flex:1;">
-                    <div class="panel-title"><i class="fas fa-scroll"></i> 游戏日志</div>
+                    <div class="panel-title">
+                        <i class="fas fa-scroll"></i> 游戏日志
+                        <span id="event-preview" style="margin-left:auto;font-size:0.7rem;font-weight:400;color:var(--text-secondary);"></span>
+                    </div>
                     <div class="log-content" id="log-content"></div>
                 </div>
 
@@ -1331,7 +1334,6 @@
         </div>
     </div>
 	
-    <!-- ↓↓↓ 在这里插入移动端快捷栏 ↓↓↓ -->
 
     <!-- 移动端底部快捷栏 -->
     <div class="mobile-quick-bar" id="mobile-quick-bar">
@@ -1956,7 +1958,97 @@
             }
             return true;
         }
+		
+		// ==================== 事件预告系统 ====================
+		function getUpcomingEvents() {
+		    const events = [];
+    
+		    // 检查接下来2个月
+		    for (let i = 1; i <= 2; i++) {
+		        let checkMonth = gameState.month + i;
+		        let checkYear = gameState.year;
+        
+ 		       // 处理跨年
+ 		       if (checkMonth > 12) {
+		            checkMonth -= 12;
+		            checkYear++;
+		        }
+        
+		        // 检查是否超过游戏时限
+		        const checkTotalMonths = gameState.totalMonths + i;
+    		    const maxMonths = gameState.maxYears * 12;
+    		    if (checkTotalMonths > maxMonths) {
+    		        continue;
+    		    }
+        
+    		    let eventName = null;
+    		    let eventIcon = '';
+        
+    		    if (checkMonth === 1) {
+    		        // 寒假
+    		        eventName = '寒假';
+    		        eventIcon = '❄️';
+    		    } else if (checkMonth === 7) {
+    		        // 暑假
+    		        eventName = '暑假';
+    		        eventIcon = '☀️';
+    		    } else if (checkMonth === 9 && checkYear >= 2) {
+    		        // 奖学金（第2年起）
+    		        eventName = '奖学金';
+    		        eventIcon = '🎓';
+    		    } else if (checkMonth === 2) {
+    		        // 教师节
+    		        eventName = '教师节';
+    		        eventIcon = '🎁';
+    		    } else if (checkMonth % 2 === 0) {
+    		        // 其他偶数月：随机事件
+    		        eventName = '随机事件';
+    		        eventIcon = '🎲';
+    		    }
+        
+    		    if (eventName) {
+    		        events.push({
+    		            month: i,
+    		            name: eventName,
+    		            icon: eventIcon,
+    		            label: i === 1 ? '下月' : '2月后'
+    		        });
+    		    }
+    		}
+    
+    		return events;
+		}
 
+		function updateEventPreview() {
+    		const previewEl = document.getElementById('event-preview');
+    		if (!previewEl) return;
+    
+    		const events = getUpcomingEvents();
+    
+    		if (events.length === 0) {
+    		    previewEl.innerHTML = '';
+    		    return;
+    		}
+    
+    		const previewHtml = events.map(e => 
+    		    `<span style="margin-left:8px;padding:2px 6px;background:${getEventColor(e.name)};border-radius:10px;font-size:0.65rem;white-space:nowrap;">${e.icon} ${e.label}:${e.name}</span>`
+    		).join('');
+    
+    		previewEl.innerHTML = `📅 预告:${previewHtml}`;
+		}
+
+		function getEventColor(eventName) {
+    		const colors = {
+    		    '寒假': 'rgba(116,185,255,0.25)',
+    		    '暑假': 'rgba(253,203,110,0.25)',
+    		    '奖学金': 'rgba(108,92,231,0.25)',
+    		    '教师节': 'rgba(253,121,168,0.25)',
+    		    '随机事件': 'rgba(0,184,148,0.2)'
+    		};
+    		return colors[eventName] || 'rgba(99,110,114,0.15)';
+		}
+		
+		
         // ==================== UI更新 ====================
         function updateAllUI() {
             updateAttributes();
@@ -1964,6 +2056,7 @@
             updateBuffs();
             updateResearchResults();
             updateActionButtons();
+			updateEventPreview();
         }
 
         function updateAttributes() {
@@ -3303,9 +3396,14 @@
         function triggerTeachersDayEvent() {
             showModal('🎁 教师节', '<p>教师节到了，你准备送导师什么礼物？</p>', [
                 { text: '什么也不送', class: 'btn-info', action: () => {
-                    addLog('教师节', '什么也不送', '导师对你略有不满，导师好感度-1');
                     closeModal();
-                    changeFavor(-1);
+                    if (gameState.favor >= 6) {
+                        addLog('教师节', '什么也不送', '无事发生');
+                        updateAllUI();
+                    } else {
+                        addLog('教师节', '什么也不送', '导师对你略有不满，导师好感度-1');
+                        changeFavor(-1);
+                    }
                 }},
                 { text: '🍵 赠送茶叶（1金）', class: 'btn-primary', action: () => {
                     addLog('教师节', '赠送茶叶', '金钱-1，导师开心收下茶叶，导师好感度+1');
@@ -3715,11 +3813,11 @@
                 { text: '开展全面合作', class: 'btn-success', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '合作失败');
-                    } else if (gameState.social < 12) {
+                        // 社交能力不足6：成功合作
                         gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false });
                         addLog('随机事件', '同门找你合作论文 - 开展全面合作', '成功合作，临时buff-下次想idea多想1次');
                     } else {
+                        // 社交能力达到6：深入合作
                         gameState.buffs.temporary.push(
                             { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
                             { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
@@ -3731,6 +3829,7 @@
                 }}
             ]);
         }
+
 
         function showRandomEvent11() {
             showModal('👨‍🎓 随机事件', '<p>师兄师姐找你合作论文，你会选择。</p>', [
@@ -3765,8 +3864,18 @@
         function showRandomEvent12() {
             showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
                 { text: '向导师诉苦', class: 'btn-primary', action: () => {
-                    addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
                     closeModal();
+                    if (gameState.favor >= 6) {
+                        // 好感度达到6：导师心软
+                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
+                        updateAllUI();
+                    } else {
+                        // 好感度不足6：导师减少指导
+                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
+                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时buff-下次想idea分数-3');
+                        updateAllUI();
+                        updateBuffs();
+                    }
                 }},
                 { text: '劝说导师抢师弟师妹一作', class: 'btn-warning', action: () => {
                     addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
@@ -3774,8 +3883,16 @@
                     changeSocial(-1);
                 }},
                 { text: '据理力争', class: 'btn-info', action: () => {
-                    addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师觉得你说得有道理');
                     closeModal();
+                    if (gameState.favor >= 6) {
+                        // 好感度达到6：轻松说服
+                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
+                        updateAllUI();
+                    } else {
+                        // 好感度不足6：艰难说服
+                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师艰难被你说服，SAN值-2');
+                        changeSan(-2);
+                    }
                 }},
                 { text: '以死相逼', class: 'btn-danger', action: () => {
                     addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
