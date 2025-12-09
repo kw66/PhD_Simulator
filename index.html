@@ -1308,7 +1308,7 @@
                     html += `<div class="paper-slot active">
                         <div class="slot-header">
                             <span class="slot-title">论文槽${i + 1}</span>
-                            ${paper.reviewing ? `<span class="${reviewingBadgeClass}"><i class="fas fa-hourglass-half"></i> ${paper.submittedGrade}类审稿中 ${paper.reviewMonths}月</span>` : ''}
+                            ${paper.reviewing ? `<span class="${reviewingBadgeClass}"><i class="fas fa-hourglass-half"></i> ${paper.submittedGrade}类 剩余${Math.max(0, paper.reviewMonths)}月</span>` : ''}
                         </div>
                         <div class="paper-title">${paper.title}</div>
                         <div class="paper-scores">
@@ -1612,8 +1612,14 @@
             gameState.papers.forEach((paper, idx) => {
                 if (paper && paper.reviewing) {
                     paper.reviewMonths--;
-                    if (paper.reviewMonths <= 0) {
-                        processPaperResult(idx);
+                    if (paper.reviewMonths < 1) {  // 改为 < 1
+                        paper.reviewMonths = 0;     // 确保不会变成负数
+                        // 使用 setTimeout 确保弹窗正确显示
+                        setTimeout(() => {
+                            if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
+                                processPaperResult(idx);
+                            }
+                        }, 100 * idx);  // 多篇论文时错开显示
                     }
                 }
             });
@@ -1809,9 +1815,9 @@
             if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
 
             paper.reviewing = true;
-            paper.reviewMonths = 4;
+            paper.reviewMonths = 4;  // 确保始终设置为4
             paper.submittedGrade = grade;
-            paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore; // 记录投稿时总分
+            paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore;
 
             addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${grade}类会议`, `总分${paper.submittedScore}，进入4个月审稿期`);
             renderPaperSlots();
@@ -2036,6 +2042,8 @@
                         gameState.rejectedCount++;
                         paper.reviewing = false;
                         paper.submittedGrade = null;
+                        paper.submittedScore = null;      // 新增：重置投稿分数
+                        paper.reviewMonths = 0;           // 新增：重置审稿月数
                         let logMsg = '可继续修改后重投';
                         if (improved) {
                             const impDetail = improvements.map(i => `${i.typeName}+${i.value}`).join('，');
@@ -3271,16 +3279,16 @@
     
     	// 深拷贝 papers 数组，确保所有属性都被保存
     	const papersCopy = gameState.papers.map(paper => {
-    	    if (paper === null) return null;
-    	    return {
-    	        title: paper.title,
-    	        ideaScore: paper.ideaScore,
-    	        expScore: paper.expScore,
-    	        writeScore: paper.writeScore,
-    	        reviewing: paper.reviewing,
-    	        reviewMonths: paper.reviewMonths,
-    	        submittedGrade: paper.submittedGrade,
-    	        submittedScore: paper.submittedScore
+        	if (paper === null) return null;
+        	return {
+        	    title: paper.title,
+        	    ideaScore: paper.ideaScore,
+        	    expScore: paper.expScore,
+        	    writeScore: paper.writeScore,
+        	    reviewing: paper.reviewing || false,
+        	    reviewMonths: paper.reviewing ? Math.min(4, Math.max(0, paper.reviewMonths)) : 0,  // 防护：限制在0-4
+        	    submittedGrade: paper.submittedGrade || null,
+        	    submittedScore: paper.submittedScore || 0
     	    };
     	});
     
@@ -3417,7 +3425,19 @@
                 	    totalCitations: save.totalCitations,
                     	publishedPapers: save.publishedPapers.map(p => ({ ...p, promotions: { ...p.promotions } })),
 	                    paperSlots: save.paperSlots,
-    	                papers: save.papers.map(p => p === null ? null : { ...p }),
+    	                papers: save.papers.map(p => {                               // ← 修改为这样
+        	                if (p === null) return null;
+        	                return {
+            	                title: p.title,
+            	                ideaScore: p.ideaScore,
+            	                expScore: p.expScore,
+            	                writeScore: p.writeScore,
+            	                reviewing: p.reviewing || false,
+            	                reviewMonths: p.reviewing ? Math.min(4, Math.max(0, p.reviewMonths || 0)) : 0,
+            	                submittedGrade: p.submittedGrade || null,
+            	                submittedScore: p.submittedScore || 0
+        	                };
+    	                }),
         	            
             	        buffs: {
                 	        permanent: save.buffs.permanent.map(b => ({ ...b })),
@@ -3456,33 +3476,52 @@
             	    document.getElementById('start-screen').classList.add('hidden');
                 	document.getElementById('game-screen').style.display = 'block';
                 
-	                // 更新所有UI
-    	            updateAllUI();
-        	        renderPaperSlots();
+                    // 更新所有UI
+                    updateAllUI();
+                    renderPaperSlots();
                 
-            	    closeModal();
-                	addLog('系统', '读取存档成功', `槽位 ${slot + 1}`);
+                    closeModal();
+                    addLog('系统', '读取存档成功', `槽位 ${slot + 1}`);
                 
-                	// 显示当前审稿状态
-	                let reviewingInfo = '';
-    	            gameState.papers.forEach((paper, idx) => {
-        	            if (paper && paper.reviewing) {
-            	            reviewingInfo += `<br>• 槽位${idx + 1}: ${paper.submittedGrade}类审稿中，剩余${paper.reviewMonths}月`;
-                	    }
-            	    });
-                
-	                showModal('✅ 读档成功', 
-    	                `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>
-        	             <p style="font-size:0.85rem;color:var(--text-secondary);">
-            	            当前进度：第${gameState.year}年${gameState.month}月<br>
-                	        科研分：${gameState.totalScore}
-                    	    ${reviewingInfo ? '<br><strong>审稿中的论文：</strong>' + reviewingInfo : ''}
-                    	 </p>`, 
-	                    [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
-    	        }}
-        	]
-	    );
-	}
+                    // 检查是否有到期的审稿需要立即处理
+                    let pendingReviews = [];
+                    gameState.papers.forEach((paper, idx) => {
+                        if (paper && paper.reviewing && paper.reviewMonths <= 0) {
+                            pendingReviews.push(idx);
+                        }
+                    });
+
+                    if (pendingReviews.length > 0) {
+                        // 延迟处理到期的审稿
+                        pendingReviews.forEach((idx, i) => {
+                            setTimeout(() => {
+                                if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
+                                    processPaperResult(idx);
+                                }
+                            }, 500 + i * 300);
+                        });
+                    } else {
+                        // 显示读档成功信息
+                        let reviewingInfo = '';
+                        gameState.papers.forEach((paper, idx) => {
+                            if (paper && paper.reviewing) {
+                                reviewingInfo += `<br>• 槽位${idx + 1}: ${paper.submittedGrade}类审稿中，剩余${paper.reviewMonths}月`;
+                            }
+                        });
+                    
+                        showModal('✅ 读档成功', 
+                            `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>
+                             <p style="font-size:0.85rem;color:var(--text-secondary);">
+                                当前进度：第${gameState.year}年${gameState.month}月<br>
+                                科研分：${gameState.totalScore}
+                                ${reviewingInfo ? '<br><strong>审稿中的论文：</strong>' + reviewingInfo : ''}
+                             </p>`, 
+                            [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
+                    }
+                }}
+            ]
+        );
+    }
 	
     </script>
 </body>
