@@ -1074,7 +1074,66 @@
                 min-height: 40px;
             }
         }
-		
+		/* 移动端底部快捷栏 */
+		.mobile-quick-bar {
+		    display: none;
+		    position: fixed;
+		    bottom: 0;
+		    left: 0;
+		    right: 0;
+		    background: var(--card-bg);
+		    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+		    padding: 8px 5px;
+		    z-index: 100;
+		    justify-content: space-around;
+		}
+
+		.quick-btn {
+		    display: flex;
+		    flex-direction: column;
+		    align-items: center;
+		    gap: 2px;
+		    padding: 8px 12px;
+		    border: none;
+		    background: var(--light-bg);
+		    border-radius: 8px;
+		    font-size: 0.7rem;
+		    color: var(--text-primary);
+		    cursor: pointer;
+		    font-family: inherit;
+		    transition: all 0.2s ease;
+		}
+
+		.quick-btn i {
+		    font-size: 1.1rem;
+		    color: var(--primary-color);
+		}
+
+		.quick-btn:active {
+ 		   transform: scale(0.95);
+		    background: var(--border-color);
+		}
+
+		.quick-btn.next-month-btn {
+		    background: linear-gradient(135deg, var(--danger-color), #fab1a0);
+		    color: white;
+		}
+
+		.quick-btn.next-month-btn i {
+		    color: white;
+		}
+
+		/* 仅在移动端显示快捷栏 */
+		@media (max-width: 768px) {
+		    .mobile-quick-bar {
+		        display: flex;
+		    }
+    
+		    /* 为快捷栏留出底部空间 */
+		    #game-screen {
+		        padding-bottom: 70px;
+		    }
+		}		
     </style>
 </head>
 
@@ -4381,7 +4440,7 @@
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
-							triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : []
+							triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],  // 👈 这里缺少逗号！
 							coffeeBoughtCount: save.coffeeBoughtCount || 0
 						};
                         
