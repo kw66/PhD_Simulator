@@ -3995,10 +3995,10 @@
             recordEnding(endingType, title);
             
             // 记录成就统计
-            const achievements = collectAchievements();
+            const achievements = collectAchievements(endingType);
             recordAchievements(achievements);
             
-            showEndingModal(title, desc, emoji);
+            showEndingModal(title, desc, emoji, endingType);
         }
 
         function getPhDEndingType() {
@@ -4016,7 +4016,7 @@
             return { type: 'phd', title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
         }
 
-        function collectAchievements() {
+        function collectAchievements(endingType) {
             const a = [];
             if (gameState.hasLover) a.push('💕 喜结良缘');
             if (gameState.gold > 30) a.push('💰 家财万贯');
@@ -4030,17 +4030,18 @@
             if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
             if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
 			if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
-			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
-    			a.push('☕ 咖啡爱好者');
-			}
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+		    if (graduationEndings.includes(endingType) && gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
+		        a.push('☕ 咖啡爱好者');
+		    }
     		if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
 				a.push('✨ Buff之神');
 			}
             return a;
         }
 
-        function showEndingModal(title, desc, emoji) {
-            const achievements = collectAchievements();
+        function showEndingModal(title, desc, emoji, endingType) {
+            const achievements = collectAchievements(endingType);
             const allAchievements = ALL_ACHIEVEMENTS;
             const locked = allAchievements.filter(x => !achievements.includes(x));
 
