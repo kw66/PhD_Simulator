@@ -3249,89 +3249,12 @@
 	const MAX_SAVES = 5;
 
 	function getSaves() {
- 	   const saves = localStorage.getItem(SAVE_KEY);
- 	   return saves ? JSON.parse(saves) : [];
+	    const saves = localStorage.getItem(SAVE_KEY);
+	    return saves ? JSON.parse(saves) : [];
 	}
-
+	
 	function saveSaves(saves) {
-	    localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
-	}
-
-	function openSaveModal() {
-  	  const saves = getSaves();
-  	  let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择存档槽位（最多5个）：</div>';
-    
-    	for (let i = 0; i < MAX_SAVES; i++) {
-        	const save = saves[i];
-        	if (save) {
-            	html += `
-                	<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-                    	<div style="flex:1;">
-                        	<div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
-                        	<div style="font-size:0.75rem;color:var(--text-secondary);">
-                            	${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
-                        	</div>
-                        	<div style="font-size:0.7rem;color:var(--text-secondary);">
-                            	保存于: ${save.saveTime}
-                        	</div>
-                    	</div>
-                    	<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
-                        	<i class="fas fa-save"></i> 覆盖
-                    	</button>
-                	</div>`;
-        	} else {
-            	html += `
-                	<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;opacity:0.7;">
-                    	<div style="flex:1;">
-                        	<div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: 空</div>
-                        	<div style="font-size:0.75rem;color:var(--text-secondary);">暂无存档</div>
-                    	</div>
-                    	<button class="btn btn-success" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
-                        	<i class="fas fa-plus"></i> 新建
-                    	</button>
-                	</div>`;
-        	}
-    	}
-    
-    	showModal('💾 存档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
-	}
-
-	function openLoadModal() {
-		const saves = getSaves();
-    
-		if (saves.filter(s => s).length === 0) {
-			showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
-				[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-			return;
-		}
-    
-		let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
-    
-		for (let i = 0; i < MAX_SAVES; i++) {
-			const save = saves[i];
-			if (save) {
-				html += `
-					<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-						<div style="flex:1;">
-							<div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
-							<div style="font-size:0.75rem;color:var(--text-secondary);">
-								${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
-							</div>
-							<div style="font-size:0.7rem;color:var(--text-secondary);">
-								A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
-							</div>
-						</div>
-						<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
-							<i class="fas fa-folder-open"></i> 读取
-						</button>
-						<button class="btn btn-danger" style="padding:5px 12px;font-size:0.75rem;" onclick="deleteSave(${i})">
-							<i class="fas fa-trash"></i>
-						</button>
-					</div>`;
-			}
-		}
-    
-		showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+    	localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
 	}
 
 	function saveGame(slot) {
@@ -3341,22 +3264,106 @@
     
     	// 保存商店状态
     	const shopState = shopItems.map(item => ({
-        	id: item.id,
-        	bought: item.bought || false,
-        	boughtThisMonth: item.boughtThisMonth || false
+    	    id: item.id,
+    	    bought: item.bought || false,
+    	    boughtThisMonth: item.boughtThisMonth || false
     	}));
     
-    	saves[slot] = {
-        	...JSON.parse(JSON.stringify(gameState)),
-        	shopState: shopState,
-        	saveTime: timeStr
+    	// 深拷贝 papers 数组，确保所有属性都被保存
+    	const papersCopy = gameState.papers.map(paper => {
+    	    if (paper === null) return null;
+    	    return {
+    	        title: paper.title,
+    	        ideaScore: paper.ideaScore,
+    	        expScore: paper.expScore,
+    	        writeScore: paper.writeScore,
+    	        reviewing: paper.reviewing,
+    	        reviewMonths: paper.reviewMonths,
+    	        submittedGrade: paper.submittedGrade,
+    	        submittedScore: paper.submittedScore
+    	    };
+    	});
+    
+    	// 深拷贝 publishedPapers 数组
+    	const publishedPapersCopy = gameState.publishedPapers.map(paper => ({
+    	    title: paper.title,
+    	    grade: paper.grade,
+    	    acceptType: paper.acceptType,
+    	    score: paper.score,
+    	    citations: paper.citations,
+    	    monthsSincePublish: paper.monthsSincePublish || 0,
+    	    promotions: paper.promotions ? { ...paper.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+    	    citationMultiplier: paper.citationMultiplier || 1
+    	}));
+    
+    	// 深拷贝 buffs
+    	const buffsCopy = {
+    	    permanent: gameState.buffs.permanent.map(b => ({ ...b })),
+    	    temporary: gameState.buffs.temporary.map(b => ({ ...b }))
+    	};
+    	
+    	const saveData = {
+    	    // 基础属性
+    	    character: gameState.character,
+    	    characterName: gameState.characterName,
+    	    degree: gameState.degree,
+    	    year: gameState.year,
+    	    month: gameState.month,
+    	    totalMonths: gameState.totalMonths,
+    	    maxYears: gameState.maxYears,
+    	    san: gameState.san,
+    	    sanMax: gameState.sanMax,
+    	    research: gameState.research,
+    	    social: gameState.social,
+    	    favor: gameState.favor,
+    	    gold: gameState.gold,
+        
+    	    // 论文相关
+    	    paperA: gameState.paperA,
+    	    paperB: gameState.paperB,
+    	    paperC: gameState.paperC,
+    	    totalScore: gameState.totalScore,
+    	    totalCitations: gameState.totalCitations,
+    	    publishedPapers: publishedPapersCopy,
+    	    paperSlots: gameState.paperSlots,
+    	    papers: papersCopy,
+        
+    	    // buffs
+    	    buffs: buffsCopy,
+        
+    	    // 状态标记
+    	    actionUsed: gameState.actionUsed,
+    	    readCount: gameState.readCount,
+    	    firstPaperAccepted: gameState.firstPaperAccepted,
+    	    firstAPaperAccepted: gameState.firstAPaperAccepted,
+    	    hasLover: gameState.hasLover,
+    	    loverType: gameState.loverType,
+    	    bigBullCooperation: gameState.bigBullCooperation,
+    	    rejectedCount: gameState.rejectedCount,
+    	    teaBreakCount: gameState.teaBreakCount,
+    	    tourCount: gameState.tourCount,
+    	    metBigBull: gameState.metBigBull,
+    	    metBeautiful: gameState.metBeautiful,
+    	    metSmart: gameState.metSmart,
+    	    bigBullDeepCount: gameState.bigBullDeepCount,
+    	    beautifulCount: gameState.beautifulCount,
+    	    smartCount: gameState.smartCount,
+        
+    	    // 随机事件池
+    	    availableRandomEvents: [...gameState.availableRandomEvents],
+    	    usedRandomEvents: [...gameState.usedRandomEvents],
+        
+    	    // 存档元信息
+    	    shopState: shopState,
+    	    saveTime: timeStr
     	};
     
+    	saves[slot] = saveData;
     	saveSaves(saves);
     	closeModal();
     
     	showModal('✅ 存档成功', `<p style="text-align:center;">游戏已保存到槽位 ${slot + 1}</p>`, 
-        	[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+    	    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
     
     	addLog('系统', '游戏已存档', `槽位 ${slot + 1}`);
 	}
@@ -3374,90 +3381,107 @@
     	showModal('⚠️ 确认读档', 
     	    `<p>确定要读取槽位 ${slot + 1} 的存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">当前游戏进度将丢失！</p>`, 
     	    [
-        	    { text: '取消', class: 'btn-info', action: closeModal },
-        	    { text: '确定读取', class: 'btn-primary', action: () => {
-        	        // 恢复商店状态
-        	        if (save.shopState) {
-        	            save.shopState.forEach(savedItem => {
-                    	    const item = shopItems.find(i => i.id === savedItem.id);
-                    	    if (item) {
-                    	        item.bought = savedItem.bought;
-                    	        item.boughtThisMonth = savedItem.boughtThisMonth;
-                    	    }
-                	    });
-                	}
+    	        { text: '取消', class: 'btn-info', action: closeModal },
+    	        { text: '确定读取', class: 'btn-primary', action: () => {
+    	            // 恢复商店状态
+    	            if (save.shopState) {
+    	                save.shopState.forEach(savedItem => {
+    	                    const item = shopItems.find(i => i.id === savedItem.id);
+    	                    if (item) {
+    	                        item.bought = savedItem.bought;
+    	                        item.boughtThisMonth = savedItem.boughtThisMonth;
+    	                    }
+    	                });
+     	           }
                 
-                	// 恢复游戏状态（排除shopState和saveTime）
-                	const { shopState, saveTime, ...gameData } = save;
-                	gameState = JSON.parse(JSON.stringify(gameData));
+                	// 恢复游戏状态
+                	gameState = {
+                	    character: save.character,
+	                    characterName: save.characterName,
+    	                degree: save.degree,
+        	            year: save.year,
+            	        month: save.month,
+                	    totalMonths: save.totalMonths,
+                    	maxYears: save.maxYears,
+	                    san: save.san,
+    	                sanMax: save.sanMax,
+        	            research: save.research,
+            	        social: save.social,
+                	    favor: save.favor,
+                    	gold: save.gold,
+                    
+	                    paperA: save.paperA,
+    	                paperB: save.paperB,
+        	            paperC: save.paperC,
+            	        totalScore: save.totalScore,
+                	    totalCitations: save.totalCitations,
+                    	publishedPapers: save.publishedPapers.map(p => ({ ...p, promotions: { ...p.promotions } })),
+	                    paperSlots: save.paperSlots,
+    	                papers: save.papers.map(p => p === null ? null : { ...p }),
+        	            
+            	        buffs: {
+                	        permanent: save.buffs.permanent.map(b => ({ ...b })),
+                    	    temporary: save.buffs.temporary.map(b => ({ ...b }))
+                    	},
+                    
+	                    actionUsed: save.actionUsed,
+    	                readCount: save.readCount,
+        	            firstPaperAccepted: save.firstPaperAccepted,
+            	        firstAPaperAccepted: save.firstAPaperAccepted,
+                	    hasLover: save.hasLover,
+                    	loverType: save.loverType,
+	                    bigBullCooperation: save.bigBullCooperation,
+    	                rejectedCount: save.rejectedCount,
+        	            teaBreakCount: save.teaBreakCount,
+            	        tourCount: save.tourCount,
+                	    metBigBull: save.metBigBull,
+	                    metBeautiful: save.metBeautiful,
+    	                metSmart: save.metSmart,
+        	            bigBullDeepCount: save.bigBullDeepCount,
+            	        beautifulCount: save.beautifulCount,
+                	    smartCount: save.smartCount,
+                    
+                    	availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
+	                    usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : []
+    	            };
                 
-                	// 确保界面显示
-                	document.getElementById('start-screen').classList.add('hidden');
+        	        // 兼容旧存档：如果没有随机事件池则重置
+            	    if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
+                	    if (!gameState.usedRandomEvents || gameState.usedRandomEvents.length === 0) {
+                    	    resetRandomEventPool();
+	                    }
+    	            }
+                
+        	        // 确保界面显示
+            	    document.getElementById('start-screen').classList.add('hidden');
                 	document.getElementById('game-screen').style.display = 'block';
                 
-                	// 更新所有UI
-                	updateAllUI();
-                	renderPaperSlots();
+	                // 更新所有UI
+    	            updateAllUI();
+        	        renderPaperSlots();
                 
-                	closeModal();
+            	    closeModal();
                 	addLog('系统', '读取存档成功', `槽位 ${slot + 1}`);
-                	
-                	showModal('✅ 读档成功', `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>`, 
-                	    [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
-            	}}
+                
+                	// 显示当前审稿状态
+	                let reviewingInfo = '';
+    	            gameState.papers.forEach((paper, idx) => {
+        	            if (paper && paper.reviewing) {
+            	            reviewingInfo += `<br>• 槽位${idx + 1}: ${paper.submittedGrade}类审稿中，剩余${paper.reviewMonths}月`;
+                	    }
+            	    });
+                
+	                showModal('✅ 读档成功', 
+    	                `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>
+        	             <p style="font-size:0.85rem;color:var(--text-secondary);">
+            	            当前进度：第${gameState.year}年${gameState.month}月<br>
+                	        科研分：${gameState.totalScore}
+                    	    ${reviewingInfo ? '<br><strong>审稿中的论文：</strong>' + reviewingInfo : ''}
+                    	 </p>`, 
+	                    [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
+    	        }}
         	]
-    	);
-	}
-
-	function deleteSave(slot) {
-    	showModal('⚠️ 确认删除', 
-        	`<p>确定要删除槽位 ${slot + 1} 的存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">此操作不可恢复！</p>`, 
-        	[
-        	    { text: '取消', class: 'btn-info', action: closeModal },
-        	    { text: '确定删除', class: 'btn-danger', action: () => {
-        	        const saves = getSaves();
-        	        saves[slot] = null;
-        	        saveSaves(saves);
-        	        closeModal();
-        	        openLoadModal(); // 刷新读档界面
-        	    }}
-    	    ]
 	    );
-	}
-	
-	function openLoadModalFromStart() {
-    	const saves = getSaves();
-    
-    	if (saves.filter(s => s).length === 0) {
-    	    showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
-    	        [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-    	    return;
-    	}
-    
-    	let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
-    
-    	for (let i = 0; i < MAX_SAVES; i++) {
-        	const save = saves[i];
-        	if (save) {
-            	html += `
-                	<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-                    	<div style="flex:1;">
-                        	<div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
-                        	<div style="font-size:0.75rem;color:var(--text-secondary);">
-                        	    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
-                        	</div>
-                        	<div style="font-size:0.7rem;color:var(--text-secondary);">
-                        	    A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
-                        	</div>
-                    	</div>
-                    	<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
-                        	<i class="fas fa-folder-open"></i> 读取
-                    	</button>
-                	</div>`;
-        	}
-    	}
-    
-    	showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
 	}
 	
     </script>
