@@ -6,6 +6,8 @@
     <title>研究生模拟器</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- LeanCloud SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.2/dist/av-min.js"></script>
     <style>
         :root {
             --primary-color: #6c5ce7;
@@ -621,13 +623,12 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<!-- 不蒜子统计脚本 -->
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
 <body>
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器 <span style="font-size:0.5em;font-weight:400;">v1.0</span></h1>
+            <h1 class="game-title">🎓 研究生模拟器 <span style="font-size:0.5em;font-weight:400;">v1.1</span></h1>
             <p class="game-author">作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a></p>
             <p class="game-author">项目地址：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a></p>
             <p class="game-author">测试人员：雁栖湖</p>
@@ -645,24 +646,48 @@
                 <div class="character-grid" id="character-grid"></div>
             </div>
 
-            <button class="btn btn-primary start-btn" id="start-btn" disabled>
-                <i class="fas fa-play"></i> 开始新的生涯
-            </button>
-			<button class="btn btn-warning start-btn" onclick="openLoadModalFromStart()">
-			    <i class="fas fa-folder-open"></i> 读取存档
-			</button>
-			<!-- 访问统计显示 -->
-			<div style="text-align:center;font-size:0.75rem;color:var(--text-secondary);margin-top:20px;padding-top:15px;border-top:1px solid var(--border-color);">
-    			<span id="busuanzi_container_site_pv">
-    			    📊 总访问量 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span> 次
-    			</span> | 
-    			<span id="busuanzi_container_site_uv">
-    			    👥 访客数 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span> 人
-    			</span>
-			</div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-primary start-btn" id="start-btn" disabled>
+                    <i class="fas fa-play"></i> 开始新的生涯
+                </button>
+                <button class="btn btn-warning start-btn" onclick="openLoadModalFromStart()">
+                    <i class="fas fa-folder-open"></i> 读取存档
+                </button>
+            </div>
+
+            <!-- 访问统计 -->
+            <div id="visitor-stats" style="text-align:center;font-size:0.75rem;color:var(--text-secondary);margin-top:20px;padding-top:15px;border-top:1px solid var(--border-color);">
+                <span id="busuanzi_container_site_pv" style="display:inline;">
+                    📊 总访问 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span> 次
+                </span> 
+                &nbsp;|&nbsp; 
+                <span id="busuanzi_container_site_uv" style="display:inline;">
+                    👥 访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span> 人
+                </span>
+            </div>
+
+            <!-- 全球统计面板 -->
+            <div id="global-stats-panel" style="margin-top:20px;padding:15px;background:var(--light-bg);border-radius:12px;display:none;">
+                <h4 style="font-size:0.95rem;color:var(--primary-color);margin-bottom:12px;text-align:center;">
+                    <i class="fas fa-chart-pie"></i> 全球玩家统计
+                </h4>
+                <div id="stats-loading" style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">
+                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                </div>
+                <div id="stats-content" style="display:none;">
+                    <div style="margin-bottom:12px;">
+                        <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">🎮 结局达成统计</div>
+                        <div id="ending-stats" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">🏆 成就达成统计</div>
+                        <div id="achievement-stats" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
+	
     <!-- 游戏主界面 -->
     <div id="game-screen">
         <div class="game-container">
@@ -787,9 +812,8 @@
             <div class="modal-buttons" id="modal-buttons"></div>
         </div>
     </div>
-
+	
     <script>
-
         // ==================== 游戏数据 ====================
         const characters = [
             { id: 'normal', name: '大多数', icon: '👤', desc: '芸芸众生中的普通一员', bonus: '没有任何属性变化', stats: {} },
@@ -807,7 +831,7 @@
             domains: ['Vision', 'Language', 'Speech', 'Text', 'Images', 'Videos', 'Knowledge', 'Data', 'Graphs', 'Medical', '3D', 'Autonomous']
         };
 
-        // 商店物品（新增AI订阅）
+        // 商店物品
         const shopItems = [
             { id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
             { id: 'gpu_rent', name: '租GPU服务器', desc: '临时buff-下次做实验多做1次', price: 2, once: false },
@@ -865,16 +889,180 @@
                 bigBullDeepCount: 0,
                 beautifulCount: 0,
                 smartCount: 0,
-                // 随机事件无放回抽样
                 availableRandomEvents: [],
                 usedRandomEvents: []
             };
+        }
+
+        // ==================== 统计系统 ====================
+        const STATS_CONFIG = {
+            appId: 'NJx2MyUXZVtxBzlWKzQAoprR-gzGzoHsz',
+            appKey: 'CVkn5hN1wzStb6vcDT8oZK4V',
+            serverURL: 'https://njx2myux.lc-cn-n1-shared.com'
+        };
+
+        let statsInitialized = false;
+
+        function initStats() {
+            if (statsInitialized) return;
+            try {
+                AV.init({
+                    appId: STATS_CONFIG.appId,
+                    appKey: STATS_CONFIG.appKey,
+                    serverURL: STATS_CONFIG.serverURL
+                });
+                statsInitialized = true;
+                console.log('统计系统初始化成功');
+            } catch (e) {
+                console.error('统计系统初始化失败:', e);
+            }
+        }
+
+        async function recordEnding(endingType, endingTitle) {
+            if (!statsInitialized) return;
+            try {
+                const Ending = AV.Object.extend('GameEndings');
+                const ending = new Ending();
+                ending.set('type', endingType);
+                ending.set('title', endingTitle);
+                ending.set('character', gameState.character);
+                ending.set('totalMonths', gameState.totalMonths);
+                ending.set('totalScore', gameState.totalScore);
+                ending.set('paperA', gameState.paperA);
+                ending.set('paperB', gameState.paperB);
+                ending.set('paperC', gameState.paperC);
+                await ending.save();
+                console.log('结局已记录:', endingTitle);
+            } catch (e) {
+                console.error('记录结局失败:', e);
+            }
+        }
+
+        async function recordAchievements(achievements) {
+            if (!statsInitialized || achievements.length === 0) return;
+            try {
+                const Achievement = AV.Object.extend('GameAchievements');
+                for (const ach of achievements) {
+                    const achievement = new Achievement();
+                    achievement.set('name', ach);
+                    achievement.set('character', gameState.character);
+                    await achievement.save();
+                }
+                console.log('成就已记录:', achievements);
+            } catch (e) {
+                console.error('记录成就失败:', e);
+            }
+        }
+
+        async function getGlobalStats() {
+            if (!statsInitialized) return null;
+            try {
+                const endingQuery = new AV.Query('GameEndings');
+                endingQuery.limit(1000);
+                const endings = await endingQuery.find();
+                
+                const endingStats = {};
+                endings.forEach(e => {
+                    const type = e.get('type');
+                    endingStats[type] = (endingStats[type] || 0) + 1;
+                });
+                
+                const achievementQuery = new AV.Query('GameAchievements');
+                achievementQuery.limit(1000);
+                const achievements = await achievementQuery.find();
+                
+                const achievementStats = {};
+                achievements.forEach(a => {
+                    const name = a.get('name');
+                    achievementStats[name] = (achievementStats[name] || 0) + 1;
+                });
+                
+                return { endings: endingStats, achievements: achievementStats };
+            } catch (e) {
+                console.error('获取统计失败:', e);
+                return null;
+            }
+        }
+
+        async function loadGlobalStatsDisplay() {
+            const panel = document.getElementById('global-stats-panel');
+            const loading = document.getElementById('stats-loading');
+            const content = document.getElementById('stats-content');
+            
+            panel.style.display = 'block';
+            
+            const stats = await getGlobalStats();
+            
+            if (!stats) {
+                loading.innerHTML = '<span style="color:var(--text-secondary);">统计加载失败</span>';
+                return;
+            }
+            
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            
+            const endingNames = {
+                'burnout': '😢 不堪重负',
+                'expelled': '😭 被退学',
+                'poor': '💸 穷困潦倒',
+                'delay': '⏰ 延毕',
+                'master': '🎓 硕士毕业',
+                'excellent_master': '🌟 优秀硕士',
+                'phd': '🎓 博士毕业',
+                'excellent_phd': '🏆 优秀博士',
+                'green_pepper': '🌶️ 青椒',
+                'become_advisor': '👨‍🏫 我就是导师',
+                'academic_star': '⭐ 学术之星',
+                'future_academician': '👑 未来院士'
+            };
+            
+            const endingStatsDiv = document.getElementById('ending-stats');
+            let endingHtml = '';
+            let totalEndings = 0;
+            
+            for (const [type, count] of Object.entries(stats.endings)) {
+                totalEndings += count;
+            }
+            
+            for (const [type, name] of Object.entries(endingNames)) {
+                const count = stats.endings[type] || 0;
+                const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
+                const opacity = count > 0 ? '1' : '0.4';
+                endingHtml += `
+                    <div style="padding:4px 8px;background:white;border-radius:6px;font-size:0.7rem;opacity:${opacity};border:1px solid var(--border-color);">
+                        ${name} <strong style="color:var(--primary-color);">${count}</strong>
+                        <span style="color:var(--text-secondary);">(${percent}%)</span>
+                    </div>`;
+            }
+            endingStatsDiv.innerHTML = endingHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无数据</span>';
+            
+            const allAchievements = [
+                '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
+                '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
+                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器'
+            ];
+            
+            const achievementStatsDiv = document.getElementById('achievement-stats');
+            let achievementHtml = '';
+            
+            for (const ach of allAchievements) {
+                const count = stats.achievements[ach] || 0;
+                const opacity = count > 0 ? '1' : '0.4';
+                achievementHtml += `
+                    <div style="padding:4px 8px;background:white;border-radius:6px;font-size:0.7rem;opacity:${opacity};border:1px solid var(--border-color);">
+                        ${ach} <strong style="color:var(--success-color);">${count}</strong>
+                    </div>`;
+            }
+            achievementStatsDiv.innerHTML = achievementHtml;
         }
 
         // ==================== 初始化 ====================
         function init() {
             renderCharacterGrid();
             document.getElementById('start-btn').addEventListener('click', startGame);
+            
+            initStats();
+            loadGlobalStatsDisplay();
         }
 
         function renderCharacterGrid() {
@@ -904,32 +1092,26 @@
             gameState.character = selectedCharacter.id;
             gameState.characterName = selectedCharacter.name;
 
-            // 应用角色加成
             if (selectedCharacter.stats.research) gameState.research += selectedCharacter.stats.research;
             if (selectedCharacter.stats.social) gameState.social += selectedCharacter.stats.social;
             if (selectedCharacter.stats.favor) gameState.favor += selectedCharacter.stats.favor;
             if (selectedCharacter.stats.gold) gameState.gold += selectedCharacter.stats.gold;
 
-            // 重置商店
             shopItems.forEach(item => {
                 if (item.once) item.bought = false;
                 if (item.monthlyOnce) item.boughtThisMonth = false;
             });
 
-            // 初始化随机事件池
             resetRandomEventPool();
 
-            // 切换界面
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').style.display = 'block';
 
-            // 初始化界面
             document.getElementById('log-content').innerHTML = '';
             checkResearchUnlock(true);
             updateAllUI();
             renderPaperSlots();
 
-            // 初始日志
             addLog('游戏开始', `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`);
             addLog('游戏目标', '硕士毕业需要科研分≥1，博士毕业需要科研分≥7');
             addLog('游戏提示', '论文科研分：A类=4分，B类=2分，C类=1分');
@@ -937,13 +1119,11 @@
             addLog('属性提示', '科研能力影响论文分数，社交能力和导师好感度影响事件走向，建议优先提升至6');
         }
 
-        // 初始化/重置随机事件池
         function resetRandomEventPool() {
-            // 基础事件列表（事件ID）
             gameState.availableRandomEvents = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13];
             gameState.usedRandomEvents = [];
         }
-
+		
         // ==================== 通用属性修改函数 ====================
         function changeSan(delta) {
             if (delta > 0) {
@@ -1099,12 +1279,10 @@
                 gameState.degree === 'master' ? '🎯 硕士：科研分≥1' : '🎯 博士：科研分≥7';
         }
 
-        // Buff合并显示（含减益和恋爱标记）
         function updateBuffs() {
             const list = document.getElementById('buff-list');
             const allBuffs = [...gameState.buffs.permanent, ...gameState.buffs.temporary];
             
-            // 添加恋人buff显示
             if (gameState.hasLover) {
                 const loverBuffName = gameState.loverType === 'beautiful' ? '恋人-每月SAN+3' : '恋人-科研加成';
                 allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
@@ -1115,7 +1293,6 @@
                 return;
             }
             
-            // 合并同类buff
             const mergedMap = {};
             allBuffs.forEach(buff => {
                 if (buff.isLove) {
@@ -1135,7 +1312,6 @@
                 }
             });
             
-            // 生成显示
             const merged = Object.values(mergedMap).map(buff => {
                 if (buff.isLove) {
                     return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
@@ -1247,7 +1423,7 @@
                 `).join('');
             }
         }
-        // 获取操作消耗
+
         function getActionCosts() {
             const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
             const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
@@ -1285,6 +1461,87 @@
             document.getElementById('btn-write').innerHTML = `<i class="fas fa-pen-fancy"></i><span>写论文</span><span class="action-cost">${formatCost(costs.write)}</span>`;
         }
 
+        // 论文推广功能
+        function promotePaper(index, type) {
+            const paper = gameState.publishedPapers[index];
+            if (!paper) return;
+    
+            if (!paper.promotions) {
+                paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
+            }
+            if (!paper.citationMultiplier) paper.citationMultiplier = 1;
+    
+            if (paper.promotions[type]) return;
+    
+            const typeNames = {
+                arxiv: '挂arxiv',
+                github: 'github开源',
+                xiaohongshu: '小红书宣传',
+                quantumbit: '量子位封面'
+            };
+    
+            let result = '';
+            let canProceed = true;
+            
+            switch(type) {
+                case 'arxiv':
+                    if (gameState.san - 3 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.arxiv = true;
+                    paper.citationMultiplier *= 1.25;
+                    result = 'SAN值-3，论文引用速度×1.25';
+                    canProceed = changeSan(-3);
+                    break;
+                case 'github':
+                    if (gameState.san - 6 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少6点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.github = true;
+                    paper.citationMultiplier *= 1.5;
+                    result = 'SAN值-6，论文引用速度×1.5';
+                    canProceed = changeSan(-6);
+                    break;
+                case 'xiaohongshu':
+                    if (gameState.san - 3 < 0) {
+                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.xiaohongshu = true;
+                    paper.citationMultiplier *= 1.25;
+                    result = 'SAN值-3，论文引用速度×1.25';
+                    canProceed = changeSan(-3);
+                    break;
+                case 'quantumbit':
+                    if (paper.grade !== 'A') {
+                        showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    if (gameState.gold - 10 < 0) {
+                        showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
+                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                        return;
+                    }
+                    paper.promotions.quantumbit = true;
+                    paper.citations += 100;
+                    gameState.totalCitations += 100;
+                    result = '金钱-10，论文引用+100';
+                    canProceed = changeGold(-10);
+                    break;
+            }
+    
+            if (canProceed) {
+                addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
+                updateAllUI();
+            }
+        }
+		
         // ==================== 论文工作站 ====================
         function renderPaperSlots() {
             const container = document.getElementById('paper-slots');
@@ -1314,7 +1571,6 @@
                 } else {
                     const total = paper.ideaScore + paper.expScore + paper.writeScore;
                     const canSubmit = paper.ideaScore > 0 && paper.expScore > 0 && paper.writeScore > 0 && !paper.reviewing;
-                    // 修改：审稿状态显示投稿的会议等级
                     const reviewingBadgeClass = paper.reviewing ? `reviewing-badge grade-${paper.submittedGrade}` : '';
                     html += `<div class="paper-slot active">
                         <div class="slot-header">
@@ -1361,7 +1617,8 @@
                 writeScore: 0,
                 reviewing: false,
                 reviewMonths: 0,
-                submittedGrade: null
+                submittedGrade: null,
+                submittedScore: 0
             };
             addLog('新论文', `在论文槽${slot + 1}开启：${title}`);
             renderPaperSlots();
@@ -1558,265 +1815,8 @@
         }
 
         function consumeTempBuff(type) {
-            const idx = gameState.buffs.temporary.findIndex(b => b.type === type);
-            if (idx !== -1) gameState.buffs.temporary.splice(idx, 1);
-        }
-
-        // ==================== 下一个月 ====================
-        function nextMonth() {
-            gameState.actionUsed = false;
-            gameState.month++;
-            gameState.totalMonths++;
-
-            // 检查是否进入新的一年
-            let newYearBonus = false;
-            if (gameState.month > 12) {
-                gameState.month = 1;
-                gameState.year++;
-                
-                // 第2年及以后，每年开始时提升社交和好感
-                if (gameState.year >= 2) {
-                    newYearBonus = true;
-                    gameState.social = Math.min(20, gameState.social + 1);
-                    gameState.favor = Math.min(20, gameState.favor + 1);
-                }
-            }
-
-            // 发工资和开销
-            const salary = gameState.degree === 'master' ? 1 : 3;
-            gameState.gold += salary - 1;
-
-            // 休息恢复
-            gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
-
-            // 恋人buff
-            if (gameState.hasLover && gameState.loverType === 'beautiful') {
-                gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
-            }
-
-            // 人体工学椅buff
-            if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
-                gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
-            }
-
-            // 论文分数衰减（所有论文包括审稿中的）
-            let decayLogs = [];
-            gameState.papers.forEach((paper, idx) => {
-                if (paper) {
-                    let decayInfo = [];
-                    if (paper.ideaScore > 1) {
-                        paper.ideaScore--;
-                        decayInfo.push(`idea-1`);
-                    }
-                    if (paper.expScore > 1) {
-                        paper.expScore--;
-                        decayInfo.push(`实验-1`);
-                    }
-                    if (decayInfo.length > 0) {
-                        const status = paper.reviewing ? '(审稿中)' : '';
-                        decayLogs.push(`槽${idx + 1}${status}:${decayInfo.join('，')}`);
-                    }
-                }
-            });
-
-            // 审稿进度
-            gameState.papers.forEach((paper, idx) => {
-                if (paper && paper.reviewing) {
-                    paper.reviewMonths--;
-                    if (paper.reviewMonths < 1) {  // 改为 < 1
-                        paper.reviewMonths = 0;     // 确保不会变成负数
-                        // 使用 setTimeout 确保弹窗正确显示
-                        setTimeout(() => {
-                            if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
-                                processPaperResult(idx);
-                            }
-                        }, 100 * idx);  // 多篇论文时错开显示
-                    }
-                }
-            });
-
-            // 更新引用
-            updateCitations();
-
-            // 重置月度商品
-            shopItems.forEach(item => {
-                if (item.monthlyOnce) item.boughtThisMonth = false;
-            });
-
-            // 日志
-            if (newYearBonus) {
-                addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
-            }
-
-            let logResult = `工资+${salary}，开销-1，休息SAN+1`;
-            if (gameState.hasLover && gameState.loverType === 'beautiful') logResult += '，恋人SAN+3';
-            if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) logResult += '，工学椅SAN+1';
-            addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
-
-            if (decayLogs.length > 0) {
-                addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
-            }
-
-            // 事件触发
-            if (gameState.month === 1) {
-                // 寒假事件（日历1月，过年）
-                triggerWinterVacationEvent();
-            } else if (gameState.month === 7) {
-                // 暑假事件（日历7月）
-                triggerSummerVacationEvent();
-            } else if (gameState.month === 9 && gameState.year >= 2) {
-                // 奖学金事件（每学年开始，9月，第2年起）
-                triggerScholarshipEvent();
-            } else if (gameState.month % 2 === 0) {
-                if (gameState.month === 2) {
-                    triggerTeachersDayEvent();
-                } else {
-                    triggerOtherRandomEvent();
-                }
-            }
-
-            // 检查毕业
-            checkGraduation();
-
-            updateAllUI();
-            renderPaperSlots();
-        }
-		
-		function triggerWinterVacationEvent() {
-   		 showModal('❄️ 寒假', 
-    		    `<p>寒假到了！回家过年，收到了长辈的压岁钱，好好休息一下吧～</p>
-     		    <div style="text-align:center;font-size:2rem;margin:15px 0;">🧧🏠🎆</div>`,
-     		   [{ 
-      		      text: '🎊 新年快乐！', 
-       		     class: 'btn-accent', 
-        		    action: () => {
-        		        gameState.gold += 1;
-         		       gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-         		       addLog('❄️ 寒假', '回家过年', '压岁钱+1，SAN值+2');
-           		     closeModal();
-          		      updateAllUI();
-       		     }
-      		  }]
- 		   );
-		}
-
-		function triggerSummerVacationEvent() {
-   		 showModal('☀️ 暑假', 
-     		   `<p>暑假来啦！虽然科研不能停，但可以稍微放松一下，调整状态～</p>
-      		   <div style="text-align:center;font-size:2rem;margin:15px 0;">🏖️🍉🌴</div>`,
-      		  [{ 
-          		  text: '😎 好好休息！', 
-          		  class: 'btn-success', 
-          		  action: () => {
-           		     gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
-           		     addLog('☀️ 暑假', '暑假休息', 'SAN值+3');
-          		      closeModal();
-          		      updateAllUI();
-      		      }
-  		      }]
-  		  );
-		}
-		
-        function updateCitations() {
-            gameState.publishedPapers.forEach(paper => {
-                paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
-                let shouldUpdate = false;
-                if (paper.grade === 'A') shouldUpdate = true;
-                else if (paper.grade === 'B' && paper.monthsSincePublish % 3 === 0) shouldUpdate = true;
-                else if (paper.grade === 'C' && paper.monthsSincePublish % 6 === 0) shouldUpdate = true;
-
-                if (shouldUpdate) {
-                    let gain = Math.round(paper.score / 10);
-                    if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
-                    if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
-                    // 应用推广倍率
-                    gain = Math.round(gain * (paper.citationMultiplier || 1));
-                    paper.citations += gain;
-                    gameState.totalCitations += gain;
-                }
-            });
-        }
-
-        // 论文推广功能
-        function promotePaper(index, type) {
-            const paper = gameState.publishedPapers[index];
-            if (!paper) return;
-    
-            // 初始化promotions（兼容旧存档）
-            if (!paper.promotions) {
-                paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
-            }
-            if (!paper.citationMultiplier) paper.citationMultiplier = 1;
-    
-            if (paper.promotions[type]) return; // 已激活
-    
-            const typeNames = {
-                arxiv: '挂arxiv',
-                github: 'github开源',
-                xiaohongshu: '小红书宣传',
-                quantumbit: '量子位封面'
-            };
-    
-            let result = '';
-            let canProceed = true;
-            
-            switch(type) {
-                case 'arxiv':
-                    if (gameState.san - 3 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.arxiv = true;
-                    paper.citationMultiplier *= 1.25;
-                    result = 'SAN值-3，论文引用速度×1.25';
-                    canProceed = changeSan(-3);
-                    break;
-                case 'github':
-                    if (gameState.san - 6 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少6点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.github = true;
-                    paper.citationMultiplier *= 1.5;
-                    result = 'SAN值-6，论文引用速度×1.5';
-                    canProceed = changeSan(-6);
-                    break;
-                case 'xiaohongshu':
-                    if (gameState.san - 3 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.xiaohongshu = true;
-                    paper.citationMultiplier *= 1.25;
-                    result = 'SAN值-3，论文引用速度×1.25';
-                    canProceed = changeSan(-3);
-                    break;
-                case 'quantumbit':
-                    if (paper.grade !== 'A') {
-                        showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    if (gameState.gold - 10 < 0) {
-                        showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.quantumbit = true;
-                    paper.citations += 100;
-                    gameState.totalCitations += 100;
-                    result = '金钱-10，论文引用+100';
-                    canProceed = changeGold(-10);
-                    break;
-            }
-    
-            if (canProceed) {
-                addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
-                updateAllUI();
-            }
+            // 删除所有同类型的临时buff
+            gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== type);
         }
 
         // ==================== 论文投稿与审稿 ====================
@@ -1826,7 +1826,7 @@
             if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
 
             paper.reviewing = true;
-            paper.reviewMonths = 4;  // 确保始终设置为4
+            paper.reviewMonths = 4;
             paper.submittedGrade = grade;
             paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore;
 
@@ -1851,10 +1851,11 @@
 
         function processPaperResult(slot) {
             const paper = gameState.papers[slot];
+            if (!paper || !paper.reviewing) return;
+            
             const grade = paper.submittedGrade;
-            const submittedScore = paper.submittedScore; // 使用投稿时记录的分数
-    
-            // 记录当前分数（用于显示改进效果）
+            const submittedScore = paper.submittedScore;
+
             const beforeScores = {
                 idea: paper.ideaScore,
                 exp: paper.expScore,
@@ -1862,10 +1863,8 @@
                 total: paper.ideaScore + paper.expScore + paper.writeScore
             };
 
-            // 生成审稿人
             const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
-    
-            // 计算结果（使用投稿时的分数评审）
+
             let totalReviewScore = 0;
             const results = reviewers.map(reviewer => {
                 const result = getReviewResult(reviewer, grade, submittedScore);
@@ -1873,13 +1872,11 @@
                 return { reviewer, ...result };
             });
 
-            // 判定结果
             let acceptType = null, accepted = false;
             if (totalReviewScore >= 3) { acceptType = 'Best Paper'; accepted = true; }
             else if (totalReviewScore >= 2) { acceptType = 'Oral'; accepted = true; }
             else if (totalReviewScore >= 0) { acceptType = 'Poster'; accepted = true; }
 
-            // 应用审稿人改进（不管是否接收都应用）
             results.forEach(r => {
                 if (r.improvement > 0) {
                     if (r.improvementType === 'idea') paper.ideaScore += r.improvement;
@@ -1888,7 +1885,6 @@
                 }
             });
 
-            // 记录改进后的分数
             const afterScores = {
                 idea: paper.ideaScore,
                 exp: paper.expScore,
@@ -1912,7 +1908,7 @@
         function getReviewResult(reviewer, grade, score) {
             let thresholds;
             if (grade === 'A') {
-                // A类论文：根据审稿人类型设置不同阈值
+                // A类论文阈值
                 switch (reviewer.type) {
                     case 'kind': thresholds = { reject: 40, borderline: 60 }; break;
                     case 'normal': case 'expert': thresholds = { reject: 50, borderline: 70 }; break;
@@ -1962,11 +1958,10 @@
             if (decision === 'Reject') return rand(negative);
             return rand([...positive, ...negative, ...neutral]);
         }
-
+		
         function showReviewResultModal(paper, grade, results, totalScore, acceptType, accepted, slot, beforeScores, afterScores) {
             const improved = afterScores.total > beforeScores.total;
             
-            // 收集改进详情
             const improvements = results.filter(r => r.improvement > 0).map(r => ({
                 reviewer: r.reviewer.name,
                 type: r.improvementType,
@@ -1993,7 +1988,6 @@
             });
             html += '</div>';
 
-            // 显示改进效果汇总
             if (improved) {
                 html += `<div style="padding:10px;background:rgba(0,184,148,0.1);border-radius:8px;margin-bottom:12px;font-size:0.85rem;">
                     <div style="font-weight:600;color:var(--success-color);margin-bottom:8px;">📈 审稿意见改进了论文质量</div>`;
@@ -2053,8 +2047,8 @@
                         gameState.rejectedCount++;
                         paper.reviewing = false;
                         paper.submittedGrade = null;
-                        paper.submittedScore = null;      // 新增：重置投稿分数
-                        paper.reviewMonths = 0;           // 新增：重置审稿月数
+                        paper.submittedScore = null;
+                        paper.reviewMonths = 0;
                         let logMsg = '可继续修改后重投';
                         if (improved) {
                             const impDetail = improvements.map(i => `${i.typeName}+${i.value}`).join('，');
@@ -2089,9 +2083,9 @@
 
             const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
             gameState.publishedPapers.push({
-    	title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
-    	promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-    	citationMultiplier: 1
+                title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
+                promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+                citationMultiplier: 1
             });
 
             gameState.papers[slot] = null;
@@ -2174,7 +2168,6 @@
                 }}
             ];
 
-            // 社交≥6的选项
             if (gameState.social >= 6) {
                 options.push(
                     { text: '🎓 找大牛合作', fn: () => { 
@@ -2201,7 +2194,6 @@
                 );
             }
 
-            // 深入合作选项
             if (gameState.metBigBull && !gameState.bigBullCooperation) {
                 options.push({ text: '🌟 和上次那个大牛深入合作', fn: () => {
                     gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+10', value: 10, permanent: false });
@@ -2291,7 +2283,7 @@
             ]);
         }
 
-        // ==================== 商店系统（压缩版）====================
+        // ==================== 商店系统 ====================
         function openShop() {
             let html = '<div>';
             shopItems.forEach(item => {
@@ -2376,9 +2368,176 @@
             updateAllUI();
             updateBuffs();
         }
+		
+        // ==================== 下一个月 ====================
+        function nextMonth() {
+            gameState.actionUsed = false;
+            gameState.month++;
+            gameState.totalMonths++;
 
+            let newYearBonus = false;
+            if (gameState.month > 12) {
+                gameState.month = 1;
+                gameState.year++;
+                
+                if (gameState.year >= 2) {
+                    newYearBonus = true;
+                    gameState.social = Math.min(20, gameState.social + 1);
+                    gameState.favor = Math.min(20, gameState.favor + 1);
+                }
+            }
 
-        // ==================== 随机事件系统（无放回抽样）====================
+            const salary = gameState.degree === 'master' ? 1 : 3;
+            gameState.gold += salary - 1;
+
+            gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
+
+            if (gameState.hasLover && gameState.loverType === 'beautiful') {
+                gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+            }
+
+            if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
+                gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
+            }
+
+            // 论文分数衰减
+            let decayLogs = [];
+            gameState.papers.forEach((paper, idx) => {
+                if (paper) {
+                    let decayInfo = [];
+                    if (paper.ideaScore > 1) {
+                        paper.ideaScore--;
+                        decayInfo.push(`idea-1`);
+                    }
+                    if (paper.expScore > 1) {
+                        paper.expScore--;
+                        decayInfo.push(`实验-1`);
+                    }
+                    if (decayInfo.length > 0) {
+                        const status = paper.reviewing ? '(审稿中)' : '';
+                        decayLogs.push(`槽${idx + 1}${status}:${decayInfo.join('，')}`);
+                    }
+                }
+            });
+
+            // 审稿进度
+            gameState.papers.forEach((paper, idx) => {
+                if (paper && paper.reviewing) {
+                    paper.reviewMonths--;
+                    if (paper.reviewMonths < 1) {
+                        paper.reviewMonths = 0;
+                        setTimeout(() => {
+                            if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
+                                processPaperResult(idx);
+                            }
+                        }, 100 * idx);
+                    }
+                }
+            });
+
+            // 更新引用
+            updateCitations();
+
+            // 重置月度商品
+            shopItems.forEach(item => {
+                if (item.monthlyOnce) item.boughtThisMonth = false;
+            });
+
+            // 日志
+            if (newYearBonus) {
+                addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
+            }
+
+            let logResult = `工资+${salary}，开销-1，休息SAN+1`;
+            if (gameState.hasLover && gameState.loverType === 'beautiful') logResult += '，恋人SAN+3';
+            if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) logResult += '，工学椅SAN+1';
+            addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
+
+            if (decayLogs.length > 0) {
+                addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
+            }
+
+            // 事件触发
+            if (gameState.month === 1) {
+                // 寒假事件（日历1月，过年）
+                triggerWinterVacationEvent();
+            } else if (gameState.month === 7) {
+                // 暑假事件（日历7月）
+                triggerSummerVacationEvent();
+            } else if (gameState.month === 9 && gameState.year >= 2) {
+                // 奖学金事件（每学年开始，9月，第2年起）
+                triggerScholarshipEvent();
+            } else if (gameState.month % 2 === 0) {
+                if (gameState.month === 2) {
+                    triggerTeachersDayEvent();
+                } else {
+                    triggerOtherRandomEvent();
+                }
+            }
+
+            // 检查毕业
+            checkGraduation();
+
+            updateAllUI();
+            renderPaperSlots();
+        }
+
+        function updateCitations() {
+            gameState.publishedPapers.forEach(paper => {
+                paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
+                let shouldUpdate = false;
+                if (paper.grade === 'A') shouldUpdate = true;
+                else if (paper.grade === 'B' && paper.monthsSincePublish % 3 === 0) shouldUpdate = true;
+                else if (paper.grade === 'C' && paper.monthsSincePublish % 6 === 0) shouldUpdate = true;
+
+                if (shouldUpdate) {
+                    let gain = Math.round(paper.score / 10);
+                    if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
+                    if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
+                    gain = Math.round(gain * (paper.citationMultiplier || 1));
+                    paper.citations += gain;
+                    gameState.totalCitations += gain;
+                }
+            });
+        }
+
+        // ==================== 寒假暑假事件 ====================
+        function triggerWinterVacationEvent() {
+            showModal('❄️ 寒假', 
+                `<p>寒假到了！回家过年，收到了长辈的压岁钱，好好休息一下吧～</p>
+                 <div style="text-align:center;font-size:2rem;margin:15px 0;">🧧🏠🎆</div>`,
+                [{ 
+                    text: '🎊 新年快乐！', 
+                    class: 'btn-accent', 
+                    action: () => {
+                        gameState.gold += 1;
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+                        addLog('❄️ 寒假', '回家过年', '压岁钱+1，SAN值+2');
+                        closeModal();
+                        updateAllUI();
+                    }
+                }]
+            );
+        }
+
+        function triggerSummerVacationEvent() {
+            showModal('☀️ 暑假', 
+                `<p>暑假来啦！虽然科研不能停，但可以稍微放松一下，调整状态～</p>
+                 <div style="text-align:center;font-size:2rem;margin:15px 0;">🏖️🍉🌴</div>`,
+                [{ 
+                    text: '😎 好好休息！', 
+                    class: 'btn-success', 
+                    action: () => {
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+                        addLog('☀️ 暑假', '暑假休息', 'SAN值+3');
+                        closeModal();
+                        updateAllUI();
+                    }
+                }]
+            );
+        }
+
+        // ==================== 随机事件系统 ====================
         function triggerScholarshipEvent() {
             const req = { 2: 1, 3: 3, 4: 6, 5: 9 }[gameState.year] || 9;
             const reward = { 2: 5, 3: 5, 4: 10, 5: 10 }[gameState.year] || 10;
@@ -2420,17 +2579,13 @@
             ]);
         }
 
-        // 无放回抽样触发随机事件
         function triggerOtherRandomEvent() {
-            // 检查是否需要重置事件池
             let availableEvents = [...gameState.availableRandomEvents];
             
-            // 如果社交>=6，添加事件11
             if (gameState.social >= 6 && !availableEvents.includes(11) && !gameState.usedRandomEvents.includes(11)) {
                 availableEvents.push(11);
             }
             
-            // 如果没有可用事件，重置事件池
             if (availableEvents.length === 0) {
                 resetRandomEventPool();
                 availableEvents = [...gameState.availableRandomEvents];
@@ -2440,17 +2595,14 @@
                 addLog('事件轮换', '新一轮随机事件开始', '所有事件重新可用');
             }
             
-            // 随机选择一个事件
             const eventIndex = Math.floor(Math.random() * availableEvents.length);
             const eventId = availableEvents[eventIndex];
             
-            // 从可用池移除，加入已用池
             gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== eventId);
             if (!gameState.usedRandomEvents.includes(eventId)) {
                 gameState.usedRandomEvents.push(eventId);
             }
             
-            // 触发对应事件
             const eventMap = {
                 1: showRandomEvent1,
                 2: showRandomEvent2,
@@ -2717,7 +2869,7 @@
                 }}
             ]);
         }
-
+		
         function showRandomEvent8() {
             showModal('💰 随机事件', '<p>导师科研经费充足，你建议。</p>', [
                 { text: '🖥️ 购买GPU服务器', class: 'btn-primary', action: () => {
@@ -2908,8 +3060,7 @@
                     closeModal();
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', '费劲周折修好了，SAN值-3');
-	  } 
-	  else {
+                    } else {
                         gameState.social = Math.max(0, gameState.social - 1);
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验分数×0', value: 0, multiply: true, permanent: false });
                         addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', '服务器数据忘了备份了，临时buff-下次实验分数×0，社交能力-1，SAN值-3');
@@ -2949,181 +3100,199 @@
         }
 
         function showPhDOptionModal() {
-			showModal('🎓 转博选择',
-				`<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
-				 <p>是否选择继续攻读博士学位？</p>
-				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
-				[
-					{ text: '硕士毕业', class: 'btn-info', action: () => { closeModal(); triggerEnding('master'); }},
-					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
-						gameState.degree = 'phd';
-						gameState.maxYears = 5;
-						closeModal();
-						
-						// 触发转博渡劫效果
-						setTimeout(() => showPhDTribulationModal(), 200);
-					}}
-				]
-			);
-		}
+            showModal('🎓 转博选择',
+                `<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
+                 <p>是否选择继续攻读博士学位？</p>
+                 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
+                [
+                    { text: '硕士毕业', class: 'btn-info', action: () => { closeModal(); triggerEnding('master'); }},
+                    { text: '📚 转为博士', class: 'btn-primary', action: () => {
+                        gameState.degree = 'phd';
+                        gameState.maxYears = 5;
+                        closeModal();
+                        setTimeout(() => showPhDTribulationModal(), 200);
+                    }}
+                ]
+            );
+        }
 
-		// 转博渡劫弹窗
-		function showPhDTribulationModal() {
-			const character = gameState.character;
-			let effectName = '';
-			let effectDesc = '';
-			let bonusDetails = [];
-			
-			// 根据角色计算加成
-			switch (character) {
-				case 'genius': // 院士转世
-					effectName = '🔬 学术天赋觉醒';
-					effectDesc = '院士转世的血脉开始沸腾，科研直觉大幅提升！';
-					gameState.research = Math.min(20, gameState.research + 2);
-					bonusDetails.push('科研能力 +2');
-					break;
-					
-				case 'social': // 社交达人
-					effectName = '🤝 人脉网络激活';
-					effectDesc = '社交达人的魅力全面绽放，人际关系更上一层楼！';
-					gameState.social = Math.min(20, gameState.social + 2);
-					bonusDetails.push('社交能力 +2');
-					break;
-					
-				case 'rich': // 富可敌国
-					effectName = '💰 财富倍增术';
-					effectDesc = '富可敌国的底蕴显现，金币储备瞬间翻倍！';
-					const oldGold = gameState.gold;
-					gameState.gold = gameState.gold * 2;
-					bonusDetails.push(`金币 ${oldGold} → ${gameState.gold} (×2)`);
-					break;
-					
-				case 'teacher-child': // 导师子女
-					effectName = '👨‍👧 血脉共鸣';
-					effectDesc = '导师子女的身份优势凸显，师生关系更加亲密！';
-					gameState.favor = Math.min(20, gameState.favor + 2);
-					bonusDetails.push('导师好感度 +2');
-					break;
-					
-				case 'chosen': // 天选之人
-					effectName = '⭐ 查缺补漏';
-					effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
-					const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
-					const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
-					gameState.research = Math.min(20, maxStat);
-					gameState.social = Math.min(20, maxStat);
-					gameState.favor = Math.min(20, maxStat);
-					if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
-					if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
-					if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
-					if (bonusDetails.length === 0) bonusDetails.push('属性已达最优，无需补齐');
-					break;
-					
-				case 'normal': // 大多数
-				default:
-   				 effectName = '🔥 我命由我不由天';
-   				 effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
-   				 const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
-  				  gameState.research = Math.min(20, gameState.research * 2);
-  				  gameState.social = Math.min(20, gameState.social * 2);
-  				  gameState.favor = Math.min(20, gameState.favor * 2);
-  				  gameState.gold = gameState.gold * 2;
-  				  bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
-  				  bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
-  				  bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
-  				  bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
-  				  break;
-			}
-			
-			// 检查科研能力解锁
-			checkResearchUnlock(true);
-			
-			const html = `
-				<div style="text-align:center;">
-					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
-					<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
-						渡劫成功！
-					</div>
-					<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
-						恭喜突破硕士境界，晋升博士修炼者！
-					</div>
-				</div>
-				
-				<div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(102,126,234,0.3);">
-					<div style="text-align:center;margin-bottom:12px;">
-						<div style="font-size:1.3rem;font-weight:700;color:#667eea;margin-bottom:5px;">${effectName}</div>
-						<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
-					</div>
-					<div style="background:white;border-radius:8px;padding:12px;">
-						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">✨ 获得加成 ✨</div>
-						<div style="display:flex;flex-direction:column;gap:6px;">
-							${bonusDetails.map(detail => `
-								<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:6px;font-size:0.9rem;font-weight:500;color:var(--success-color);">
-									<i class="fas fa-arrow-up"></i> ${detail}
-								</div>
-							`).join('')}
-						</div>
-					</div>
-				</div>
-				
-				<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
-					<div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 新的修炼目标</div>
-					<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
-					<div style="color:var(--text-secondary);">修炼年限：5年</div>
-				</div>
-			`;
-			
-			// 添加动画样式
-			if (!document.getElementById('tribulation-style')) {
-				const style = document.createElement('style');
-				style.id = 'tribulation-style';
-				style.textContent = `
-					@keyframes pulse {
-						0%, 100% { transform: scale(1); opacity: 1; }
-						50% { transform: scale(1.1); opacity: 0.8; }
-					}
-				`;
-				document.head.appendChild(style);
-			}
-			
-			showModal('⚡ 转博渡劫', html, [
-				{ text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
-					addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
-					closeModal();
-					updateAllUI();
-					renderPaperSlots();
-				}}
-			]);
-		}
-
+        function showPhDTribulationModal() {
+            const character = gameState.character;
+            let effectName = '';
+            let effectDesc = '';
+            let bonusDetails = [];
+            
+            switch (character) {
+                case 'genius':
+                    effectName = '🔬 学术天赋觉醒';
+                    effectDesc = '院士转世的血脉开始沸腾，科研直觉大幅提升！';
+                    gameState.research = Math.min(20, gameState.research + 2);
+                    bonusDetails.push('科研能力 +2');
+                    break;
+                    
+                case 'social':
+                    effectName = '🤝 人脉网络激活';
+                    effectDesc = '社交达人的魅力全面绽放，人际关系更上一层楼！';
+                    gameState.social = Math.min(20, gameState.social + 2);
+                    bonusDetails.push('社交能力 +2');
+                    break;
+                    
+                case 'rich':
+                    effectName = '💰 财富倍增术';
+                    effectDesc = '富可敌国的底蕴显现，金币储备瞬间翻倍！';
+                    const oldGold = gameState.gold;
+                    gameState.gold = gameState.gold * 2;
+                    bonusDetails.push(`金币 ${oldGold} → ${gameState.gold} (×2)`);
+                    break;
+                    
+                case 'teacher-child':
+                    effectName = '👨‍👧 血脉共鸣';
+                    effectDesc = '导师子女的身份优势凸显，师生关系更加亲密！';
+                    gameState.favor = Math.min(20, gameState.favor + 2);
+                    bonusDetails.push('导师好感度 +2');
+                    break;
+                    
+                case 'chosen':
+                    effectName = '⭐ 查缺补漏';
+                    effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
+                    const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
+                    const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
+                    gameState.research = Math.min(20, maxStat);
+                    gameState.social = Math.min(20, maxStat);
+                    gameState.favor = Math.min(20, maxStat);
+                    if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
+                    if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
+                    if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
+                    if (bonusDetails.length === 0) bonusDetails.push('属性已达最优，无需补齐');
+                    break;
+                    
+                case 'normal':
+                default:
+                    effectName = '🔥 我命由我不由天';
+                    effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
+                    const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
+                    gameState.research = Math.min(20, gameState.research * 2);
+                    gameState.social = Math.min(20, gameState.social * 2);
+                    gameState.favor = Math.min(20, gameState.favor * 2);
+                    gameState.gold = gameState.gold * 2;
+                    bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
+                    bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
+                    bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
+                    bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
+                    break;
+            }
+            
+            checkResearchUnlock(true);
+            
+            const html = `
+                <div style="text-align:center;">
+                    <div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
+                    <div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+                        渡劫成功！
+                    </div>
+                    <div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
+                        恭喜突破硕士境界，晋升博士修炼者！
+                    </div>
+                </div>
+                
+                <div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(102,126,234,0.3);">
+                    <div style="text-align:center;margin-bottom:12px;">
+                        <div style="font-size:1.3rem;font-weight:700;color:#667eea;margin-bottom:5px;">${effectName}</div>
+                        <div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
+                    </div>
+                    <div style="background:white;border-radius:8px;padding:12px;">
+                        <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">✨ 获得加成 ✨</div>
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            ${bonusDetails.map(detail => `
+                                <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:6px;font-size:0.9rem;font-weight:500;color:var(--success-color);">
+                                    <i class="fas fa-arrow-up"></i> ${detail}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
+                    <div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 新的修炼目标</div>
+                    <div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
+                    <div style="color:var(--text-secondary);">修炼年限：5年</div>
+                </div>
+            `;
+            
+            if (!document.getElementById('tribulation-style')) {
+                const style = document.createElement('style');
+                style.id = 'tribulation-style';
+                style.textContent = `
+                    @keyframes pulse {
+                        0%, 100% { transform: scale(1); opacity: 1; }
+                        50% { transform: scale(1.1); opacity: 0.8; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            showModal('⚡ 转博渡劫', html, [
+                { text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
+                    addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
+                    closeModal();
+                    updateAllUI();
+                    renderPaperSlots();
+                }}
+            ]);
+        }
+		
         // ==================== 游戏结局 ====================
         function triggerEnding(type) {
             let title, desc, emoji;
+            let endingType = type;
+            
             switch (type) {
                 case 'burnout': title = '不堪重负'; desc = '繁重的科研压力压垮了你，你最终选择了离开...'; emoji = '😢'; break;
                 case 'expelled': title = '被退学'; desc = '导师对你彻底失望，你被劝退了...'; emoji = '😭'; break;
                 case 'poor': title = '穷困潦倒'; desc = '你连饭都吃不起了，只能含恨离开...'; emoji = '💸'; break;
                 case 'delay': title = '延毕'; desc = '你没能在规定时间内完成毕业要求，只能延期毕业...'; emoji = '⏰'; break;
                 case 'master':
-                    if (gameState.totalScore >= 4) { title = '优秀硕士毕业'; desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; emoji = '🌟'; }
-                    else { title = '硕士毕业'; desc = '恭喜！你顺利完成了硕士学业！'; emoji = '🎓'; }
+                    if (gameState.totalScore >= 4) { 
+                        title = '优秀硕士毕业'; 
+                        desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
+                        emoji = '🌟'; 
+                        endingType = 'excellent_master';
+                    } else { 
+                        title = '硕士毕业'; 
+                        desc = '恭喜！你顺利完成了硕士学业！'; 
+                        emoji = '🎓'; 
+                    }
                     break;
                 case 'phd':
                     const e = getPhDEndingType();
                     title = e.title; desc = e.desc; emoji = e.emoji;
+                    endingType = e.type;
                     break;
             }
+            
+            // 记录结局统计
+            recordEnding(endingType, title);
+            
+            // 记录成就统计
+            const achievements = collectAchievements();
+            recordAchievements(achievements);
+            
             showEndingModal(title, desc, emoji);
         }
 
         function getPhDEndingType() {
             const { paperA, totalCitations, bigBullCooperation } = gameState;
-            if (paperA >= 5 && totalCitations > 2000 && bigBullCooperation) return { title: '未来院士', desc: '你的学术成就令人瞩目，成功去大牛组当副教授！', emoji: '👑' };
-            if (paperA >= 5 && totalCitations > 1000 && bigBullCooperation) return { title: '学术之星', desc: '你的才华被大牛赏识，成功去大牛组飞升疾走！', emoji: '⭐' };
-            if (paperA >= 5 && totalCitations > 1000) return { title: '我就是导师', desc: '恭喜！你成功留校成为副教授！', emoji: '👨‍🏫' };
-            if (paperA >= 4 && totalCitations > 500) return { title: '青椒', desc: '恭喜！你成功留校飞升疾走！', emoji: '🌶️' };
-            if (paperA >= 3) return { title: '优秀博士毕业', desc: '恭喜！你以优异的成绩完成了博士学业！', emoji: '🏆' };
-            return { title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
+            if (paperA >= 5 && totalCitations > 2000 && bigBullCooperation) 
+                return { type: 'future_academician', title: '未来院士', desc: '你的学术成就令人瞩目，成功去大牛组当副教授！', emoji: '👑' };
+            if (paperA >= 5 && totalCitations > 1000 && bigBullCooperation) 
+                return { type: 'academic_star', title: '学术之星', desc: '你的才华被大牛赏识，成功去大牛组飞升疾走！', emoji: '⭐' };
+            if (paperA >= 5 && totalCitations > 1000) 
+                return { type: 'become_advisor', title: '我就是导师', desc: '恭喜！你成功留校成为副教授！', emoji: '👨‍🏫' };
+            if (paperA >= 4 && totalCitations > 500) 
+                return { type: 'green_pepper', title: '青椒', desc: '恭喜！你成功留校飞升疾走！', emoji: '🌶️' };
+            if (paperA >= 3) 
+                return { type: 'excellent_phd', title: '优秀博士毕业', desc: '恭喜！你以优异的成绩完成了博士学业！', emoji: '🏆' };
+            return { type: 'phd', title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
         }
 
         function collectAchievements() {
@@ -3194,8 +3363,404 @@
             document.getElementById('start-btn').disabled = true;
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('start-screen').classList.remove('hidden');
+            
+            // 刷新统计数据
+            loadGlobalStatsDisplay();
         }
 
+        // ==================== 存档系统 ====================
+        const SAVE_KEY = 'graduateSimulatorSaves';
+        const MAX_SAVES = 5;
+
+        function getSaves() {
+            const saves = localStorage.getItem(SAVE_KEY);
+            return saves ? JSON.parse(saves) : [];
+        }
+
+        function saveSaves(saves) {
+            localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
+        }
+
+        function openSaveModal() {
+            const saves = getSaves();
+            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择存档槽位（最多5个）：</div>';
+            
+            for (let i = 0; i < MAX_SAVES; i++) {
+                const save = saves[i];
+                if (save) {
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);">
+                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
+                                </div>
+                                <div style="font-size:0.7rem;color:var(--text-secondary);">
+                                    保存于: ${save.saveTime}
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
+                                <i class="fas fa-save"></i> 覆盖
+                            </button>
+                        </div>`;
+                } else {
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;opacity:0.7;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: 空</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);">暂无存档</div>
+                            </div>
+                            <button class="btn btn-success" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
+                                <i class="fas fa-plus"></i> 新建
+                            </button>
+                        </div>`;
+                }
+            }
+            
+            showModal('💾 存档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+        }
+
+        function openLoadModal() {
+            const saves = getSaves();
+            
+            if (saves.filter(s => s).length === 0) {
+                showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
+                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                return;
+            }
+            
+            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
+            
+            for (let i = 0; i < MAX_SAVES; i++) {
+                const save = saves[i];
+                if (save) {
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);">
+                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
+                                </div>
+                                <div style="font-size:0.7rem;color:var(--text-secondary);">
+                                    A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
+                                <i class="fas fa-folder-open"></i> 读取
+                            </button>
+                            <button class="btn btn-danger" style="padding:5px 12px;font-size:0.75rem;" onclick="deleteSave(${i})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>`;
+                }
+            }
+            
+            showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+        }
+
+        function openLoadModalFromStart() {
+            const saves = getSaves();
+            
+            if (saves.filter(s => s).length === 0) {
+                showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
+                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                return;
+            }
+            
+            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
+            
+            for (let i = 0; i < MAX_SAVES; i++) {
+                const save = saves[i];
+                if (save) {
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: ${save.characterName}</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);">
+                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年${save.month}月 | 科研分:${save.totalScore}
+                                </div>
+                                <div style="font-size:0.7rem;color:var(--text-secondary);">
+                                    A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
+                                <i class="fas fa-folder-open"></i> 读取
+                            </button>
+                        </div>`;
+                }
+            }
+            
+            showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+        }
+
+        function saveGame(slot) {
+            const saves = getSaves();
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            const shopState = shopItems.map(item => ({
+                id: item.id,
+                bought: item.bought || false,
+                boughtThisMonth: item.boughtThisMonth || false
+            }));
+            
+            const papersCopy = gameState.papers.map(paper => {
+                if (paper === null) return null;
+                return {
+                    title: paper.title,
+                    ideaScore: paper.ideaScore,
+                    expScore: paper.expScore,
+                    writeScore: paper.writeScore,
+                    reviewing: paper.reviewing || false,
+                    reviewMonths: paper.reviewing ? Math.min(4, Math.max(0, paper.reviewMonths)) : 0,
+                    submittedGrade: paper.submittedGrade || null,
+                    submittedScore: paper.submittedScore || 0
+                };
+            });
+            
+            const publishedPapersCopy = gameState.publishedPapers.map(paper => ({
+                title: paper.title,
+                grade: paper.grade,
+                acceptType: paper.acceptType,
+                score: paper.score,
+                citations: paper.citations,
+                monthsSincePublish: paper.monthsSincePublish || 0,
+                promotions: paper.promotions ? { ...paper.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+                citationMultiplier: paper.citationMultiplier || 1
+            }));
+            
+            const buffsCopy = {
+                permanent: gameState.buffs.permanent.map(b => ({ ...b })),
+                temporary: gameState.buffs.temporary.map(b => ({ ...b }))
+            };
+            
+            const saveData = {
+                character: gameState.character,
+                characterName: gameState.characterName,
+                degree: gameState.degree,
+                year: gameState.year,
+                month: gameState.month,
+                totalMonths: gameState.totalMonths,
+                maxYears: gameState.maxYears,
+                san: gameState.san,
+                sanMax: gameState.sanMax,
+                research: gameState.research,
+                social: gameState.social,
+                favor: gameState.favor,
+                gold: gameState.gold,
+                
+                paperA: gameState.paperA,
+                paperB: gameState.paperB,
+                paperC: gameState.paperC,
+                totalScore: gameState.totalScore,
+                totalCitations: gameState.totalCitations,
+                publishedPapers: publishedPapersCopy,
+                paperSlots: gameState.paperSlots,
+                papers: papersCopy,
+                
+                buffs: buffsCopy,
+                
+                actionUsed: gameState.actionUsed,
+                readCount: gameState.readCount,
+                firstPaperAccepted: gameState.firstPaperAccepted,
+                firstAPaperAccepted: gameState.firstAPaperAccepted,
+                hasLover: gameState.hasLover,
+                loverType: gameState.loverType,
+                bigBullCooperation: gameState.bigBullCooperation,
+                rejectedCount: gameState.rejectedCount,
+                teaBreakCount: gameState.teaBreakCount,
+                tourCount: gameState.tourCount,
+                metBigBull: gameState.metBigBull,
+                metBeautiful: gameState.metBeautiful,
+                metSmart: gameState.metSmart,
+                bigBullDeepCount: gameState.bigBullDeepCount,
+                beautifulCount: gameState.beautifulCount,
+                smartCount: gameState.smartCount,
+                
+                availableRandomEvents: [...gameState.availableRandomEvents],
+                usedRandomEvents: [...gameState.usedRandomEvents],
+                
+                shopState: shopState,
+                saveTime: timeStr
+            };
+            
+            saves[slot] = saveData;
+            saveSaves(saves);
+            closeModal();
+            
+            showModal('✅ 存档成功', `<p style="text-align:center;">游戏已保存到槽位 ${slot + 1}</p>`, 
+                [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+            
+            addLog('系统', '游戏已存档', `槽位 ${slot + 1}`);
+        }
+
+        function loadGame(slot) {
+            const saves = getSaves();
+            const save = saves[slot];
+            
+            if (!save) {
+                showModal('❌ 读档失败', '<p>该存档不存在！</p>', 
+                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+                return;
+            }
+            
+            showModal('⚠️ 确认读档', 
+                `<p>确定要读取槽位 ${slot + 1} 的存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">当前游戏进度将丢失！</p>`, 
+                [
+                    { text: '取消', class: 'btn-info', action: closeModal },
+                    { text: '确定读取', class: 'btn-primary', action: () => {
+                        // 恢复商店状态
+                        if (save.shopState) {
+                            save.shopState.forEach(savedItem => {
+                                const item = shopItems.find(i => i.id === savedItem.id);
+                                if (item) {
+                                    item.bought = savedItem.bought;
+                                    item.boughtThisMonth = savedItem.boughtThisMonth;
+                                }
+                            });
+                        }
+                        
+                        // 恢复游戏状态
+                        gameState = {
+                            character: save.character,
+                            characterName: save.characterName,
+                            degree: save.degree,
+                            year: save.year,
+                            month: save.month,
+                            totalMonths: save.totalMonths,
+                            maxYears: save.maxYears,
+                            san: save.san,
+                            sanMax: save.sanMax,
+                            research: save.research,
+                            social: save.social,
+                            favor: save.favor,
+                            gold: save.gold,
+                            
+                            paperA: save.paperA,
+                            paperB: save.paperB,
+                            paperC: save.paperC,
+                            totalScore: save.totalScore,
+                            totalCitations: save.totalCitations,
+                            publishedPapers: save.publishedPapers.map(p => ({ 
+                                ...p, 
+                                promotions: p.promotions ? { ...p.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+                                citationMultiplier: p.citationMultiplier || 1,
+                                monthsSincePublish: p.monthsSincePublish || 0
+                            })),
+                            paperSlots: save.paperSlots,
+                            
+                            papers: save.papers.map(p => {
+                                if (p === null) return null;
+                                return {
+                                    title: p.title,
+                                    ideaScore: p.ideaScore,
+                                    expScore: p.expScore,
+                                    writeScore: p.writeScore,
+                                    reviewing: p.reviewing || false,
+                                    reviewMonths: p.reviewing ? Math.min(4, Math.max(0, p.reviewMonths || 0)) : 0,
+                                    submittedGrade: p.submittedGrade || null,
+                                    submittedScore: p.submittedScore || 0
+                                };
+                            }),
+                            
+                            buffs: {
+                                permanent: save.buffs.permanent.map(b => ({ ...b })),
+                                temporary: save.buffs.temporary.map(b => ({ ...b }))
+                            },
+                            
+                            actionUsed: save.actionUsed,
+                            readCount: save.readCount,
+                            firstPaperAccepted: save.firstPaperAccepted,
+                            firstAPaperAccepted: save.firstAPaperAccepted,
+                            hasLover: save.hasLover,
+                            loverType: save.loverType,
+                            bigBullCooperation: save.bigBullCooperation,
+                            rejectedCount: save.rejectedCount,
+                            teaBreakCount: save.teaBreakCount,
+                            tourCount: save.tourCount,
+                            metBigBull: save.metBigBull,
+                            metBeautiful: save.metBeautiful,
+                            metSmart: save.metSmart,
+                            bigBullDeepCount: save.bigBullDeepCount,
+                            beautifulCount: save.beautifulCount,
+                            smartCount: save.smartCount,
+                            
+                            availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
+                            usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : []
+                        };
+                        
+                        // 兼容旧存档
+                        if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
+                            if (!gameState.usedRandomEvents || gameState.usedRandomEvents.length === 0) {
+                                resetRandomEventPool();
+                            }
+                        }
+                        
+                        // 确保界面显示
+                        document.getElementById('start-screen').classList.add('hidden');
+                        document.getElementById('game-screen').style.display = 'block';
+                        
+                        // 更新所有UI
+                        updateAllUI();
+                        renderPaperSlots();
+                        
+                        closeModal();
+                        addLog('系统', '读取存档成功', `槽位 ${slot + 1}`);
+                        
+                        // 检查是否有到期的审稿需要立即处理
+                        let pendingReviews = [];
+                        gameState.papers.forEach((paper, idx) => {
+                            if (paper && paper.reviewing && paper.reviewMonths <= 0) {
+                                pendingReviews.push(idx);
+                            }
+                        });
+
+                        if (pendingReviews.length > 0) {
+                            pendingReviews.forEach((idx, i) => {
+                                setTimeout(() => {
+                                    if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
+                                        processPaperResult(idx);
+                                    }
+                                }, 500 + i * 300);
+                            });
+                        } else {
+                            let reviewingInfo = '';
+                            gameState.papers.forEach((paper, idx) => {
+                                if (paper && paper.reviewing) {
+                                    reviewingInfo += `<br>• 槽位${idx + 1}: ${paper.submittedGrade}类审稿中，剩余${paper.reviewMonths}月`;
+                                }
+                            });
+                            
+                            showModal('✅ 读档成功', 
+                                `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>
+                                 <p style="font-size:0.85rem;color:var(--text-secondary);">
+                                    当前进度：第${gameState.year}年${gameState.month}月<br>
+                                    科研分：${gameState.totalScore}
+                                    ${reviewingInfo ? '<br><strong>审稿中的论文：</strong>' + reviewingInfo : ''}
+                                 </p>`, 
+                                [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
+                        }
+                    }}
+                ]
+            );
+        }
+
+        function deleteSave(slot) {
+            showModal('⚠️ 确认删除', 
+                `<p>确定要删除槽位 ${slot + 1} 的存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">此操作不可恢复！</p>`, 
+                [
+                    { text: '取消', class: 'btn-info', action: closeModal },
+                    { text: '确定删除', class: 'btn-danger', action: () => {
+                        const saves = getSaves();
+                        saves[slot] = null;
+                        saveSaves(saves);
+                        closeModal();
+                        openLoadModal();
+                    }}
+                ]
+            );
+        }
+		
         // ==================== 弹窗系统 ====================
         let modalCallbacks = [];
 
@@ -3249,6 +3814,7 @@
 
         // ==================== 工具函数 ====================
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        
         function shuffle(arr) {
             const a = [...arr];
             for (let i = a.length - 1; i > 0; i--) {
@@ -3260,280 +3826,23 @@
 
         // ==================== 启动游戏 ====================
         document.addEventListener('DOMContentLoaded', init);
-		
-		
-			
-	// ==================== 存档系统 ====================
-	const SAVE_KEY = 'graduateSimulatorSaves';
-	const MAX_SAVES = 5;
+    </script>
 
-	function getSaves() {
-	    const saves = localStorage.getItem(SAVE_KEY);
-	    return saves ? JSON.parse(saves) : [];
-	}
-	
-	function saveSaves(saves) {
-    	localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
-	}
-
-	function saveGame(slot) {
-    	const saves = getSaves();
-    	const now = new Date();
-    	const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    <!-- 不蒜子统计脚本 -->
+    <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     
-    	// 保存商店状态
-    	const shopState = shopItems.map(item => ({
-    	    id: item.id,
-    	    bought: item.bought || false,
-    	    boughtThisMonth: item.boughtThisMonth || false
-    	}));
-    
-    	// 深拷贝 papers 数组，确保所有属性都被保存
-    	const papersCopy = gameState.papers.map(paper => {
-        	if (paper === null) return null;
-        	return {
-        	    title: paper.title,
-        	    ideaScore: paper.ideaScore,
-        	    expScore: paper.expScore,
-        	    writeScore: paper.writeScore,
-        	    reviewing: paper.reviewing || false,
-        	    reviewMonths: paper.reviewing ? Math.min(4, Math.max(0, paper.reviewMonths)) : 0,  // 防护：限制在0-4
-        	    submittedGrade: paper.submittedGrade || null,
-        	    submittedScore: paper.submittedScore || 0
-    	    };
-    	});
-    
-    	// 深拷贝 publishedPapers 数组
-    	const publishedPapersCopy = gameState.publishedPapers.map(paper => ({
-    	    title: paper.title,
-    	    grade: paper.grade,
-    	    acceptType: paper.acceptType,
-    	    score: paper.score,
-    	    citations: paper.citations,
-    	    monthsSincePublish: paper.monthsSincePublish || 0,
-    	    promotions: paper.promotions ? { ...paper.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-    	    citationMultiplier: paper.citationMultiplier || 1
-    	}));
-    
-    	// 深拷贝 buffs
-    	const buffsCopy = {
-    	    permanent: gameState.buffs.permanent.map(b => ({ ...b })),
-    	    temporary: gameState.buffs.temporary.map(b => ({ ...b }))
-    	};
-    	
-    	const saveData = {
-    	    // 基础属性
-    	    character: gameState.character,
-    	    characterName: gameState.characterName,
-    	    degree: gameState.degree,
-    	    year: gameState.year,
-    	    month: gameState.month,
-    	    totalMonths: gameState.totalMonths,
-    	    maxYears: gameState.maxYears,
-    	    san: gameState.san,
-    	    sanMax: gameState.sanMax,
-    	    research: gameState.research,
-    	    social: gameState.social,
-    	    favor: gameState.favor,
-    	    gold: gameState.gold,
-        
-    	    // 论文相关
-    	    paperA: gameState.paperA,
-    	    paperB: gameState.paperB,
-    	    paperC: gameState.paperC,
-    	    totalScore: gameState.totalScore,
-    	    totalCitations: gameState.totalCitations,
-    	    publishedPapers: publishedPapersCopy,
-    	    paperSlots: gameState.paperSlots,
-    	    papers: papersCopy,
-        
-    	    // buffs
-    	    buffs: buffsCopy,
-        
-    	    // 状态标记
-    	    actionUsed: gameState.actionUsed,
-    	    readCount: gameState.readCount,
-    	    firstPaperAccepted: gameState.firstPaperAccepted,
-    	    firstAPaperAccepted: gameState.firstAPaperAccepted,
-    	    hasLover: gameState.hasLover,
-    	    loverType: gameState.loverType,
-    	    bigBullCooperation: gameState.bigBullCooperation,
-    	    rejectedCount: gameState.rejectedCount,
-    	    teaBreakCount: gameState.teaBreakCount,
-    	    tourCount: gameState.tourCount,
-    	    metBigBull: gameState.metBigBull,
-    	    metBeautiful: gameState.metBeautiful,
-    	    metSmart: gameState.metSmart,
-    	    bigBullDeepCount: gameState.bigBullDeepCount,
-    	    beautifulCount: gameState.beautifulCount,
-    	    smartCount: gameState.smartCount,
-        
-    	    // 随机事件池
-    	    availableRandomEvents: [...gameState.availableRandomEvents],
-    	    usedRandomEvents: [...gameState.usedRandomEvents],
-        
-    	    // 存档元信息
-    	    shopState: shopState,
-    	    saveTime: timeStr
-    	};
-    
-    	saves[slot] = saveData;
-    	saveSaves(saves);
-    	closeModal();
-    
-    	showModal('✅ 存档成功', `<p style="text-align:center;">游戏已保存到槽位 ${slot + 1}</p>`, 
-    	    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-    
-    	addLog('系统', '游戏已存档', `槽位 ${slot + 1}`);
-	}
-
-	function loadGame(slot) {
-    	const saves = getSaves();
-    	const save = saves[slot];
-    
-    	if (!save) {
-    	    showModal('❌ 读档失败', '<p>该存档不存在！</p>', 
-    	        [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-    	    return;
-    	}
-    
-    	showModal('⚠️ 确认读档', 
-    	    `<p>确定要读取槽位 ${slot + 1} 的存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">当前游戏进度将丢失！</p>`, 
-    	    [
-    	        { text: '取消', class: 'btn-info', action: closeModal },
-    	        { text: '确定读取', class: 'btn-primary', action: () => {
-    	            // 恢复商店状态
-    	            if (save.shopState) {
-    	                save.shopState.forEach(savedItem => {
-    	                    const item = shopItems.find(i => i.id === savedItem.id);
-    	                    if (item) {
-    	                        item.bought = savedItem.bought;
-    	                        item.boughtThisMonth = savedItem.boughtThisMonth;
-    	                    }
-    	                });
-     	           }
-                
-                	// 恢复游戏状态
-                	gameState = {
-                	    character: save.character,
-	                    characterName: save.characterName,
-    	                degree: save.degree,
-        	            year: save.year,
-            	        month: save.month,
-                	    totalMonths: save.totalMonths,
-                    	maxYears: save.maxYears,
-	                    san: save.san,
-    	                sanMax: save.sanMax,
-        	            research: save.research,
-            	        social: save.social,
-                	    favor: save.favor,
-                    	gold: save.gold,
-                    
-	                    paperA: save.paperA,
-    	                paperB: save.paperB,
-        	            paperC: save.paperC,
-            	        totalScore: save.totalScore,
-                	    totalCitations: save.totalCitations,
-                    	publishedPapers: save.publishedPapers.map(p => ({ ...p, promotions: { ...p.promotions } })),
-	                    paperSlots: save.paperSlots,
-    	                papers: save.papers.map(p => {                               // ← 修改为这样
-        	                if (p === null) return null;
-        	                return {
-            	                title: p.title,
-            	                ideaScore: p.ideaScore,
-            	                expScore: p.expScore,
-            	                writeScore: p.writeScore,
-            	                reviewing: p.reviewing || false,
-            	                reviewMonths: p.reviewing ? Math.min(4, Math.max(0, p.reviewMonths || 0)) : 0,
-            	                submittedGrade: p.submittedGrade || null,
-            	                submittedScore: p.submittedScore || 0
-        	                };
-    	                }),
-        	            
-            	        buffs: {
-                	        permanent: save.buffs.permanent.map(b => ({ ...b })),
-                    	    temporary: save.buffs.temporary.map(b => ({ ...b }))
-                    	},
-                    
-	                    actionUsed: save.actionUsed,
-    	                readCount: save.readCount,
-        	            firstPaperAccepted: save.firstPaperAccepted,
-            	        firstAPaperAccepted: save.firstAPaperAccepted,
-                	    hasLover: save.hasLover,
-                    	loverType: save.loverType,
-	                    bigBullCooperation: save.bigBullCooperation,
-    	                rejectedCount: save.rejectedCount,
-        	            teaBreakCount: save.teaBreakCount,
-            	        tourCount: save.tourCount,
-                	    metBigBull: save.metBigBull,
-	                    metBeautiful: save.metBeautiful,
-    	                metSmart: save.metSmart,
-        	            bigBullDeepCount: save.bigBullDeepCount,
-            	        beautifulCount: save.beautifulCount,
-                	    smartCount: save.smartCount,
-                    
-                    	availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
-	                    usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : []
-    	            };
-                
-        	        // 兼容旧存档：如果没有随机事件池则重置
-            	    if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
-                	    if (!gameState.usedRandomEvents || gameState.usedRandomEvents.length === 0) {
-                    	    resetRandomEventPool();
-	                    }
-    	            }
-                
-        	        // 确保界面显示
-            	    document.getElementById('start-screen').classList.add('hidden');
-                	document.getElementById('game-screen').style.display = 'block';
-                
-                    // 更新所有UI
-                    updateAllUI();
-                    renderPaperSlots();
-                
-                    closeModal();
-                    addLog('系统', '读取存档成功', `槽位 ${slot + 1}`);
-                
-                    // 检查是否有到期的审稿需要立即处理
-                    let pendingReviews = [];
-                    gameState.papers.forEach((paper, idx) => {
-                        if (paper && paper.reviewing && paper.reviewMonths <= 0) {
-                            pendingReviews.push(idx);
-                        }
-                    });
-
-                    if (pendingReviews.length > 0) {
-                        // 延迟处理到期的审稿
-                        pendingReviews.forEach((idx, i) => {
-                            setTimeout(() => {
-                                if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
-                                    processPaperResult(idx);
-                                }
-                            }, 500 + i * 300);
-                        });
-                    } else {
-                        // 显示读档成功信息
-                        let reviewingInfo = '';
-                        gameState.papers.forEach((paper, idx) => {
-                            if (paper && paper.reviewing) {
-                                reviewingInfo += `<br>• 槽位${idx + 1}: ${paper.submittedGrade}类审稿中，剩余${paper.reviewMonths}月`;
-                            }
-                        });
-                    
-                        showModal('✅ 读档成功', 
-                            `<p style="text-align:center;">已读取槽位 ${slot + 1} 的存档</p>
-                             <p style="font-size:0.85rem;color:var(--text-secondary);">
-                                当前进度：第${gameState.year}年${gameState.month}月<br>
-                                科研分：${gameState.totalScore}
-                                ${reviewingInfo ? '<br><strong>审稿中的论文：</strong>' + reviewingInfo : ''}
-                             </p>`, 
-                            [{ text: '继续游戏', class: 'btn-primary', action: closeModal }]);
-                    }
-                }}
-            ]
-        );
-    }
-	
+    <!-- 备用方案：如果不蒜子加载失败，显示默认文字 -->
+    <script>
+        setTimeout(function() {
+            var pv = document.getElementById('busuanzi_value_site_pv');
+            var uv = document.getElementById('busuanzi_value_site_uv');
+            if (pv && pv.innerText === '-') {
+                pv.innerText = '统计中';
+            }
+            if (uv && uv.innerText === '-') {
+                uv.innerText = '统计中';
+            }
+        }, 3000);
     </script>
 </body>
 </html>
