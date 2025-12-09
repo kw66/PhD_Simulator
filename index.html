@@ -5257,7 +5257,16 @@
 		// 显示所有结局要求
 		function showEndingRequirements() {
 			let html = '<div style="max-height:60vh;overflow-y:auto;">';
-			// ... html 生成代码保持不变 ...
+			
+			for (const [type, name] of Object.entries(ENDING_NAMES)) {
+				const req = ENDING_REQUIREMENTS[type] || '未知';
+				html += `
+					<div style="padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+						<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">${name}</div>
+						<div style="font-size:0.75rem;color:var(--text-secondary);">${req}</div>
+					</div>
+				`;
+			}
 			html += '</div>';
 			
 			showModal('📜 结局达成要求', html, [{ 
