@@ -816,13 +816,74 @@
     <script>
         // ==================== 游戏数据 ====================
         const characters = [
-            { id: 'normal', name: '大多数', icon: '👤', desc: '芸芸众生中的普通一员', bonus: '没有任何属性变化', stats: {} },
-            { id: 'genius', name: '院士转世', icon: '🔬', desc: '天生就是做科研的料', bonus: '科研能力初始+5', stats: { research: 5 } },
-            { id: 'social', name: '社交达人', icon: '🤝', desc: '八面玲珑的社交高手', bonus: '社交能力初始+5', stats: { social: 5 } },
-            { id: 'rich', name: '富可敌国', icon: '💰', desc: '家境殷实无忧无虑', bonus: '金币值初始+5', stats: { gold: 5 } },
-            { id: 'teacher-child', name: '导师子女', icon: '👨‍👧', desc: '近水楼台先得月', bonus: '导师好感度初始+5', stats: { favor: 5 } },
-            { id: 'chosen', name: '天选之人', icon: '⭐', desc: '命运的宠儿全面发展', bonus: '科研+2 社交+2 好感+2 金币+2', stats: { research: 2, social: 2, favor: 2, gold: 2 } }
+            { 
+                id: 'normal', 
+                name: '大多数', 
+                icon: '👤', 
+                awakenIcon: '🔥',
+                desc: '芸芸众生中的普通一员', 
+                bonus: '没有任何属性变化', 
+                awakenName: '我命由我不由天',
+                awakenDesc: '转博时所有属性×2',
+                stats: {} 
+            },
+            { 
+                id: 'genius', 
+                name: '院士转世', 
+                icon: '🔬', 
+                awakenIcon: '🧬',
+                desc: '天生就是做科研的料', 
+                bonus: '科研能力初始+5', 
+                awakenName: '学术天赋觉醒',
+                awakenDesc: '转博时科研能力+2',
+                stats: { research: 5 } 
+            },
+            { 
+                id: 'social', 
+                name: '社交达人', 
+                icon: '🤝', 
+                awakenIcon: '🌐',
+                desc: '八面玲珑的社交高手', 
+                bonus: '社交能力初始+5', 
+                awakenName: '人脉网络激活',
+                awakenDesc: '转博时社交能力+2',
+                stats: { social: 5 } 
+            },
+            { 
+                id: 'rich', 
+                name: '富可敌国', 
+                icon: '💰', 
+                awakenIcon: '💎',
+                desc: '家境殷实无忧无虑', 
+                bonus: '金币值初始+5', 
+                awakenName: '财富倍增术',
+                awakenDesc: '转博时金币×2',
+                stats: { gold: 5 } 
+            },
+            { 
+                id: 'teacher-child', 
+                name: '导师子女', 
+                icon: '👨‍👧', 
+                awakenIcon: '👑',
+                desc: '近水楼台先得月', 
+                bonus: '导师好感度初始+5', 
+                awakenName: '血脉共鸣',
+                awakenDesc: '转博时导师好感度+2',
+                stats: { favor: 5 } 
+            },
+            { 
+                id: 'chosen', 
+                name: '天选之人', 
+                icon: '⭐', 
+                awakenIcon: '✨',
+                desc: '命运的宠儿全面发展', 
+                bonus: '科研+2 社交+2 好感+2 金币+2', 
+                awakenName: '查缺补漏',
+                awakenDesc: '转博时补齐所有短板',
+                stats: { research: 2, social: 2, favor: 2, gold: 2 } 
+            }
         ];
+
 
         const paperTitleWords = {
             adjectives: ['Deep', 'Neural', 'Efficient', 'Scalable', 'Robust', 'Adaptive', 'Dynamic', 'Multi-modal', 'Self-supervised', 'Federated', 'Attention-based', 'Graph-based', 'Hierarchical', 'Contrastive', 'Progressive', 'Unified'],
@@ -913,11 +974,66 @@
                 });
                 statsInitialized = true;
                 console.log('统计系统初始化成功');
+                
+                // 记录访问
+                recordVisit();
             } catch (e) {
                 console.error('统计系统初始化失败:', e);
             }
         }
 
+        // 记录访问量
+        async function recordVisit() {
+            if (!statsInitialized) return;
+            try {
+                // 检查是否是新访客（用 localStorage 标记）
+                const visitorKey = 'graduate_simulator_visitor';
+                const isNewVisitor = !localStorage.getItem(visitorKey);
+                
+                // 记录 PV（页面访问量）
+                const Visit = AV.Object.extend('SiteVisits');
+                const visit = new Visit();
+                visit.set('type', 'pv');
+                visit.set('url', window.location.hostname);
+                visit.set('timestamp', new Date());
+                await visit.save();
+                
+                // 如果是新访客，记录 UV（独立访客）
+                if (isNewVisitor) {
+                    const uvVisit = new Visit();
+                    uvVisit.set('type', 'uv');
+                    uvVisit.set('url', window.location.hostname);
+                    uvVisit.set('timestamp', new Date());
+                    await uvVisit.save();
+                    localStorage.setItem(visitorKey, 'true');
+                }
+                
+                console.log('访问已记录');
+            } catch (e) {
+                console.error('记录访问失败:', e);
+            }
+        }
+
+        // 获取访问统计
+        async function getVisitStats() {
+            if (!statsInitialized) return { pv: 0, uv: 0 };
+            try {
+                const pvQuery = new AV.Query('SiteVisits');
+                pvQuery.equalTo('type', 'pv');
+                const pvCount = await pvQuery.count();
+                
+                const uvQuery = new AV.Query('SiteVisits');
+                uvQuery.equalTo('type', 'uv');
+                const uvCount = await uvQuery.count();
+                
+                return { pv: pvCount, uv: uvCount };
+            } catch (e) {
+                console.error('获取访问统计失败:', e);
+                return { pv: 0, uv: 0 };
+            }
+        }
+
+        // 记录结局
         async function recordEnding(endingType, endingTitle) {
             if (!statsInitialized) return;
             try {
@@ -931,6 +1047,7 @@
                 ending.set('paperA', gameState.paperA);
                 ending.set('paperB', gameState.paperB);
                 ending.set('paperC', gameState.paperC);
+                ending.set('url', window.location.hostname);
                 await ending.save();
                 console.log('结局已记录:', endingTitle);
             } catch (e) {
@@ -938,6 +1055,7 @@
             }
         }
 
+        // 记录成就
         async function recordAchievements(achievements) {
             if (!statsInitialized || achievements.length === 0) return;
             try {
@@ -946,6 +1064,7 @@
                     const achievement = new Achievement();
                     achievement.set('name', ach);
                     achievement.set('character', gameState.character);
+                    achievement.set('url', window.location.hostname);
                     await achievement.save();
                 }
                 console.log('成就已记录:', achievements);
@@ -954,6 +1073,7 @@
             }
         }
 
+        // 获取全局统计数据
         async function getGlobalStats() {
             if (!statsInitialized) return null;
             try {
@@ -984,6 +1104,7 @@
             }
         }
 
+        // 加载全局统计显示
         async function loadGlobalStatsDisplay() {
             const panel = document.getElementById('global-stats-panel');
             const loading = document.getElementById('stats-loading');
@@ -991,10 +1112,18 @@
             
             panel.style.display = 'block';
             
+            // 加载访问量
+            const visitStats = await getVisitStats();
+            const pvEl = document.getElementById('busuanzi_value_site_pv');
+            const uvEl = document.getElementById('busuanzi_value_site_uv');
+            if (pvEl) pvEl.textContent = visitStats.pv || 0;
+            if (uvEl) uvEl.textContent = visitStats.uv || 0;
+            
+            // 加载游戏统计
             const stats = await getGlobalStats();
             
             if (!stats) {
-                loading.innerHTML = '<span style="color:var(--text-secondary);">统计加载失败</span>';
+                loading.innerHTML = '<span style="color:var(--text-secondary);">暂无统计数据</span>';
                 return;
             }
             
@@ -1073,6 +1202,12 @@
                     <div class="name">${char.name}</div>
                     <div class="desc">${char.desc}</div>
                     <div class="bonus">${char.bonus}</div>
+                    <div class="awaken-info" style="margin-top:8px;padding:6px 8px;background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(118,75,162,0.1));border-radius:6px;border:1px dashed rgba(102,126,234,0.3);">
+                        <div style="font-size:0.65rem;color:var(--primary-color);font-weight:600;margin-bottom:2px;">
+                            <span style="margin-right:3px;">⚡</span>转博觉醒: ${char.awakenIcon} ${char.awakenName}
+                        </div>
+                        <div style="font-size:0.6rem;color:var(--text-secondary);">${char.awakenDesc}</div>
+                    </div>
                 </div>
             `).join('');
         }
@@ -3826,23 +3961,6 @@
 
         // ==================== 启动游戏 ====================
         document.addEventListener('DOMContentLoaded', init);
-    </script>
-
-    <!-- 不蒜子统计脚本 -->
-    <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-    
-    <!-- 备用方案：如果不蒜子加载失败，显示默认文字 -->
-    <script>
-        setTimeout(function() {
-            var pv = document.getElementById('busuanzi_value_site_pv');
-            var uv = document.getElementById('busuanzi_value_site_uv');
-            if (pv && pv.innerText === '-') {
-                pv.innerText = '统计中';
-            }
-            if (uv && uv.innerText === '-') {
-                uv.innerText = '统计中';
-            }
-        }, 3000);
     </script>
 </body>
 </html>
