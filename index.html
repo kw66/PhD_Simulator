@@ -1376,7 +1376,13 @@
             verbs: ['Understanding', 'Generating', 'Predicting', 'Detecting', 'Recognizing', 'Synthesizing', 'Optimizing', 'Training', 'Enhancing', 'Improving'],
             domains: ['Vision', 'Language', 'Speech', 'Text', 'Images', 'Videos', 'Knowledge', 'Data', 'Graphs', 'Medical', '3D', 'Autonomous']
         };
-
+		
+		// 所有可能的buff类型
+		const ALL_BUFF_TYPES = [
+    		'monthly_san', 'exp_times', 'write_san_reduce', 'read_san_reduce',
+    		'idea_bonus', 'exp_bonus', 'write_bonus', 'idea_times', 'write_times', 'citation_multiply'
+		];
+		
         // 商店物品
         const shopItems = [
             { id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
@@ -1436,7 +1442,9 @@
                 beautifulCount: 0,
                 smartCount: 0,
                 availableRandomEvents: [],
-                usedRandomEvents: []
+                usedRandomEvents: [],
+				triggeredBuffTypes: [],
+				coffeeBoughtCount: 0
             };
         }
 
@@ -1616,6 +1624,7 @@
             content.style.display = 'block';
             
             const endingNames = {
+				'quit': '🚪 主动退学',
                 'burnout': '😢 不堪重负',
                 'expelled': '😭 被退学',
                 'poor': '💸 穷困潦倒',
@@ -1653,7 +1662,8 @@
             const allAchievements = [
                 '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
                 '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
-                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器'
+                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器', 
+				'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
             ];
             
             const achievementStatsDiv = document.getElementById('achievement-stats');
@@ -1903,6 +1913,15 @@
             const list = document.getElementById('buff-list');
             const allBuffs = [...gameState.buffs.permanent, ...gameState.buffs.temporary];
             
+			if (!gameState.triggeredBuffTypes) {
+        			gameState.triggeredBuffTypes = [];
+    			}
+    			allBuffs.forEach(buff => {
+        			if (buff.type && !gameState.triggeredBuffTypes.includes(buff.type)) {
+        			    gameState.triggeredBuffTypes.push(buff.type);
+        			}
+    			});
+			
             if (gameState.hasLover) {
                 const loverBuffName = gameState.loverType === 'beautiful' ? '恋人-每月SAN+3' : '恋人-科研加成';
                 allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
@@ -2957,6 +2976,7 @@
                     break;
                 case 'coffee':
                     item.boughtThisMonth = true;
+					gameState.coffeeBoughtCount++;
                     gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
                     result += '，SAN值+2';
                     break;
@@ -3871,7 +3891,8 @@
                 case 'expelled': title = '被退学'; desc = '导师对你彻底失望，你被劝退了...'; emoji = '😭'; break;
                 case 'poor': title = '穷困潦倒'; desc = '你连饭都吃不起了，只能含恨离开...'; emoji = '💸'; break;
                 case 'delay': title = '延毕'; desc = '你没能在规定时间内完成毕业要求，只能延期毕业...'; emoji = '⏰'; break;
-                case 'master':
+                case 'quit': title = '主动退学'; desc = '你决定放弃学业，开启人生新篇章...也许这也是一种勇气。'; emoji = '🚪'; break;
+				case 'master':
                     if (gameState.totalScore >= 4) { 
                         title = '优秀硕士毕业'; 
                         desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
@@ -3928,12 +3949,24 @@
             if (gameState.teaBreakCount >= 3) a.push('☕ 我爱茶歇');
             if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
             if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
+			if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
+			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
+    			a.push('☕ 咖啡爱好者');
+			}
+    		if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
+				a.push('✨ Buff之神');
+			}
             return a;
         }
 
         function showEndingModal(title, desc, emoji) {
             const achievements = collectAchievements();
-            const allAchievements = ['💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器'];
+            const allAchievements = [
+                '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
+                '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
+                '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
+				'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
+            ];
             const locked = allAchievements.filter(x => !achievements.includes(x));
 
             let html = `<div style="text-align:center;margin-bottom:15px;">
@@ -3978,13 +4011,20 @@
 		
 		// ==================== 重开确认 ====================
 		function confirmRestart() {
-		    showModal('⚠️ 确认重开', 
-		        '<p>确定要重新开始游戏吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">当前游戏进度将丢失！</p>', 
-		        [
-		            { text: '取消', class: 'btn-info', action: closeModal },
-		            { text: '确定重开', class: 'btn-danger', action: restartGame }
-		        ]
-		    );
+    		if (gameState.totalMonths > 0) {
+    		    showModal('⚠️ 确认重开', 
+    		        '<p>确定要放弃当前游戏吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">这将触发"主动退学"结局！</p>', 
+    		        [
+    		            { text: '继续游戏', class: 'btn-info', action: closeModal },
+    		            { text: '😢 主动退学', class: 'btn-danger', action: () => {
+                		    closeModal();
+                		    triggerEnding('quit');
+            		    }}
+        		    ]
+    		    );
+    		} else {
+    		    restartGame();
+    		}
 		}
 		
 		
@@ -4211,6 +4251,8 @@
                 
                 availableRandomEvents: [...gameState.availableRandomEvents],
                 usedRandomEvents: [...gameState.usedRandomEvents],
+				triggeredBuffTypes: [...(gameState.triggeredBuffTypes || [])],
+				coffeeBoughtCount: gameState.coffeeBoughtCount || 0,
                 
                 shopState: shopState,
                 saveTime: timeStr
@@ -4318,8 +4360,10 @@
                             smartCount: save.smartCount,
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
-                            usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : []
-                        };
+                            usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
+							triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : []
+							coffeeBoughtCount: save.coffeeBoughtCount || 0
+						};
                         
                         // 兼容旧存档
                         if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
@@ -4446,7 +4490,7 @@
 
         // ==================== 工具函数 ====================
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-        
+		
         function shuffle(arr) {
             const a = [...arr];
             for (let i = a.length - 1; i > 0; i--) {
