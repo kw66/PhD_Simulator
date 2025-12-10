@@ -1516,10 +1516,10 @@
 					icon: '👤', 
 					awakenIcon: '🔥',
 					desc: '芸芸众生中的普通一员', 
-					bonus: '初始属性全5', 
+					bonus: '无特殊能力', 
 					awakenName: '我命由我不由天',
 					awakenDesc: '转博时所有属性×2', 
-					stats: { research: 4, social: 4, favor: 4, gold: 4 }, // 初始全5（基础1+4）
+					stats: { research: 0, social: 0, favor: 0, gold: 0 }, // 初始全5（基础1+4）
 					reversed: {
 						name: '怠惰之《大多数》',
 						icon: '😴',
@@ -2755,8 +2755,9 @@
         }
 
 		function updateGraduation() {
-			document.getElementById('current-year').textContent = `第${gameState.year}年`;
-			document.getElementById('current-month').textContent = `第${gameState.month}月`;
+			// 修复：只输出数字，不要重复添加"第"和"年/月"
+			document.getElementById('current-year').textContent = gameState.year;
+			document.getElementById('current-month').textContent = gameState.month;
 			const remaining = (gameState.maxYears * 12) - gameState.totalMonths;
 			document.getElementById('remaining-time').textContent = remaining;
 			document.getElementById('graduation-target').textContent = 
@@ -5154,52 +5155,43 @@
 				return;
 			}
 			
+			const maxMonths = gameState.maxYears * 12;
+			
+			// 硕士转博检查（在特定时间点且满足条件）
 			if (gameState.degree === 'master') {
+				// 第2年第12月，科研分>=2 或 第3年第12月，科研分>=3
 				if ((gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
 					(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)) {
 					showPhDOptionModal();
 					return;
 				}
 			}
-			const maxMonths = gameState.maxYears * 12;
+			
+			// 毕业时间到了
 			if (gameState.totalMonths >= maxMonths) {
-				if (gameState.degree === 'master' && gameState.totalScore >= 1) triggerEnding('master');
-				else if (gameState.degree === 'phd' && gameState.totalScore >= 7) triggerEnding('phd');
-				else triggerEnding('delay');
+				if (gameState.degree === 'master') {
+					if (gameState.totalScore >= 1) {
+						triggerEnding('master');
+					} else {
+						triggerEnding('delay');
+					}
+				} else if (gameState.degree === 'phd') {
+					if (gameState.totalScore >= 7) {
+						triggerEnding('phd');
+					} else {
+						triggerEnding('delay');
+					}
+				}
+				return;
 			}
 		}
 
 		function showPhDOptionModal() {
-		    // === 天才少年检查 ===
+			// === 天才少年检查 ===
 			if (gameState.totalScore >= 7) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
 				gameState.achievementConditions.phdRequirementMetEarly = true;
 			}
-			const buttons = [
-				{
-					text: '硕士毕业', 
-					class: 'btn-info', 
-					action: () => {
-						// === 人间清醒检查 ===
-						gameState.phdOpportunitiesRejected++;
-						if (gameState.phdOpportunitiesRejected >= 2) {
-							gameState.achievementConditions.rejectedPhdTwice = true;
-						}
-						
-						closeModal(); 
-						triggerEnding('master'); 
-					}
-				},
-				{
-					text: '📚 转为博士', 
-					class: 'btn-primary', 
-					action: () => {
-						gameState.degree = 'phd';
-						gameState.maxYears = 5;
-						closeModal();
-						setTimeout(() => showPhDTribulationModal(), 200);
-					}
-				}
-			];
 			
 			gameState.pendingPhDChoice = true;  // 设置标志位
 			
@@ -5210,6 +5202,12 @@
 				[
 					{ text: '硕士毕业', class: 'btn-info', action: () => { 
 						gameState.pendingPhDChoice = false;
+						// === 人间清醒检查 ===
+						gameState.phdOpportunitiesRejected = (gameState.phdOpportunitiesRejected || 0) + 1;
+						if (gameState.phdOpportunitiesRejected >= 2) {
+							gameState.achievementConditions = gameState.achievementConditions || {};
+							gameState.achievementConditions.rejectedPhdTwice = true;
+						}
 						closeModal(); 
 						triggerEnding('master'); 
 					}},
@@ -6420,7 +6418,7 @@
         // ==================== 日志系统 ====================
 		function addLog(event, detail, result = '') {
 			const logContent = document.getElementById('log-content');
-			const dateStr = `第${gameState.year}年第${gameState.month}月`;  // 修改为"第X年第X月"格式
+			const dateStr = `第${gameState.year}年${gameState.month}月`;  // 修复格式
 			const isNegative = result && (result.includes('-') || result.includes('拒稿') || result.includes('不满') || result.includes('失败') || result.includes('落选'));
 			const entry = document.createElement('div');
 			entry.className = `log-entry ${isNegative ? 'negative' : ''}`;
