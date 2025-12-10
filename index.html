@@ -1804,6 +1804,8 @@
 				pendingPhDChoice: false,
 				pendingConference: null,
 				goldSpentTotal: 0,
+				enterpriseCount: 0,           // 企业交流次数
+				ailabInternship: false,       // 是否在AILab实习
 				
 				// 新增成就相关状态
 				rejectedPapers: {},                    // 记录每篇论文的拒稿次数
@@ -2863,6 +2865,18 @@
 					: '💕聪慧恋人(金-1)';
 				allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
 			}
+			// 🆕 新增：实习状态显示
+			if (gameState.ailabInternship) {
+				const sanCost = gameState.isReversed && gameState.character === 'normal' 
+					? (gameState.reversedAwakened ? 9 : 6) 
+					: 3;
+				allBuffs.push({ 
+					type: 'internship', 
+					name: `🏢AILab实习(金+2,SAN-${sanCost})`, 
+					permanent: true, 
+					isInternship: true 
+				});
+			}
 			
 			if (allBuffs.length === 0) {
 				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
@@ -2906,7 +2920,10 @@
 				if (buff.isLove) {
 					return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
 				}
-				
+				// 🆕 新增：实习buff
+				if (buff.isInternship) {
+					return { name: buff.name, permanent: true, isInternship: true, isDebuff: false };
+				}				
 				// mentorship buff - 直接使用原有的name和desc
 				if (buff.type === 'mentorship') {
 					return { 
@@ -2962,12 +2979,14 @@
 			list.innerHTML = merged.map(buff => {
 				let tagClass = 'buff-tag ';
 				if (buff.isLove) tagClass += 'love';
+				else if (buff.isInternship) tagClass += 'temporary'; // 用蓝色显示
 				else if (buff.isMentorship) tagClass += 'permanent';
 				else if (buff.isDebuff) tagClass += 'debuff';
 				else if (buff.permanent) tagClass += 'permanent';
 				else tagClass += 'temporary';
 				
-				const icon = buff.isLove ? 'fa-heart' : 
+				const icon = buff.isLove ? 'fa-heart' :
+							buff.isInternship ? 'fa-building' :  // 🆕 实习图标				
 							buff.isMentorship ? 'fa-user-graduate' :
 							buff.isDebuff ? 'fa-arrow-down' : 
 							buff.permanent ? 'fa-infinity' : 'fa-clock';
@@ -4058,12 +4077,18 @@
                     updateBuffs();
                     return true;
                 }},
-                { text: '🏢 找企业交流', fn: () => { 
-                    gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
-                    addLog('开会事件', '找企业交流', '临时buff-下次做实验分数×1.25');
-                    updateBuffs();
-                    return true;
-                }},
+				{ text: '🏢 找企业交流', fn: () => { 
+					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					updateBuffs();
+					
+					// 第3次触发实习邀请
+					if (gameState.enterpriseCount === 3 && !gameState.ailabInternship) {
+						setTimeout(() => showAILabInternshipModal(), 300);
+					}
+					return true;
+				}},
                 { text: '🤝 找同学合作', fn: () => { 
                     gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
                     addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
@@ -4146,40 +4171,97 @@
             })));
         }
 
-	function showLoverModal(type) {
-		const desc = type === 'beautiful' 
-			? '你和那个好看的异性学者越来越熟悉了' 
-			: '你和那个聪慧的异性学者越来越默契了';
-		
-		const bonusDesc = type === 'beautiful'
-			? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
-			: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
-		
-		showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>${bonusDesc}`, [
-			{ text: '还是算了', class: 'btn-info', action: closeModal },
-			{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
-				gameState.hasLover = true;
-				gameState.loverType = type;
-				if (type === 'beautiful') {
-					gameState.san = gameState.sanMax;
-					gameState.sanMax += 4;
-					addLog('💕 恋爱', '和好看的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
-				} else {
-					changeResearch(1);
-					gameState.buffs.permanent.push(
-						{ type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
-						{ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
-						{ type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
-					);
-					addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
-					changeSan(1);
-				}
-				closeModal();
-				updateAllUI();
-				updateBuffs();
-			}}
-		]);
-	}
+		function showLoverModal(type) {
+			const desc = type === 'beautiful' 
+				? '你和那个好看的异性学者越来越熟悉了' 
+				: '你和那个聪慧的异性学者越来越默契了';
+			
+			const bonusDesc = type === 'beautiful'
+				? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
+				: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
+			
+			showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>${bonusDesc}`, [
+				{ text: '还是算了', class: 'btn-info', action: closeModal },
+				{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
+					gameState.hasLover = true;
+					gameState.loverType = type;
+					if (type === 'beautiful') {
+						gameState.san = gameState.sanMax;
+						gameState.sanMax += 4;
+						addLog('💕 恋爱', '和好看的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
+					} else {
+						changeResearch(1);
+						gameState.buffs.permanent.push(
+							{ type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
+							{ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
+							{ type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
+						);
+						addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
+						changeSan(1);
+					}
+					closeModal();
+					updateAllUI();
+					updateBuffs();
+				}}
+			]);
+		}
+
+		function showAILabInternshipModal() {
+			const sanCost = gameState.isReversed && gameState.character === 'normal' 
+				? (gameState.reversedAwakened ? 9 : 6) 
+				: 3;
+			
+			showModal('🏢 实习邀请', 
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">🤖</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">上海AI Lab 远程实习邀请</div>
+				</div>
+				<p>你在企业交流中表现出色，AI Lab 的研究员对你印象深刻，向你发出了远程实习邀请！</p>
+				
+				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin:15px 0;">
+					<div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">📋 实习待遇：</div>
+					<div style="display:flex;flex-direction:column;gap:6px;font-size:0.85rem;">
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--success-color);">✓</span>
+							<span>永久buff：做实验分数 ×1.25</span>
+						</div>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--success-color);">✓</span>
+							<span>每月金钱 +2（实习工资）</span>
+						</div>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--danger-color);">✗</span>
+							<span>每月SAN -${sanCost}（工作压力）${sanCost !== 3 ? '（怠惰效果）' : ''}</span>
+						</div>
+					</div>
+				</div>
+				
+				<p style="font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+					远程实习可以兼顾学业，但需要承担额外的工作压力
+				</p>`,
+				[
+					{ text: '婉拒邀请', class: 'btn-info', action: () => {
+						addLog('实习邀请', '婉拒了AI Lab的实习邀请', '专心完成学业');
+						closeModal();
+					}},
+					{ text: '🚀 接受实习', class: 'btn-primary', action: () => {
+						gameState.ailabInternship = true;
+						gameState.buffs.permanent.push({ 
+							type: 'exp_bonus', 
+							name: '实习加成：做实验分数×1.25', 
+							value: 1.25, 
+							multiply: true, 
+							permanent: true 
+						});
+						addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-3');
+						closeModal();
+						updateBuffs();
+						updateAllUI();
+					}}
+				]
+			);
+		}
+
 
         function showBigBullCoopModal() {
             showModal('🌟 联合培养', '<p>大牛对你的科研能力印象深刻，提议与你的导师联合培养你，是否接受？</p>', [
@@ -4408,6 +4490,29 @@
 				}
 			}
 
+			// 🆕 新增：AILab 实习效果
+			if (gameState.ailabInternship) {
+				// 实习工资
+				gameState.gold += 2;
+				
+				// 工作压力（SAN消耗，受怠惰效果影响）
+				const baseSanCost = 3;
+				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+				gameState.san -= actualSanCost;
+				
+				// 富可敌国觉醒：实习工资也算收入，需要阻止
+				if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked) {
+					gameState.gold -= 2; // 撤销增加
+					addLog('逆位效果', '金钱封印', '实习工资被封印');
+				}
+				
+				// 检查 SAN 是否为负
+				if (gameState.san < 0) {
+					triggerEnding('burnout');
+					return;
+				}
+			}
+
             // 人体工学椅效果
             if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
                 gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
@@ -4502,10 +4607,10 @@
                 if (item.monthlyOnce) item.boughtThisMonth = false;
             });
 
-            // 日志
-            if (newYearBonus) {
-                addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
-            }
+			// 日志
+			if (newYearBonus) {
+				addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
+			}
 
 			let logResult = `工资+${salary}，开销-1，休息SAN+${sanRecovery}`;
 			if (extraGold > 0) logResult += `，逆位额外+${extraGold}金`;
@@ -4513,8 +4618,15 @@
 				if (gameState.loverType === 'beautiful') {
 					logResult += '，恋人SAN+3';
 				}
-				logResult += '，约会-1金';  // 新增
+				logResult += '，约会-1金';
 			}
+			// 🆕 新增实习日志
+			if (gameState.ailabInternship) {
+				const actualSanCost = Math.abs(getActualSanChange(-3));
+				logResult += `，实习+2金`;
+				logResult += `，实习SAN-${actualSanCost}`;
+			}
+			
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) logResult += '，工学椅SAN+1';
             addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
 
@@ -5762,7 +5874,7 @@
 			if (gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
 			if (gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
 			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
-			if (gameState.san <= 0 && gameState.gold <= 0) a.push('💪 全力以赴');
+			if (gameState.san <= 0 && gameState.gold == 0) a.push('💪 全力以赴');
 			
 			const requiredTypes = [
 				'A-Poster', 'A-Oral', 'A-Best Paper',
@@ -6347,6 +6459,7 @@
                 usedRandomEvents: [...gameState.usedRandomEvents],
                 triggeredBuffTypes: [...(gameState.triggeredBuffTypes || [])],
                 coffeeBoughtCount: gameState.coffeeBoughtCount || 0,
+				goldSpentTotal: gameState.goldSpentTotal || 0,
                 
                 isReversed: gameState.isReversed,
                 reversedAwakened: gameState.reversedAwakened,
@@ -6356,6 +6469,8 @@
 				
 				pendingPhDChoice: gameState.pendingPhDChoice || false,
 				pendingConference: gameState.pendingConference || null,
+				enterpriseCount: gameState.enterpriseCount || 0,
+				ailabInternship: gameState.ailabInternship || false,
 				
 				rejectedPapers: {...gameState.rejectedPapers},
 				maxConcurrentReviews: gameState.maxConcurrentReviews,
@@ -6467,6 +6582,8 @@
                             bigBullDeepCount: save.bigBullDeepCount,
                             beautifulCount: save.beautifulCount,
                             smartCount: save.smartCount,
+							enterpriseCount: save.enterpriseCount || 0,
+							ailabInternship: save.ailabInternship || false,
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
