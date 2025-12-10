@@ -2882,12 +2882,18 @@
 				
 				if (mergedMap[key]) {
 					if (buff.multiply) {
-						mergedMap[key].value *= buff.value;
+						// 修改：使用加法叠加乘法buff，×2 + ×2 = ×3
+						mergedMap[key].value += (buff.value - 1);
 					} else {
 						mergedMap[key].value += buff.value;
 					}
 				} else {
 					mergedMap[key] = { ...buff };
+				}
+				
+				// 确保乘数最小为0，不能为负数
+				if (buff.multiply && mergedMap[key].value < 0) {
+					mergedMap[key].value = 0;
 				}
 			});
 			
@@ -3591,21 +3597,27 @@
 		}
 
 
-        function calculateScore(type) {
-            const base = gameState.research * (0.5 + Math.random());
-            const randomBonus = Math.floor(Math.random() * 6);
-            let score = Math.round(base + randomBonus);
+		function calculateScore(type) {
+			const base = gameState.research * (0.5 + Math.random());
+			const randomBonus = Math.floor(Math.random() * 6);
+			let score = Math.round(base + randomBonus);
 
-            let bonus = 0, multiplier = 1;
-            const buffType = type + '_bonus';
-            [...gameState.buffs.permanent, ...gameState.buffs.temporary].forEach(b => {
-                if (b.type === buffType) {
-                    if (b.multiply) multiplier *= b.value;
-                    else bonus += b.value;
-                }
-            });
-            return Math.max(0, Math.round(score * multiplier + bonus));
-        }
+			let bonus = 0, multiplier = 1;
+			const buffType = type + '_bonus';
+			[...gameState.buffs.permanent, ...gameState.buffs.temporary].forEach(b => {
+				if (b.type === buffType) {
+					if (b.multiply) {
+						// 使用加法叠加：×2 + ×2 = ×3
+						multiplier += (b.value - 1);
+					} else {
+						bonus += b.value;
+					}
+				}
+			});
+			// 乘数最小为0
+			multiplier = Math.max(0, multiplier);
+			return Math.max(0, Math.round(score * multiplier + bonus));
+		}
 
         function countBuff(type) {
             let count = 0;
