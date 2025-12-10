@@ -49,6 +49,10 @@
             --text-primary: #e0e0e0;
             --text-secondary: #a0a0a0;
             --border-color: #444;
+			--achievement-text: #f0e6ff;         /* 浅紫色文字 */
+			--achievement-bg: #2d1a36;          /* 深紫色背景 */
+			--achievement-border: #8e44ad;      /* 中等紫色边框 */
+			--achievement-shadow: 0 2px 8px rgba(155, 89, 182, 0.3); /* 紫色阴影 */
         }
 
         body.reversed-theme #start-screen {
@@ -341,6 +345,52 @@
             color: #888 !important;
             border: none;
         }
+		
+		/* 基础成就样式 */
+		.achievement-item {
+			padding: 6px 12px;
+			border-radius: 16px;
+			font-size: 0.8rem;
+			margin: 4px;
+			display: inline-block;
+		}
+
+		/* 正位模式样式（保留原有） */
+		body:not(.reversed-theme) .achievement-item {
+			background: linear-gradient(135deg, #fdcb6e33, #ffeaa733);
+			color: #2d3436;
+			border: 1px solid #fdcb6e;
+		}
+
+		/* 逆位模式新样式 */
+		body.reversed-theme .achievement-item {
+			background: var(--achievement-bg);
+			color: var(--achievement-text);
+			border: 1px solid var(--achievement-border);
+			box-shadow: var(--achievement-shadow);
+		}
+
+		/* 未解锁成就 */
+		body.reversed-theme .locked-achievement {
+			background: #1e1525;
+			color: #a0a0a0;
+			border: 1px dashed #6c3483;
+			opacity: 0.7;
+		}	
+		
+		body.reversed-theme .achievement-item {
+			transition: all 0.3s ease;
+		}
+
+		body.reversed-theme .achievement-item:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(155, 89, 182, 0.5);
+		}
+
+		body.reversed-theme .locked-achievement:hover {
+			color: #c0c0c0 !important;
+			border-style: solid;
+		}		
 
         /* 弹窗样式 */
         .modal-overlay {
@@ -1687,37 +1737,39 @@
             }
         }
 
-        async function getVisitStats() {
-            if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
-                return visitStatsCache;
-            }
-            
-            if (!supabase) return { pv: 0, uv: 0 };
-            
-            try {
-                const { count: pvCount, error: pvError } = await supabase
-                    .from('site_visits')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('type', 'pv');
-                
-                if (pvError) throw pvError;
-                
-                const { count: uvCount, error: uvError } = await supabase
-                    .from('site_visits')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('type', 'uv');
-                    
-                if (uvError) throw uvError;
-                
-                visitStatsCache = { pv: pvCount || 0, uv: uvCount || 0 };
-                visitStatsCacheTime = Date.now();
-                
-                return visitStatsCache;
-            } catch (e) {
-                console.error('获取访问统计失败:', e);
-                return visitStatsCache || { pv: 0, uv: 0 };
-            }
-        }
+		// ==================== 修改后的 getVisitStats 函数 ====================
+		async function getVisitStats() {
+			if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
+				return visitStatsCache;
+			}
+			
+			if (!supabase) return { pv: 0, uv: 0 };
+			
+			try {
+				// 使用 count 查询，这个不受 1000 限制
+				const { count: pvCount, error: pvError } = await supabase
+					.from('site_visits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'pv');
+				
+				if (pvError) throw pvError;
+				
+				const { count: uvCount, error: uvError } = await supabase
+					.from('site_visits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'uv');
+					
+				if (uvError) throw uvError;
+				
+				visitStatsCache = { pv: pvCount || 0, uv: uvCount || 0 };
+				visitStatsCacheTime = Date.now();
+				
+				return visitStatsCache;
+			} catch (e) {
+				console.error('获取访问统计失败:', e);
+				return visitStatsCache || { pv: 0, uv: 0 };
+			}
+		}
 
         async function recordEnding(endingType, endingTitle) {
             if (!supabase) return;
@@ -1759,63 +1811,93 @@
             }
         }
 
-        async function getGlobalStats() {
-            if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
-                console.log('使用缓存的全球统计');
-                return statsCache;
-            }
-            
-            if (!supabase) return null;
-            
-            try {
-                const stats = {
-                    normal: { endings: {}, achievements: {}, characterEndings: {} },
-                    reversed: { endings: {}, achievements: {}, characterEndings: {} }
-                };
+		// ==================== 分页获取所有数据的辅助函数 ====================
+		async function fetchAllRows(tableName, selectColumns) {
+			if (!supabase) return [];
+			
+			let allData = [];
+			let from = 0;
+			const pageSize = 1000;
+			
+			while (true) {
+				const { data, error } = await supabase
+					.from(tableName)
+					.select(selectColumns)
+					.range(from, from + pageSize - 1);
+				
+				if (error) {
+					console.error(`获取 ${tableName} 数据失败:`, error);
+					throw error;
+				}
+				
+				if (!data || data.length === 0) break;
+				
+				allData = allData.concat(data);
+				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
+				
+				// 如果返回的数据少于 pageSize，说明已经是最后一页
+				if (data.length < pageSize) break;
+				
+				from += pageSize;
+			}
+			
+			return allData;
+		}
+		
+		// ==================== 修改后的 getGlobalStats 函数 ====================
+		async function getGlobalStats() {
+			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
+				console.log('使用缓存的全球统计');
+				return statsCache;
+			}
+			
+			if (!supabase) return null;
+			
+			try {
+				const stats = {
+					normal: { endings: {}, achievements: {}, characterEndings: {} },
+					reversed: { endings: {}, achievements: {}, characterEndings: {} }
+				};
 
-                const { data: endings, error: endingsError } = await supabase
-                    .from('game_endings')
-                    .select('ending_type, is_reversed, character');
-                    
-                if (endingsError) throw endingsError;
-                
-                endings?.forEach(e => {
-                    const mode = e.is_reversed ? 'reversed' : 'normal';
-                    const type = e.ending_type;
-                    const character = e.character;
-                    
-                    stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
-                    
-                    if (!stats[mode].characterEndings[character]) {
-                        stats[mode].characterEndings[character] = { total: 0, hard: 0 };
-                    }
-                    stats[mode].characterEndings[character].total++;
-                    if (HARD_ENDINGS.includes(type)) {
-                        stats[mode].characterEndings[character].hard++;
-                    }
-                });
+				// 使用分页获取所有结局数据
+				const endings = await fetchAllRows('game_endings', 'ending_type, is_reversed, character');
+				console.log(`总共获取 ${endings.length} 条结局记录`);
+				
+				endings.forEach(e => {
+					const mode = e.is_reversed ? 'reversed' : 'normal';
+					const type = e.ending_type;
+					const character = e.character;
+					
+					stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
+					
+					if (!stats[mode].characterEndings[character]) {
+						stats[mode].characterEndings[character] = { total: 0, hard: 0 };
+					}
+					stats[mode].characterEndings[character].total++;
+					if (HARD_ENDINGS.includes(type)) {
+						stats[mode].characterEndings[character].hard++;
+					}
+				});
 
-                const { data: achievements, error: achievementsError } = await supabase
-                    .from('game_achievements')
-                    .select('achievement_name, is_reversed');
-                    
-                if (achievementsError) throw achievementsError;
-                
-                achievements?.forEach(a => {
-                    const mode = a.is_reversed ? 'reversed' : 'normal';
-                    const name = a.achievement_name;
-                    stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
-                });
+				// 使用分页获取所有成就数据
+				const achievements = await fetchAllRows('game_achievements', 'achievement_name, is_reversed');
+				console.log(`总共获取 ${achievements.length} 条成就记录`);
+				
+				achievements.forEach(a => {
+					const mode = a.is_reversed ? 'reversed' : 'normal';
+					const name = a.achievement_name;
+					stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
+				});
 
-                statsCache = stats;
-                statsCacheTime = Date.now();
-                
-                return stats;
-            } catch (e) {
-                console.error('获取统计失败:', e);
-                return statsCache || null;
-            }
-        }
+				statsCache = stats;
+				statsCacheTime = Date.now();
+				
+				return stats;
+			} catch (e) {
+				console.error('获取统计失败:', e);
+				return statsCache || null;
+			}
+		}
 
         function calculateCharacterDifficulty(stats) {
             const difficultyData = {};
@@ -3752,6 +3834,7 @@
             gameState.actionUsed = false;
             gameState.month++;
             gameState.totalMonths++;
+					
 
             let newYearBonus = false;
             if (gameState.month > 12) {
@@ -3897,10 +3980,11 @@
 				triggerSummerVacationEvent();
 			} else if (gameState.month === 1 && gameState.year >= 2) {  // 奖学金在每年第1个月（从第二年开始）
 				triggerScholarshipEvent();
+			} else if (gameState.month === 2) {
+			    triggerTeachersDayEvent();
 			} else if (gameState.month % 2 === 0) {
 				triggerOtherRandomEvent();
 			}
-
             // 检查毕业
             checkGraduation();
 
@@ -5004,19 +5088,26 @@
                 </div>
             </div>`;
 
-            if (achievements.length > 0) {
-                html += `<div style="background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(255,234,167,0.2));border-radius:12px;padding:12px;margin-bottom:10px;">
-                    <div style="font-weight:600;margin-bottom:8px;color:#d68910;font-size:0.85rem;display:flex;align-items:center;justify-content:space-between;">
-                        <span><i class="fas fa-trophy"></i> 达成成就 (${achievements.length})</span>
-                        <span style="font-size:0.7rem;color:var(--text-secondary);cursor:pointer;" onclick="showAchievementRequirements()">
-                            <i class="fas fa-question-circle"></i> 查看要求
-                        </span>
-                    </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                        ${achievements.map(a => `<span style="padding:4px 8px;background:white;border-radius:15px;font-size:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);cursor:pointer;" onclick="showSingleAchievementRequirement('${a}')">${a}</span>`).join('')}
-                    </div>
-                </div>`;
-            }
+			if (achievements.length > 0) {
+				html += `
+				<div class="achievements-container" 
+					 style="margin: 15px 0; background: ${gameState.isReversed ? 'rgba(46, 34, 56, 0.5)' : 'rgba(253, 203, 110, 0.1)'}; 
+							border-radius: 12px; 
+							padding: 12px;">
+					<div style="font-weight: 600; 
+							   margin-bottom: 8px; 
+							   color: ${gameState.isReversed ? '#d7bde2' : '#d68910'};">
+						<i class="fas fa-trophy"></i> 达成成就 (${achievements.length})
+					</div>
+					<div style="display: flex; flex-wrap: wrap; gap: 6px;">
+						${achievements.map(a => `
+							<span class="${gameState.isReversed ? 'achievement-item reversed-achievement' : 'achievement-item'}">
+								${a}
+							</span>
+						`).join('')}
+					</div>
+				</div>`;
+			}
 
             if (locked.length > 0) {
                 html += `<div style="background:var(--light-bg);border-radius:12px;padding:12px;margin-bottom:10px;">
