@@ -353,16 +353,24 @@
 			font-size: 0.8rem;
 			margin: 4px;
 			display: inline-block;
+			cursor: pointer;  /* ★ 新增：手型指针 */
+			transition: all 0.3s ease;  /* ★ 新增：过渡动画 */
 		}
 
-		/* 正位模式样式（保留原有） */
+		/* 正位模式样式 */
 		body:not(.reversed-theme) .achievement-item {
 			background: linear-gradient(135deg, #fdcb6e33, #ffeaa733);
 			color: #2d3436;
 			border: 1px solid #fdcb6e;
 		}
 
-		/* 逆位模式新样式 */
+		/* ★ 新增：正位模式悬停效果 */
+		body:not(.reversed-theme) .achievement-item:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(253, 203, 110, 0.5);
+		}
+
+		/* 逆位模式样式 */
 		body.reversed-theme .achievement-item {
 			background: linear-gradient(135deg, #6c3483, #4a235a);
 			color: #ffffff;
@@ -370,6 +378,12 @@
 			box-shadow: 0 2px 10px rgba(155, 89, 182, 0.5);
 			font-weight: 500;
 			text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+		}
+
+		/* 逆位模式悬停效果 */
+		body.reversed-theme .achievement-item:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(155, 89, 182, 0.5);
 		}
 
 		/* 未解锁成就 */
@@ -3409,24 +3423,48 @@
             checkResearchUnlock();
         }
 
-        function updateCitations() {
-            gameState.publishedPapers.forEach(paper => {
-                paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
-                let shouldUpdate = false;
-                if (paper.grade === 'A') shouldUpdate = true;
-                else if (paper.grade === 'B' && paper.monthsSincePublish % 3 === 0) shouldUpdate = true;
-                else if (paper.grade === 'C' && paper.monthsSincePublish % 6 === 0) shouldUpdate = true;
+		function updateCitations() {
+			gameState.publishedPapers.forEach(paper => {
+				paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
+				
+				// ★★★ 新增：计算引用衰减系数 ★★★
+				// 模拟论文热度曲线：先升后降
+				let decayFactor;
+				const age = paper.monthsSincePublish;
+				
+				if (age <= 6) {
+					// 初期：热度上升期，系数从0.8升到1.2
+					decayFactor = 0.8 + (age / 6) * 0.4;
+				} else if (age <= 18) {
+					// 高峰期：系数从1.2逐渐降到0.6
+					decayFactor = 1.2 - ((age - 6) / 12) * 0.6;
+				} else if (age <= 36) {
+					// 衰减期：系数从0.6降到0.3
+					decayFactor = 0.6 - ((age - 18) / 18) * 0.3;
+				} else {
+					// 长尾期：维持0.2的最低增长
+					decayFactor = 0.2;
+				}
+				
+				let shouldUpdate = false;
+				if (paper.grade === 'A') shouldUpdate = true;
+				else if (paper.grade === 'B' && paper.monthsSincePublish % 3 === 0) shouldUpdate = true;
+				else if (paper.grade === 'C' && paper.monthsSincePublish % 6 === 0) shouldUpdate = true;
 
-                if (shouldUpdate) {
-                    let gain = Math.round(paper.score / 10);
-                    if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
-                    if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
-                    gain = Math.round(gain * (paper.citationMultiplier || 1));
-                    paper.citations += gain;
-                    gameState.totalCitations += gain;
-                }
-            });
-        }
+				if (shouldUpdate) {
+					let gain = Math.round(paper.score / 10);
+					if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
+					if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
+					gain = Math.round(gain * (paper.citationMultiplier || 1));
+					
+					// ★★★ 应用衰减系数 ★★★
+					gain = Math.max(1, Math.round(gain * decayFactor));
+					
+					paper.citations += gain;
+					gameState.totalCitations += gain;
+				}
+			});
+		}
 		
         // ==================== 毕业检查 ====================
         function checkGraduation() {
