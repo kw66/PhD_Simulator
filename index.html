@@ -3016,48 +3016,66 @@
 			
 			switch(type) {
 				case 'arxiv': {
-					const baseSanCost = -3;
-					const actualSanCost = getActualSanChange(baseSanCost);
-					if (gameState.san + actualSanCost < 0) {
-						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+					const baseSanCost = 3;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.arxiv = true;
 					paper.citationMultiplier *= 1.25;
-					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度×1.25`;
-					canProceed = changeSan(baseSanCost);
+					canProceed = changeSan(-baseSanCost);
 					break;
 				}
 				case 'github': {
-					const baseSanCost = -6;
-					const actualSanCost = getActualSanChange(baseSanCost);
-					if (gameState.san + actualSanCost < 0) {
-						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+					const baseSanCost = 6;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.github = true;
 					paper.citationMultiplier *= 1.5;
-					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度×1.5`;
-					canProceed = changeSan(baseSanCost);
+					canProceed = changeSan(-baseSanCost);
 					break;
 				}
 				case 'xiaohongshu': {
-					const baseSanCost = -3;
-					const actualSanCost = getActualSanChange(baseSanCost);
-					if (gameState.san + actualSanCost < 0) {
-						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+					const baseSanCost = 3;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.xiaohongshu = true;
 					paper.citationMultiplier *= 1.25;
-					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度×1.25`;
-					canProceed = changeSan(baseSanCost);
+					canProceed = changeSan(-baseSanCost);
 					break;
 				}
 				case 'quantumbit':
@@ -3066,7 +3084,7 @@
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
-					if (gameState.gold - 10 < 0) {
+					if (gameState.gold < 10) {
 						showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
@@ -3193,16 +3211,27 @@
         // ==================== 操作功能 ====================
 		function readPaper() {
 			if (gameState.actionUsed) return;
-			gameState.actionUsed = true;
 			
 			const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
-			const baseSanCost = has4K ? -1 : -2;
-			const actualSanCost = getActualSanChange(baseSanCost);
+			const baseSanCost = has4K ? 1 : 2;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			// SAN不足保护
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			gameState.actionUsed = true;
 			
 			gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
 			gameState.readCount++;
 
-			let result = `SAN值${actualSanCost}`;
+			let result = `SAN值-${actualSanCost}`;
 			if (has4K) result += '（4K显示器生效）';
 			if (actualSanCost !== baseSanCost) {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
@@ -3216,28 +3245,53 @@
 
 			addLog('看论文', '认真阅读了学术论文', result);
 			updateBuffs();
-			changeSan(baseSanCost);
+			changeSan(-baseSanCost);
 		}
 
 		function partTimeJob() {
 			if (gameState.actionUsed) return;
+			
+			const baseSanCost = 5;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			// SAN不足保护
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			gameState.actionUsed = true;
 			
-			const baseSanCost = -5;
-			const actualSanCost = getActualSanChange(baseSanCost);
-			
-			let result = `SAN值${actualSanCost}`;
+			let result = `SAN值-${actualSanCost}`;
 			if (actualSanCost !== baseSanCost) {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
 			result += '，金钱+2';
 			
 			addLog('打工', '辛苦工作赚取生活费', result);
-			changeStats({ san: baseSanCost, gold: 2 });
+			changeStats({ san: -baseSanCost, gold: 2 });
 		}
 
 		function thinkIdea() {
 			if (gameState.actionUsed) return;
+			
+			const baseSanCost = 2;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			// SAN不足保护
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing);
 			if (available.length === 0) {
@@ -3249,9 +3303,6 @@
 				gameState.actionUsed = true;
 				const paper = gameState.papers[index];
 				
-				const baseSanCost = -2;
-				const actualSanCost = getActualSanChange(baseSanCost);
-				
 				let times = 1 + countBuff('idea_times');
 				let bestScore = paper.ideaScore;
 				let lastGen = 0;
@@ -3261,7 +3312,7 @@
 					if (gen > bestScore) bestScore = gen;
 				}
 				
-				let result = `SAN值${actualSanCost}`;
+				let result = `SAN值-${actualSanCost}`;
 				if (actualSanCost !== baseSanCost) {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
@@ -3277,12 +3328,26 @@
 				consumeTempBuff('idea_bonus');
 				addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
 				renderPaperSlots();
-				changeSan(baseSanCost);
+				changeSan(-baseSanCost);
 			});
 		}
 
 		function doExperiment() {
 			if (gameState.actionUsed) return;
+			
+			const baseSanCost = 3;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			// SAN不足保护
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
 			if (available.length === 0) {
@@ -3294,9 +3359,6 @@
 				gameState.actionUsed = true;
 				const paper = gameState.papers[index];
 				
-				const baseSanCost = -3;
-				const actualSanCost = getActualSanChange(baseSanCost);
-				
 				let times = 1 + countBuff('exp_times');
 				let bestScore = paper.expScore;
 				let lastGen = 0;
@@ -3306,7 +3368,7 @@
 					if (gen > bestScore) bestScore = gen;
 				}
 				
-				let result = `SAN值${actualSanCost}`;
+				let result = `SAN值-${actualSanCost}`;
 				if (actualSanCost !== baseSanCost) {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
@@ -3322,12 +3384,27 @@
 				consumeTempBuff('exp_bonus');
 				addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
 				renderPaperSlots();
-				changeSan(baseSanCost);
+				changeSan(-baseSanCost);
 			});
 		}
 
 		function writePaper() {
 			if (gameState.actionUsed) return;
+			
+			const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
+			const baseSanCost = hasKeyboard ? 3 : 4;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			// SAN不足保护
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
 			if (available.length === 0) {
@@ -3337,9 +3414,6 @@
 			}
 			showPaperSelectModal('写论文', available, (index) => {
 				gameState.actionUsed = true;
-				const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-				const baseSanCost = hasKeyboard ? -3 : -4;
-				const actualSanCost = getActualSanChange(baseSanCost);
 				const paper = gameState.papers[index];
 				
 				let times = 1 + countBuff('write_times');
@@ -3351,7 +3425,7 @@
 					if (gen > bestScore) bestScore = gen;
 				}
 				
-				let result = `SAN值${actualSanCost}`;
+				let result = `SAN值-${actualSanCost}`;
 				if (hasKeyboard) result += '（机械键盘生效）';
 				if (actualSanCost !== baseSanCost) {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
@@ -3368,7 +3442,7 @@
 				consumeTempBuff('write_bonus');
 				addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
 				renderPaperSlots();
-				changeSan(baseSanCost);
+				changeSan(-baseSanCost);
 			});
 		}
 
@@ -3908,71 +3982,77 @@
             showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
         }
 
-        function buyItem(id) {
-            const item = shopItems.find(i => i.id === id);
-            if (!item || gameState.gold < item.price) return;
-            
-            gameState.gold -= item.price;
-            let result = `金钱-${item.price}`;
-            
-            switch (id) {
-                case 'chair':
-                    item.bought = true;
-                    gameState.buffs.permanent.push({ type: 'monthly_san', name: '每月SAN值+1', value: 1, permanent: true });
-                    result += '，获得永久buff-每月SAN值+1';
-                    break;
-                case 'gpu_rent':
-                    gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做1次', value: 1, permanent: false });
-                    result += '，获得临时buff-下次做实验多做1次';
-                    break;
-                case 'gpu_buy':
-                    gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true });
-                    result += '，获得永久buff-每次做实验多做1次';
-                    break;
-                case 'keyboard':
-                    item.bought = true;
-                    gameState.buffs.permanent.push({ type: 'write_san_reduce', name: '写论文SAN-3', value: 1, permanent: true });
-                    result += '，获得永久buff-每次写论文变为SAN值-3';
-                    break;
-                case 'monitor':
-                    item.bought = true;
-                    gameState.buffs.permanent.push({ type: 'read_san_reduce', name: '读论文SAN-1', value: 1, permanent: true });
-                    result += '，获得永久buff-读论文变为SAN值-1';
-                    break;
-                case 'coffee':
-                    item.boughtThisMonth = true;
-                    gameState.coffeeBoughtCount++;
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-                    result += '，SAN值+2';
-                    break;
-                case 'polish':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次论文写作分数+5', value: 5, permanent: false });
-                    result += '，获得临时buff-下次论文写作分数+5';
-                    break;
-                case 'gemini':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次想idea分数+4';
-                    break;
-                case 'gpt':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次写论文分数+4';
-                    break;
-                case 'claude':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次做实验分数+4';
-                    break;
-            }
-            
-            addLog('购买', `购买了${item.name}`, result);
-            closeModal();
-            openShop();
-            updateAllUI();
-            updateBuffs();
-        }
+		function buyItem(id) {
+			const item = shopItems.find(i => i.id === id);
+			if (!item) return;
+			
+			if (gameState.gold < item.price) {
+				showModal('❌ 购买失败', `<p>金钱不足！购买${item.name}需要${item.price}金币，当前只有${gameState.gold}金币。</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			gameState.gold -= item.price;
+			let result = `金钱-${item.price}`;
+			
+			switch (id) {
+				case 'chair':
+					item.bought = true;
+					gameState.buffs.permanent.push({ type: 'monthly_san', name: '每月SAN值+1', value: 1, permanent: true });
+					result += '，获得永久buff-每月SAN值+1';
+					break;
+				case 'gpu_rent':
+					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做1次', value: 1, permanent: false });
+					result += '，获得临时buff-下次做实验多做1次';
+					break;
+				case 'gpu_buy':
+					gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true });
+					result += '，获得永久buff-每次做实验多做1次';
+					break;
+				case 'keyboard':
+					item.bought = true;
+					gameState.buffs.permanent.push({ type: 'write_san_reduce', name: '写论文SAN-3', value: 1, permanent: true });
+					result += '，获得永久buff-每次写论文变为SAN值-3';
+					break;
+				case 'monitor':
+					item.bought = true;
+					gameState.buffs.permanent.push({ type: 'read_san_reduce', name: '读论文SAN-1', value: 1, permanent: true });
+					result += '，获得永久buff-读论文变为SAN值-1';
+					break;
+				case 'coffee':
+					item.boughtThisMonth = true;
+					gameState.coffeeBoughtCount++;
+					gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+					result += '，SAN值+2';
+					break;
+				case 'polish':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次论文写作分数+5', value: 5, permanent: false });
+					result += '，获得临时buff-下次论文写作分数+5';
+					break;
+				case 'gemini':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
+					result += '，获得临时buff-下次想idea分数+4';
+					break;
+				case 'gpt':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+4', value: 4, permanent: false });
+					result += '，获得临时buff-下次写论文分数+4';
+					break;
+				case 'claude':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+4', value: 4, permanent: false });
+					result += '，获得临时buff-下次做实验分数+4';
+					break;
+			}
+			
+			addLog('购买', `购买了${item.name}`, result);
+			closeModal();
+			openShop();
+			updateAllUI();
+			updateBuffs();
+		}
 
         // ==================== 下一个月 ====================
         function nextMonth() {
