@@ -2342,6 +2342,15 @@
         }
 
         // ==================== 通用属性修改函数（支持逆位）====================
+		// 计算实际SAN变化值（考虑怠惰之大多数的翻倍效果）
+		function getActualSanChange(delta) {
+			if (gameState.isReversed && gameState.character === 'normal' && delta < 0) {
+				const multiplier = gameState.reversedAwakened ? 3 : 2;
+				return delta * multiplier;
+			}
+			return delta;
+		}
+		
         function changeSan(delta) {
             if (gameState.isReversed && gameState.character === 'normal' && delta < 0) {
                 const multiplier = gameState.reversedAwakened ? 3 : 2;
@@ -3170,153 +3179,187 @@
         }
 
         // ==================== 操作功能 ====================
-        function readPaper() {
-            if (gameState.actionUsed) return;
-            gameState.actionUsed = true;
-            
-            const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
-            const sanCost = has4K ? -1 : -2;
-            
-            gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
-            gameState.readCount++;
+		function readPaper() {
+			if (gameState.actionUsed) return;
+			gameState.actionUsed = true;
+			
+			const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
+			const baseSanCost = has4K ? -1 : -2;
+			const actualSanCost = getActualSanChange(baseSanCost);
+			
+			gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
+			gameState.readCount++;
 
-            let result = `SAN值${sanCost}${has4K ? '（4K显示器生效）' : ''}，获得临时buff：下次想idea分数+1`;
+			let result = `SAN值${actualSanCost}`;
+			if (has4K) result += '（4K显示器生效）';
+			if (actualSanCost !== baseSanCost) {
+				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+			}
+			result += '，获得临时buff：下次想idea分数+1';
 
-            if (gameState.readCount % 5 === 0) {
-                changeResearch(1);
-                result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
-            }
+			if (gameState.readCount % 5 === 0) {
+				changeResearch(1);
+				result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
+			}
 
-            addLog('看论文', '认真阅读了学术论文', result);
-            updateBuffs();
-            changeSan(sanCost);
-        }
+			addLog('看论文', '认真阅读了学术论文', result);
+			updateBuffs();
+			changeSan(baseSanCost);
+		}
 
-        function partTimeJob() {
-            if (gameState.actionUsed) return;
-            gameState.actionUsed = true;
-            addLog('打工', '辛苦工作赚取生活费', 'SAN值-5，金钱+2');
-            changeStats({ san: -5, gold: 2 });
-        }
+		function partTimeJob() {
+			if (gameState.actionUsed) return;
+			gameState.actionUsed = true;
+			
+			const baseSanCost = -5;
+			const actualSanCost = getActualSanChange(baseSanCost);
+			
+			let result = `SAN值${actualSanCost}`;
+			if (actualSanCost !== baseSanCost) {
+				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+			}
+			result += '，金钱+2';
+			
+			addLog('打工', '辛苦工作赚取生活费', result);
+			changeStats({ san: baseSanCost, gold: 2 });
+		}
 
-        function thinkIdea() {
-            if (gameState.actionUsed) return;
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('想idea', available, (index) => {
-                gameState.actionUsed = true;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('idea_times');
-                let bestScore = paper.ideaScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('idea');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值-2`;
-                if (times > 1) result += `（想${times}次）`;
-                if (bestScore > paper.ideaScore) {
-                    paper.ideaScore = bestScore;
-                    result += `，idea分更新为${bestScore}`;
-                } else {
-                    result += `，idea分未更新（生成${lastGen}，当前${paper.ideaScore}）`;
-                }
-                
-                consumeTempBuff('idea_times');
-                consumeTempBuff('idea_bonus');
-                addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
-                renderPaperSlots();
-                changeSan(-2);
-            });
-        }
+		function thinkIdea() {
+			if (gameState.actionUsed) return;
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			showPaperSelectModal('想idea', available, (index) => {
+				gameState.actionUsed = true;
+				const paper = gameState.papers[index];
+				
+				const baseSanCost = -2;
+				const actualSanCost = getActualSanChange(baseSanCost);
+				
+				let times = 1 + countBuff('idea_times');
+				let bestScore = paper.ideaScore;
+				let lastGen = 0;
+				for (let i = 0; i < times; i++) {
+					const gen = calculateScore('idea');
+					lastGen = gen;
+					if (gen > bestScore) bestScore = gen;
+				}
+				
+				let result = `SAN值${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (times > 1) result += `（想${times}次）`;
+				if (bestScore > paper.ideaScore) {
+					paper.ideaScore = bestScore;
+					result += `，idea分更新为${bestScore}`;
+				} else {
+					result += `，idea分未更新（生成${lastGen}，当前${paper.ideaScore}）`;
+				}
+				
+				consumeTempBuff('idea_times');
+				consumeTempBuff('idea_bonus');
+				addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
+				renderPaperSlots();
+				changeSan(baseSanCost);
+			});
+		}
 
-        function doExperiment() {
-            if (gameState.actionUsed) return;
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('做实验', available, (index) => {
-                gameState.actionUsed = true;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('exp_times');
-                let bestScore = paper.expScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('exp');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值-3`;
-                if (times > 1) result += `（实验${times}次）`;
-                if (bestScore > paper.expScore) {
-                    paper.expScore = bestScore;
-                    result += `，实验分更新为${bestScore}`;
-                } else {
-                    result += `，实验分未更新（生成${lastGen}，当前${paper.expScore}）`;
-                }
-                
-                consumeTempBuff('exp_times');
-                consumeTempBuff('exp_bonus');
-                addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
-                renderPaperSlots();
-                changeSan(-3);
-            });
-        }
+		function doExperiment() {
+			if (gameState.actionUsed) return;
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			showPaperSelectModal('做实验', available, (index) => {
+				gameState.actionUsed = true;
+				const paper = gameState.papers[index];
+				
+				const baseSanCost = -3;
+				const actualSanCost = getActualSanChange(baseSanCost);
+				
+				let times = 1 + countBuff('exp_times');
+				let bestScore = paper.expScore;
+				let lastGen = 0;
+				for (let i = 0; i < times; i++) {
+					const gen = calculateScore('exp');
+					lastGen = gen;
+					if (gen > bestScore) bestScore = gen;
+				}
+				
+				let result = `SAN值${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (times > 1) result += `（实验${times}次）`;
+				if (bestScore > paper.expScore) {
+					paper.expScore = bestScore;
+					result += `，实验分更新为${bestScore}`;
+				} else {
+					result += `，实验分未更新（生成${lastGen}，当前${paper.expScore}）`;
+				}
+				
+				consumeTempBuff('exp_times');
+				consumeTempBuff('exp_bonus');
+				addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
+				renderPaperSlots();
+				changeSan(baseSanCost);
+			});
+		}
 
-        function writePaper() {
-            if (gameState.actionUsed) return;
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('写论文', available, (index) => {
-                gameState.actionUsed = true;
-                const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-                const sanCost = hasKeyboard ? -3 : -4;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('write_times');
-                let bestScore = paper.writeScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('write');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值${sanCost}${hasKeyboard ? '（机械键盘生效）' : ''}`;
-                if (times > 1) result += `（写${times}次）`;
-                if (bestScore > paper.writeScore) {
-                    paper.writeScore = bestScore;
-                    result += `，写作分更新为${bestScore}`;
-                } else {
-                    result += `，写作分未更新（生成${lastGen}，当前${paper.writeScore}）`;
-                }
-                
-                consumeTempBuff('write_times');
-                consumeTempBuff('write_bonus');
-                addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
-                renderPaperSlots();
-                changeSan(sanCost);
-            });
-        }
+		function writePaper() {
+			if (gameState.actionUsed) return;
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			showPaperSelectModal('写论文', available, (index) => {
+				gameState.actionUsed = true;
+				const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
+				const baseSanCost = hasKeyboard ? -3 : -4;
+				const actualSanCost = getActualSanChange(baseSanCost);
+				const paper = gameState.papers[index];
+				
+				let times = 1 + countBuff('write_times');
+				let bestScore = paper.writeScore;
+				let lastGen = 0;
+				for (let i = 0; i < times; i++) {
+					const gen = calculateScore('write');
+					lastGen = gen;
+					if (gen > bestScore) bestScore = gen;
+				}
+				
+				let result = `SAN值${actualSanCost}`;
+				if (hasKeyboard) result += '（机械键盘生效）';
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (times > 1) result += `（写${times}次）`;
+				if (bestScore > paper.writeScore) {
+					paper.writeScore = bestScore;
+					result += `，写作分更新为${bestScore}`;
+				} else {
+					result += `，写作分未更新（生成${lastGen}，当前${paper.writeScore}）`;
+				}
+				
+				consumeTempBuff('write_times');
+				consumeTempBuff('write_bonus');
+				addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
+				renderPaperSlots();
+				changeSan(baseSanCost);
+			});
+		}
+
 
         function calculateScore(type) {
             const base = gameState.research * (0.5 + Math.random());
