@@ -2717,113 +2717,132 @@
 				gameState.degree === 'master' ? '🎯 硕士：科研分≥1' : '🎯 博士：科研分≥7';
 		}
 
-        function updateBuffs() {
-            const list = document.getElementById('buff-list');
-            const allBuffs = [...gameState.buffs.permanent, ...gameState.buffs.temporary];
-            
-            if (!gameState.triggeredBuffTypes) {
-                gameState.triggeredBuffTypes = [];
-            }
-            allBuffs.forEach(buff => {
-                if (buff.type && !gameState.triggeredBuffTypes.includes(buff.type)) {
-                    gameState.triggeredBuffTypes.push(buff.type);
-                }
-            });
-            
-            if (gameState.hasLover) {
-                const loverBuffName = gameState.loverType === 'beautiful' ? '💕恋人-每月SAN+3' : '💕聪慧恋人';
-                allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
-            }
-            
-            if (allBuffs.length === 0) {
-                list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
-                return;
-            }
-            
+		function updateBuffs() {
+			const list = document.getElementById('buff-list');
+			const allBuffs = [...gameState.buffs.permanent, ...gameState.buffs.temporary];
+			
+			if (!gameState.triggeredBuffTypes) {
+				gameState.triggeredBuffTypes = [];
+			}
+			allBuffs.forEach(buff => {
+				if (buff.type && !gameState.triggeredBuffTypes.includes(buff.type)) {
+					gameState.triggeredBuffTypes.push(buff.type);
+				}
+			});
+			
+			if (gameState.hasLover) {
+				const loverBuffName = gameState.loverType === 'beautiful' ? '💕恋人-每月SAN+3' : '💕聪慧恋人';
+				allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
+			}
+			
+			if (allBuffs.length === 0) {
+				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
+				return;
+			}
+			
 			const mergedMap = {};
 			allBuffs.forEach(buff => {
-				if(buff.isLove) {
+				// 恋人buff单独处理
+				if (buff.isLove) {
 					mergedMap['lover'] = buff;
 					return;
 				}
-				if(buff.type === 'mentorship') {
+				// mentorship buff单独处理
+				if (buff.type === 'mentorship') {
 					mergedMap['mentorship'] = buff;
 					return;
 				}
-                const key = `${buff.type}_${buff.multiply ? 'mul' : 'add'}_${buff.permanent ? 'perm' : 'temp'}`;
-                
-                if (mergedMap[key]) {
-                    if (buff.multiply) {
-                        mergedMap[key].value *= buff.value;
-                    } else {
-                        mergedMap[key].value += buff.value;
-                    }
-                } else {
-                    mergedMap[key] = { ...buff };
-                }
-            });
-            
-            const merged = Object.values(mergedMap).map(buff => {
-                if (buff.isLove) {
-                    return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
-                }
-                
-                let name = '';
-                const prefix = buff.permanent ? '每次' : '下次';
-                const typeNames = {
-                    'idea_bonus': '想idea分数',
-                    'exp_bonus': '做实验分数',
-                    'write_bonus': '写论文分数',
-                    'idea_times': '想idea',
-                    'exp_times': '做实验',
-                    'write_times': '写论文',
-                    'monthly_san': '每月SAN',
-                    'read_san_reduce': '读论文SAN',
-                    'write_san_reduce': '写论文SAN',
-                    'citation_multiply': '中稿引用'
-                };
-                
-                const typeName = typeNames[buff.type] || buff.type;
-                let isDebuff = false;
-                
-                if (buff.type.includes('_times')) {
-                    name = `${prefix}${typeName}+${buff.value}次`;
-                } else if (buff.type === 'monthly_san') {
-                    name = `每月SAN+${buff.value}`;
-                } else if (buff.type === 'read_san_reduce') {
-                    name = `读论文SAN-1`;
-                } else if (buff.type === 'write_san_reduce') {
-                    name = `写论文SAN-3`;
-                } else if (buff.type === 'citation_multiply') {
-                    name = `下篇中稿引用×${buff.value}`;
-                } else if (buff.multiply) {
-                    if (buff.value < 1) isDebuff = true;
-                    name = `${prefix}${typeName}×${buff.value}`;
-                } else {
-                    if (buff.value < 0) isDebuff = true;
-                    const sign = buff.value >= 0 ? '+' : '';
-                    name = `${prefix}${typeName}${sign}${buff.value}`;
-                }
-                
-                return { name, permanent: buff.permanent, isLove: false, isDebuff };
-            });
-            
+				
+				const key = `${buff.type}_${buff.multiply ? 'mul' : 'add'}_${buff.permanent ? 'perm' : 'temp'}`;
+				
+				if (mergedMap[key]) {
+					if (buff.multiply) {
+						mergedMap[key].value *= buff.value;
+					} else {
+						mergedMap[key].value += buff.value;
+					}
+				} else {
+					mergedMap[key] = { ...buff };
+				}
+			});
+			
+			const merged = Object.values(mergedMap).map(buff => {
+				// 恋人buff
+				if (buff.isLove) {
+					return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
+				}
+				
+				// mentorship buff - 直接使用原有的name和desc
+				if (buff.type === 'mentorship') {
+					return { 
+						name: buff.name, 
+						desc: buff.desc,
+						permanent: true, 
+						isLove: false, 
+						isDebuff: false,
+						isMentorship: true 
+					};
+				}
+				
+				let name = '';
+				const prefix = buff.permanent ? '每次' : '下次';
+				const typeNames = {
+					'idea_bonus': '想idea分数',
+					'exp_bonus': '做实验分数',
+					'write_bonus': '写论文分数',
+					'idea_times': '想idea',
+					'exp_times': '做实验',
+					'write_times': '写论文',
+					'monthly_san': '每月SAN',
+					'read_san_reduce': '读论文SAN',
+					'write_san_reduce': '写论文SAN',
+					'citation_multiply': '中稿引用'
+				};
+				
+				const typeName = typeNames[buff.type] || buff.type;
+				let isDebuff = false;
+				
+				if (buff.type.includes('_times')) {
+					name = `${prefix}${typeName}+${buff.value}次`;
+				} else if (buff.type === 'monthly_san') {
+					name = `每月SAN+${buff.value}`;
+				} else if (buff.type === 'read_san_reduce') {
+					name = `读论文SAN-1`;
+				} else if (buff.type === 'write_san_reduce') {
+					name = `写论文SAN-3`;
+				} else if (buff.type === 'citation_multiply') {
+					name = `下篇中稿引用×${buff.value}`;
+				} else if (buff.multiply) {
+					if (buff.value < 1) isDebuff = true;
+					name = `${prefix}${typeName}×${buff.value}`;
+				} else {
+					if (buff.value < 0) isDebuff = true;
+					const sign = buff.value >= 0 ? '+' : '';
+					name = `${prefix}${typeName}${sign}${buff.value}`;
+				}
+				
+				return { name, permanent: buff.permanent, isLove: false, isDebuff };
+			});
+			
 			list.innerHTML = merged.map(buff => {
 				let tagClass = 'buff-tag ';
-				if(buff.isLove) tagClass += 'love';
-				else if(buff.type === 'mentorship') tagClass += 'permanent'; // 使用永久buff的样式
-				else if(buff.isDebuff) tagClass += 'debuff';
-				else if(buff.permanent) tagClass += 'permanent';
+				if (buff.isLove) tagClass += 'love';
+				else if (buff.isMentorship) tagClass += 'permanent';
+				else if (buff.isDebuff) tagClass += 'debuff';
+				else if (buff.permanent) tagClass += 'permanent';
 				else tagClass += 'temporary';
 				
 				const icon = buff.isLove ? 'fa-heart' : 
-							buff.type === 'mentorship' ? 'fa-users' : // 使用人群图标
+							buff.isMentorship ? 'fa-user-graduate' :
 							buff.isDebuff ? 'fa-arrow-down' : 
 							buff.permanent ? 'fa-infinity' : 'fa-clock';
 				
+				// mentorship显示desc，其他不显示
+				const descText = buff.isMentorship && buff.desc ? ` (${buff.desc})` : '';
+				
 				return `<span class="${tagClass}">
 					<i class="fas ${icon}"></i>
-					${buff.name}${buff.desc ? ` (${buff.desc})` : ''}
+					${buff.name}${descText}
 				</span>`;
 			}).join('');
 		}
@@ -4104,9 +4123,11 @@
 			// 处理长期合作buff
 			const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
 			if(mentorshipBuff) {
-				const baseSanCost = -1;
-				const actualSanCost = getActualSanChange(baseSanCost);
-				changeSan(baseSanCost);
+				const baseSanCost = 1;
+				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+				
+				changeSan(-baseSanCost);
+				
 				// 总引用增加当前科研能力值
 				const researchBonus = gameState.research;
 				gameState.totalCitations += researchBonus;
@@ -4114,7 +4135,11 @@
 				gameState.publishedPapers.forEach(paper => {
 					paper.citations += Math.floor(researchBonus / gameState.publishedPapers.length);
 				});
-				const sanText = actualSanCost !== baseSanCost ? `SAN${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN${actualSanCost}`;
+				
+				let sanText = `SAN-${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
 				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
 			}
 
@@ -4934,28 +4959,49 @@
 		}
 
 		function showRandomEvent14() {
+			// 计算实际SAN消耗用于显示
+			const baseSanCost = 1;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			const sanDescText = actualSanCost !== baseSanCost 
+				? `每月SAN-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+				: `每月SAN-${baseSanCost}`;
+			
 			showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
 				{ text: '精力有限算了', class: 'btn-info', action: () => {
 					addLog('随机事件', '指导师弟师妹 - 精力有限算了', '无事发生');
 					closeModal();
 				}},
 				{ text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
-					const baseSanCost = -5;
-					const actualSanCost = getActualSanChange(baseSanCost);
-					const sanText = actualSanCost !== baseSanCost ? `SAN${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN${actualSanCost}`;
+					const baseCost = 5;
+					const actualCost = Math.abs(getActualSanChange(-baseCost));
+					
+					// SAN不足保护
+					if (gameState.san < actualCost) {
+						const tipText = actualCost !== baseCost 
+							? `<p>SAN值不足！基础消耗${baseCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					
+					let sanText = `SAN-${actualCost}`;
+					if (actualCost !== baseCost) {
+						sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+					}
 					addLog('随机事件', '指导师弟师妹 - 合作一个idea', `${sanText}，社交+1`);
 					closeModal();
-					changeSan(baseSanCost);
+					changeSan(-baseCost);
 					changeSocial(1);
 				}},
 				{ text: '展开长期合作', class: 'btn-success', action: () => {
 					gameState.buffs.permanent.push({
 						type: 'mentorship',
 						name: '指导师弟师妹',
-						desc: '每月SAN-1，总引用+科研能力值',
+						desc: `${sanDescText}，总引用+科研能力值`,
 						permanent: true
 					});
-					addLog('随机事件', '指导师弟师妹 - 展开长期合作', '每月SAN-1，总引用+科研能力值');
+					addLog('随机事件', '指导师弟师妹 - 展开长期合作', `${sanDescText}，总引用+科研能力值`);
 					closeModal();
 					updateBuffs();
 				}}
