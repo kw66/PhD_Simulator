@@ -2993,85 +2993,97 @@
         }
 		
         // ==================== 论文推广功能 ====================
-        function promotePaper(index, type) {
-            const paper = gameState.publishedPapers[index];
-            if (!paper) return;
+		function promotePaper(index, type) {
+			const paper = gameState.publishedPapers[index];
+			if (!paper) return;
 
-            if (!paper.promotions) {
-                paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
-            }
-            if (!paper.citationMultiplier) paper.citationMultiplier = 1;
+			if (!paper.promotions) {
+				paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
+			}
+			if (!paper.citationMultiplier) paper.citationMultiplier = 1;
 
-            if (paper.promotions[type]) return;
+			if (paper.promotions[type]) return;
 
-            const typeNames = {
-                arxiv: '挂arxiv',
-                github: 'github开源',
-                xiaohongshu: '小红书宣传',
-                quantumbit: '量子位封面'
-            };
+			const typeNames = {
+				arxiv: '挂arxiv',
+				github: 'github开源',
+				xiaohongshu: '小红书宣传',
+				quantumbit: '量子位封面'
+			};
 
-            let result = '';
-            let canProceed = true;
-            
-            switch(type) {
-                case 'arxiv':
-                    if (gameState.san - 3 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.arxiv = true;
-                    paper.citationMultiplier *= 1.25;
-                    result = 'SAN值-3，论文引用速度×1.25';
-                    canProceed = changeSan(-3);
-                    break;
-                case 'github':
-                    if (gameState.san - 6 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少6点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.github = true;
-                    paper.citationMultiplier *= 1.5;
-                    result = 'SAN值-6，论文引用速度×1.5';
-                    canProceed = changeSan(-6);
-                    break;
-                case 'xiaohongshu':
-                    if (gameState.san - 3 < 0) {
-                        showModal('❌ 操作失败', '<p>SAN值不足！需要至少3点SAN值。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.xiaohongshu = true;
-                    paper.citationMultiplier *= 1.25;
-                    result = 'SAN值-3，论文引用速度×1.25';
-                    canProceed = changeSan(-3);
-                    break;
-                case 'quantumbit':
-                    if (paper.grade !== 'A') {
-                        showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    if (gameState.gold - 10 < 0) {
-                        showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.quantumbit = true;
-                    paper.citations += 100;
-                    gameState.totalCitations += 100;
-                    result = '金钱-10，论文引用+100';
-                    canProceed = changeGold(-10);
-                    break;
-            }
+			let result = '';
+			let canProceed = true;
+			
+			switch(type) {
+				case 'arxiv': {
+					const baseSanCost = -3;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					if (gameState.san + actualSanCost < 0) {
+						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.arxiv = true;
+					paper.citationMultiplier *= 1.25;
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					result = `${sanText}，论文引用速度×1.25`;
+					canProceed = changeSan(baseSanCost);
+					break;
+				}
+				case 'github': {
+					const baseSanCost = -6;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					if (gameState.san + actualSanCost < 0) {
+						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.github = true;
+					paper.citationMultiplier *= 1.5;
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					result = `${sanText}，论文引用速度×1.5`;
+					canProceed = changeSan(baseSanCost);
+					break;
+				}
+				case 'xiaohongshu': {
+					const baseSanCost = -3;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					if (gameState.san + actualSanCost < 0) {
+						showModal('❌ 操作失败', `<p>SAN值不足！需要至少${Math.abs(actualSanCost)}点SAN值。</p>`, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.xiaohongshu = true;
+					paper.citationMultiplier *= 1.25;
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					result = `${sanText}，论文引用速度×1.25`;
+					canProceed = changeSan(baseSanCost);
+					break;
+				}
+				case 'quantumbit':
+					if (paper.grade !== 'A') {
+						showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					if (gameState.gold - 10 < 0) {
+						showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.quantumbit = true;
+					paper.citations += 100;
+					gameState.totalCitations += 100;
+					result = '金钱-10，论文引用+100';
+					canProceed = changeGold(-10);
+					break;
+			}
 
-            if (canProceed) {
-                addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
-                updateAllUI();
-            }
-        }
+			if (canProceed) {
+				addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
+				updateAllUI();
+			}
+		}
 
         // ==================== 论文工作站 ====================
         function renderPaperSlots() {
@@ -4012,15 +4024,18 @@
 			// 处理长期合作buff
 			const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
 			if(mentorshipBuff) {
-				changeSan(-1);
+				const baseSanCost = -1;
+				const actualSanCost = getActualSanChange(baseSanCost);
+				changeSan(baseSanCost);
 				// 总引用增加当前科研能力值
 				const researchBonus = gameState.research;
 				gameState.totalCitations += researchBonus;
-				// 更新所有已发表论文的引用（可选）
+				// 更新所有已发表论文的引用
 				gameState.publishedPapers.forEach(paper => {
 					paper.citations += Math.floor(researchBonus / gameState.publishedPapers.length);
 				});
-				addLog('长期合作', '指导师弟师妹的成果', `总引用+${researchBonus}`);
+				const sanText = actualSanCost !== baseSanCost ? `SAN${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN${actualSanCost}`;
+				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
 			}
 
             // 玩世之导师子女：每月好感-1（不翻倍）
@@ -4313,213 +4328,243 @@
             }
         }
 
-        function showRandomEvent1() {
-            showModal('📚 随机事件', '<p>导师派你指导本科生毕设。</p>', [
-                { text: '残忍拒绝', class: 'btn-danger', action: () => {
-                    addLog('随机事件', '导师派你指导本科生毕设 - 残忍拒绝', '导师对你略有不满，导师好感度-1');
-                    closeModal();
-                    changeFavor(-1);
-                }},
-                { text: '亲力亲为', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 亲力亲为', '本科生顺利毕业，后成为你的师弟师妹帮助你科研打下手，SAN值-3，科研能力+1');
-                        changeResearch(1);
-                    } else {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 亲力亲为', '本科生顺利毕业，SAN值-3');
-                    }
-                    changeSan(-3);
-                }},
-                { text: '让师弟师妹去指导', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.social < 6) {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹对你颇有微词，社交能力-1');
-                        changeSocial(-1);
-                    } else {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹成功为你分忧');
-                        updateAllUI();
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent1() {
+			showModal('📚 随机事件', '<p>导师派你指导本科生毕设。</p>', [
+				{ text: '残忍拒绝', class: 'btn-danger', action: () => {
+					addLog('随机事件', '导师派你指导本科生毕设 - 残忍拒绝', '导师对你略有不满，导师好感度-1');
+					closeModal();
+					changeFavor(-1);
+				}},
+				{ text: '亲力亲为', class: 'btn-primary', action: () => {
+					closeModal();
+					const baseSanCost = -3;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					
+					if (Math.random() < 0.5) {
+						addLog('随机事件', '导师派你指导本科生毕设 - 亲力亲为', `本科生顺利毕业，后成为你的师弟师妹帮助你科研打下手，${sanText}，科研能力+1`);
+						changeResearch(1);
+					} else {
+						addLog('随机事件', '导师派你指导本科生毕设 - 亲力亲为', `本科生顺利毕业，${sanText}`);
+					}
+					changeSan(baseSanCost);
+				}},
+				{ text: '让师弟师妹去指导', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.social < 6) {
+						addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹对你颇有微词，社交能力-1');
+						changeSocial(-1);
+					} else {
+						addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹成功为你分忧');
+						updateAllUI();
+					}
+				}}
+			]);
+		}
 
-        function showRandomEvent2() {
-            showModal('📝 随机事件', '<p>导师让你帮他审稿。</p>', [
-                { text: '以没时间为由拒绝', class: 'btn-danger', action: () => {
-                    addLog('随机事件', '导师让你帮他审稿 - 以没时间为由拒绝', '导师对你略有不满，导师好感度-1');
-                    closeModal();
-                    changeFavor(-1);
-                }},
-                { text: '认真审稿', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
-                        addLog('随机事件', '导师让你帮他审稿 - 认真审稿', '得到了启发，SAN值-2，临时buff-下次想idea分数+4');
-                        updateBuffs();
-                    } else {
-                        addLog('随机事件', '导师让你帮他审稿 - 认真审稿', '无事发生，SAN值-2');
-                    }
-                    changeSan(-2);
-                }},
-                { text: '交给师弟师妹', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.social < 6) {
-                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹对你颇有微词，社交能力-1');
-                        changeSocial(-1);
-                    } else {
-                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹成功为你分忧');
-                        updateAllUI();
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent2() {
+			showModal('📝 随机事件', '<p>导师让你帮他审稿。</p>', [
+				{ text: '以没时间为由拒绝', class: 'btn-danger', action: () => {
+					addLog('随机事件', '导师让你帮他审稿 - 以没时间为由拒绝', '导师对你略有不满，导师好感度-1');
+					closeModal();
+					changeFavor(-1);
+				}},
+				{ text: '认真审稿', class: 'btn-primary', action: () => {
+					closeModal();
+					const baseSanCost = -2;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					
+					if (Math.random() < 0.5) {
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
+						addLog('随机事件', '导师让你帮他审稿 - 认真审稿', `得到了启发，${sanText}，临时buff-下次想idea分数+4`);
+						updateBuffs();
+					} else {
+						addLog('随机事件', '导师让你帮他审稿 - 认真审稿', `无事发生，${sanText}`);
+					}
+					changeSan(baseSanCost);
+				}},
+				{ text: '交给师弟师妹', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.social < 6) {
+						addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹对你颇有微词，社交能力-1');
+						changeSocial(-1);
+					} else {
+						addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹成功为你分忧');
+						updateAllUI();
+					}
+				}}
+			]);
+		}
 
-        function showRandomEvent3() {
-            showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
-                { text: '强撑', class: 'btn-danger', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '突然感冒了 - 强撑', '身体透支了，SAN值-8');
-                        changeSan(-8);
-                    } else {
-                        addLog('随机事件', '突然感冒了 - 强撑', '撑过去了，年轻人身体好');
-                        updateAllUI();
-                    }
-                }},
-                { text: '自己买感冒药', class: 'btn-primary', action: () => {
-                    addLog('随机事件', '突然感冒了 - 自己买感冒药', '喝999感冒灵好了，金钱-2');
-                    closeModal();
-                    changeGold(-2);
-                }},
-                { text: '去医院看病', class: 'btn-info', action: () => {
-                    addLog('随机事件', '突然感冒了 - 去医院看病', '医生妙手回春，你比生病前还精神，SAN值+2，金钱-4');
-                    closeModal();
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-                    changeGold(-4);
-                }}
-            ]);
-        }
+		function showRandomEvent3() {
+			showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
+				{ text: '强撑', class: 'btn-danger', action: () => {
+					closeModal();
+					if (Math.random() < 0.5) {
+						const baseSanCost = -8;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '突然感冒了 - 强撑', `身体透支了，${sanText}`);
+						changeSan(baseSanCost);
+					} else {
+						addLog('随机事件', '突然感冒了 - 强撑', '撑过去了，年轻人身体好');
+						updateAllUI();
+					}
+				}},
+				{ text: '自己买感冒药', class: 'btn-primary', action: () => {
+					addLog('随机事件', '突然感冒了 - 自己买感冒药', '喝999感冒灵好了，金钱-2');
+					closeModal();
+					changeGold(-2);
+				}},
+				{ text: '去医院看病', class: 'btn-info', action: () => {
+					addLog('随机事件', '突然感冒了 - 去医院看病', '医生妙手回春，你比生病前还精神，SAN值+2，金钱-4');
+					closeModal();
+					gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+					changeGold(-4);
+				}}
+			]);
+		}
 
-        function showRandomEvent4() {
-            showModal('💼 随机事件', '<p>导师安排你做项目。</p>', [
-                { text: '横向项目', class: 'btn-warning', action: () => {
-                    addLog('随机事件', '导师安排你做项目 - 横向项目', '成功结项，SAN值-7，导师好感度+1，金钱+5');
-                    closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 1);
-                    gameState.gold += 5;
-                    changeSan(-7);
-                }},
-                { text: '纵向项目', class: 'btn-primary', action: () => {
-                    addLog('随机事件', '导师安排你做项目 - 纵向项目', '成功结项，SAN值-5，导师好感度+1，科研能力+1');
-                    closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 1);
-                    changeResearch(1);
-                    changeSan(-5);
-                }},
-                { text: '拒绝项目', class: 'btn-danger', action: () => {
-                    closeModal();
-                    if (gameState.research < 6) {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你比较不满，导师好感度-2');
-                        changeFavor(-2);
-                    } else if (gameState.research < 12) {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你略为不满，导师好感度-1');
-                        changeFavor(-1);
-                    } else {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师让你以科研为重');
-                        updateAllUI();
-                    }
-                }},
-                { text: '让师弟师妹分担', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.social < 6) {
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '师弟师妹对你颇有微词，SAN值-2，社交能力-1');
-                        changeSocial(-1);
-                        changeSan(-2);
-                    } else if (gameState.social < 12) {
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '师弟师妹成功为你分忧，SAN值-2');
-                        changeSan(-2);
-                    } else {
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '师弟师妹主动全包了');
-                        updateAllUI();
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent4() {
+			showModal('💼 随机事件', '<p>导师安排你做项目。</p>', [
+				{ text: '横向项目', class: 'btn-warning', action: () => {
+					const baseSanCost = -7;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					addLog('随机事件', '导师安排你做项目 - 横向项目', `成功结项，${sanText}，导师好感度+1，金钱+5`);
+					closeModal();
+					gameState.favor = Math.min(20, gameState.favor + 1);
+					gameState.gold += 5;
+					changeSan(baseSanCost);
+				}},
+				{ text: '纵向项目', class: 'btn-primary', action: () => {
+					const baseSanCost = -5;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					addLog('随机事件', '导师安排你做项目 - 纵向项目', `成功结项，${sanText}，导师好感度+1，科研能力+1`);
+					closeModal();
+					gameState.favor = Math.min(20, gameState.favor + 1);
+					changeResearch(1);
+					changeSan(baseSanCost);
+				}},
+				{ text: '拒绝项目', class: 'btn-danger', action: () => {
+					closeModal();
+					if (gameState.research < 6) {
+						addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你比较不满，导师好感度-2');
+						changeFavor(-2);
+					} else if (gameState.research < 12) {
+						addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你略为不满，导师好感度-1');
+						changeFavor(-1);
+					} else {
+						addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师让你以科研为重');
+						updateAllUI();
+					}
+				}},
+				{ text: '让师弟师妹分担', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.social < 6) {
+						const baseSanCost = -2;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `师弟师妹对你颇有微词，${sanText}，社交能力-1`);
+						changeSocial(-1);
+						changeSan(baseSanCost);
+					} else if (gameState.social < 12) {
+						const baseSanCost = -2;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `师弟师妹成功为你分忧，${sanText}`);
+						changeSan(baseSanCost);
+					} else {
+						addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '师弟师妹主动全包了');
+						updateAllUI();
+					}
+				}}
+			]);
+		}
 
-        function showRandomEvent5() {
-            showModal('💬 随机事件', '<p>导师找你谈话。</p>', [
-                { text: '认真准备科研进展', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
-                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师指出你关键错误，临时buff-下次想idea分数+5');
-                        updateBuffs();
-                        updateAllUI();
-                    } else {
-                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师发现你在摸鱼，导师好感度-1');
-                        changeFavor(-1);
-                    }
-                }},
-                { text: '向导师询问如何科研', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.favor < 6) {
-                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师觉得你天资愚笨，导师好感度-1');
-                        changeFavor(-1);
-                    } else {
-                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师传授你科研秘诀，科研能力+1');
-                        changeResearch(1);
-                    }
-                }},
-                { text: '告诉导师想要去实习', class: 'btn-warning', action: () => {
-                    closeModal();
-                    if (gameState.favor >= 6) {
-                        gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
-                        gameState.gold += 5;
-                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', '导师居然同意了但要兼顾科研，SAN值-6，临时buff-下次做实验分数+5，金钱+5');
-                        updateBuffs();
-                        changeSan(-6);
-                    } else {
-                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', '导师果然拒绝了，导师好感度-1');
-                        changeFavor(-1);
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent5() {
+			showModal('💬 随机事件', '<p>导师找你谈话。</p>', [
+				{ text: '认真准备科研进展', class: 'btn-primary', action: () => {
+					closeModal();
+					if (Math.random() < 0.5) {
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
+						addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师指出你关键错误，临时buff-下次想idea分数+5');
+						updateBuffs();
+						updateAllUI();
+					} else {
+						addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师发现你在摸鱼，导师好感度-1');
+						changeFavor(-1);
+					}
+				}},
+				{ text: '向导师询问如何科研', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.favor < 6) {
+						addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师觉得你天资愚笨，导师好感度-1');
+						changeFavor(-1);
+					} else {
+						addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师传授你科研秘诀，科研能力+1');
+						changeResearch(1);
+					}
+				}},
+				{ text: '告诉导师想要去实习', class: 'btn-warning', action: () => {
+					closeModal();
+					if (gameState.favor >= 6) {
+						const baseSanCost = -6;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
+						gameState.gold += 5;
+						addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', `导师居然同意了但要兼顾科研，${sanText}，临时buff-下次做实验分数+5，金钱+5`);
+						updateBuffs();
+						changeSan(baseSanCost);
+					} else {
+						addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', '导师果然拒绝了，导师好感度-1');
+						changeFavor(-1);
+					}
+				}}
+			]);
+		}
 
-        function showRandomEvent6() {
-            showModal('📊 随机事件', '<p>实验室召开组会。</p>', [
-                { text: '讲解一篇深奥论文', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (gameState.research < 6) {
-                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师发现你不懂装懂，导师好感度-1');
-                        changeFavor(-1);
-                    } else {
-                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师夸赞了你的见解，导师好感度+1');
-                        changeFavor(1);
-                    }
-                }},
-                { text: '讲解系列论文', class: 'btn-warning', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室召开组会 - 讲解系列论文', '虽然很辛苦但导师大力夸赞了你的见解，SAN值-3，导师好感度+2');
-                        gameState.favor = Math.min(20, gameState.favor + 2);
-                    } else {
-                        addLog('随机事件', '实验室召开组会 - 讲解系列论文', '虽然很辛苦但导师没来参会，SAN值-3');
-                    }
-                    changeSan(-3);
-                }},
-                { text: '偷偷水过去', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师对你略有不满，导师好感度-1');
-                        changeFavor(-1);
-                    } else {
-                        addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师恰好没来');
-                        updateAllUI();
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent6() {
+			showModal('📊 随机事件', '<p>实验室召开组会。</p>', [
+				{ text: '讲解一篇深奥论文', class: 'btn-primary', action: () => {
+					closeModal();
+					if (gameState.research < 6) {
+						addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师发现你不懂装懂，导师好感度-1');
+						changeFavor(-1);
+					} else {
+						addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师夸赞了你的见解，导师好感度+1');
+						changeFavor(1);
+					}
+				}},
+				{ text: '讲解系列论文', class: 'btn-warning', action: () => {
+					closeModal();
+					const baseSanCost = -3;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					
+					if (Math.random() < 0.5) {
+						addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师大力夸赞了你的见解，${sanText}，导师好感度+2`);
+						gameState.favor = Math.min(20, gameState.favor + 2);
+					} else {
+						addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师没来参会，${sanText}`);
+					}
+					changeSan(baseSanCost);
+				}},
+				{ text: '偷偷水过去', class: 'btn-info', action: () => {
+					closeModal();
+					if (Math.random() < 0.5) {
+						addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师对你略有不满，导师好感度-1');
+						changeFavor(-1);
+					} else {
+						addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师恰好没来');
+						updateAllUI();
+					}
+				}}
+			]);
+		}
 
         function showRandomEvent7() {
             showModal('🎉 随机事件', '<p>实验室组织团建。</p>', [
@@ -4719,9 +4764,7 @@
 				}},
 				{ text: '劝说导师抢师弟师妹一作', class: 'btn-warning', action: () => {
 					closeModal();
-					// 检查角色是否为导师子女或其逆位
 					if (gameState.character === 'teacher-child' || (gameState.isReversed && gameState.character === 'teacher-child')) {
-						// 生成一篇C类论文
 						const title = generatePaperTitle();
 						gameState.publishedPapers.push({
 							title: title,
@@ -4737,7 +4780,6 @@
 						gameState.totalScore += 1;
 						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文');
 					} else {
-						// 非导师子女角色，社交能力-1
 						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
 						changeSocial(-1);
 					}
@@ -4749,8 +4791,11 @@
 						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
 						updateAllUI();
 					} else {
-						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师艰难被你说服，SAN值-2');
-						changeSan(-2);
+						const baseSanCost = -2;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `导师艰难被你说服，${sanText}`);
+						changeSan(baseSanCost);
 					}
 				}},
 				{ text: '以死相逼', class: 'btn-danger', action: () => {
@@ -4761,45 +4806,52 @@
 			]);
 		}
 
-        function showRandomEvent13() {
-            showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
-                { text: '催导师快修', class: 'btn-primary', action: () => {
-                    closeModal();
-                    gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数-2', value: -2, permanent: true });
-                    addLog('随机事件', '实验室服务器突然坏了 - 催导师快修', '导师每次坏了就帮你重启，永久debuff-每次做实验分数-2');
-                    updateAllUI();
-                    updateBuffs();
-                }},
-                { text: '举报同门挖矿', class: 'btn-warning', action: () => {
-                    addLog('随机事件', '实验室服务器突然坏了 - 举报同门用服务器挖矿', '同门负责修好了，社交能力-2');
-                    closeModal();
-                    changeSocial(-2);
-                }},
-                { text: '自己重装系统', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', '费劲周折修好了，SAN值-3');
-                    } else {
-                        changeSocial(-1);
-                        gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验分数×0', value: 0, multiply: true, permanent: false });
-                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', '服务器数据忘了备份了，临时debuff-下次实验分数×0，社交能力-1，SAN值-3');
-                        updateBuffs();
-                    }
-                    changeSan(-3);
-                }},
-                { text: '淘宝找人修理', class: 'btn-danger', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '遇到高手修好了，金币-2');
-                        changeGold(-2);
-                    } else {
-                        addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '遇到无良商家修了很久，金币-4，SAN值-2');
-                        gameState.san -= 2;
-                        changeGold(-4);
-                    }
-                }}
-            ]);
-        }
+		function showRandomEvent13() {
+			showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
+				{ text: '催导师快修', class: 'btn-primary', action: () => {
+					closeModal();
+					gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数-2', value: -2, permanent: true });
+					addLog('随机事件', '实验室服务器突然坏了 - 催导师快修', '导师每次坏了就帮你重启，永久debuff-每次做实验分数-2');
+					updateAllUI();
+					updateBuffs();
+				}},
+				{ text: '举报同门挖矿', class: 'btn-warning', action: () => {
+					addLog('随机事件', '实验室服务器突然坏了 - 举报同门用服务器挖矿', '同门负责修好了，社交能力-2');
+					closeModal();
+					changeSocial(-2);
+				}},
+				{ text: '自己重装系统', class: 'btn-info', action: () => {
+					closeModal();
+					const baseSanCost = -3;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					
+					if (Math.random() < 0.5) {
+						addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `费劲周折修好了，${sanText}`);
+					} else {
+						changeSocial(-1);
+						gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验分数×0', value: 0, multiply: true, permanent: false });
+						addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `服务器数据忘了备份了，临时debuff-下次实验分数×0，社交能力-1，${sanText}`);
+						updateBuffs();
+					}
+					changeSan(baseSanCost);
+				}},
+				{ text: '淘宝找人修理', class: 'btn-danger', action: () => {
+					closeModal();
+					if (Math.random() < 0.5) {
+						addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '遇到高手修好了，金币-2');
+						changeGold(-2);
+					} else {
+						const baseSanCost = -2;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', `遇到无良商家修了很久，金币-4，${sanText}`);
+						gameState.san += actualSanCost; // 直接使用实际值，因为changeSan会再次计算
+						changeGold(-4);
+					}
+				}}
+			]);
+		}
 
 		function showRandomEvent14() {
 			showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
@@ -4808,13 +4860,15 @@
 					closeModal();
 				}},
 				{ text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
-					addLog('随机事件', '指导师弟师妹 - 合作一个idea', 'SAN-5，社交+1');
+					const baseSanCost = -5;
+					const actualSanCost = getActualSanChange(baseSanCost);
+					const sanText = actualSanCost !== baseSanCost ? `SAN${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN${actualSanCost}`;
+					addLog('随机事件', '指导师弟师妹 - 合作一个idea', `${sanText}，社交+1`);
 					closeModal();
-					changeSan(-5);
+					changeSan(baseSanCost);
 					changeSocial(1);
 				}},
 				{ text: '展开长期合作', class: 'btn-success', action: () => {
-					// 添加长期合作buff
 					gameState.buffs.permanent.push({
 						type: 'mentorship',
 						name: '指导师弟师妹',
