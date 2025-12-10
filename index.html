@@ -1806,6 +1806,7 @@
 				goldSpentTotal: 0,
 				enterpriseCount: 0,           // 企业交流次数
 				ailabInternship: false,       // 是否在AILab实习
+				firstBestPaperAccepted: false,
 				
 				// 新增成就相关状态
 				rejectedPapers: {},                    // 记录每篇论文的拒稿次数
@@ -2213,6 +2214,7 @@
             reversedBtn.classList.toggle('reversed-active', reversed);
             
             document.body.classList.toggle('reversed-theme', reversed);
+			document.querySelectorAll('.character-card').forEach(card => card.classList.remove('selected'));
             
             if (reversed) {
                 modeDesc.innerHTML = '🔮 逆位模式，循规蹈矩？不免太过无趣！';
@@ -2465,9 +2467,9 @@
 			
 			// 玩世之导师子女：好感降低不翻倍，但每降1点SAN+1金+1
 			if (gameState.isReversed && gameState.character === 'teacher-child' && delta < 0) {
-				// 不再翻倍，直接应用变化
-				gameState.favor = Math.max(0, gameState.favor + delta);
-				const decreased = oldFavor - gameState.favor;
+				const oldFavor = gameState.favor;
+				gameState.favor = gameState.favor + delta;  // ✅ 移除 Math.max
+				const decreased = Math.max(0, oldFavor - gameState.favor);  // 计算实际减少量
 				if (decreased > 0) {
 					gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
 					gameState.gold += decreased;
@@ -2653,17 +2655,11 @@
 				if (changes.favor) {
 					if (gameState.isReversed && gameState.character === 'teacher-child' && changes.favor < 0) {
 						const oldFavor = gameState.favor;
-						gameState.favor = Math.max(0, gameState.favor + changes.favor);
-						const decreased = oldFavor - gameState.favor;
+						gameState.favor = gameState.favor + changes.favor;  // ✅ 移除 Math.max
+						const decreased = Math.max(0, oldFavor - gameState.favor);  // 计算实际减少量
 						if (decreased > 0) {
 							gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
 							gameState.gold += decreased;
-						}
-					} else {
-						if (changes.favor > 0) {
-							gameState.favor = Math.min(20, gameState.favor + changes.favor);
-						} else {
-							gameState.favor += changes.favor;
 						}
 					}
 					if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
@@ -3352,6 +3348,8 @@
                 reviewing: false,
                 reviewMonths: 0,
                 submittedGrade: null,
+				reviewMonths: 0,  // 显式初始化
+				submittedGrade: null,  // 显式初始化
                 submittedScore: 0
             };
             addLog('新论文', `在论文槽${slot + 1}开启：${title}`);
@@ -4544,15 +4542,14 @@
             // 玩世之导师子女：每月好感-1（不翻倍）
 			if (gameState.isReversed && gameState.character === 'teacher-child') {
 				const oldFavor = gameState.favor;
-				gameState.favor = Math.max(0, gameState.favor - 1);
-				const decreased = oldFavor - gameState.favor;
+				gameState.favor = gameState.favor - 1;  // ✅ 移除 Math.max
+				const decreased = Math.max(0, oldFavor - gameState.favor);  // 计算实际减少量
 				if (decreased > 0) {
 					gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
 					gameState.gold += decreased;
 					addLog('逆位效果', '玩世不恭（每月）', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
 				}
 				
-				// 检查好感度是否为负
 				if (gameState.favor < 0) {
 					triggerEnding('expelled');
 					return;
@@ -5874,7 +5871,7 @@
 			if (gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
 			if (gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
 			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
-			if (gameState.san <= 0 && gameState.gold == 0) a.push('💪 全力以赴');
+			if (gameState.san === 0 && gameState.gold === 0) a.push('💪 全力以赴');
 			
 			const requiredTypes = [
 				'A-Poster', 'A-Oral', 'A-Best Paper',
@@ -6471,6 +6468,7 @@
 				pendingConference: gameState.pendingConference || null,
 				enterpriseCount: gameState.enterpriseCount || 0,
 				ailabInternship: gameState.ailabInternship || false,
+				firstBestPaperAccepted: gameState.firstBestPaperAccepted || false,
 				
 				rejectedPapers: {...gameState.rejectedPapers},
 				maxConcurrentReviews: gameState.maxConcurrentReviews,
@@ -6584,6 +6582,8 @@
                             smartCount: save.smartCount,
 							enterpriseCount: save.enterpriseCount || 0,
 							ailabInternship: save.ailabInternship || false,
+							firstBestPaperAccepted: save.firstBestPaperAccepted || false,
+							goldSpentTotal: save.goldSpentTotal || 0,
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
