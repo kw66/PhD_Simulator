@@ -37,23 +37,23 @@
         }
 
         /* 逆位暗色主题 */
-        body.reversed-theme {
-            --primary-color: #9b59b6;
-            --secondary-color: #8e44ad;
-            --accent-color: #c0392b;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --light-bg: #2c2c2c;
-            --card-bg: #1a1a2e;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --border-color: #444;
-			--achievement-text: #f0e6ff;         /* 浅紫色文字 */
-			--achievement-bg: #2d1a36;          /* 深紫色背景 */
-			--achievement-border: #8e44ad;      /* 中等紫色边框 */
-			--achievement-shadow: 0 2px 8px rgba(155, 89, 182, 0.3); /* 紫色阴影 */
-        }
+		body.reversed-theme {
+			--primary-color: #9b59b6;
+			--secondary-color: #8e44ad;
+			--accent-color: #c0392b;
+			--success-color: #27ae60;
+			--warning-color: #f39c12;
+			--danger-color: #e74c3c;
+			--light-bg: #2c2c2c;
+			--card-bg: #1a1a2e;
+			--text-primary: #e0e0e0;
+			--text-secondary: #a0a0a0;
+			--border-color: #444;
+			--achievement-text: #ffffff;         /* 纯白色文字，更清晰 */
+			--achievement-bg: #5b2c6f;          /* 更亮的紫色背景 */
+			--achievement-border: #d7bde2;      /* 浅紫色边框，更明显 */
+			--achievement-shadow: 0 2px 10px rgba(155, 89, 182, 0.5); /* 更强的紫色阴影 */
+		}
 
         body.reversed-theme #start-screen {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
@@ -364,10 +364,12 @@
 
 		/* 逆位模式新样式 */
 		body.reversed-theme .achievement-item {
-			background: var(--achievement-bg);
-			color: var(--achievement-text);
-			border: 1px solid var(--achievement-border);
-			box-shadow: var(--achievement-shadow);
+			background: linear-gradient(135deg, #6c3483, #4a235a);
+			color: #ffffff;
+			border: 1px solid #d7bde2;
+			box-shadow: 0 2px 10px rgba(155, 89, 182, 0.5);
+			font-weight: 500;
+			text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 		}
 
 		/* 未解锁成就 */
@@ -390,6 +392,93 @@
 		body.reversed-theme .locked-achievement:hover {
 			color: #c0c0c0 !important;
 			border-style: solid;
+		}
+
+		/* 全球统计面板中的成就/结局标签 */
+		.stats-tag {
+			padding: 4px 8px;
+			background: white;
+			border-radius: 6px;
+			font-size: 0.65rem;
+			border: 1px solid var(--border-color);
+		}
+
+		.stats-tag strong {
+			color: var(--success-color);
+		}
+
+		.stats-tag.ending-tag strong {
+			color: var(--primary-color);
+		}
+
+		body.reversed-theme .stats-tag {
+			background: #2d2d44;
+			color: #e0e0e0;
+			border-color: #555;
+		}
+
+		body.reversed-theme .stats-tag strong {
+			color: #58d68d;
+		}
+
+		body.reversed-theme .stats-tag.ending-tag strong {
+			color: #bb8fce;
+		}
+
+		/* 未解锁成就样式 */
+		.locked-achievement-tag {
+			padding: 4px 8px;
+			background: #e0e0e0;
+			border-radius: 15px;
+			font-size: 0.75rem;
+			color: #999;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+
+		.locked-achievement-tag:hover {
+			background: #d0d0d0;
+			color: #666;
+		}
+
+		body.reversed-theme .locked-achievement-tag {
+			background: #3d3d5c;
+			color: #a0a0a0;
+			border: 1px dashed #6c3483;
+		}
+
+		body.reversed-theme .locked-achievement-tag:hover {
+			background: #4d4d6c;
+			color: #c0c0c0;
+			border-color: #8e44ad;
+		}
+
+		/* 弹窗内的统计标签 */
+		.modal-stats-tag {
+			padding: 4px 8px;
+			background: var(--light-bg);
+			border-radius: 6px;
+			font-size: 0.7rem;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+
+		.modal-stats-tag:hover {
+			transform: translateY(-1px);
+		}
+
+		.modal-stats-tag strong {
+			color: var(--success-color);
+		}
+
+		body.reversed-theme .modal-stats-tag {
+			background: #2d2d44;
+			color: #e0e0e0;
+			border: 1px solid #444;
+		}
+
+		body.reversed-theme .modal-stats-tag strong {
+			color: #58d68d;
 		}		
 
         /* 弹窗样式 */
@@ -2033,36 +2122,37 @@
             renderCharacterGrid();
         }
 
-        function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
-            let totalEndings = 0;
-            for (const count of Object.values(modeStats.endings)) {
-                totalEndings += count;
-            }
+		function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
+			let totalEndings = 0;
+			for (const count of Object.values(modeStats.endings)) {
+				totalEndings += count;
+			}
 
-            let endingHtml = '';
-            for (const [type, name] of Object.entries(ENDING_NAMES)) {
-                const count = modeStats.endings[type] || 0;
-                const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
-                const opacity = count > 0 ? '1' : '0.4';
-                endingHtml += `
-                    <div style="padding:4px 8px;background:white;border-radius:6px;font-size:0.65rem;opacity:${opacity};border:1px solid var(--border-color);">
-                        ${name} <strong style="color:var(--primary-color);">${count}</strong>
-                        <span style="color:var(--text-secondary);">(${percent}%)</span>
-                    </div>`;
-            }
-            endingContainer.innerHTML = endingHtml || '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
+			let endingHtml = '';
+			for (const [type, name] of Object.entries(ENDING_NAMES)) {
+				const count = modeStats.endings[type] || 0;
+				const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
+				const opacity = count > 0 ? '1' : '0.4';
+				endingHtml += `
+					<div class="stats-tag ending-tag" style="opacity:${opacity};">
+						${name} <strong>${count}</strong>
+						<span style="color:var(--text-secondary);">(${percent}%)</span>
+					</div>`;
+			}
+			endingContainer.innerHTML = endingHtml || '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
 
-            let achievementHtml = '';
-            for (const ach of ALL_ACHIEVEMENTS) {
-                const count = modeStats.achievements[ach] || 0;
-                const opacity = count > 0 ? '1' : '0.4';
-                achievementHtml += `
-                    <div style="padding:4px 8px;background:white;border-radius:6px;font-size:0.65rem;opacity:${opacity};border:1px solid var(--border-color);">
-                        ${ach} <strong style="color:var(--success-color);">${count}</strong>
-                    </div>`;
-            }
-            achievementContainer.innerHTML = achievementHtml;
-        }
+			let achievementHtml = '';
+			for (const ach of ALL_ACHIEVEMENTS) {
+				const count = modeStats.achievements[ach] || 0;
+				const opacity = count > 0 ? '1' : '0.5';
+				html += `
+					<div class="modal-stats-tag" style="opacity:${opacity};" onclick="showSingleAchievementRequirement('${ach}')">
+						${ach} <strong>${count}</strong>
+					</div>
+				`;
+			}
+			achievementContainer.innerHTML = achievementHtml;
+		}
 		
         // ==================== 模式切换 ====================
         function switchMode(reversed) {
@@ -5091,9 +5181,10 @@
 			if (achievements.length > 0) {
 				html += `
 				<div class="achievements-container" 
-					 style="margin: 15px 0; background: ${gameState.isReversed ? 'rgba(46, 34, 56, 0.5)' : 'rgba(253, 203, 110, 0.1)'}; 
+					 style="margin: 15px 0; background: ${gameState.isReversed ? 'rgba(93, 44, 111, 0.3)' : 'rgba(253, 203, 110, 0.1)'}; 
 							border-radius: 12px; 
-							padding: 12px;">
+							padding: 12px;
+							border: 1px solid ${gameState.isReversed ? '#8e44ad' : '#fdcb6e'};">
 					<div style="font-weight: 600; 
 							   margin-bottom: 8px; 
 							   color: ${gameState.isReversed ? '#d7bde2' : '#d68910'};">
@@ -5101,7 +5192,7 @@
 					</div>
 					<div style="display: flex; flex-wrap: wrap; gap: 6px;">
 						${achievements.map(a => `
-							<span class="${gameState.isReversed ? 'achievement-item reversed-achievement' : 'achievement-item'}">
+							<span class="achievement-item">
 								${a}
 							</span>
 						`).join('')}
@@ -5109,19 +5200,19 @@
 				</div>`;
 			}
 
-            if (locked.length > 0) {
-                html += `<div style="background:var(--light-bg);border-radius:12px;padding:12px;margin-bottom:10px;">
-                    <div style="font-weight:600;margin-bottom:8px;color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;justify-content:space-between;">
-                        <span><i class="fas fa-lock"></i> 未解锁成就</span>
-                        <span style="font-size:0.7rem;cursor:pointer;" onclick="showAchievementRequirements()">
-                            <i class="fas fa-question-circle"></i> 查看要求
-                        </span>
-                    </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                        ${locked.map(a => `<span style="padding:4px 8px;background:#e0e0e0;border-radius:15px;font-size:0.75rem;color:#999;cursor:pointer;" onclick="showSingleAchievementRequirement('${a}')">${a}</span>`).join('')}
-                    </div>
-                </div>`;
-            }
+			if (locked.length > 0) {
+				html += `<div style="background:var(--light-bg);border-radius:12px;padding:12px;margin-bottom:10px;">
+					<div style="font-weight:600;margin-bottom:8px;color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;justify-content:space-between;">
+						<span><i class="fas fa-lock"></i> 未解锁成就</span>
+						<span style="font-size:0.7rem;cursor:pointer;" onclick="showAchievementRequirements()">
+							<i class="fas fa-question-circle"></i> 查看要求
+						</span>
+					</div>
+					<div style="display:flex;flex-wrap:wrap;gap:6px;">
+						${locked.map(a => `<span class="locked-achievement-tag" onclick="showSingleAchievementRequirement('${a}')">${a}</span>`).join('')}
+					</div>
+				</div>`;
+			}
 
             html += `<div style="background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.1));border-radius:12px;padding:12px;margin-bottom:10px;cursor:pointer;" onclick="showEndingStatistics()">
                 <div style="font-weight:600;margin-bottom:8px;color:var(--primary-color);font-size:0.85rem;display:flex;align-items:center;justify-content:space-between;">
