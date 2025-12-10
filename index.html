@@ -2661,6 +2661,13 @@
 							gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
 							gameState.gold += decreased;
 						}
+					} else {
+						// 添加通用处理逻辑
+						if (changes.favor > 0) {
+							gameState.favor = Math.min(20, gameState.favor + changes.favor);
+						} else {
+							gameState.favor += changes.favor;
+						}
 					}
 					if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
 				}
@@ -3114,6 +3121,9 @@
 				} else if (checkMonth === 1 && checkYear >= 2) {  // 奖学金在每年第1个月（从第二年开始）
 					eventName = '奖学金';
 					eventIcon = '🎓';
+				} else if (checkMonth === 2) {
+					eventName = '教师节';
+					eventIcon = '🎁';
 				} else if (checkMonth % 2 === 0) {
 					eventName = '随机事件';
 					eventIcon = '🎲';
@@ -3348,8 +3358,6 @@
                 reviewing: false,
                 reviewMonths: 0,
                 submittedGrade: null,
-				reviewMonths: 0,  // 显式初始化
-				submittedGrade: null,  // 显式初始化
                 submittedScore: 0
             };
             addLog('新论文', `在论文槽${slot + 1}开启：${title}`);
@@ -6008,6 +6016,34 @@
 
 			showModal('🎮 游戏结束', html, [{ text: '🔄 我要重开', class: 'btn-primary', action: restartGame }]);
 		}
+		
+		function showAchievementRequirements() {
+			let html = '<div style="max-height:60vh;overflow-y:auto;">';
+			
+			for (const [name, req] of Object.entries(ACHIEVEMENT_REQUIREMENTS)) {
+				html += `
+					<div style="padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+						<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">${name}</div>
+						<div style="font-size:0.75rem;color:var(--text-secondary);">${req}</div>
+					</div>
+				`;
+			}
+			html += '</div>';
+			
+			showModal('🏆 成就达成要求', html, [{ 
+				text: currentEndingData ? '返回结局' : '关闭', 
+				class: 'btn-primary', 
+				action: () => {
+					closeModal();
+					if (currentEndingData) {
+						setTimeout(() => {
+							showEndingModal(currentEndingData.title, currentEndingData.desc, currentEndingData.emoji, currentEndingData.endingType);
+						}, 100);
+					}
+				}
+			}]);
+		}		
+		
 
         function showSingleAchievementRequirement(name) {
             const req = ACHIEVEMENT_REQUIREMENTS[name];
@@ -6615,9 +6651,22 @@
                             isReversedMode = false;
                         }
 						
-						if (save.rejectedPapers) gameState.rejectedPapers = {...save.rejectedPapers};
-						if (save.furnitureBought) gameState.furnitureBought = {...save.furnitureBought};
-						if (save.achievementConditions) gameState.achievementConditions = {...save.achievementConditions};
+						gameState.rejectedPapers = save.rejectedPapers ? {...save.rejectedPapers} : {};
+						gameState.furnitureBought = save.furnitureBought ? {...save.furnitureBought} : {
+							chair: false,
+							monitor: false,
+							keyboard: false
+						};
+						gameState.achievementConditions = save.achievementConditions ? {...save.achievementConditions} : {
+							highScorePaper: false,
+							unanimousImprovement: false,
+							allBadReviewers: false,
+							tripleRejected: false,
+							bought5GPUs: false,
+							fullFurnitureSet: false,
+							phdRequirementMetEarly: false,
+							rejectedPhdTwice: false
+						};
 						gameState.maxConcurrentReviews = save.maxConcurrentReviews || 0;
 						gameState.phdOpportunitiesRejected = save.phdOpportunitiesRejected || 0;
 						gameState.gpuServersBought = save.gpuServersBought || 0;
