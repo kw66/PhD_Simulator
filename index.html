@@ -2118,6 +2118,10 @@
             });
 
             resetRandomEventPool();
+			
+			if(gameState.publishedPapers.length === 0) {
+				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 14);
+			}
 
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').style.display = 'block';
@@ -2159,6 +2163,9 @@
 
         function resetRandomEventPool() {
             gameState.availableRandomEvents = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13];
+			if(gameState.publishedPapers.length > 0) {
+				gameState.availableRandomEvents.push(14);
+			}
             gameState.usedRandomEvents = [];
         }
 
@@ -2552,12 +2559,16 @@
                 return;
             }
             
-            const mergedMap = {};
-            allBuffs.forEach(buff => {
-                if (buff.isLove) {
-                    mergedMap['lover'] = buff;
-                    return;
-                }
+			const mergedMap = {};
+			allBuffs.forEach(buff => {
+				if(buff.isLove) {
+					mergedMap['lover'] = buff;
+					return;
+				}
+				if(buff.type === 'mentorship') {
+					mergedMap['mentorship'] = buff;
+					return;
+				}
                 const key = `${buff.type}_${buff.multiply ? 'mul' : 'add'}_${buff.permanent ? 'perm' : 'temp'}`;
                 
                 if (mergedMap[key]) {
@@ -2616,21 +2627,25 @@
                 return { name, permanent: buff.permanent, isLove: false, isDebuff };
             });
             
-            list.innerHTML = merged.map(buff => {
-                let tagClass = 'buff-tag ';
-                if (buff.isLove) tagClass += 'love';
-                else if (buff.isDebuff) tagClass += 'debuff';
-                else if (buff.permanent) tagClass += 'permanent';
-                else tagClass += 'temporary';
-                
-                const icon = buff.isLove ? 'fa-heart' : buff.isDebuff ? 'fa-arrow-down' : buff.permanent ? 'fa-infinity' : 'fa-clock';
-                
-                return `<span class="${tagClass}">
-                    <i class="fas ${icon}"></i>
-                    ${buff.name}
-                </span>`;
-            }).join('');
-        }
+			list.innerHTML = merged.map(buff => {
+				let tagClass = 'buff-tag ';
+				if(buff.isLove) tagClass += 'love';
+				else if(buff.type === 'mentorship') tagClass += 'permanent'; // 使用永久buff的样式
+				else if(buff.isDebuff) tagClass += 'debuff';
+				else if(buff.permanent) tagClass += 'permanent';
+				else tagClass += 'temporary';
+				
+				const icon = buff.isLove ? 'fa-heart' : 
+							buff.type === 'mentorship' ? 'fa-users' : // 使用人群图标
+							buff.isDebuff ? 'fa-arrow-down' : 
+							buff.permanent ? 'fa-infinity' : 'fa-clock';
+				
+				return `<span class="${tagClass}">
+					<i class="fas ${icon}"></i>
+					${buff.name}${buff.desc ? ` (${buff.desc})` : ''}
+				</span>`;
+			}).join('');
+		}
 
         function updateResearchResults() {
             document.getElementById('paper-a-count').textContent = gameState.paperA;
@@ -3427,6 +3442,11 @@
                 promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
                 citationMultiplier: 1
             });
+			
+			if(gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
+				gameState.availableRandomEvents.push(14);
+				addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
+			}
 
             gameState.papers[slot] = null;
 
@@ -3772,6 +3792,20 @@
             if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
                 gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
             }
+			
+			// 处理长期合作buff
+			const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
+			if(mentorshipBuff) {
+				changeSan(-1);
+				// 总引用增加当前科研能力值
+				const researchBonus = gameState.research;
+				gameState.totalCitations += researchBonus;
+				// 更新所有已发表论文的引用（可选）
+				gameState.publishedPapers.forEach(paper => {
+					paper.citations += Math.floor(researchBonus / gameState.publishedPapers.length);
+				});
+				addLog('长期合作', '指导师弟师妹的成果', `总引用+${researchBonus}`);
+			}
 
             // 玩世之导师子女：每月好感-1（不翻倍）
             if (gameState.isReversed && gameState.character === 'teacher-child') {
@@ -4053,7 +4087,8 @@
                 10: showRandomEvent10,
                 11: showRandomEvent11,
                 12: showRandomEvent12,
-                13: showRandomEvent13
+                13: showRandomEvent13,
+				14: showRandomEvent14,
             };
             
             if (eventMap[eventId]) {
@@ -4548,7 +4583,34 @@
                 }}
             ]);
         }
-		
+
+		function showRandomEvent14() {
+			showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
+				{ text: '精力有限算了', class: 'btn-info', action: () => {
+					addLog('随机事件', '指导师弟师妹 - 精力有限算了', '无事发生');
+					closeModal();
+				}},
+				{ text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
+					addLog('随机事件', '指导师弟师妹 - 合作一个idea', 'SAN-5，社交+1');
+					closeModal();
+					changeSan(-5);
+					changeSocial(1);
+				}},
+				{ text: '展开长期合作', class: 'btn-success', action: () => {
+					// 添加长期合作buff
+					gameState.buffs.permanent.push({
+						type: 'mentorship',
+						name: '指导师弟师妹',
+						desc: '每月SAN-1，总引用+科研能力值',
+						permanent: true
+					});
+					addLog('随机事件', '指导师弟师妹 - 展开长期合作', '每月SAN-1，总引用+科研能力值');
+					closeModal();
+					updateBuffs();
+				}}
+			]);
+		}
+
         // ==================== 毕业检查 ====================
         function checkGraduation() {
             if (gameState.degree === 'master') {
