@@ -2145,8 +2145,8 @@
 			for (const ach of ALL_ACHIEVEMENTS) {
 				const count = modeStats.achievements[ach] || 0;
 				const opacity = count > 0 ? '1' : '0.5';
-				html += `
-					<div class="modal-stats-tag" style="opacity:${opacity};" onclick="showSingleAchievementRequirement('${ach}')">
+				achievementHtml += `
+					<div class="stats-tag" style="opacity:${opacity};">
 						${ach} <strong>${count}</strong>
 					</div>
 				`;
