@@ -1588,7 +1588,7 @@
                     icon: '🏴‍☠️',
                     awakenIcon: '👑',
                     desc: '钱是唯一的追求',
-                    bonus: '科研/社交/好感固定1，每月额外+3金',
+                    bonus: '科研/社交/好感固定0，每月额外+3金',
                     awakenName: '金钱的力量',
                     awakenDesc: '金币只能减少，每消费6金→科研/社交/好感各+1',
                     stats: {}
@@ -2637,69 +2637,61 @@
 				if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
 			}
 			
-			if (changes.favor) {
-				// 贪求之富可敌国：属性固定为0或锁定
-				if (gameState.isReversed && gameState.character === 'rich') {
-					if (!gameState.statsLocked) {
-						gameState.favor = 0;
-					}
-					// 锁定后不变
-				} else if (gameState.isReversed && gameState.character === 'teacher-child' && changes.favor < 0) {
-					// 玩世之导师子女：好感降低不翻倍
-					const oldFavor = gameState.favor;
-					gameState.favor = Math.max(0, gameState.favor + changes.favor);
-					const decreased = oldFavor - gameState.favor;
-					if (decreased > 0) {
-						gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-						gameState.gold += decreased;
-					}
+			// 贪求之富可敌国：属性变化被阻止
+			if (gameState.isReversed && gameState.character === 'rich') {
+				if (!gameState.statsLocked) {
+					// 觉醒前：属性固定为0，忽略所有属性变化
+					// 不处理 changes.favor, changes.research, changes.social
 				} else {
-					if (changes.favor > 0) {
-						gameState.favor = Math.min(20, gameState.favor + changes.favor);
-					} else {
-						gameState.favor += changes.favor;
-					}
+					// 觉醒后：属性锁定，只能通过消费增加，忽略其他属性变化
+					// 不处理 changes.favor, changes.research, changes.social
 				}
-				if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
-			}
-			
-			if (changes.research) {
-				// 愚钝之院士转世：科研固定为0
-				if (gameState.isReversed && gameState.character === 'genius') {
-					if (changes.research > 0) {
-						gameState.blockedResearchGains += changes.research;
-						const sanGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
-						const goldGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
-						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
-						gameState.gold += goldGain;
-						if (gameState.reversedAwakened) {
-							gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
-							gameState.social = Math.min(20, gameState.social + changes.research * 2);
+			} else {
+				// 其他角色正常处理属性变化
+				if (changes.favor) {
+					if (gameState.isReversed && gameState.character === 'teacher-child' && changes.favor < 0) {
+						const oldFavor = gameState.favor;
+						gameState.favor = Math.max(0, gameState.favor + changes.favor);
+						const decreased = oldFavor - gameState.favor;
+						if (decreased > 0) {
+							gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+							gameState.gold += decreased;
+						}
+					} else {
+						if (changes.favor > 0) {
+							gameState.favor = Math.min(20, gameState.favor + changes.favor);
+						} else {
+							gameState.favor += changes.favor;
 						}
 					}
-					gameState.research = 0;
-				} else if (gameState.isReversed && gameState.character === 'rich') {
-					// 贪求之富可敌国：属性固定为0或锁定
-					if (!gameState.statsLocked) {
+					if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
+				}
+				
+				if (changes.research) {
+					if (gameState.isReversed && gameState.character === 'genius') {
+						if (changes.research > 0) {
+							gameState.blockedResearchGains += changes.research;
+							const sanGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
+							const goldGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
+							gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+							gameState.gold += goldGain;
+							if (gameState.reversedAwakened) {
+								gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
+								gameState.social = Math.min(20, gameState.social + changes.research * 2);
+							}
+						}
 						gameState.research = 0;
-					}
-				} else {
-					if (changes.research > 0) {
-						gameState.research = Math.min(20, gameState.research + changes.research);
-						checkResearchUnlock();
 					} else {
-						gameState.research = Math.max(0, gameState.research + changes.research);
+						if (changes.research > 0) {
+							gameState.research = Math.min(20, gameState.research + changes.research);
+							checkResearchUnlock();
+						} else {
+							gameState.research = Math.max(0, gameState.research + changes.research);
+						}
 					}
 				}
-			}
-			
-			if (changes.social) {
-				// 贪求之富可敌国：属性固定为0或锁定
-				if (gameState.isReversed && gameState.character === 'rich') {
-					if (!gameState.statsLocked) {
-						gameState.social = 0;
-					}
-				} else {
+				
+				if (changes.social) {
 					const oldSocial = gameState.social;
 					if (changes.social > 0) {
 						gameState.social = Math.min(20, gameState.social + changes.social);
@@ -2744,6 +2736,16 @@
         }
 
         function updateAttributes() {
+			// 逆位富可敌国：强制属性固定（觉醒前为0，觉醒后锁定）
+			if (gameState.isReversed && gameState.character === 'rich') {
+				if (!gameState.statsLocked) {
+					// 觉醒前：强制属性为0
+					gameState.research = 0;
+					gameState.social = 0;
+					gameState.favor = 0;
+				}
+				// 觉醒后：属性已锁定，保持当前值（只能通过消费增加）
+			}
             document.getElementById('san-value').textContent = gameState.san;
             document.getElementById('san-max').textContent = gameState.sanMax;
             document.getElementById('san-bar').style.width = `${Math.max(0, (gameState.san / gameState.sanMax) * 100)}%`;
@@ -2856,7 +2858,9 @@
 			});
 			
 			if (gameState.hasLover) {
-				const loverBuffName = gameState.loverType === 'beautiful' ? '💕恋人-每月SAN+3' : '💕聪慧恋人';
+				const loverBuffName = gameState.loverType === 'beautiful' 
+					? '💕恋人(SAN+3,金-1)' 
+					: '💕聪慧恋人(金-1)';
 				allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
 			}
 			
@@ -4142,33 +4146,40 @@
             })));
         }
 
-        function showLoverModal(type) {
-            const desc = type === 'beautiful' ? '你和那个好看的异性学者越来越熟悉了' : '你和那个聪慧的异性学者越来越默契了';
-            showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>`, [
-                { text: '还是算了', class: 'btn-info', action: closeModal },
-                { text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
-                    gameState.hasLover = true;
-                    gameState.loverType = type;
-                    if (type === 'beautiful') {
-                        gameState.san = gameState.sanMax;
-                        gameState.sanMax += 4;
-                        addLog('💕 恋爱', '和好看的异性学者成为恋人', 'SAN值回满，每月SAN值+3，SAN值上限+4');
-                    } else {
-                        changeResearch(1);
-                        gameState.buffs.permanent.push(
-                            { type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
-                            { type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
-                            { type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
-                        );
-                        addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次');
-                        changeSan(1);
-                    }
-                    closeModal();
-                    updateAllUI();
-                    updateBuffs();
-                }}
-            ]);
-        }
+	function showLoverModal(type) {
+		const desc = type === 'beautiful' 
+			? '你和那个好看的异性学者越来越熟悉了' 
+			: '你和那个聪慧的异性学者越来越默契了';
+		
+		const bonusDesc = type === 'beautiful'
+			? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
+			: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
+		
+		showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>${bonusDesc}`, [
+			{ text: '还是算了', class: 'btn-info', action: closeModal },
+			{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
+				gameState.hasLover = true;
+				gameState.loverType = type;
+				if (type === 'beautiful') {
+					gameState.san = gameState.sanMax;
+					gameState.sanMax += 4;
+					addLog('💕 恋爱', '和好看的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
+				} else {
+					changeResearch(1);
+					gameState.buffs.permanent.push(
+						{ type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
+						{ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
+						{ type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
+					);
+					addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
+					changeSan(1);
+				}
+				closeModal();
+				updateAllUI();
+				updateBuffs();
+			}}
+		]);
+	}
 
         function showBigBullCoopModal() {
             showModal('🌟 联合培养', '<p>大牛对你的科研能力印象深刻，提议与你的导师联合培养你，是否接受？</p>', [
@@ -4214,8 +4225,27 @@
 				return;
 			}
 			
-			gameState.gold -= item.price;
+			// 修复：使用 changeGold 处理金币消费，让富可敌国的消费属性增加逻辑生效
 			let result = `金钱-${item.price}`;
+			
+			// 富可敌国觉醒：通过消费增加属性（需要在金币减少前计算）
+			if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked) {
+				const spent = item.price;
+				gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
+				
+				const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+				const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
+				const newGains = attributeGains - previousGains;
+				
+				if (newGains > 0) {
+					gameState.research = Math.min(20, gameState.research + newGains);
+					gameState.social = Math.min(20, gameState.social + newGains);
+					gameState.favor = Math.min(20, gameState.favor + newGains);
+					result += `，金钱觉醒(累计${gameState.goldSpentTotal}金)：科研+${newGains}, 社交+${newGains}, 好感+${newGains}`;
+				}
+			}
+			
+			gameState.gold -= item.price;
 			
 			switch(id) {
 				case 'gpu_buy':
@@ -4310,17 +4340,22 @@
             gameState.totalMonths++;
 					
 
-            let newYearBonus = false;
-            if (gameState.month > 12) {
-                gameState.month = 1;
-                gameState.year++;
-                
-                if (gameState.year >= 2) {
-                    newYearBonus = true;
-                    gameState.social = Math.min(20, gameState.social + 1);
-                    gameState.favor = Math.min(20, gameState.favor + 1);
-                }
-            }
+			let newYearBonus = false;
+			if (gameState.month > 12) {
+				gameState.month = 1;
+				gameState.year++;
+				
+				if (gameState.year >= 2) {
+					newYearBonus = true;
+					// 逆位富可敌国：属性增加被阻止
+					if (!(gameState.isReversed && gameState.character === 'rich')) {
+						gameState.social = Math.min(20, gameState.social + 1);
+						gameState.favor = Math.min(20, gameState.favor + 1);
+					} else {
+						addLog('逆位效果', '贪求封印', '新年属性增加被封印');
+					}
+				}
+			}
 
             const salary = gameState.degree === 'master' ? 1 : 3;
             
@@ -4341,9 +4376,37 @@
             gameState.san = Math.min(gameState.sanMax, gameState.san + sanRecovery);
 
             // 恋人效果
-            if (gameState.hasLover && gameState.loverType === 'beautiful') {
-                gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
-            }
+			if (gameState.hasLover) {
+				// SAN回复（好看的恋人）
+				if (gameState.loverType === 'beautiful') {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+				}
+				
+				// 约会开销
+				gameState.gold -= 1;
+				
+				// 富可敌国觉醒：恋爱开销也算消费
+				if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked) {
+					gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + 1;
+					
+					const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+					const previousGains = Math.floor((gameState.goldSpentTotal - 1) / 6);
+					const newGains = attributeGains - previousGains;
+					
+					if (newGains > 0) {
+						gameState.research = Math.min(20, gameState.research + newGains);
+						gameState.social = Math.min(20, gameState.social + newGains);
+						gameState.favor = Math.min(20, gameState.favor + newGains);
+						addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
+					}
+				}
+				
+				// 检查是否破产
+				if (gameState.gold < 0) {
+					triggerEnding('poor');
+					return;
+				}
+			}
 
             // 人体工学椅效果
             if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
@@ -4444,10 +4507,15 @@
                 addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
             }
 
-            let logResult = `工资+${salary}，开销-1，休息SAN+${sanRecovery}`;
-            if (extraGold > 0) logResult += `，逆位额外+${extraGold}金`;
-            if (gameState.hasLover && gameState.loverType === 'beautiful') logResult += '，恋人SAN+3';
-            if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) logResult += '，工学椅SAN+1';
+			let logResult = `工资+${salary}，开销-1，休息SAN+${sanRecovery}`;
+			if (extraGold > 0) logResult += `，逆位额外+${extraGold}金`;
+			if (gameState.hasLover) {
+				if (gameState.loverType === 'beautiful') {
+					logResult += '，恋人SAN+3';
+				}
+				logResult += '，约会-1金';  // 新增
+			}
+			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) logResult += '，工学椅SAN+1';
             addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
 
             if (decayLogs.length > 0) {
@@ -5283,12 +5351,20 @@
 			
 			gameState.pendingPhDChoice = true;  // 设置标志位
 			
+			// 判断是第几年的转博选择
+			const isSecondYear = gameState.year === 2;
+			const notPhDText = isSecondYear ? '继续读硕士' : '硕士毕业';
+			const notPhDDesc = isSecondYear 
+				? '<p style="color:var(--text-secondary);font-size:0.85rem;">选择继续读硕士，明年还有一次转博机会</p>'
+				: '';
+			
 			showModal('🎓 转博选择',
 				`<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
 				 <p>是否选择继续攻读博士学位？</p>
-				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
+				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>
+				 ${notPhDDesc}`,
 				[
-					{ text: '硕士毕业', class: 'btn-info', action: () => { 
+					{ text: notPhDText, class: 'btn-info', action: () => { 
 						gameState.pendingPhDChoice = false;
 						// === 人间清醒检查 ===
 						gameState.phdOpportunitiesRejected = (gameState.phdOpportunitiesRejected || 0) + 1;
@@ -5296,8 +5372,23 @@
 							gameState.achievementConditions = gameState.achievementConditions || {};
 							gameState.achievementConditions.rejectedPhdTwice = true;
 						}
-						closeModal(); 
-						triggerEnding('master'); 
+						closeModal();
+						
+						// 第2年选择不转博：继续读硕士
+						if (isSecondYear) {
+							addLog('转博选择', '选择继续读硕士', '明年还有一次转博机会');
+							updateAllUI();
+							
+							// 处理待处理的开会事件
+							if (gameState.pendingConference) {
+								const grade = gameState.pendingConference;
+								gameState.pendingConference = null;
+								setTimeout(() => showConferenceModal(grade), 300);
+							}
+						} else {
+							// 第3年选择不转博：硕士毕业
+							triggerEnding('master');
+						}
 					}},
 					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
 						gameState.pendingPhDChoice = false;
@@ -5381,9 +5472,14 @@
 						gameState.goldLocked = true;
 						gameState.statsLocked = true;
 						gameState.goldSpentTotal = 0;  // 重置消费计数
+						// 觉醒时属性仍然是0，从0开始通过消费增加
+						gameState.research = 0;
+						gameState.social = 0;
+						gameState.favor = 0;
 						bonusDetails.push('⚠️ 金币只能减少，不能增加');
 						bonusDetails.push('每消费6金币 → 科研+1, 社交+1, 好感+1');
-						bonusDetails.push('⚠️ 属性不能以其他方式增加');
+						bonusDetails.push('⚠️ 当前属性：科研0/社交0/好感0');
+						bonusDetails.push('💡 快去花钱提升属性吧！');
 						break;
 						
 					case 'teacher-child': // 玩世之导师子女
@@ -5698,9 +5794,11 @@
 				? '<span style="color:#9b59b6;font-size:0.8rem;">🌑 逆位模式</span>' 
 				: '<span style="color:#6c5ce7;font-size:0.8rem;">☀️ 正位模式</span>';
 
-			// 判断是否为失败结局
+			// 判断结局类型
 			const failedEndings = ['quit', 'burnout', 'expelled', 'poor', 'delay'];
+			const successEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
 			const isFailed = failedEndings.includes(endingType);
+			const isSuccess = successEndings.includes(endingType);
 
 			let html = `<div style="text-align:center;margin-bottom:15px;">
 				<div style="font-size:3rem;margin-bottom:10px;">${emoji}</div>
@@ -5720,6 +5818,20 @@
 					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
 						<i class="fas fa-palette"></i> 作者向你传授科研绘图心得
 					</a>
+				</div>`;
+			}
+			
+			// 成功结局添加实习邀请链接
+			if (isSuccess) {
+				html += `
+				<div style="background:linear-gradient(135deg,rgba(0,184,148,0.15),rgba(108,92,231,0.15));border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;">
+					<div style="font-size:0.9rem;margin-bottom:8px;">🎉 恭喜毕业！新的征程即将开始~</div>
+					  <a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank" 
+					     style="display:inline-block;padding:8px 16px;background:linear-gradient(135deg,var(--success-color),var(--primary-color));color:white;text-decoration:none;border-radius:20px;font-size:0.85rem;font-weight:500;transition:all 0.3s ease;"
+					     onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,184,148,0.4)'"
+					     onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+					  	<i class="fas fa-building"></i> 作者诚邀你来上海AI Lab实习
+					  </a>
 				</div>`;
 			}
 			
@@ -5787,36 +5899,6 @@
 
 			showModal('🎮 游戏结束', html, [{ text: '🔄 我要重开', class: 'btn-primary', action: restartGame }]);
 		}
-
-        function showAchievementRequirements() {
-            let html = '<div style="max-height:60vh;overflow-y:auto;">';
-            
-            for (const [name, req] of Object.entries(ACHIEVEMENT_REQUIREMENTS)) {
-                const achieved = collectAchievements(null).includes(name);
-                html += `
-                    <div style="padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;border-left:3px solid ${achieved ? 'var(--success-color)' : 'var(--border-color)'};">
-                        <div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">
-                            ${name} ${achieved ? '<span style="color:var(--success-color);font-size:0.7rem;">✓ 已达成</span>' : ''}
-                        </div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary);">${req}</div>
-                    </div>
-                `;
-            }
-            html += '</div>';
-            
-            showModal('🏆 成就达成要求', html, [{ 
-                text: currentEndingData ? '返回结局' : '关闭', 
-                class: 'btn-primary', 
-                action: () => {
-                    closeModal();
-                    if (currentEndingData) {
-                        setTimeout(() => {
-                            showEndingModal(currentEndingData.title, currentEndingData.desc, currentEndingData.emoji, currentEndingData.endingType);
-                        }, 100);
-                    }
-                }
-            }]);
-        }
 
         function showSingleAchievementRequirement(name) {
             const req = ACHIEVEMENT_REQUIREMENTS[name];
