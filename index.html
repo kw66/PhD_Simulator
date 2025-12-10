@@ -1806,6 +1806,7 @@
                 enterpriseCount: 0,
                 ailabInternship: false,
                 firstBestPaperAccepted: false,
+				badmintonMonth: -1,  // ★★★ 新增：记录打羽毛球的月份 ★★★
                 
                 // ★★★ 新增：逆位富可敌国相关状态 ★★★
                 lastResetMonth: 0,  // 上次重置的月份（用于觉醒后半年重置）
@@ -5225,33 +5226,58 @@
             
             const eventIndex = Math.floor(Math.random() * availableEvents.length);
             const eventId = availableEvents[eventIndex];
-            
-            gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== eventId);
-            if (!gameState.usedRandomEvents.includes(eventId)) {
-                gameState.usedRandomEvents.push(eventId);
-            }
-            
-            const eventMap = {
-                1: showRandomEvent1,
-                2: showRandomEvent2,
-                3: showRandomEvent3,
-                4: showRandomEvent4,
-                5: showRandomEvent5,
-                6: showRandomEvent6,
-                7: showRandomEvent7,
-                8: showRandomEvent8,
-                9: showRandomEvent9,
-                10: showRandomEvent10,
-                11: showRandomEvent11,
-                12: showRandomEvent12,
-                13: showRandomEvent13,
-                14: showRandomEvent14,
-            };
-            
-            if (eventMap[eventId]) {
-                eventMap[eventId]();
-            }
-        }
+            // ★★★ 新增：检查是否抵抗感冒 ★★★
+			if (eventId === 3 && gameState.totalMonths === gameState.badmintonMonth + 1) {
+				// 从可用池中移除感冒事件
+				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 3);
+				if (!gameState.usedRandomEvents.includes(3)) {
+					gameState.usedRandomEvents.push(3);
+				}
+				
+				// 显示抵抗感冒的提示
+				showModal('💪 随机事件', 
+					`<p>本来你要感冒了...</p>
+					 <div style="text-align:center;font-size:2rem;margin:15px 0;">🏸➡️🛡️</div>
+					 <p>但是上个月打羽毛球强化了身体，成功抵抗了感冒！</p>`,
+					[{ 
+						text: '身体倍儿棒！', 
+						class: 'btn-success', 
+						action: () => {
+							addLog('随机事件', '感冒来袭', '上个月打羽毛球强化了身体，成功抵抗！');
+							closeModal();
+							updateAllUI();
+						}
+					}]
+				);
+				return;
+			}
+			
+			gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== eventId);
+			if (!gameState.usedRandomEvents.includes(eventId)) {
+				gameState.usedRandomEvents.push(eventId);
+			}
+			
+			const eventMap = {
+				1: showRandomEvent1,
+				2: showRandomEvent2,
+				3: showRandomEvent3,
+				4: showRandomEvent4,
+				5: showRandomEvent5,
+				6: showRandomEvent6,
+				7: showRandomEvent7,
+				8: showRandomEvent8,
+				9: showRandomEvent9,
+				10: showRandomEvent10,
+				11: showRandomEvent11,
+				12: showRandomEvent12,
+				13: showRandomEvent13,
+				14: showRandomEvent14,
+			};
+			
+			if (eventMap[eventId]) {
+				eventMap[eventId]();
+			}
+		}
 
         function showRandomEvent1() {
             showModal('📚 随机事件', '<p>导师派你指导本科生毕设。</p>', [
@@ -5494,7 +5520,8 @@
         function showRandomEvent7() {
             showModal('🎉 随机事件', '<p>实验室组织团建。</p>', [
                 { text: '🏸 打羽毛球', class: 'btn-primary', action: () => {
-                    addLog('随机事件', '实验室组织团建 - 打羽毛球', '脖子和手臂得到了强化，SAN值+2');
+					gameState.badmintonMonth = gameState.totalMonths;
+                    addLog('随机事件', '实验室组织团建 - 打羽毛球', '脖子和手臂得到了强化，有助于抵抗感冒，SAN值+2');
                     closeModal();
                     changeSan(2);
                 }},
@@ -6518,6 +6545,7 @@
                 lastResetMonth: gameState.lastResetMonth || 0,
 				socialAwakened: gameState.socialAwakened || false,
 				reviewerDistribution: gameState.reviewerDistribution || null,
+				badmintonMonth: gameState.badmintonMonth || -1,
                 
                 rejectedPapers: {...(gameState.rejectedPapers || {})},
                 maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -6653,6 +6681,7 @@
                             lastResetMonth: save.lastResetMonth || 0,
 							socialAwakened: save.socialAwakened || false,
 							reviewerDistribution: save.reviewerDistribution || null,
+							badmintonMonth: save.badmintonMonth || -1,
                             
                             rejectedPapers: save.rejectedPapers ? {...save.rejectedPapers} : {},
                             furnitureBought: save.furnitureBought ? {...save.furnitureBought} : {
