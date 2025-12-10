@@ -1509,28 +1509,28 @@
     <script>
 	
         // ==================== 游戏数据 ====================
-        const characters = [
-            { 
-                id: 'normal', 
-                name: '大多数', 
-                icon: '👤', 
-                awakenIcon: '🔥',
-                desc: '芸芸众生中的普通一员', 
-                bonus: '没有任何属性变化', 
-                awakenName: '我命由我不由天',
-                awakenDesc: '转博时所有属性×2',
-                stats: {},
-                reversed: {
-                    name: '怠惰之《大多数》',
-                    icon: '😴',
-                    awakenIcon: '💀',
-                    desc: '懒惰是原罪，也是护盾',
-                    bonus: 'SAN减少翻倍，初始属性全6，每月SAN+3',
-                    awakenName: '极致怠惰',
-                    awakenDesc: '属性翻倍，SAN减少3倍，每月SAN+6',
-                    stats: { research: 5, social: 5, favor: 5, gold: 5 }
-                }
-            },
+			const characters = [
+				{ 
+					id: 'normal', 
+					name: '大多数', 
+					icon: '👤', 
+					awakenIcon: '🔥',
+					desc: '芸芸众生中的普通一员', 
+					bonus: '初始属性全5', 
+					awakenName: '我命由我不由天',
+					awakenDesc: '转博时所有属性×2', 
+					stats: { research: 4, social: 4, favor: 4, gold: 4 }, // 初始全5（基础1+4）
+					reversed: {
+						name: '怠惰之《大多数》',
+						icon: '😴',
+						awakenIcon: '💀',
+						desc: '懒惰是原罪，也是护盾',
+						bonus: 'SAN减少翻倍，初始属性全5，每月SAN+3',
+						awakenName: '极致怠惰',
+						awakenDesc: '属性翻倍，SAN减少3倍，每月SAN+6',
+						stats: { research: 4, social: 4, favor: 4, gold: 4 } // 初始全5（基础1+4）
+					}
+				},
             { 
                 id: 'genius', 
                 name: '院士转世', 
@@ -1546,9 +1546,9 @@
                     icon: '🤡',
                     awakenIcon: '🎭',
                     desc: '科研是什么？能吃吗？',
-                    bonus: '科研固定1，全论文槽，科研提升→SAN+2,金+2',
+                    bonus: '科研固定1，全论文槽，科研提升→SAN+4,金+4',
                     awakenName: '大智若愚',
-                    awakenDesc: '科研提升→好感+2,SAN+2,社交+2,金+2',
+                    awakenDesc: '科研提升→SAN+6,金+6,好感+2,社交+2',
                     stats: {}
                 }
             },
@@ -1654,7 +1654,12 @@
             '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
             '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
             '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
-            '📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神'
+            '📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神',
+			'📜 高分论文', '🍀 幸运儿', '😭 倒霉蛋',
+			'🎻 曲高和寡', '💪 全力以赴', '🏆 全收集',
+			'👊 越战越勇', '🧠 人间清醒', '🔥 火力全开',
+			'🍚 食之无味', '🤖 机械飞升', '🛋️ 全套家具',
+			'🧒 天才少年'
         ];
 
         // 结局名称映射
@@ -1709,7 +1714,20 @@
             '🤖 论文机器': '发表论文总数≥10',
             '📚 千引大佬': '总引用数≥1000',
             '☕ 咖啡爱好者': '顺利毕业且每月都购买冰美式',
-            '✨ Buff之神': '触发过所有类型的Buff效果'
+            '✨ Buff之神': '触发过所有类型的Buff效果',
+			'📜 高分论文': '论文中稿后(可能的改进后)分数达到125',
+			'🍀 幸运儿': '论文收到三位审稿人的一致改进',
+			'😭 倒霉蛋': '三个审稿人都是坏审稿人(恶意小同行或者40个问题审稿人)',
+			'🎻 曲高和寡': '只中过A类论文，没有B和C',
+			'💪 全力以赴': '毕业时SAN和金钱都为0',
+			'🏆 全收集': '毕业时中稿A,B,C的poster，oral，best paper共9类论文',
+			'👊 越战越勇': '毕业时至少被拒稿5次',
+			'🧠 人间清醒': '拥有两次转博机会都拒绝了',
+			'🔥 火力全开': '论文槽位同时有4篇论文在审',
+			'🍚 食之无味': '一篇论文被连续拒稿3次',
+			'🤖 机械飞升': '商店购买5台GPU服务器',
+			'🛋️ 全套家具': '购买工学椅+显示器+键盘',
+			'🧒 天才少年': '转博时就达到博士毕业要求'
         };
 
         // 商店物品
@@ -1733,62 +1751,82 @@
         let characterDifficultyData = {};
         let currentEndingData = null;
 
-        function getInitialState() {
-            return {
-                character: null,
-                characterName: '',
-                degree: 'master',
-                year: 1,
-                month: 1,
-                totalMonths: 0,
-                maxYears: 3,
-                san: 20,
-                sanMax: 20,
-                research: 1,
-                social: 1,
-                favor: 1,
-                gold: 1,
-                paperA: 0,
-                paperB: 0,
-                paperC: 0,
-                totalScore: 0,
-                totalCitations: 0,
-                publishedPapers: [],
-                paperSlots: 1,
-                papers: [null, null, null, null],
-                buffs: { permanent: [], temporary: [] },
-                actionUsed: false,
-                readCount: 0,
-                firstPaperAccepted: false,
-                firstAPaperAccepted: false,
-                hasLover: false,
-                loverType: null,
-                bigBullCooperation: false,
-                rejectedCount: 0,
-                teaBreakCount: 0,
-                tourCount: 0,
-                metBigBull: false,
-                metBeautiful: false,
-                metSmart: false,
-                bigBullDeepCount: 0,
-                beautifulCount: 0,
-                smartCount: 0,
-                availableRandomEvents: [],
-                usedRandomEvents: [],
-                triggeredBuffTypes: [],
-                coffeeBoughtCount: 0,
-                // 逆位相关
-                isReversed: false,
-                reversedAwakened: false,
-                blockedResearchGains: 0,
-                goldLocked: false,
-                statsLocked: false,
-                _isMonthlyFavorDecrease: false,
-				// 弹窗控制
-				pendingPhDChoice: false,      // 是否有待处理的转博选择
-				pendingConference: null,      // 待处理的开会事件（存储grade）
-            };
-        }
+		function getInitialState() {
+			return {
+				character: null,
+				characterName: '',
+				degree: 'master',
+				year: 1,
+				month: 1,
+				totalMonths: 0,
+				maxYears: 3,
+				san: 20,
+				sanMax: 20,
+				research: 1,
+				social: 1,
+				favor: 1,
+				gold: 1,
+				paperA: 0,
+				paperB: 0,
+				paperC: 0,
+				totalScore: 0,
+				totalCitations: 0,
+				publishedPapers: [],
+				paperSlots: 1,
+				papers: [null, null, null, null],
+				buffs: { permanent: [], temporary: [] },
+				actionUsed: false,
+				readCount: 0,
+				firstPaperAccepted: false,
+				firstAPaperAccepted: false,
+				hasLover: false,
+				loverType: null,
+				bigBullCooperation: false,
+				rejectedCount: 0,
+				teaBreakCount: 0,
+				tourCount: 0,
+				metBigBull: false,
+				metBeautiful: false,
+				metSmart: false,
+				bigBullDeepCount: 0,
+				beautifulCount: 0,
+				smartCount: 0,
+				availableRandomEvents: [],
+				usedRandomEvents: [],
+				triggeredBuffTypes: [],
+				coffeeBoughtCount: 0,
+				isReversed: false,
+				reversedAwakened: false,
+				blockedResearchGains: 0,
+				goldLocked: false,
+				statsLocked: false,
+				_isMonthlyFavorDecrease: false,
+				pendingPhDChoice: false,
+				pendingConference: null,
+				
+				// 新增成就相关状态
+				rejectedPapers: {},                    // 记录每篇论文的拒稿次数
+				maxConcurrentReviews: 0,               // 最大同时审稿数
+				phdOpportunitiesRejected: 0,           // 拒绝转博次数
+				gpuServersBought: 0,                   // 购买GPU服务器次数
+				furnitureBought: {                     // 家具购买记录
+					chair: false,
+					monitor: false,
+					keyboard: false
+				},
+				achievementConditions: {               // 成就条件记录
+					highScorePaper: false,             // 高分论文
+					unanimousImprovement: false,       // 幸运儿
+					allBadReviewers: false,            // 倒霉蛋
+					tripleRejected: false,             // 食之无味
+					bought5GPUs: false,                // 机械飞升
+					fullFurnitureSet: false,           // 全套家具
+					phdRequirementMetEarly: false,     // 天才少年
+					rejectedPhdTwice: false            // 人间清醒
+				},
+				paperTypeCollection: new Set()         // 论文类型收集（用于全收集成就）
+			};
+		}
 
         // ==================== Supabase 统计系统 ====================
         const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
@@ -2178,7 +2216,7 @@
                 selectionTitle.innerHTML = '<i class="fas fa-moon"></i> 选择你的逆位角色';
                 gameIntro.innerHTML = `
                     <p>🌑 <strong>逆位模式已开启！</strong>每个角色都有独特的逆位效果，规则将被颠覆。</p>
-                    <p>⚠️ <strong>注意</strong>：逆位角色难度更高，属性变化规则可能完全不同！</p>
+                    <p>⚠️ <strong>注意</strong>：逆位角色玩法更独特，属性变化规则可能完全不同！</p>
                     <p>🎯 <strong>游戏目标</strong>：硕士毕业科研分≥1（3年），博士毕业科研分≥7（5年）</p>
                     <p>📝 <strong>论文科研分</strong>：A类=4分，B类=2分，C类=1分</p>
                     <p>💀 <strong>挑战自我</strong>：逆位角色的转博觉醒效果也完全不同！</p>
@@ -2425,28 +2463,33 @@
 
         function changeResearch(delta) {
             // 愚钝之院士转世：科研能力固定为1
-            if (gameState.isReversed && gameState.character === 'genius') {
-                if (delta > 0) {
-                    gameState.blockedResearchGains += delta;
-                    const sanGain = delta * 2;
-                    const goldGain = delta * 2;
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
-                    gameState.gold += goldGain;
-                    
-                    if (gameState.reversedAwakened) {
-                        const favorGain = delta * 2;
-                        const socialGain = delta * 2;
-                        gameState.favor = Math.min(20, gameState.favor + favorGain);
-                        gameState.social = Math.min(20, gameState.social + socialGain);
-                        addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
-                    } else {
-                        addLog('逆位效果', '愚钝转化', `科研提升被转化 → SAN+${sanGain}, 金钱+${goldGain}`);
-                    }
-                }
-                gameState.research = 1;
-                updateAllUI();
-                return true;
-            }
+			if (gameState.isReversed && gameState.character === 'genius') {
+				if (delta > 0) {
+					gameState.blockedResearchGains += delta;
+					if (gameState.reversedAwakened) {
+						// 觉醒后：科研+1 → SAN+6，金钱+6，好感+2，社交+2
+						const sanGain = delta * 6;
+						const goldGain = delta * 6;
+						const favorGain = delta * 2;
+						const socialGain = delta * 2;
+						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+						gameState.gold += goldGain;
+						gameState.favor = Math.min(20, gameState.favor + favorGain);
+						gameState.social = Math.min(20, gameState.social + socialGain);
+						addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
+					} else {
+						// 觉醒前：科研+1 → SAN+4，金钱+4
+						const sanGain = delta * 4;
+						const goldGain = delta * 4;
+						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+						gameState.gold += goldGain;
+						addLog('逆位效果', '愚钝转化', `科研提升被转化 → SAN+${sanGain}, 金钱+${goldGain}`);
+					}
+				}
+				gameState.research = 1;
+				updateAllUI();
+				return true;
+			}
             
             // 贪求之富可敌国：属性锁定
             if (gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked) {
@@ -3498,19 +3541,23 @@
         }
 
         // ==================== 论文投稿与审稿 ====================
-        function submitPaper(slot, grade) {
-            const paper = gameState.papers[slot];
-            if (!paper || paper.reviewing) return;
-            if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
+		function submitPaper(slot, grade) {
+			const paper = gameState.papers[slot];
+			
+			if (!paper || paper.reviewing) return;
+			if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
 
-            paper.reviewing = true;
-            paper.reviewMonths = 4;
-            paper.submittedGrade = grade;
-            paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore;
+			paper.reviewing = true;
+			paper.reviewMonths = 4;
+			paper.submittedGrade = grade;
+			paper.submittedScore = paper.ideaScore + paper.expScore + paper.writeScore;
 
-            addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${grade}类会议`, `总分${paper.submittedScore}，进入4个月审稿期`);
-            renderPaperSlots();
-        }
+			const currentReviews = gameState.papers.filter(p => p?.reviewing).length;
+			gameState.maxConcurrentReviews = Math.max(gameState.maxConcurrentReviews || 0, currentReviews);
+
+			addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${grade}类会议`, `总分${paper.submittedScore}，进入4个月审稿期`);
+			renderPaperSlots();
+		}
 
         function abandonPaper(slot) {
             const paper = gameState.papers[slot];
@@ -3635,7 +3682,33 @@
         }
 
         function showReviewResultModal(paper, grade, results, totalScore, acceptType, accepted, slot, beforeScores, afterScores) {
-            const improved = afterScores.total > beforeScores.total;
+			const improved = afterScores.total > beforeScores.total;
+			
+			// 检查高分论文成就（无论是否接收，达到125分就算）
+			if (afterScores.total >= 125) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.highScorePaper = true;
+			}
+			
+			// 检查幸运儿成就（三位审稿人都给改进意见）
+			const allImproved = results.every(r => r.improvement > 0);
+			if (allImproved) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.unanimousImprovement = true;
+			}
+			
+			// 检查倒霉蛋成就
+			const isBadReviewer = r => r.reviewer.type === 'hostile' || r.reviewer.type === 'questions';
+			if (results.every(isBadReviewer)) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.allBadReviewers = true;
+			}
+			
+			// 记录论文类型（只在接收时记录）
+			if (accepted) {
+				gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
+				gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
+			}
             
             const improvements = results.filter(r => r.improvement > 0).map(r => ({
                 reviewer: r.reviewer.name,
@@ -3719,7 +3792,13 @@
                     if (accepted) {
                         handlePaperAccepted(paper, grade, acceptType, slot);
                     } else {
-                        gameState.rejectedCount++;
+						gameState.rejectedCount++;
+						gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
+						
+						// 检查食之无味成就
+						if (gameState.rejectedPapers[paper.title] >= 3) {
+							gameState.achievementConditions.tripleRejected = true;
+						}
                         paper.reviewing = false;
                         paper.submittedGrade = null;
                         paper.submittedScore = null;
@@ -3752,20 +3831,38 @@
 			else gameState.paperC++;
 
 			let bonusResearch = 0;
-			if (!gameState.firstPaperAccepted) { gameState.firstPaperAccepted = true; bonusResearch++; }
-			if (grade === 'A' && !gameState.firstAPaperAccepted) { gameState.firstAPaperAccepted = true; bonusResearch++; }
+			if (!gameState.firstPaperAccepted) {
+				gameState.firstPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
+			}
+			if (grade === 'A' && !gameState.firstAPaperAccepted) {
+				gameState.firstAPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
+			}
+			if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
+				gameState.firstBestPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
+			}
 			if (bonusResearch > 0) {
 				changeResearch(bonusResearch);
 			}
 
 			const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
 			gameState.publishedPapers.push({
-				title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
+				title: paper.title,
+				grade,
+				acceptType,
+				score: finalScore,
+				citations: 0,
+				monthsSincePublish: 0,
 				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
 				citationMultiplier: 1
 			});
-			
-			if(gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
+
+			if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
 				gameState.availableRandomEvents.push(14);
 				addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
 			}
@@ -3781,7 +3878,7 @@
 				(gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
 				(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
 			);
-			
+
 			if (canPhD) {
 				// 如果满足转博条件，先存储开会事件，等转博选择完成后再触发
 				gameState.pendingConference = grade;
@@ -4028,6 +4125,33 @@
 			
 			gameState.gold -= item.price;
 			let result = `金钱-${item.price}`;
+			
+			switch(id) {
+				case 'gpu_buy':
+					gameState.gpuServersBought++;
+					// 检查机械飞升成就
+					if (gameState.gpuServersBought >= 5) {
+						gameState.achievementConditions.bought5GPUs = true;
+					}
+					break;
+					
+				case 'chair':
+					gameState.furnitureBought.chair = true;
+					break;
+				case 'monitor':
+					gameState.furnitureBought.monitor = true;
+					break;
+				case 'keyboard':
+					gameState.furnitureBought.keyboard = true;
+					break;
+			}
+			
+			// 检查全套家具成就
+			if (gameState.furnitureBought.chair && 
+				gameState.furnitureBought.monitor && 
+				gameState.furnitureBought.keyboard) {
+				gameState.achievementConditions.fullFurnitureSet = true;
+			}
 			
 			switch (id) {
 				case 'chair':
@@ -5046,6 +5170,37 @@
 		}
 
 		function showPhDOptionModal() {
+		    // === 天才少年检查 ===
+			if (gameState.totalScore >= 7) {
+				gameState.achievementConditions.phdRequirementMetEarly = true;
+			}
+			const buttons = [
+				{
+					text: '硕士毕业', 
+					class: 'btn-info', 
+					action: () => {
+						// === 人间清醒检查 ===
+						gameState.phdOpportunitiesRejected++;
+						if (gameState.phdOpportunitiesRejected >= 2) {
+							gameState.achievementConditions.rejectedPhdTwice = true;
+						}
+						
+						closeModal(); 
+						triggerEnding('master'); 
+					}
+				},
+				{
+					text: '📚 转为博士', 
+					class: 'btn-primary', 
+					action: () => {
+						gameState.degree = 'phd';
+						gameState.maxYears = 5;
+						closeModal();
+						setTimeout(() => showPhDTribulationModal(), 200);
+					}
+				}
+			];
+			
 			gameState.pendingPhDChoice = true;  // 设置标志位
 			
 			showModal('🎓 转博选择',
@@ -5414,8 +5569,32 @@
             if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
                 a.push('✨ Buff之神');
             }
-            return a;
-        }
+			// 新增成就检查
+			if (gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
+			if (gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
+			if (gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
+			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
+			if (gameState.san <= 0 && gameState.gold <= 0) a.push('💪 全力以赴');
+			
+			const requiredTypes = [
+				'A-Poster', 'A-Oral', 'A-Best Paper',
+				'B-Poster', 'B-Oral', 'B-Best Paper',
+				'C-Poster', 'C-Oral', 'C-Best Paper'
+			];
+			if (requiredTypes.every(type => gameState.paperTypeCollection.has(type))) {
+				a.push('🏆 全收集');
+			}
+			
+			if (gameState.rejectedCount >= 5) a.push('👊 越战越勇');
+			if (gameState.achievementConditions.rejectedPhdTwice) a.push('🧠 人间清醒');
+			if (gameState.maxConcurrentReviews >= 4) a.push('🔥 火力全开');
+			if (gameState.achievementConditions.tripleRejected) a.push('🍚 食之无味');
+			if (gameState.achievementConditions.bought5GPUs) a.push('🤖 机械飞升');
+			if (gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
+			if (gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
+			
+			return a;
+		}
 
         function showEndingModal(title, desc, emoji, endingType) {
             currentEndingData = { title, desc, emoji, endingType };
@@ -5985,6 +6164,14 @@
 				
 				pendingPhDChoice: gameState.pendingPhDChoice || false,
 				pendingConference: gameState.pendingConference || null,
+				
+				rejectedPapers: {...gameState.rejectedPapers},
+				maxConcurrentReviews: gameState.maxConcurrentReviews,
+				phdOpportunitiesRejected: gameState.phdOpportunitiesRejected,
+				gpuServersBought: gameState.gpuServersBought,
+				furnitureBought: {...gameState.furnitureBought},
+				achievementConditions: {...gameState.achievementConditions},
+				paperTypeCollection: [...gameState.paperTypeCollection],
                 
                 shopState: shopState,
                 saveTime: timeStr
@@ -6118,6 +6305,14 @@
                             document.body.classList.remove('reversed-theme');
                             isReversedMode = false;
                         }
+						
+						if (save.rejectedPapers) gameState.rejectedPapers = {...save.rejectedPapers};
+						if (save.furnitureBought) gameState.furnitureBought = {...save.furnitureBought};
+						if (save.achievementConditions) gameState.achievementConditions = {...save.achievementConditions};
+						gameState.maxConcurrentReviews = save.maxConcurrentReviews || 0;
+						gameState.phdOpportunitiesRejected = save.phdOpportunitiesRejected || 0;
+						gameState.gpuServersBought = save.gpuServersBought || 0;
+						gameState.paperTypeCollection = new Set(save.paperTypeCollection || []);
                         
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
