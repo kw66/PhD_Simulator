@@ -2520,14 +2520,14 @@
             showModal('👤 角色详情', html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
         }
 
-        function updateGraduation() {
-            document.getElementById('current-year').textContent = gameState.year;
-            document.getElementById('current-month').textContent = gameState.month;
-            const remaining = (gameState.maxYears * 12) - gameState.totalMonths;
-            document.getElementById('remaining-time').textContent = remaining;
-            document.getElementById('graduation-target').textContent = 
-                gameState.degree === 'master' ? '🎯 硕士：科研分≥1' : '🎯 博士：科研分≥7';
-        }
+		function updateGraduation() {
+			document.getElementById('current-year').textContent = `第${gameState.year}年`;
+			document.getElementById('current-month').textContent = `第${gameState.month}月`;
+			const remaining = (gameState.maxYears * 12) - gameState.totalMonths;
+			document.getElementById('remaining-time').textContent = remaining;
+			document.getElementById('graduation-target').textContent = 
+				gameState.degree === 'master' ? '🎯 硕士：科研分≥1' : '🎯 博士：科研分≥7';
+		}
 
         function updateBuffs() {
             const list = document.getElementById('buff-list');
@@ -2721,54 +2721,51 @@
         }
 
         // ==================== 事件预告系统 ====================
-        function getUpcomingEvents() {
-            const events = [];
-            
-            for (let i = 1; i <= 2; i++) {
-                let checkMonth = gameState.month + i;
-                let checkYear = gameState.year;
-                
-                if (checkMonth > 12) {
-                    checkMonth -= 12;
-                    checkYear++;
-                }
-                
-                const checkTotalMonths = gameState.totalMonths + i;
-                const maxMonths = gameState.maxYears * 12;
-                if (checkTotalMonths > maxMonths) continue;
-                
-                let eventName = null;
-                let eventIcon = '';
-                
-                if (checkMonth === 1) {
-                    eventName = '寒假';
-                    eventIcon = '❄️';
-                } else if (checkMonth === 7) {
-                    eventName = '暑假';
-                    eventIcon = '☀️';
-                } else if (checkMonth === 9 && checkYear >= 2) {
-                    eventName = '奖学金';
-                    eventIcon = '🎓';
-                } else if (checkMonth === 2) {
-                    eventName = '教师节';
-                    eventIcon = '🎁';
-                } else if (checkMonth % 2 === 0) {
-                    eventName = '随机事件';
-                    eventIcon = '🎲';
-                }
-                
-                if (eventName) {
-                    events.push({
-                        month: i,
-                        name: eventName,
-                        icon: eventIcon,
-                        label: i === 1 ? '下月' : '2月后'
-                    });
-                }
-            }
-            
-            return events;
-        }
+		function getUpcomingEvents() {
+			const events = [];
+			
+			for (let i = 1; i <= 2; i++) {
+				let checkMonth = gameState.month + i;
+				let checkYear = gameState.year;
+				
+				if (checkMonth > 12) {
+					checkMonth -= 12;
+					checkYear++;
+				}
+				
+				const checkTotalMonths = gameState.totalMonths + i;
+				const maxMonths = gameState.maxYears * 12;
+				if (checkTotalMonths > maxMonths) continue;
+				
+				let eventName = null;
+				let eventIcon = '';
+				
+				if (checkMonth === 5) {  // 寒假在第5个月
+					eventName = '寒假';
+					eventIcon = '❄️';
+				} else if (checkMonth === 11) {  // 暑假在第11个月
+					eventName = '暑假';
+					eventIcon = '☀️';
+				} else if (checkMonth === 1 && checkYear >= 2) {  // 奖学金在每年第1个月（从第二年开始）
+					eventName = '奖学金';
+					eventIcon = '🎓';
+				} else if (checkMonth % 2 === 0) {
+					eventName = '随机事件';
+					eventIcon = '🎲';
+				}
+				
+				if (eventName) {
+					events.push({
+						month: i,
+						name: eventName,
+						icon: eventIcon,
+						label: i === 1 ? '下月' : '2月后'
+					});
+				}
+			}
+			
+			return events;
+		}
 
         function updateEventPreview() {
             const previewEl = document.getElementById('event-preview');
@@ -3859,20 +3856,16 @@
                 addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
             }
 
-            // 事件触发
-            if (gameState.month === 1) {
-                triggerWinterVacationEvent();
-            } else if (gameState.month === 7) {
-                triggerSummerVacationEvent();
-            } else if (gameState.month === 9 && gameState.year >= 2) {
-                triggerScholarshipEvent();
-            } else if (gameState.month % 2 === 0) {
-                if (gameState.month === 2) {
-                    triggerTeachersDayEvent();
-                } else {
-                    triggerOtherRandomEvent();
-                }
-            }
+			// 事件触发
+			if (gameState.month === 5) {  // 寒假在第5个月
+				triggerWinterVacationEvent();
+			} else if (gameState.month === 11) {  // 暑假在第11个月
+				triggerSummerVacationEvent();
+			} else if (gameState.month === 1 && gameState.year >= 2) {  // 奖学金在每年第1个月（从第二年开始）
+				triggerScholarshipEvent();
+			} else if (gameState.month % 2 === 0) {
+				triggerOtherRandomEvent();
+			}
 
             // 检查毕业
             checkGraduation();
@@ -4458,42 +4451,63 @@
             ]);
         }
 
-        function showRandomEvent12() {
-            showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
-                { text: '向导师诉苦', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (gameState.favor >= 6) {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
-                        updateAllUI();
-                    } else {
-                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
-                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
-                        updateAllUI();
-                        updateBuffs();
-                    }
-                }},
-                { text: '劝说导师抢师弟师妹一作', class: 'btn-warning', action: () => {
-                    addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
-                    closeModal();
-                    changeSocial(-1);
-                }},
-                { text: '据理力争', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.favor >= 6) {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
-                        updateAllUI();
-                    } else {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师艰难被你说服，SAN值-2');
-                        changeSan(-2);
-                    }
-                }},
-                { text: '以死相逼', class: 'btn-danger', action: () => {
-                    addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
-                    closeModal();
-                    changeFavor(-1);
-                }}
-            ]);
-        }
+		function showRandomEvent12() {
+			showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
+				{ text: '向导师诉苦', class: 'btn-primary', action: () => {
+					closeModal();
+					if (gameState.favor >= 6) {
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
+						updateAllUI();
+					} else {
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
+						updateAllUI();
+						updateBuffs();
+					}
+				}},
+				{ text: '劝说导师抢师弟师妹一作', class: 'btn-warning', action: () => {
+					closeModal();
+					// 检查角色是否为导师子女或其逆位
+					if (gameState.character === 'teacher-child' || (gameState.isReversed && gameState.character === 'teacher-child')) {
+						// 生成一篇C类论文
+						const title = generatePaperTitle();
+						gameState.publishedPapers.push({
+							title: title,
+							grade: 'C',
+							acceptType: 'Poster',
+							score: 1,
+							citations: 0,
+							monthsSincePublish: 0,
+							promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+							citationMultiplier: 1
+						});
+						gameState.paperC++;
+						gameState.totalScore += 1;
+						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文');
+					} else {
+						// 非导师子女角色，社交能力-1
+						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
+						changeSocial(-1);
+					}
+					updateAllUI();
+				}},
+				{ text: '据理力争', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.favor >= 6) {
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
+						updateAllUI();
+					} else {
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师艰难被你说服，SAN值-2');
+						changeSan(-2);
+					}
+				}},
+				{ text: '以死相逼', class: 'btn-danger', action: () => {
+					addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
+					closeModal();
+					changeFavor(-1);
+				}}
+			]);
+		}
 
         function showRandomEvent13() {
             showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
@@ -5688,16 +5702,16 @@
         }
 
         // ==================== 日志系统 ====================
-        function addLog(event, detail, result = '') {
-            const logContent = document.getElementById('log-content');
-            const dateStr = `第${gameState.year}年${gameState.month}月`;
-            const isNegative = result && (result.includes('-') || result.includes('拒稿') || result.includes('不满') || result.includes('失败') || result.includes('落选'));
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${isNegative ? 'negative' : ''}`;
-            entry.innerHTML = `<div class="date">[${dateStr}] ${event}</div><div class="event">${detail}</div>${result ? `<div class="result">→ ${result}</div>` : ''}`;
-            logContent.insertBefore(entry, logContent.firstChild);
-            while (logContent.children.length > 100) logContent.removeChild(logContent.lastChild);
-        }
+		function addLog(event, detail, result = '') {
+			const logContent = document.getElementById('log-content');
+			const dateStr = `第${gameState.year}年第${gameState.month}月`;  // 修改为"第X年第X月"格式
+			const isNegative = result && (result.includes('-') || result.includes('拒稿') || result.includes('不满') || result.includes('失败') || result.includes('落选'));
+			const entry = document.createElement('div');
+			entry.className = `log-entry ${isNegative ? 'negative' : ''}`;
+			entry.innerHTML = `<div class="date">[${dateStr}] ${event}</div><div class="event">${detail}</div>${result ? `<div class="result">→ ${result}</div>` : ''}`;
+			logContent.insertBefore(entry, logContent.firstChild);
+			while (logContent.children.length > 100) logContent.removeChild(logContent.lastChild);
+		}
 
         // ==================== 工具函数 ====================
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
