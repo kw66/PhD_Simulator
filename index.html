@@ -1546,7 +1546,7 @@
                     icon: '🤡',
                     awakenIcon: '🎭',
                     desc: '科研是什么？能吃吗？',
-                    bonus: '科研固定1，全论文槽，科研提升→SAN+4,金+4',
+                    bonus: '科研固定0，全论文槽，科研提升→SAN+4,金+4',
                     awakenName: '大智若愚',
                     awakenDesc: '科研提升→SAN+6,金+6,好感+2,社交+2',
                     stats: {}
@@ -1567,10 +1567,10 @@
                     icon: '🐍',
                     awakenIcon: '👁️',
                     desc: '见不得别人好，也见不得自己差',
-                    bonus: '社交-1→科研+1,好感+1 | 社交+1→SAN+1,金+1',
-                    awakenName: '嫉妒归零',
-                    awakenDesc: '转博时社交能力变为1',
-                    stats: { social: 5 }
+                    bonus: '社交初始5，社交-1→科研+1,好感+1 | 社交+1→SAN+1,金+1',
+                    awakenName: '嫉妒重置',
+                    awakenDesc: '转博时社交能力变为5',
+                    stats: { social: 4 }
                 }
             },
             { 
@@ -1589,9 +1589,9 @@
                     awakenIcon: '👑',
                     desc: '钱是唯一的追求',
                     bonus: '科研/社交/好感固定1，每月额外+3金',
-                    awakenName: '金钱觉醒',
-                    awakenDesc: '每6金→科研+1,社交+1,好感+1，之后锁定',
-                    stats: { gold: 5 }
+                    awakenName: '金钱的力量',
+                    awakenDesc: '金币只能减少，每消费6金→科研/社交/好感各+1',
+                    stats: {}
                 }
             },
             { 
@@ -1609,9 +1609,9 @@
                     icon: '🎪',
                     awakenIcon: '🃏',
                     desc: '叛逆是我的代名词',
-                    bonus: '好感初始12，好感↓翻倍，每月好感-1→SAN+1,金+1',
+                    bonus: '好感初始12，好感↓翻倍，每月好感-1，好感-1→SAN+1,金+1',
                     awakenName: '浪子回头',
-                    awakenDesc: '转博时导师好感度+6',
+                    awakenDesc: '好感度倒置为20-好感度',
                     stats: { favor: 11 }
                 }
             },
@@ -1633,7 +1633,7 @@
                     bonus: '每月:科研/社交/好感随机交换，SAN/金随机交换',
                     awakenName: '命运轮盘',
                     awakenDesc: '每月:科研/社交/好感/SAN/金全部随机交换',
-                    stats: { research: 2, social: 2, favor: 2, gold: 2 }
+                    stats: {}
                 }
             }
         ];
@@ -1803,6 +1803,7 @@
 				_isMonthlyFavorDecrease: false,
 				pendingPhDChoice: false,
 				pendingConference: null,
+				goldSpentTotal: 0,
 				
 				// 新增成就相关状态
 				rejectedPapers: {},                    // 记录每篇论文的拒稿次数
@@ -2360,16 +2361,16 @@
         function initReversedCharacter() {
             switch (gameState.character) {
                 case 'genius':
-                    gameState.research = 1;
+                    gameState.research = 0;
                     gameState.paperSlots = 4;
-                    addLog('逆位效果', '愚钝之《院士转世》', '科研能力固定为1，全部论文槽已解锁');
+                    addLog('逆位效果', '愚钝之《院士转世》', '科研能力固定为0，全部论文槽已解锁');
                     break;
                     
                 case 'rich':
-                    gameState.research = 1;
-                    gameState.social = 1;
-                    gameState.favor = 1;
-                    addLog('逆位效果', '贪求之《富可敌国》', '科研/社交/好感固定为1，每月额外+3金');
+                    gameState.research = 0;
+                    gameState.social = 0;
+                    gameState.favor = 0;
+                    addLog('逆位效果', '贪求之《富可敌国》', '科研/社交/好感固定为0，每月额外+3金');
                     break;
             }
         }
@@ -2411,58 +2412,89 @@
             return true;
         }
 
-        function changeGold(delta) {
-            if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked && delta > 0) {
-                return true;
-            }
-            
-            gameState.gold += delta;
-            updateAllUI();
-            if (gameState.gold < 0) {
-                triggerEnding('poor');
-                return false;
-            }
-            return true;
-        }
+		function changeGold(delta) {
+			// 贪求之富可敌国觉醒后：金币只能减少不能增加
+			if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked) {
+				if (delta > 0) {
+					addLog('逆位效果', '金钱封印', '金币无法增加');
+					return true;
+				}
+				// 记录消费并检查是否触发属性增加
+				if (delta < 0) {
+					const spent = Math.abs(delta);
+					gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
+					
+					// 每消费6金币，属性各+1
+					const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+					const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
+					const newGains = attributeGains - previousGains;
+					
+					if (newGains > 0) {
+						gameState.research = Math.min(20, gameState.research + newGains);
+						gameState.social = Math.min(20, gameState.social + newGains);
+						gameState.favor = Math.min(20, gameState.favor + newGains);
+						addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
+					}
+				}
+			}
+			
+			gameState.gold += delta;
+			updateAllUI();
+			if (gameState.gold < 0) {
+				triggerEnding('poor');
+				return false;
+			}
+			return true;
+		}
 
-        function changeFavor(delta) {
-            const oldFavor = gameState.favor;
-            
-            if (gameState.isReversed && gameState.character === 'teacher-child' && delta < 0) {
-                if (!gameState._isMonthlyFavorDecrease) {
-                    delta = delta * 2;
-                }
-            }
-            
-            if (gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked) {
-                return true;
-            }
-            
-            if (delta > 0) {
-                gameState.favor = Math.min(20, gameState.favor + delta);
-            } else {
-                gameState.favor += delta;
-            }
-            
-            if (gameState.isReversed && gameState.character === 'teacher-child' && delta < 0) {
-                const decreased = oldFavor - gameState.favor;
-                if (decreased > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-                    gameState.gold += decreased;
-                    addLog('逆位效果', '玩世不恭', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
-                }
-            }
-            
-            updateAllUI();
-            if (gameState.favor < 0) {
-                triggerEnding('expelled');
-                return false;
-            }
-            return true;
-        }
+		function changeFavor(delta) {
+			const oldFavor = gameState.favor;
+			
+			// 贪求之富可敌国：属性固定为0（觉醒前）或锁定（觉醒后）
+			if (gameState.isReversed && gameState.character === 'rich') {
+				if (gameState.statsLocked) {
+					return true;
+				} else {
+					gameState.favor = 0;
+					updateAllUI();
+					return true;
+				}
+			}
+			
+			// 玩世之导师子女：好感降低不翻倍，但每降1点SAN+1金+1
+			if (gameState.isReversed && gameState.character === 'teacher-child' && delta < 0) {
+				// 不再翻倍，直接应用变化
+				gameState.favor = Math.max(0, gameState.favor + delta);
+				const decreased = oldFavor - gameState.favor;
+				if (decreased > 0) {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+					gameState.gold += decreased;
+					addLog('逆位效果', '玩世不恭', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
+				}
+				updateAllUI();
+				if (gameState.favor < 0) {
+					triggerEnding('expelled');
+					return false;
+				}
+				return true;
+			}
+			
+			if (delta > 0) {
+				gameState.favor = Math.min(20, gameState.favor + delta);
+			} else {
+				gameState.favor += delta;
+			}
+			
+			updateAllUI();
+			if (gameState.favor < 0) {
+				triggerEnding('expelled');
+				return false;
+			}
+			return true;
+		}
 
         function changeResearch(delta) {
-            // 愚钝之院士转世：科研能力固定为1
+            // 愚钝之院士转世：科研能力固定为0
 			if (gameState.isReversed && gameState.character === 'genius') {
 				if (delta > 0) {
 					gameState.blockedResearchGains += delta;
@@ -2486,57 +2518,71 @@
 						addLog('逆位效果', '愚钝转化', `科研提升被转化 → SAN+${sanGain}, 金钱+${goldGain}`);
 					}
 				}
-				gameState.research = 1;
+				gameState.research = 0;  // 固定为0
 				updateAllUI();
 				return true;
 			}
-            
-            // 贪求之富可敌国：属性锁定
-            if (gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked) {
-                return true;
-            }
-            
-            if (delta > 0) {
-                gameState.research = Math.min(20, gameState.research + delta);
-                checkResearchUnlock();
-            } else {
-                gameState.research = Math.max(0, gameState.research + delta);
-            }
-            updateAllUI();
-            return true;
-        }
+			
+			// 贪求之富可敌国：属性固定为0（觉醒前后都固定）
+			if (gameState.isReversed && gameState.character === 'rich' && !gameState.statsLocked) {
+				gameState.research = 0;
+				updateAllUI();
+				return true;
+			}
+			
+			// 贪求之富可敌国：觉醒后属性锁定
+			if (gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked) {
+				return true;
+			}
+			
+			if (delta > 0) {
+				gameState.research = Math.min(20, gameState.research + delta);
+				checkResearchUnlock();
+			} else {
+				gameState.research = Math.max(0, gameState.research + delta);
+			}
+			updateAllUI();
+			return true;
+		}
 
-        function changeSocial(delta) {
-            const oldSocial = gameState.social;
-            
-            if (gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked) {
-                return true;
-            }
-            
-            if (delta > 0) {
-                gameState.social = Math.min(20, gameState.social + delta);
-            } else {
-                gameState.social = Math.max(0, gameState.social + delta);
-            }
-            
-            // 嫉妒之社交达人：社交变化触发效果
-            if (gameState.isReversed && gameState.character === 'social') {
-                const change = gameState.social - oldSocial;
-                if (change < 0) {
-                    const amount = Math.abs(change);
-                    changeResearch(amount);
-                    gameState.favor = Math.min(20, gameState.favor + amount);
-                    addLog('逆位效果', '嫉妒转化', `社交-${amount} → 科研+${amount}, 好感+${amount}`);
-                } else if (change > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + change);
-                    gameState.gold += change;
-                    addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
-                }
-            }
-            
-            updateAllUI();
-            return true;
-        }
+		function changeSocial(delta) {
+			const oldSocial = gameState.social;
+			
+			// 贪求之富可敌国：属性固定为0（觉醒前）或锁定（觉醒后）
+			if (gameState.isReversed && gameState.character === 'rich') {
+				if (gameState.statsLocked) {
+					return true;
+				} else {
+					gameState.social = 0;
+					updateAllUI();
+					return true;
+				}
+			}
+			
+			if (delta > 0) {
+				gameState.social = Math.min(20, gameState.social + delta);
+			} else {
+				gameState.social = Math.max(0, gameState.social + delta);
+			}
+			
+			// 嫉妒之社交达人：社交变化触发效果
+			if (gameState.isReversed && gameState.character === 'social') {
+				const change = gameState.social - oldSocial;
+				if (change < 0) {
+					const amount = Math.abs(change);
+					changeResearch(amount);
+					gameState.favor = Math.min(20, gameState.favor + amount);
+					addLog('逆位效果', '嫉妒转化', `社交-${amount} → 科研+${amount}, 好感+${amount}`);
+				} else if (change > 0) {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + change);
+					gameState.gold += change;
+					addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
+				}
+			}
+			
+			updateAllUI();
+			return true;
+		}
 
         function changeSanMax(delta) {
             gameState.sanMax += delta;
@@ -2544,116 +2590,148 @@
             return true;
         }
 
-        function changeStats(changes) {
-            let gameOver = false;
-            
-            if (changes.sanMax) gameState.sanMax += changes.sanMax;
-            
-            if (changes.san) {
-                let sanDelta = changes.san;
-                if (gameState.isReversed && gameState.character === 'normal' && sanDelta < 0) {
-                    const multiplier = gameState.reversedAwakened ? 3 : 2;
-                    sanDelta = sanDelta * multiplier;
-                }
-                
-                if (sanDelta > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + sanDelta);
-                } else {
-                    gameState.san += sanDelta;
-                }
-                if (gameState.san < 0) gameOver = 'burnout';
-            }
-            
-            if (changes.gold) {
-                if (!(gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked && changes.gold > 0)) {
-                    gameState.gold += changes.gold;
-                }
-                if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
-            }
-            
-            if (changes.favor) {
-                if (!(gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked)) {
-                    let favorDelta = changes.favor;
-                    const oldFavor = gameState.favor;
-                    
-                    if (gameState.isReversed && gameState.character === 'teacher-child' && favorDelta < 0) {
-                        if (!gameState._isMonthlyFavorDecrease) {
-                            favorDelta = favorDelta * 2;
-                        }
-                    }
-                    
-                    if (favorDelta > 0) {
-                        gameState.favor = Math.min(20, gameState.favor + favorDelta);
-                    } else {
-                        gameState.favor += favorDelta;
-                    }
-                    
-                    if (gameState.isReversed && gameState.character === 'teacher-child' && favorDelta < 0) {
-                        const decreased = oldFavor - gameState.favor;
-                        if (decreased > 0) {
-                            gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-                            gameState.gold += decreased;
-                        }
-                    }
-                }
-                if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
-            }
-            
-            if (changes.research) {
-                if (gameState.isReversed && gameState.character === 'genius') {
-                    if (changes.research > 0) {
-                        gameState.blockedResearchGains += changes.research;
-                        gameState.san = Math.min(gameState.sanMax, gameState.san + changes.research * 2);
-                        gameState.gold += changes.research * 2;
-                        if (gameState.reversedAwakened) {
-                            gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
-                            gameState.social = Math.min(20, gameState.social + changes.research * 2);
-                        }
-                    }
-                    gameState.research = 1;
-                } else if (!(gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked)) {
-                    if (changes.research > 0) {
-                        gameState.research = Math.min(20, gameState.research + changes.research);
-                        checkResearchUnlock();
-                    } else {
-                        gameState.research = Math.max(0, gameState.research + changes.research);
-                    }
-                }
-            }
-            
-            if (changes.social) {
-                if (!(gameState.isReversed && gameState.character === 'rich' && gameState.statsLocked)) {
-                    const oldSocial = gameState.social;
-                    if (changes.social > 0) {
-                        gameState.social = Math.min(20, gameState.social + changes.social);
-                    } else {
-                        gameState.social = Math.max(0, gameState.social + changes.social);
-                    }
-                    
-                    if (gameState.isReversed && gameState.character === 'social') {
-                        const change = gameState.social - oldSocial;
-                        if (change < 0) {
-                            const amount = Math.abs(change);
-                            changeResearch(amount);
-                            gameState.favor = Math.min(20, gameState.favor + amount);
-                            addLog('逆位效果', '嫉妒转化', `社交-${amount} → 科研+${amount}, 好感+${amount}`);
-                        } else if (change > 0) {
-                            gameState.san = Math.min(gameState.sanMax, gameState.san + change);
-                            gameState.gold += change;
-                            addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
-                        }
-                    }
-                }
-            }
-            
-            updateAllUI();
-            
-            if (gameOver) {
-                triggerEnding(gameOver);
-                return false;
-            }
-            return true;
-        }
+		function changeStats(changes) {
+			let gameOver = false;
+			
+			if (changes.sanMax) gameState.sanMax += changes.sanMax;
+			
+			if (changes.san) {
+				let sanDelta = changes.san;
+				if (gameState.isReversed && gameState.character === 'normal' && sanDelta < 0) {
+					const multiplier = gameState.reversedAwakened ? 3 : 2;
+					sanDelta = sanDelta * multiplier;
+				}
+				
+				if (sanDelta > 0) {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + sanDelta);
+				} else {
+					gameState.san += sanDelta;
+				}
+				if (gameState.san < 0) gameOver = 'burnout';
+			}
+			
+			if (changes.gold) {
+				// 贪求之富可敌国觉醒后：金币只能减少
+				if (gameState.isReversed && gameState.character === 'rich' && gameState.goldLocked) {
+					if (changes.gold > 0) {
+						// 金币增加被阻止
+					} else {
+						const spent = Math.abs(changes.gold);
+						gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
+						
+						const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+						const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
+						const newGains = attributeGains - previousGains;
+						
+						if (newGains > 0) {
+							gameState.research = Math.min(20, gameState.research + newGains);
+							gameState.social = Math.min(20, gameState.social + newGains);
+							gameState.favor = Math.min(20, gameState.favor + newGains);
+							addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
+						}
+						gameState.gold += changes.gold;
+					}
+				} else {
+					gameState.gold += changes.gold;
+				}
+				if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
+			}
+			
+			if (changes.favor) {
+				// 贪求之富可敌国：属性固定为0或锁定
+				if (gameState.isReversed && gameState.character === 'rich') {
+					if (!gameState.statsLocked) {
+						gameState.favor = 0;
+					}
+					// 锁定后不变
+				} else if (gameState.isReversed && gameState.character === 'teacher-child' && changes.favor < 0) {
+					// 玩世之导师子女：好感降低不翻倍
+					const oldFavor = gameState.favor;
+					gameState.favor = Math.max(0, gameState.favor + changes.favor);
+					const decreased = oldFavor - gameState.favor;
+					if (decreased > 0) {
+						gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+						gameState.gold += decreased;
+					}
+				} else {
+					if (changes.favor > 0) {
+						gameState.favor = Math.min(20, gameState.favor + changes.favor);
+					} else {
+						gameState.favor += changes.favor;
+					}
+				}
+				if (gameState.favor < 0 && !gameOver) gameOver = 'expelled';
+			}
+			
+			if (changes.research) {
+				// 愚钝之院士转世：科研固定为0
+				if (gameState.isReversed && gameState.character === 'genius') {
+					if (changes.research > 0) {
+						gameState.blockedResearchGains += changes.research;
+						const sanGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
+						const goldGain = changes.research * (gameState.reversedAwakened ? 6 : 4);
+						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+						gameState.gold += goldGain;
+						if (gameState.reversedAwakened) {
+							gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
+							gameState.social = Math.min(20, gameState.social + changes.research * 2);
+						}
+					}
+					gameState.research = 0;
+				} else if (gameState.isReversed && gameState.character === 'rich') {
+					// 贪求之富可敌国：属性固定为0或锁定
+					if (!gameState.statsLocked) {
+						gameState.research = 0;
+					}
+				} else {
+					if (changes.research > 0) {
+						gameState.research = Math.min(20, gameState.research + changes.research);
+						checkResearchUnlock();
+					} else {
+						gameState.research = Math.max(0, gameState.research + changes.research);
+					}
+				}
+			}
+			
+			if (changes.social) {
+				// 贪求之富可敌国：属性固定为0或锁定
+				if (gameState.isReversed && gameState.character === 'rich') {
+					if (!gameState.statsLocked) {
+						gameState.social = 0;
+					}
+				} else {
+					const oldSocial = gameState.social;
+					if (changes.social > 0) {
+						gameState.social = Math.min(20, gameState.social + changes.social);
+					} else {
+						gameState.social = Math.max(0, gameState.social + changes.social);
+					}
+					
+					// 嫉妒之社交达人
+					if (gameState.isReversed && gameState.character === 'social') {
+						const change = gameState.social - oldSocial;
+						if (change < 0) {
+							const amount = Math.abs(change);
+							changeResearch(amount);
+							gameState.favor = Math.min(20, gameState.favor + amount);
+							addLog('逆位效果', '嫉妒转化', `社交-${amount} → 科研+${amount}, 好感+${amount}`);
+						} else if (change > 0) {
+							gameState.san = Math.min(gameState.sanMax, gameState.san + change);
+							gameState.gold += change;
+							addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
+						}
+					}
+				}
+			}
+			
+			updateAllUI();
+			
+			if (gameOver) {
+				triggerEnding(gameOver);
+				return false;
+			}
+			return true;
+		}
 
         // ==================== UI更新 ====================
         function updateAllUI() {
@@ -4284,24 +4362,22 @@
 			}
 
             // 玩世之导师子女：每月好感-1（不翻倍）
-            if (gameState.isReversed && gameState.character === 'teacher-child') {
-                gameState._isMonthlyFavorDecrease = true;
-                const oldFavor = gameState.favor;
-                gameState.favor = Math.max(0, gameState.favor - 1);
-                const decreased = oldFavor - gameState.favor;
-                if (decreased > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-                    gameState.gold += decreased;
-                    addLog('逆位效果', '玩世不恭（每月）', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
-                }
-                gameState._isMonthlyFavorDecrease = false;
-                
-                // 检查好感度是否为负
-                if (gameState.favor < 0) {
-                    triggerEnding('expelled');
-                    return;
-                }
-            }
+			if (gameState.isReversed && gameState.character === 'teacher-child') {
+				const oldFavor = gameState.favor;
+				gameState.favor = Math.max(0, gameState.favor - 1);
+				const decreased = oldFavor - gameState.favor;
+				if (decreased > 0) {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+					gameState.gold += decreased;
+					addLog('逆位效果', '玩世不恭（每月）', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
+				}
+				
+				// 检查好感度是否为负
+				if (gameState.favor < 0) {
+					triggerEnding('expelled');
+					return;
+				}
+			}
             
             // 空想之天选之人：每月随机交换属性
             if (gameState.isReversed && gameState.character === 'chosen') {
@@ -5259,46 +5335,52 @@
 						effectName = '🎭 大智若愚';
 						effectDesc = '真正的智慧不在于科研数值';
 						bonusDetails.push('科研提升转化效果升级');
-						bonusDetails.push('每1点科研提升 → 好感+2, SAN+2, 社交+2, 金+2');
+						bonusDetails.push('每1点科研提升 → 好感+2, SAN+6, 社交+2, 金+6');
 						break;
 						
 					case 'social': // 嫉妒之社交达人
-						effectName = '👁️ 嫉妒归零';
-						effectDesc = '社交能力归零，从头开始...';
-						const oldSocial = gameState.social;
-						const decrease = oldSocial - 1;
-						if (decrease > 0) {
-							changeResearch(decrease);
+						effectName = '👁️ 嫉妒重置';
+						effectDesc = '社交能力重置，触发连带效果';
+						const oldSocialVal = gameState.social;
+						if (oldSocialVal > 5) {
+							// 社交减少，触发嫉妒转化
+							const decrease = oldSocialVal - 5;
+							// 直接增加属性，不通过changeResearch（避免触发院士转世的检查）
+							gameState.research = Math.min(20, gameState.research + decrease);
 							gameState.favor = Math.min(20, gameState.favor + decrease);
-							bonusDetails.push(`社交 ${oldSocial} → 1`);
+							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
 							bonusDetails.push(`触发嫉妒转化：科研+${decrease}, 好感+${decrease}`);
+						} else if (oldSocialVal < 5) {
+							// 社交增加，触发嫉妒反馈
+							const increase = 5 - oldSocialVal;
+							gameState.san = Math.min(gameState.sanMax, gameState.san + increase);
+							gameState.gold += increase;
+							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
+							bonusDetails.push(`触发嫉妒反馈：SAN+${increase}, 金钱+${increase}`);
+						} else {
+							bonusDetails.push('社交已经是5，无变化');
 						}
-						gameState.social = 1;
+						gameState.social = 5;
 						break;
 						
 					case 'rich': // 贪求之富可敌国
 						effectName = '👑 金钱觉醒';
-						effectDesc = '用财富换取一切，然后永远封印';
-						const goldToConvert = Math.floor(gameState.gold / 6);
-						if (goldToConvert > 0) {
-							gameState.research = Math.min(20, 1 + goldToConvert);
-							gameState.social = Math.min(20, 1 + goldToConvert);
-							gameState.favor = Math.min(20, 1 + goldToConvert);
-							bonusDetails.push(`消耗 ${goldToConvert * 6} 金币`);
-							bonusDetails.push(`科研 1 → ${gameState.research}`);
-							bonusDetails.push(`社交 1 → ${gameState.social}`);
-							bonusDetails.push(`好感 1 → ${gameState.favor}`);
-						}
+						effectDesc = '用财富换取力量，然后永远封印';
 						gameState.goldLocked = true;
 						gameState.statsLocked = true;
-						bonusDetails.push('⚠️ 金币和属性已永久锁定');
+						gameState.goldSpentTotal = 0;  // 重置消费计数
+						bonusDetails.push('⚠️ 金币只能减少，不能增加');
+						bonusDetails.push('每消费6金币 → 科研+1, 社交+1, 好感+1');
+						bonusDetails.push('⚠️ 属性不能以其他方式增加');
 						break;
 						
 					case 'teacher-child': // 玩世之导师子女
 						effectName = '🃏 浪子回头';
-						effectDesc = '叛逆的尽头是和解';
-						gameState.favor = Math.min(20, gameState.favor + 6);
-						bonusDetails.push('导师好感度 +6');
+						effectDesc = '好感度倒置，从叛逆走向和解';
+						const oldFavorVal = gameState.favor;
+						const newFavorVal = Math.min(20, Math.max(0, 20 - oldFavorVal));
+						gameState.favor = newFavorVal;
+						bonusDetails.push(`好感度倒置：${oldFavorVal} → ${newFavorVal} (20-${oldFavorVal})`);
 						break;
 						
 					case 'chosen': // 空想之天选之人
