@@ -1783,7 +1783,10 @@
                 blockedResearchGains: 0,
                 goldLocked: false,
                 statsLocked: false,
-                _isMonthlyFavorDecrease: false
+                _isMonthlyFavorDecrease: false,
+				// 弹窗控制
+				pendingPhDChoice: false,      // 是否有待处理的转博选择
+				pendingConference: null,      // 待处理的开会事件（存储grade）
             };
         }
 
@@ -3735,47 +3738,59 @@
             ]);
         }
 
-        function handlePaperAccepted(paper, grade, acceptType, slot) {
-            const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
-            const sanGain = { 'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } };
-            const favorGain = { 'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } };
+		function handlePaperAccepted(paper, grade, acceptType, slot) {
+			const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
+			const sanGain = { 'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } };
+			const favorGain = { 'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } };
 
-            gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain[grade][acceptType]);
-            gameState.favor = Math.min(20, gameState.favor + favorGain[grade][acceptType]);
-            gameState.totalScore += scoreMap[grade];
+			gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain[grade][acceptType]);
+			gameState.favor = Math.min(20, gameState.favor + favorGain[grade][acceptType]);
+			gameState.totalScore += scoreMap[grade];
 
-            if (grade === 'A') gameState.paperA++;
-            else if (grade === 'B') gameState.paperB++;
-            else gameState.paperC++;
+			if (grade === 'A') gameState.paperA++;
+			else if (grade === 'B') gameState.paperB++;
+			else gameState.paperC++;
 
-            // 修复：使用changeResearch函数
-            let bonusResearch = 0;
-            if (!gameState.firstPaperAccepted) { gameState.firstPaperAccepted = true; bonusResearch++; }
-            if (grade === 'A' && !gameState.firstAPaperAccepted) { gameState.firstAPaperAccepted = true; bonusResearch++; }
-            if (bonusResearch > 0) {
-                changeResearch(bonusResearch);
-            }
+			let bonusResearch = 0;
+			if (!gameState.firstPaperAccepted) { gameState.firstPaperAccepted = true; bonusResearch++; }
+			if (grade === 'A' && !gameState.firstAPaperAccepted) { gameState.firstAPaperAccepted = true; bonusResearch++; }
+			if (bonusResearch > 0) {
+				changeResearch(bonusResearch);
+			}
 
-            const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
-            gameState.publishedPapers.push({
-                title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
-                promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-                citationMultiplier: 1
-            });
+			const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
+			gameState.publishedPapers.push({
+				title: paper.title, grade, acceptType, score: finalScore, citations: 0, monthsSincePublish: 0,
+				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+				citationMultiplier: 1
+			});
 			
 			if(gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
 				gameState.availableRandomEvents.push(14);
 				addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
 			}
 
-            gameState.papers[slot] = null;
+			gameState.papers[slot] = null;
 
-            let result = `SAN+${sanGain[grade][acceptType]}，好感+${favorGain[grade][acceptType]}，科研分+${scoreMap[grade]}`;
-            if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
-            addLog('论文中稿', `${grade}类会议被接收为${acceptType}`, result);
+			let result = `SAN+${sanGain[grade][acceptType]}，好感+${favorGain[grade][acceptType]}，科研分+${scoreMap[grade]}`;
+			if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
+			addLog('论文中稿', `${grade}类会议被接收为${acceptType}`, result);
 
-            setTimeout(() => showConferenceModal(grade), 300);
-        }
+			// 检查是否满足转博条件
+			const canPhD = gameState.degree === 'master' && (
+				(gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
+				(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
+			);
+			
+			if (canPhD) {
+				// 如果满足转博条件，先存储开会事件，等转博选择完成后再触发
+				gameState.pendingConference = grade;
+				setTimeout(() => showPhDOptionModal(), 300);
+			} else {
+				// 不满足转博条件，正常显示开会选择
+				setTimeout(() => showConferenceModal(grade), 300);
+			}
+		}
 		
         // ==================== 开会系统 ====================
         function showConferenceModal(grade) {
@@ -5009,38 +5024,50 @@
 		}
 
         // ==================== 毕业检查 ====================
-        function checkGraduation() {
-            if (gameState.degree === 'master') {
-                if ((gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
-                    (gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)) {
-                    showPhDOptionModal();
-                    return;
-                }
-            }
-            const maxMonths = gameState.maxYears * 12;
-            if (gameState.totalMonths >= maxMonths) {
-                if (gameState.degree === 'master' && gameState.totalScore >= 1) triggerEnding('master');
-                else if (gameState.degree === 'phd' && gameState.totalScore >= 7) triggerEnding('phd');
-                else triggerEnding('delay');
-            }
-        }
+		function checkGraduation() {
+			// 如果正在等待转博选择，不再重复检查
+			if (gameState.pendingPhDChoice) {
+				return;
+			}
+			
+			if (gameState.degree === 'master') {
+				if ((gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
+					(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)) {
+					showPhDOptionModal();
+					return;
+				}
+			}
+			const maxMonths = gameState.maxYears * 12;
+			if (gameState.totalMonths >= maxMonths) {
+				if (gameState.degree === 'master' && gameState.totalScore >= 1) triggerEnding('master');
+				else if (gameState.degree === 'phd' && gameState.totalScore >= 7) triggerEnding('phd');
+				else triggerEnding('delay');
+			}
+		}
 
-        function showPhDOptionModal() {
-            showModal('🎓 转博选择',
-                `<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
-                 <p>是否选择继续攻读博士学位？</p>
-                 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
-                [
-                    { text: '硕士毕业', class: 'btn-info', action: () => { closeModal(); triggerEnding('master'); }},
-                    { text: '📚 转为博士', class: 'btn-primary', action: () => {
-                        gameState.degree = 'phd';
-                        gameState.maxYears = 5;
-                        closeModal();
-                        setTimeout(() => showPhDTribulationModal(), 200);
-                    }}
-                ]
-            );
-        }
+		function showPhDOptionModal() {
+			gameState.pendingPhDChoice = true;  // 设置标志位
+			
+			showModal('🎓 转博选择',
+				`<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
+				 <p>是否选择继续攻读博士学位？</p>
+				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>`,
+				[
+					{ text: '硕士毕业', class: 'btn-info', action: () => { 
+						gameState.pendingPhDChoice = false;
+						closeModal(); 
+						triggerEnding('master'); 
+					}},
+					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
+						gameState.pendingPhDChoice = false;
+						gameState.degree = 'phd';
+						gameState.maxYears = 5;
+						closeModal();
+						setTimeout(() => showPhDTribulationModal(), 200);
+					}}
+				]
+			);
+		}
 
         function showPhDTribulationModal() {
             const character = gameState.character;
@@ -5159,14 +5186,21 @@
                     </div>
                 `;
                 
-                showModal('🌑 逆位觉醒', html, [
-                    { text: '🌙 拥抱黑暗', class: 'btn-danger', action: () => {
-                        addLog('逆位觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
-                        closeModal();
-                        updateAllUI();
-                        renderPaperSlots();
-                    }}
-                ]);
+				showModal('🌑 逆位觉醒', html, [
+					{ text: '🌙 拥抱黑暗', class: 'btn-danger', action: () => {
+						addLog('逆位觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
+						closeModal();
+						updateAllUI();
+						renderPaperSlots();
+						
+						// 处理待处理的开会事件
+						if (gameState.pendingConference) {
+							const grade = gameState.pendingConference;
+							gameState.pendingConference = null;
+							setTimeout(() => showConferenceModal(grade), 300);
+						}
+					}}
+				]);
                 
                 return;
             }
@@ -5281,14 +5315,21 @@
                 document.head.appendChild(style);
             }
             
-            showModal('⚡ 转博渡劫', html, [
-                { text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
-                    addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
-                    closeModal();
-                    updateAllUI();
-                    renderPaperSlots();
-                }}
-            ]);
+			showModal('⚡ 转博渡劫', html, [
+				{ text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
+					addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
+					closeModal();
+					updateAllUI();
+					renderPaperSlots();
+					
+					// 处理待处理的开会事件
+					if (gameState.pendingConference) {
+						const grade = gameState.pendingConference;
+						gameState.pendingConference = null;
+						setTimeout(() => showConferenceModal(grade), 300);
+					}
+				}}
+			]);
         }
 
         // ==================== 游戏结局 ====================
@@ -5880,6 +5921,7 @@
                 permanent: gameState.buffs.permanent.map(b => ({ ...b })),
                 temporary: gameState.buffs.temporary.map(b => ({ ...b }))
             };
+			
             
             const saveData = {
                 character: gameState.character,
@@ -5934,6 +5976,9 @@
                 blockedResearchGains: gameState.blockedResearchGains,
                 goldLocked: gameState.goldLocked,
                 statsLocked: gameState.statsLocked,
+				
+				pendingPhDChoice: gameState.pendingPhDChoice || false,
+				pendingConference: gameState.pendingConference || null,
                 
                 shopState: shopState,
                 saveTime: timeStr
@@ -6042,6 +6087,9 @@
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
                             triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],
                             coffeeBoughtCount: save.coffeeBoughtCount || 0,
+							
+							pendingPhDChoice: save.pendingPhDChoice || false,
+							pendingConference: save.pendingConference || null,
                             
                             isReversed: save.isReversed || false,
                             reversedAwakened: save.reversedAwakened || false,
