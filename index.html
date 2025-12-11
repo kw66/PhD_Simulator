@@ -4759,15 +4759,17 @@
             
             results.forEach(r => {
                 const color = r.decision === 'Accept' ? 'var(--success-color)' : r.decision === 'Reject' ? 'var(--danger-color)' : 'var(--warning-color)';
-                html += `<div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;font-size:0.85rem;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <strong>${r.reviewer.name}</strong>
-                        <span style="color:${color};font-weight:600;">${r.decision}(${r.score > 0 ? '+' : ''}${r.score})</span>
-                    </div>
-                    <div style="font-size:0.8rem;color:var(--text-secondary);">"${r.comment}"</div>
-                    ${r.improvement > 0 ? `<div style="color:var(--success-color);font-size:0.75rem;margin-top:3px;background:rgba(0,184,148,0.1);padding:3px 6px;border-radius:4px;display:inline-block;">
-                        📝 改进论文 → ${r.improvementType === 'idea' ? 'Idea' : r.improvementType === 'exp' ? '实验' : '写作'}分 <strong>+${r.improvement}</strong></div>` : ''}
-                </div>`;
+				html += `<div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;font-size:0.85rem;">
+					<div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+						<strong>${r.reviewer.name}</strong>
+						<span style="color:${color};font-weight:600;">${r.decision}(${r.score > 0 ? '+' : ''}${r.score})</span>
+					</div>
+					<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:3px;">
+						📐 评审视角: ${r.weightInfo} → 有效分${r.effectiveScore}${r.balancePenalty !== 0 ? ` (${r.balancePenalty > 0 ? '-' : '+'}${Math.abs(r.balancePenalty)})` : ''}
+					</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);">"${r.comment}"</div>
+					...
+				</div>`;
             });
             html += '</div>';
 
