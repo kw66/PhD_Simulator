@@ -494,6 +494,14 @@
 		body.reversed-theme .modal-stats-tag strong {
 			color: #58d68d;
 		}		
+		
+		body.reversed-theme .meta-records {
+			background: #2d2d44 !important;
+		}
+
+		body.reversed-theme .meta-records div[style*="border-bottom"] {
+			border-color: #444 !important;
+		}
 
         /* 弹窗样式 */
         .modal-overlay {
@@ -1923,27 +1931,46 @@
             }
         }
 
-        async function recordEnding(endingType, endingTitle) {
-            if (!supabase) return;
-            try {
-                const { error } = await supabase.from('game_endings').insert({
-                    ending_type: endingType,
-                    ending_title: endingTitle,
-                    character: gameState.character,
-                    is_reversed: gameState.isReversed,
-                    total_months: gameState.totalMonths,
-                    total_score: gameState.totalScore,
-                    paper_a: gameState.paperA,
-                    paper_b: gameState.paperB,
-                    paper_c: gameState.paperC
-                });
-                
-                if (error) throw error;
-                console.log('✅ 结局已记录:', endingTitle, gameState.isReversed ? '(逆位)' : '(正位)');
-            } catch (e) {
-                console.error('❌ 记录结局失败:', e);
-            }
-        }
+		async function recordEnding(endingType, endingTitle) {
+			// 计算成就数量
+			const achievements = collectAchievements(endingType);
+			const achievementCount = achievements.length;
+			
+			// ★★★ 更新本地记录 ★★★
+			updateLocalMeta(
+				gameState.character, 
+				gameState.isReversed, 
+				gameState.totalScore, 
+				gameState.totalCitations, 
+				achievementCount
+			);
+			
+			if (!supabase) return;
+			
+			try {
+				const { error } = await supabase.from('game_endings').insert({
+					ending_type: endingType,
+					ending_title: endingTitle,
+					character: gameState.character,
+					is_reversed: gameState.isReversed,
+					total_months: gameState.totalMonths,
+					total_score: gameState.totalScore,
+					paper_a: gameState.paperA,
+					paper_b: gameState.paperB,
+					paper_c: gameState.paperC,
+					total_citations: gameState.totalCitations,
+					achievements_count: achievementCount
+				});
+				
+				if (error) throw error;
+				console.log('✅ 结局已记录:', endingTitle);
+				
+				// 清除缓存
+				globalCharacterRecords = null;
+			} catch (e) {
+				console.error('❌ 记录结局失败:', e);
+			}
+		}
 
         async function recordAchievements(achievements) {
             if (!supabase || achievements.length === 0) return;
@@ -2176,7 +2203,8 @@
             
             renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
             renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
-            
+            // ★★★ 加载全球角色记录 ★★★
+			await getGlobalCharacterRecords();
             renderCharacterGrid();
         }
 
@@ -2267,52 +2295,106 @@
             loadGlobalStatsDisplay();
         }
 
-        function renderCharacterGrid() {
-            const grid = document.getElementById('character-grid');
-            grid.innerHTML = characters.map(char => {
-                const data = isReversedMode && char.reversed ? char.reversed : char;
-                const diffKey = `${char.id}_${isReversedMode ? 'reversed' : 'normal'}`;
-                const diffData = characterDifficultyData[diffKey] || { stars: null, rate: null, total: 0 };
-                
-                const starsHtml = renderDifficultyStars(diffData.stars);
-                const badgeHtml = getDifficultyBadge(diffData.stars);
-                const rateText = diffData.rate !== null ? `${(diffData.rate * 100).toFixed(1)}%` : '?';
-                const totalGames = diffData.total || 0;
-                
-                const cardClass = isReversedMode ? 'character-card reversed-card' : 'character-card';
-                const bonusClass = isReversedMode ? 'background:rgba(231,76,60,0.15);color:#e74c3c;' : '';
-                const awakenBg = isReversedMode 
-                    ? 'background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(231,76,60,0.15));border-color:rgba(231,76,60,0.4);' 
-                    : 'background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(118,75,162,0.1));border-color:rgba(102,126,234,0.3);';
-                const awakenColor = isReversedMode ? '#e74c3c' : 'var(--primary-color)';
+		function renderCharacterGrid() {
+			const grid = document.getElementById('character-grid');
+			const globalRecords = globalCharacterRecords;
+			
+			grid.innerHTML = characters.map(char => {
+				const data = isReversedMode && char.reversed ? char.reversed : char;
+				const diffKey = `${char.id}_${isReversedMode ? 'reversed' : 'normal'}`;
+				const diffData = characterDifficultyData[diffKey] || { stars: null, rate: null, total: 0 };
+				
+				// 获取本地最高记录
+				const localRecord = getCharacterLocalRecord(char.id, isReversedMode);
+				const hasLocalRecord = localRecord.maxScore > 0;
+				
+				// 获取全球记录
+				const mode = isReversedMode ? 'reversed' : 'normal';
+				const globalRecord = globalRecords?.[mode]?.[char.id] || {
+					today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
+					history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+				};
+				const hasGlobalRecord = globalRecord.history.maxScore > 0;
+				
+				const starsHtml = renderDifficultyStars(diffData.stars);
+				const badgeHtml = getDifficultyBadge(diffData.stars);
+				const rateText = diffData.rate !== null ? `${(diffData.rate * 100).toFixed(1)}%` : '?';
+				const totalGames = diffData.total || 0;
+				
+				const cardClass = isReversedMode ? 'character-card reversed-card' : 'character-card';
+				const bonusClass = isReversedMode ? 'background:rgba(231,76,60,0.15);color:#e74c3c;' : '';
+				const awakenBg = isReversedMode 
+					? 'background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(231,76,60,0.15));border-color:rgba(231,76,60,0.4);' 
+					: 'background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(118,75,162,0.1));border-color:rgba(102,126,234,0.3);';
+				const awakenColor = isReversedMode ? '#e74c3c' : 'var(--primary-color)';
 
-                return `
-                <div class="${cardClass}" data-id="${char.id}" onclick="selectCharacter('${char.id}')">
-                    <div class="icon">${data.icon}</div>
-                    <div class="name">${data.name}</div>
-                    <div class="desc">${data.desc}</div>
-                    <div class="bonus" style="${bonusClass}">${data.bonus}</div>
-                    <div class="awaken-info" style="margin-top:8px;padding:6px 8px;${awakenBg}border-radius:6px;border:1px dashed;">
-                        <div style="font-size:0.65rem;color:${awakenColor};font-weight:600;margin-bottom:2px;">
-                            <span style="margin-right:3px;">⚡</span>转博觉醒: ${data.awakenIcon} ${data.awakenName}
-                        </div>
-                        <div style="font-size:0.6rem;color:var(--text-secondary);">${data.awakenDesc}</div>
-                    </div>
-                    <div class="difficulty-container">
-                        <div>
-                            <span class="difficulty-label">难度</span>
-                            <div class="difficulty-stars">${starsHtml}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            ${badgeHtml}
-                            <div style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px;">
-                                博士率:${rateText} (${totalGames}局)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `}).join('');
-        }
+				// Meta记录HTML
+				const metaRecordHtml = `
+					<div class="meta-records" style="margin-top:8px;padding:8px;background:var(--light-bg);border-radius:8px;font-size:0.6rem;">
+						<!-- 我的记录 -->
+						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
+							<div style="font-weight:600;color:var(--success-color);margin-bottom:4px;">👤 我的最高</div>
+							${hasLocalRecord ? `
+								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
+									<span>🎯${localRecord.maxScore}分</span>
+									<span>📚${localRecord.maxCitations}引</span>
+									<span>🏆${localRecord.maxAchievements}成就</span>
+								</div>
+							` : `<div style="color:var(--text-secondary);text-align:center;">暂无记录</div>`}
+						</div>
+						<!-- 今日全球 -->
+						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
+							<div style="font-weight:600;color:var(--warning-color);margin-bottom:4px;">☀️ 今日全球</div>
+							${globalRecord.today.maxScore > 0 ? `
+								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
+									<span>🎯${globalRecord.today.maxScore}分</span>
+									<span>📚${globalRecord.today.maxCitations}引</span>
+									<span>🏆${globalRecord.today.maxAchievements}成就</span>
+								</div>
+							` : `<div style="color:var(--text-secondary);text-align:center;">今日暂无</div>`}
+						</div>
+						<!-- 历史全球 -->
+						<div>
+							<div style="font-weight:600;color:var(--accent-color);margin-bottom:4px;">👑 历史全球</div>
+							${hasGlobalRecord ? `
+								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
+									<span>🎯${globalRecord.history.maxScore}分</span>
+									<span>📚${globalRecord.history.maxCitations}引</span>
+									<span>🏆${globalRecord.history.maxAchievements}成就</span>
+								</div>
+							` : `<div style="color:var(--text-secondary);text-align:center;">暂无记录</div>`}
+						</div>
+					</div>
+				`;
+
+				return `
+				<div class="${cardClass}" data-id="${char.id}" onclick="selectCharacter('${char.id}')">
+					<div class="icon">${data.icon}</div>
+					<div class="name">${data.name}</div>
+					<div class="desc">${data.desc}</div>
+					<div class="bonus" style="${bonusClass}">${data.bonus}</div>
+					<div class="awaken-info" style="margin-top:8px;padding:6px 8px;${awakenBg}border-radius:6px;border:1px dashed;">
+						<div style="font-size:0.65rem;color:${awakenColor};font-weight:600;margin-bottom:2px;">
+							<span style="margin-right:3px;">⚡</span>转博觉醒: ${data.awakenIcon} ${data.awakenName}
+						</div>
+						<div style="font-size:0.6rem;color:var(--text-secondary);">${data.awakenDesc}</div>
+					</div>
+					${metaRecordHtml}
+					<div class="difficulty-container">
+						<div>
+							<span class="difficulty-label">难度</span>
+							<div class="difficulty-stars">${starsHtml}</div>
+						</div>
+						<div style="text-align:right;">
+							${badgeHtml}
+							<div style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px;">
+								博士率:${rateText} (${totalGames}局)
+							</div>
+						</div>
+					</div>
+				</div>
+			`}).join('');
+		}
 
         function selectCharacter(id) {
             selectedCharacter = characters.find(c => c.id === id);
@@ -6348,6 +6430,144 @@
             renderCharacterGrid();
             loadGlobalStatsDisplay();
         }
+
+		// ==================== Meta进度系统 ====================
+		const META_KEY = 'graduateSimulatorMeta';
+		const META_START_DATE = '2025-12-11T00:00:00Z';
+
+		function getLocalMeta() {
+			const meta = localStorage.getItem(META_KEY);
+			return meta ? JSON.parse(meta) : { normal: {}, reversed: {} };
+		}
+
+		function saveLocalMeta(meta) {
+			localStorage.setItem(META_KEY, JSON.stringify(meta));
+		}
+
+		function updateLocalMeta(character, isReversed, score, citations, achievementCount) {
+			const meta = getLocalMeta();
+			const mode = isReversed ? 'reversed' : 'normal';
+			
+			if (!meta[mode]) meta[mode] = {};
+			if (!meta[mode][character]) {
+				meta[mode][character] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
+			}
+			
+			const record = meta[mode][character];
+			if (score > record.maxScore) record.maxScore = score;
+			if (citations > record.maxCitations) record.maxCitations = citations;
+			if (achievementCount > record.maxAchievements) record.maxAchievements = achievementCount;
+			
+			saveLocalMeta(meta);
+			return record;
+		}
+
+		function getCharacterLocalRecord(characterId, isReversed) {
+			const meta = getLocalMeta();
+			const mode = isReversed ? 'reversed' : 'normal';
+			return meta[mode]?.[characterId] || { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
+		}
+
+		// 全球角色记录缓存
+		let globalCharacterRecords = null;
+		let globalCharacterRecordsTime = 0;
+
+		async function getGlobalCharacterRecords() {
+			if (globalCharacterRecords && (Date.now() - globalCharacterRecordsTime < CACHE_DURATION)) {
+				return globalCharacterRecords;
+			}
+			
+			if (!supabase) return null;
+			
+			try {
+				// ★★★ 修改：使用北京时间计算今日 ★★★
+				const now = new Date();
+				// 转换为北京时间
+				const beijingOffset = 8 * 60; // UTC+8 分钟
+				const localOffset = now.getTimezoneOffset(); // 本地时区偏移（分钟）
+				const beijingTime = new Date(now.getTime() + (beijingOffset + localOffset) * 60 * 1000);
+				
+				// 北京时间今日0点
+				const beijingToday = new Date(beijingTime);
+				beijingToday.setHours(0, 0, 0, 0);
+				// 转回UTC时间用于数据库查询
+				const todayUtc = new Date(beijingToday.getTime() - beijingOffset * 60 * 1000);
+				const todayStr = todayUtc.toISOString();
+				
+				// 12月11日北京时间8点 = 12月11日UTC 00:00
+				const startDateStr = '2025-12-11T00:00:00Z';
+				
+				// 获取12月11日（北京时间）以来的所有记录
+				const allData = await fetchAllRows('game_endings', 
+					'character, is_reversed, total_score, total_citations, achievements_count, created_at');
+				
+				const records = {
+					normal: {},
+					reversed: {}
+				};
+				
+				// 初始化所有角色
+				characters.forEach(char => {
+					records.normal[char.id] = {
+						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
+						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+					};
+					records.reversed[char.id] = {
+						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
+						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+					};
+				});
+				
+				// 处理数据
+				allData.forEach(row => {
+					const recordTime = new Date(row.created_at);
+					
+					// 只统计12月11日北京时间之后的数据
+					if (recordTime < new Date(startDateStr)) return;
+					
+					const mode = row.is_reversed ? 'reversed' : 'normal';
+					const charId = row.character;
+					
+					if (!records[mode][charId]) return;
+					
+					const score = row.total_score || 0;
+					const citations = row.total_citations || 0;
+					const achievements = row.achievements_count || 0;
+					
+					// 更新历史最高
+					if (score > records[mode][charId].history.maxScore) {
+						records[mode][charId].history.maxScore = score;
+					}
+					if (citations > records[mode][charId].history.maxCitations) {
+						records[mode][charId].history.maxCitations = citations;
+					}
+					if (achievements > records[mode][charId].history.maxAchievements) {
+						records[mode][charId].history.maxAchievements = achievements;
+					}
+					
+					// 更新今日最高（北京时间）
+					if (recordTime >= todayUtc) {
+						if (score > records[mode][charId].today.maxScore) {
+							records[mode][charId].today.maxScore = score;
+						}
+						if (citations > records[mode][charId].today.maxCitations) {
+							records[mode][charId].today.maxCitations = citations;
+						}
+						if (achievements > records[mode][charId].today.maxAchievements) {
+							records[mode][charId].today.maxAchievements = achievements;
+						}
+					}
+				});
+				
+				globalCharacterRecords = records;
+				globalCharacterRecordsTime = Date.now();
+				
+				return records;
+			} catch (e) {
+				console.error('获取全球角色记录失败:', e);
+				return globalCharacterRecords || null;
+			}
+		}
 
         // ==================== 存档系统 ====================
         const SAVE_KEY = 'graduateSimulatorSaves';
