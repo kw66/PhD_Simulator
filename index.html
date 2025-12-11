@@ -1278,7 +1278,7 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器v2.0</h1>
+            <h1 class="game-title">🎓 研究生模拟器v2.1</h1>
             <p class="game-author">
                 作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
                 &nbsp;|&nbsp;
@@ -2353,33 +2353,39 @@
 					<div class="meta-records" style="margin-top:8px;padding:8px;background:var(--light-bg);border-radius:8px;font-size:0.6rem;">
 						<!-- 我的记录 -->
 						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
-							<div style="font-weight:600;color:var(--success-color);margin-bottom:4px;">👤 我的最高</div>
+							<div style="font-weight:600;color:var(--success-color);margin-bottom:4px;">👤 我的最高（分开统计）</div>
 							${hasLocalRecord ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${localRecord.maxScore}分</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>📚${localRecord.maxCitations}引</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>🏆${localRecord.maxAchievements}成就</span>
 								</div>
 							` : `<div style="color:var(--text-secondary);text-align:center;">暂无记录</div>`}
 						</div>
 						<!-- 今日全球 -->
 						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
-							<div style="font-weight:600;color:var(--warning-color);margin-bottom:4px;">☀️ 今日全球</div>
+							<div style="font-weight:600;color:var(--warning-color);margin-bottom:4px;">☀️ 今日全球（分开统计）</div>
 							${globalRecord.today.maxScore > 0 ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${globalRecord.today.maxScore}分</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>📚${globalRecord.today.maxCitations}引</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>🏆${globalRecord.today.maxAchievements}成就</span>
 								</div>
 							` : `<div style="color:var(--text-secondary);text-align:center;">今日暂无</div>`}
 						</div>
 						<!-- 历史全球 -->
 						<div>
-							<div style="font-weight:600;color:var(--accent-color);margin-bottom:4px;">👑 历史全球</div>
+							<div style="font-weight:600;color:var(--accent-color);margin-bottom:4px;">👑 历史全球（分开统计）</div>
 							${hasGlobalRecord ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${globalRecord.history.maxScore}分</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>📚${globalRecord.history.maxCitations}引</span>
+									<span style="color:var(--border-color);">|</span>
 									<span>🏆${globalRecord.history.maxAchievements}成就</span>
 								</div>
 							` : `<div style="color:var(--text-secondary);text-align:center;">暂无记录</div>`}
