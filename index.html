@@ -3980,115 +3980,119 @@
         }
 		
         // ==================== 论文推广功能 ====================
-        function promotePaper(index, type) {
-            const paper = gameState.publishedPapers[index];
-            if (!paper) return;
+		function promotePaper(index, type) {
+			const paper = gameState.publishedPapers[index];
+			if (!paper) return;
 
-            if (!paper.promotions) {
-                paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
-            }
-            if (!paper.citationMultiplier) paper.citationMultiplier = 1;
+			if (!paper.promotions) {
+				paper.promotions = { arxiv: false, github: false, xiaohongshu: false, quantumbit: false };
+			}
+			if (!paper.citationMultiplier) paper.citationMultiplier = 1;
 
-            if (paper.promotions[type]) return;
+			if (paper.promotions[type]) return;
 
-            const typeNames = {
-                arxiv: '挂arxiv',
-                github: 'github开源',
-                xiaohongshu: '小红书宣传',
-                quantumbit: '量子位封面'
-            };
+			const typeNames = {
+				arxiv: '挂arxiv',
+				github: 'github开源',
+				xiaohongshu: '小红书宣传',
+				quantumbit: '量子位封面'
+			};
 
-            let result = '';
-            let canProceed = true;
-            
-            switch(type) {
-                case 'arxiv': {
-                    const baseSanCost = 3;
-                    const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-                    
-                    if (gameState.san < actualSanCost) {
-                        const tipText = actualSanCost !== baseSanCost 
-                            ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                            : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                        showModal('❌ 操作失败', tipText, 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.arxiv = true;
-                    paper.citationMultiplier *= 1.25;
-                    const sanText = actualSanCost !== baseSanCost 
-                        ? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
-                        : `SAN值-${baseSanCost}`;
-                    result = `${sanText}，论文引用速度×1.25`;
-                    canProceed = changeSan(-baseSanCost);
-                    break;
-                }
-                case 'github': {
-                    const baseSanCost = 6;
-                    const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-                    
-                    if (gameState.san < actualSanCost) {
-                        const tipText = actualSanCost !== baseSanCost 
-                            ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                            : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                        showModal('❌ 操作失败', tipText, 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.github = true;
-                    paper.citationMultiplier *= 1.5;
-                    const sanText = actualSanCost !== baseSanCost 
-                        ? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
-                        : `SAN值-${baseSanCost}`;
-                    result = `${sanText}，论文引用速度×1.5`;
-                    canProceed = changeSan(-baseSanCost);
-                    break;
-                }
-                case 'xiaohongshu': {
-                    const baseSanCost = 3;
-                    const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-                    
-                    if (gameState.san < actualSanCost) {
-                        const tipText = actualSanCost !== baseSanCost 
-                            ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                            : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                        showModal('❌ 操作失败', tipText, 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.xiaohongshu = true;
-                    paper.citationMultiplier *= 1.25;
-                    const sanText = actualSanCost !== baseSanCost 
-                        ? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
-                        : `SAN值-${baseSanCost}`;
-                    result = `${sanText}，论文引用速度×1.25`;
-                    canProceed = changeSan(-baseSanCost);
-                    break;
-                }
-                case 'quantumbit':
-                    if (paper.grade !== 'A') {
-                        showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    if (gameState.gold < 10) {
-                        showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    paper.promotions.quantumbit = true;
-                    paper.citations += 100;
-                    gameState.totalCitations += 100;
-                    result = '金钱-10，论文引用+100';
-                    canProceed = changeGold(-10);
-                    break;
-            }
+			let result = '';
+			let canProceed = true;
+			
+			switch(type) {
+				case 'arxiv': {
+					const baseSanCost = 3;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.arxiv = true;
+					// ★★★ 改为加法：+0.25 ★★★
+					paper.citationMultiplier += 0.25;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
+					result = `${sanText}，论文引用速度+25%`;
+					canProceed = changeSan(-baseSanCost);
+					break;
+				}
+				case 'github': {
+					const baseSanCost = 6;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.github = true;
+					// ★★★ 改为加法：+0.5 ★★★
+					paper.citationMultiplier += 0.5;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
+					result = `${sanText}，论文引用速度+50%`;
+					canProceed = changeSan(-baseSanCost);
+					break;
+				}
+				case 'xiaohongshu': {
+					const baseSanCost = 3;
+					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+					
+					if (gameState.san < actualSanCost) {
+						const tipText = actualSanCost !== baseSanCost 
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+						showModal('❌ 操作失败', tipText, 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.xiaohongshu = true;
+					// ★★★ 改为加法：+0.25 ★★★
+					paper.citationMultiplier += 0.25;
+					const sanText = actualSanCost !== baseSanCost 
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+						: `SAN值-${baseSanCost}`;
+					result = `${sanText}，论文引用速度+25%`;
+					canProceed = changeSan(-baseSanCost);
+					break;
+				}
+				case 'quantumbit':
+					// ★★★ 量子位保持不变，直接+100引用 ★★★
+					if (paper.grade !== 'A') {
+						showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					if (gameState.gold < 10) {
+						showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
+							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+						return;
+					}
+					paper.promotions.quantumbit = true;
+					paper.citations += 100;
+					gameState.totalCitations += 100;
+					result = '金钱-10，论文引用+100';
+					canProceed = changeGold(-10);
+					break;
+			}
 
-            if (canProceed) {
-                addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
-                updateAllUI();
-            }
-        }
+			if (canProceed) {
+				addLog('论文推广', `"${paper.title.substring(0, 15)}..." ${typeNames[type]}`, result);
+				updateAllUI();
+			}
+		}
 
         // ==================== 论文工作站 ====================
         function renderPaperSlots() {
@@ -4758,75 +4762,122 @@
             ]);
         }
 
-        function handlePaperAccepted(paper, grade, acceptType, slot) {
-            const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
-            const sanGain = { 'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } };
-            const favorGain = { 'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } };
+		function handlePaperAccepted(paper, grade, acceptType, slot) {
+			const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
+			const sanGain = { 
+				'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 
+				'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 
+				'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } 
+			};
+			const favorGain = { 
+				'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 
+				'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 
+				'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } 
+			};
 
-            // 逆位富可敌国：SAN增加无效（但好感度仍然会被重置）
-            gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain[grade][acceptType]);
-			gameState.favor = Math.min(20, gameState.favor + favorGain[grade][acceptType]);
-            gameState.totalScore += scoreMap[grade];
+			// ★★★ 定义论文水平等级 ★★★
+			const paperRankMap = {
+				'A-Best Paper': 9,
+				'A-Oral': 8,
+				'A-Poster': 7,
+				'B-Best Paper': 6,
+				'B-Oral': 5,
+				'B-Poster': 4,
+				'C-Best Paper': 3,
+				'C-Oral': 2,
+				'C-Poster': 1
+			};
+			
+			const currentRank = paperRankMap[`${grade}-${acceptType}`];
+			
+			// ★★★ 统计同等或更高水平的已发表论文数量 ★★★
+			const higherOrEqualCount = gameState.publishedPapers.filter(p => {
+				const pRank = paperRankMap[`${p.grade}-${p.acceptType}`];
+				return pRank >= currentRank;
+			}).length;
+			
+			// ★★★ 计算递减后的奖励 ★★★
+			const baseSan = sanGain[grade][acceptType];
+			const baseFavor = favorGain[grade][acceptType];
+			
+			const actualSanGain = Math.max(1, baseSan - higherOrEqualCount);
+			const favorReduction = Math.floor(higherOrEqualCount / 2);
+			const actualFavorGain = baseFavor > 0 ? Math.max(0, baseFavor - favorReduction) : 0;
+			
+			// ★★★ 判断是否有递减 ★★★
+			const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
+			
+			gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
+			gameState.favor = Math.min(20, gameState.favor + actualFavorGain);
+			gameState.totalScore += scoreMap[grade];
 
-            if (grade === 'A') gameState.paperA++;
-            else if (grade === 'B') gameState.paperB++;
-            else gameState.paperC++;
+			if (grade === 'A') gameState.paperA++;
+			else if (grade === 'B') gameState.paperB++;
+			else gameState.paperC++;
 
-            let bonusResearch = 0;
-            if (!gameState.firstPaperAccepted) {
-                gameState.firstPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
-            }
-            if (grade === 'A' && !gameState.firstAPaperAccepted) {
-                gameState.firstAPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
-            }
-            if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
-                gameState.firstBestPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
-            }
-            if (bonusResearch > 0) {
-                changeResearch(bonusResearch);
-            }
+			// 首次发表奖励
+			let bonusResearch = 0;
+			if (!gameState.firstPaperAccepted) {
+				gameState.firstPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
+			}
+			if (grade === 'A' && !gameState.firstAPaperAccepted) {
+				gameState.firstAPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
+			}
+			if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
+				gameState.firstBestPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
+			}
+			if (bonusResearch > 0) {
+				changeResearch(bonusResearch);
+			}
 
-            const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
-            gameState.publishedPapers.push({
-                title: paper.title,
-                grade,
-                acceptType,
-                score: finalScore,
-                citations: 0,
-                monthsSincePublish: 0,
-                promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-                citationMultiplier: 1
-            });
+			const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
+			gameState.publishedPapers.push({
+				title: paper.title,
+				grade,
+				acceptType,
+				score: finalScore,
+				citations: 0,
+				monthsSincePublish: 0,
+				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+				citationMultiplier: 1
+			});
 
-            if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
-                gameState.availableRandomEvents.push(14);
-                addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
-            }
+			if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
+				gameState.availableRandomEvents.push(14);
+				addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
+			}
 
-            gameState.papers[slot] = null;
+			gameState.papers[slot] = null;
 
-            let result = `SAN+${sanGain[grade][acceptType]}，好感+${favorGain[grade][acceptType]}，科研分+${scoreMap[grade]}`;
-            if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
-            addLog('论文中稿', `${grade}类会议被接收为${acceptType}`, result);
+			// ★★★ 日志显示详情（带友好提示）★★★
+			let result = `SAN+${actualSanGain}，好感+${actualFavorGain}，科研分+${scoreMap[grade]}`;
+			if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
+			
+			// ★★★ 添加递减提示 ★★★
+			if (hasDecay) {
+				result += `（已发${higherOrEqualCount}篇同级或更高，有点麻木了）`;
+			}
+			
+			addLog('论文中稿', `${grade}类会议被接收为${acceptType}`, result);
 
-            const canPhD = gameState.degree === 'master' && (
-                (gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
-                (gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
-            );
+			const canPhD = gameState.degree === 'master' && (
+				(gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
+				(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
+			);
 
-            if (canPhD) {
-                gameState.pendingConference = grade;
-                setTimeout(() => showPhDOptionModal(), 300);
-            } else {
-                setTimeout(() => showConferenceModal(grade), 300);
-            }
-        }
+			if (canPhD) {
+				gameState.pendingConference = grade;
+				setTimeout(() => showPhDOptionModal(), 300);
+			} else {
+				setTimeout(() => showConferenceModal(grade), 300);
+			}
+		}
 		
         // ==================== 开会系统 ====================
         function showConferenceModal(grade) {
