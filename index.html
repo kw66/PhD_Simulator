@@ -1870,7 +1870,7 @@
         let statsCacheTime = 0;
         let visitStatsCache = null;
         let visitStatsCacheTime = 0;
-        const CACHE_DURATION = 5 * 60 * 1000;
+        const CACHE_DURATION = 10 * 60 * 1000;
 
         function initStats() {
             if (statsInitialized) return;
@@ -6480,26 +6480,18 @@
 			if (!supabase) return null;
 			
 			try {
-				// ★★★ 修改：使用北京时间计算今日 ★★★
+				// 计算北京时间今日0点对应的UTC时间
 				const now = new Date();
-				// 转换为北京时间
-				const beijingOffset = 8 * 60; // UTC+8 分钟
-				const localOffset = now.getTimezoneOffset(); // 本地时区偏移（分钟）
+				const beijingOffset = 8 * 60;
+				const localOffset = now.getTimezoneOffset();
 				const beijingTime = new Date(now.getTime() + (beijingOffset + localOffset) * 60 * 1000);
-				
-				// 北京时间今日0点
 				const beijingToday = new Date(beijingTime);
 				beijingToday.setHours(0, 0, 0, 0);
-				// 转回UTC时间用于数据库查询
 				const todayUtc = new Date(beijingToday.getTime() - beijingOffset * 60 * 1000);
 				const todayStr = todayUtc.toISOString();
 				
-				// 12月11日北京时间8点 = 12月11日UTC 00:00
-				const startDateStr = '2025-12-11T00:00:00Z';
-				
-				// 获取12月11日（北京时间）以来的所有记录
-				const allData = await fetchAllRows('game_endings', 
-					'character, is_reversed, total_score, total_citations, achievements_count, created_at');
+				// 12月11日北京时间0点
+				const startDateStr = '2024-12-10T16:00:00Z';
 				
 				const records = {
 					normal: {},
@@ -6518,50 +6510,89 @@
 					};
 				});
 				
-				// 处理数据
-				allData.forEach(row => {
-					const recordTime = new Date(row.created_at);
-					
-					// 只统计12月11日北京时间之后的数据
-					if (recordTime < new Date(startDateStr)) return;
-					
+				// ★★★ 优化：分别查询历史最高和今日最高 ★★★
+				
+				// 1. 查询历史最高（按角色和模式分组）
+				const { data: historyData, error: historyError } = await supabase
+					.from('game_endings')
+					.select('character, is_reversed, total_score, total_citations, achievements_count')
+					.gte('created_at', startDateStr)
+					.order('total_score', { ascending: false });
+				
+				if (historyError) throw historyError;
+				
+				// 2. 查询今日最高
+				const { data: todayData, error: todayError } = await supabase
+					.from('game_endings')
+					.select('character, is_reversed, total_score, total_citations, achievements_count')
+					.gte('created_at', todayStr)
+					.order('total_score', { ascending: false });
+				
+				if (todayError) throw todayError;
+				
+				// 处理历史数据 - 只取每个角色的最高值
+				const historyProcessed = {};
+				(historyData || []).forEach(row => {
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character;
+					const key = `${mode}_${charId}`;
 					
-					if (!records[mode][charId]) return;
-					
-					const score = row.total_score || 0;
-					const citations = row.total_citations || 0;
-					const achievements = row.achievements_count || 0;
-					
-					// 更新历史最高
-					if (score > records[mode][charId].history.maxScore) {
-						records[mode][charId].history.maxScore = score;
-					}
-					if (citations > records[mode][charId].history.maxCitations) {
-						records[mode][charId].history.maxCitations = citations;
-					}
-					if (achievements > records[mode][charId].history.maxAchievements) {
-						records[mode][charId].history.maxAchievements = achievements;
+					if (!historyProcessed[key]) {
+						historyProcessed[key] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
 					}
 					
-					// 更新今日最高（北京时间）
-					if (recordTime >= todayUtc) {
-						if (score > records[mode][charId].today.maxScore) {
-							records[mode][charId].today.maxScore = score;
+					const record = historyProcessed[key];
+					if ((row.total_score || 0) > record.maxScore) {
+						record.maxScore = row.total_score || 0;
+					}
+					if ((row.total_citations || 0) > record.maxCitations) {
+						record.maxCitations = row.total_citations || 0;
+					}
+					if ((row.achievements_count || 0) > record.maxAchievements) {
+						record.maxAchievements = row.achievements_count || 0;
+					}
+				});
+				
+				// 处理今日数据
+				const todayProcessed = {};
+				(todayData || []).forEach(row => {
+					const mode = row.is_reversed ? 'reversed' : 'normal';
+					const charId = row.character;
+					const key = `${mode}_${charId}`;
+					
+					if (!todayProcessed[key]) {
+						todayProcessed[key] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
+					}
+					
+					const record = todayProcessed[key];
+					if ((row.total_score || 0) > record.maxScore) {
+						record.maxScore = row.total_score || 0;
+					}
+					if ((row.total_citations || 0) > record.maxCitations) {
+						record.maxCitations = row.total_citations || 0;
+					}
+					if ((row.achievements_count || 0) > record.maxAchievements) {
+						record.maxAchievements = row.achievements_count || 0;
+					}
+				});
+				
+				// 合并到 records
+				characters.forEach(char => {
+					['normal', 'reversed'].forEach(mode => {
+						const key = `${mode}_${char.id}`;
+						if (historyProcessed[key]) {
+							records[mode][char.id].history = historyProcessed[key];
 						}
-						if (citations > records[mode][charId].today.maxCitations) {
-							records[mode][charId].today.maxCitations = citations;
+						if (todayProcessed[key]) {
+							records[mode][char.id].today = todayProcessed[key];
 						}
-						if (achievements > records[mode][charId].today.maxAchievements) {
-							records[mode][charId].today.maxAchievements = achievements;
-						}
-					}
+					});
 				});
 				
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
 				
+				console.log('✅ 全球角色记录加载完成');
 				return records;
 			} catch (e) {
 				console.error('获取全球角色记录失败:', e);
