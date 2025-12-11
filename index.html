@@ -4504,28 +4504,36 @@
             ]);
         }
 
-        function processPaperResult(slot) {
-            const paper = gameState.papers[slot];
-            if (!paper || !paper.reviewing) return;
-            
-            const grade = paper.submittedGrade;
-            const submittedScore = paper.submittedScore;
+		function processPaperResult(slot) {
+			const paper = gameState.papers[slot];
+			if (!paper || !paper.reviewing) return;
+			
+			const grade = paper.submittedGrade;
+			const submittedScore = paper.submittedScore;
 
-            const beforeScores = {
-                idea: paper.ideaScore,
-                exp: paper.expScore,
-                write: paper.writeScore,
-                total: paper.ideaScore + paper.expScore + paper.writeScore
-            };
+			const beforeScores = {
+				idea: paper.ideaScore,
+				exp: paper.expScore,
+				write: paper.writeScore,
+				total: paper.ideaScore + paper.expScore + paper.writeScore
+			};
 
-            const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
+			const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
 
-            let totalReviewScore = 0;
-            const results = reviewers.map(reviewer => {
-                const result = getReviewResult(reviewer, grade, submittedScore);
-                totalReviewScore += result.score;
-                return { reviewer, ...result };
-            });
+			let totalReviewScore = 0;
+			const results = reviewers.map(reviewer => {
+				// ★★★ 传入三项分数用于几何平均计算 ★★★
+				const result = getReviewResult(
+					reviewer, 
+					grade, 
+					submittedScore, 
+					paper.ideaScore, 
+					paper.expScore, 
+					paper.writeScore
+				);
+				totalReviewScore += result.score;
+				return { reviewer, ...result };
+			});
 
             let acceptType = null, accepted = false;
             if (totalReviewScore >= 3) { acceptType = 'Best Paper'; accepted = true; }
@@ -4586,46 +4594,70 @@
 			return { type: 'questions', name: '40个问题审稿人' };
 		}
 
-        function getReviewResult(reviewer, grade, score) {
-            let thresholds;
-            if (grade === 'A') {
-                switch (reviewer.type) {
-                    case 'kind': thresholds = { reject: 40, borderline: 60 }; break;
-                    case 'normal': case 'expert': thresholds = { reject: 50, borderline: 70 }; break;
-                    case 'gpt': thresholds = { reject: 40, borderline: 80 }; break;
-                    case 'hostile': case 'questions': thresholds = { reject: 80, borderline: 90 }; break;
-                }
-            } else if (grade === 'B') {
-                switch (reviewer.type) {
-                    case 'kind': thresholds = { reject: 20, borderline: 40 }; break;
-                    case 'normal': case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
-                    case 'gpt': thresholds = { reject: 20, borderline: 60 }; break;
-                    case 'hostile': case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
-                }
-            } else {
-                switch (reviewer.type) {
-                    case 'kind': thresholds = { reject: 10, borderline: 20 }; break;
-                    case 'normal': case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
-                    case 'gpt': thresholds = { reject: 15, borderline: 40 }; break;
-                    case 'hostile': case 'questions': thresholds = { reject: 25, borderline: 40 }; break;
-                }
-            }
+		function getReviewResult(reviewer, grade, score, ideaScore, expScore, writeScore) {
+			// ★★★ 计算几何平均有效分（处理0值边界）★★★
+			const safeIdea = Math.max(1, ideaScore);
+			const safeExp = Math.max(1, expScore);
+			const safeWrite = Math.max(1, writeScore);
+			
+			const geometricMean = Math.pow(safeIdea * safeExp * safeWrite, 1/3);
+			const effectiveScore = Math.round(geometricMean * 3);
+			
+			// 计算惩罚值用于显示
+			const balancePenalty = score - effectiveScore;
+			
+			let thresholds;
+			if (grade === 'A') {
+				switch (reviewer.type) {
+					case 'kind': thresholds = { reject: 40, borderline: 60 }; break;
+					case 'normal': case 'expert': thresholds = { reject: 50, borderline: 70 }; break;
+					case 'gpt': thresholds = { reject: 40, borderline: 80 }; break;
+					case 'hostile': case 'questions': thresholds = { reject: 80, borderline: 90 }; break;
+				}
+			} else if (grade === 'B') {
+				switch (reviewer.type) {
+					case 'kind': thresholds = { reject: 20, borderline: 40 }; break;
+					case 'normal': case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
+					case 'gpt': thresholds = { reject: 20, borderline: 60 }; break;
+					case 'hostile': case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
+				}
+			} else {
+				switch (reviewer.type) {
+					case 'kind': thresholds = { reject: 10, borderline: 20 }; break;
+					case 'normal': case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
+					case 'gpt': thresholds = { reject: 15, borderline: 40 }; break;
+					case 'hostile': case 'questions': thresholds = { reject: 25, borderline: 40 }; break;
+				}
+			}
 
-            let decision, reviewScore;
-            if (score < thresholds.reject) { decision = 'Reject'; reviewScore = -1; }
-            else if (score < thresholds.borderline) { decision = 'Borderline'; reviewScore = 0; }
-            else { decision = 'Accept'; reviewScore = 1; }
+			let decision, reviewScore;
+			// ★★★ 使用几何平均有效分判断 ★★★
+			if (effectiveScore < thresholds.reject) { decision = 'Reject'; reviewScore = -1; }
+			else if (effectiveScore < thresholds.borderline) { decision = 'Borderline'; reviewScore = 0; }
+			else { decision = 'Accept'; reviewScore = 1; }
 
-            const comment = generateComment(decision, reviewer.type);
-            
-            let improvement = 0, improvementType = '';
-            if ((reviewer.type === 'normal' || reviewer.type === 'expert') && decision !== 'Reject') {
-                improvement = reviewer.type === 'expert' ? 6 : 3;
-                improvementType = ['idea', 'exp', 'write'][Math.floor(Math.random() * 3)];
-            }
+			const comment = generateComment(decision, reviewer.type);
+			
+			let improvement = 0, improvementType = '';
+			if ((reviewer.type === 'normal' || reviewer.type === 'expert') && decision !== 'Reject') {
+				improvement = reviewer.type === 'expert' ? 6 : 3;
+				// ★★★ 优先改进最弱项 ★★★
+				const minScore = Math.min(ideaScore, expScore, writeScore);
+				if (ideaScore === minScore) improvementType = 'idea';
+				else if (expScore === minScore) improvementType = 'exp';
+				else improvementType = 'write';
+			}
 
-            return { decision, score: reviewScore, comment, improvement, improvementType };
-        }
+			return { 
+				decision, 
+				score: reviewScore, 
+				comment, 
+				improvement, 
+				improvementType, 
+				effectiveScore,  // ★★★ 新增：返回有效分 ★★★
+				balancePenalty   // ★★★ 新增：返回惩罚值 ★★★
+			};
+		}
 
         function generateComment(decision, type) {
             if (type === 'questions') return '我有40个问题。';
@@ -4669,10 +4701,14 @@
                 value: r.improvement
             }));
             
-            let html = `<div style="margin-bottom:12px;font-size:0.9rem;">
-                <strong>论文：</strong>${paper.title.substring(0, 30)}${paper.title.length > 30 ? '...' : ''}<br>
-                <strong>投稿：</strong>${grade}类会议 | <strong>投稿时总分：</strong>${paper.submittedScore}
-            </div><div style="margin-bottom:12px;">`;
+			const firstResult = results[0];  // 取第一个审稿人的有效分（都一样）
+			const hasBalancePenalty = firstResult.balancePenalty > 0;
+
+			let html = `<div style="margin-bottom:12px;font-size:0.9rem;">
+				<strong>论文：</strong>${paper.title.substring(0, 30)}${paper.title.length > 30 ? '...' : ''}<br>
+				<strong>投稿：</strong>${grade}类会议 | <strong>投稿时总分：</strong>${paper.submittedScore}
+				${hasBalancePenalty ? `<br><span style="color:var(--warning-color);font-size:0.85rem;">⚠️ 论文不均衡，有效分：${firstResult.effectiveScore}（-${firstResult.balancePenalty}）</span>` : ''}
+			</div>`;
             
             results.forEach(r => {
                 const color = r.decision === 'Accept' ? 'var(--success-color)' : r.decision === 'Reject' ? 'var(--danger-color)' : 'var(--warning-color)';
