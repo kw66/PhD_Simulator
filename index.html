@@ -2166,47 +2166,67 @@
             return '<span class="difficulty-badge easy">简单</span>';
         }
 
-        async function loadGlobalStatsDisplay() {
-            const panel = document.getElementById('global-stats-panel');
-            const loading = document.getElementById('stats-loading');
-            const content = document.getElementById('stats-content');
-            
-            panel.style.display = 'block';
-            
-            const visitStats = await getVisitStats();
-            const pvEl = document.getElementById('busuanzi_value_site_pv');
-            const uvEl = document.getElementById('busuanzi_value_site_uv');
-            if (pvEl) pvEl.textContent = visitStats.pv || 0;
-            if (uvEl) uvEl.textContent = visitStats.uv || 0;
-            
-            const stats = await getGlobalStats();
-            
-            if (!stats) {
-                loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败，请刷新重试</span>';
-                document.getElementById('total-games-value').textContent = 0;
-                return;
-            }
-            
-            let totalGames = 0;
-            for (const count of Object.values(stats.normal.endings)) {
-                totalGames += count;
-            }
-            for (const count of Object.values(stats.reversed.endings)) {
-                totalGames += count;
-            }
-            document.getElementById('total-games-value').textContent = totalGames;
-            
-            characterDifficultyData = calculateCharacterDifficulty(stats);
-            
-            loading.style.display = 'none';
-            content.style.display = 'block';
-            
-            renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
-            renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
-            // ★★★ 加载全球角色记录 ★★★
-			await getGlobalCharacterRecords();
-            renderCharacterGrid();
-        }
+		async function loadGlobalStatsDisplay() {
+			const panel = document.getElementById('global-stats-panel');
+			const loading = document.getElementById('stats-loading');
+			const content = document.getElementById('stats-content');
+			
+			panel.style.display = 'block';
+			
+			// ★★★ 先快速显示访问统计 ★★★
+			getVisitStats().then(visitStats => {
+				const pvEl = document.getElementById('busuanzi_value_site_pv');
+				const uvEl = document.getElementById('busuanzi_value_site_uv');
+				if (pvEl) pvEl.textContent = visitStats.pv || 0;
+				if (uvEl) uvEl.textContent = visitStats.uv || 0;
+			});
+			
+			// ★★★ 异步加载全球统计，不阻塞页面 ★★★
+			setTimeout(async () => {
+				try {
+					const stats = await getGlobalStats();
+					
+					if (!stats) {
+						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败，请刷新重试</span>';
+						document.getElementById('total-games-value').textContent = 0;
+						return;
+					}
+					
+					// 计算总游戏数
+					let totalGames = 0;
+					for (const count of Object.values(stats.normal.endings)) {
+						totalGames += count;
+					}
+					for (const count of Object.values(stats.reversed.endings)) {
+						totalGames += count;
+					}
+					document.getElementById('total-games-value').textContent = totalGames;
+					
+					// 计算角色难度
+					characterDifficultyData = calculateCharacterDifficulty(stats);
+					
+					// 显示统计内容
+					loading.style.display = 'none';
+					content.style.display = 'block';
+					
+					renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
+					renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
+					
+					// ★★★ 先渲染角色卡片（用旧数据或空数据）★★★
+					renderCharacterGrid();
+					
+					// ★★★ 角色记录单独异步加载，加载完后再更新 ★★★
+					getGlobalCharacterRecords().then(() => {
+						renderCharacterGrid();
+						console.log('✅ 角色全球记录已更新');
+					});
+					
+				} catch (e) {
+					console.error('加载统计失败:', e);
+					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败</span>';
+				}
+			}, 50);  // 延迟50ms，让页面先渲染
+		}
 
         function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
             let totalEndings = 0;
