@@ -5897,63 +5897,72 @@
             ]);
         }
 
-        function showRandomEvent12() {
-            showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
-                { text: '向导师诉苦', class: 'btn-primary', action: () => {
-                    closeModal();
-                    if (gameState.favor >= 6) {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
-                        updateAllUI();
-                    } else {
-                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
-                        addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
-                        updateAllUI();
-                        updateBuffs();
-                    }
-                }},
-                { text: '劝说导师抢师弟师妹一作', class: 'btn-warning', action: () => {
-                    closeModal();
-                    if (gameState.character === 'teacher-child' || (gameState.isReversed && gameState.character === 'teacher-child')) {
-                        const title = generatePaperTitle();
-                        gameState.publishedPapers.push({
-                            title: title,
-                            grade: 'C',
-                            acceptType: 'Poster',
-                            score: 1,
-                            citations: 0,
-                            monthsSincePublish: 0,
-                            promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-                            citationMultiplier: 1
-                        });
-                        gameState.paperC++;
-                        gameState.totalScore += 1;
-                        addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文');
-                    } else {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
-                        changeSocial(-1);
-                    }
-                    updateAllUI();
-                }},
-                { text: '据理力争', class: 'btn-info', action: () => {
-                    closeModal();
-                    if (gameState.favor >= 6) {
-                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
-                        updateAllUI();
-                    } else {
-                        const baseSanCost = -2;
-                        const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
-                        addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `导师艰难被你说服，${sanText}`);
-                        changeSan(baseSanCost);
-                    }
-                }},
-                { text: '以死相逼', class: 'btn-danger', action: () => {
-                    addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
-                    closeModal();
-                    changeFavor(-1);
-                }}
-            ]);
-        }
+		function showRandomEvent12() {
+			// ★★★ 新增：判断是否为导师子女角色 ★★★
+			const isTeacherChild = gameState.character === 'teacher-child';
+			
+			// ★★★ 新增：根据角色动态生成选项文本 ★★★
+			const grabOptionText = isTeacherChild 
+				? '劝说导师抢师弟师妹一作 🎁（导师子女：获得C类论文）' 
+				: '劝说导师抢师弟师妹一作';
+			const grabOptionClass = isTeacherChild ? 'btn-success' : 'btn-warning';  // 导师子女用绿色按钮突出显示
+			
+			showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
+				{ text: '向导师诉苦', class: 'btn-primary', action: () => {
+					closeModal();
+					if (gameState.favor >= 6) {
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
+						updateAllUI();
+					} else {
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
+						updateAllUI();
+						updateBuffs();
+					}
+				}},
+				{ text: grabOptionText, class: grabOptionClass, action: () => {  // ★★★ 使用动态文本和样式 ★★★
+					closeModal();
+					if (gameState.character === 'teacher-child') {  // ★★★ 简化判断条件 ★★★
+						const title = generatePaperTitle();
+						gameState.publishedPapers.push({
+							title: title,
+							grade: 'C',
+							acceptType: 'Poster',
+							score: 1,
+							citations: 0,
+							monthsSincePublish: 0,
+							promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+							citationMultiplier: 1
+						});
+						gameState.paperC++;
+						gameState.totalScore += 1;
+						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文');
+					} else {
+						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
+						changeSocial(-1);
+					}
+					updateAllUI();
+				}},
+				{ text: '据理力争', class: 'btn-info', action: () => {
+					closeModal();
+					if (gameState.favor >= 6) {
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
+						updateAllUI();
+					} else {
+						const baseSanCost = -2;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `导师艰难被你说服，${sanText}`);
+						changeSan(baseSanCost);
+					}
+				}},
+				{ text: '以死相逼', class: 'btn-danger', action: () => {
+					addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
+					closeModal();
+					changeFavor(-1);
+				}}
+			]);
+		}
 
         function showRandomEvent13() {
             showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
