@@ -1278,7 +1278,7 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器v2.1</h1>
+            <h1 class="game-title">🎓 研究生模拟器v2.2</h1>
             <p class="game-author">
                 作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
                 &nbsp;|&nbsp;
@@ -1341,29 +1341,24 @@
             <!-- 全球统计面板 -->
             <div id="global-stats-panel" style="margin-top:20px;padding:15px;background:var(--light-bg);border-radius:12px;display:none;">
                 <h4 style="font-size:0.95rem;color:var(--primary-color);margin-bottom:12px;text-align:center;">
-                    <i class="fas fa-chart-pie"></i> 全球玩家统计
+                    <i class="fas fa-chart-pie"></i> 全球统计（最近10000局）
                 </h4>
                 <div id="stats-loading" style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">
                     <i class="fas fa-spinner fa-spin"></i> 加载中...
                 </div>
-                <div id="stats-content" style="display:none;">
-                    <!-- 正位统计 -->
-                    <div class="stats-section" id="normal-stats-section">
-                        <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;color:#6c5ce7;">☀️ 正位模式</div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">结局统计</div>
-                        <div id="normal-ending-stats" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">成就统计</div>
-                        <div id="normal-achievement-stats" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-                    </div>
-                    <!-- 逆位统计 -->
-                    <div class="stats-section" id="reversed-stats-section">
-                        <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;color:#9b59b6;">🌑 逆位模式</div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">结局统计</div>
-                        <div id="reversed-ending-stats" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
-                        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">成就统计</div>
-                        <div id="reversed-achievement-stats" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-                    </div>
-                </div>
+			<div id="stats-content" style="display:none;">
+				<!-- 正位统计 -->
+				<div id="normal-stats-section" class="stats-section">
+					<div id="normal-ending-stats" style="margin-bottom:10px;"></div>
+					<div id="normal-achievement-stats"></div>
+				</div>
+				
+				<!-- 逆位统计 -->
+				<div id="reversed-stats-section" class="stats-section" style="display:none;">
+					<div id="reversed-ending-stats" style="margin-bottom:10px;"></div>
+					<div id="reversed-achievement-stats"></div>
+				</div>
+			</div>
             </div>
         </div>
     </div>
@@ -1672,17 +1667,18 @@
             'idea_bonus', 'exp_bonus', 'write_bonus', 'idea_times', 'write_times', 'citation_multiply'
         ];
 
-        const ALL_ACHIEVEMENTS = [
-            '💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
-            '🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
-            '☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
-            '📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神',
-            '📜 高分论文', '🍀 幸运儿', '😭 倒霉蛋',
-            '🎻 曲高和寡', '💪 全力以赴', '🏆 全收集',
-            '👊 越战越勇', '🧠 人间清醒', '🔥 火力全开',
-            '🍚 食之无味', '🤖 机械飞升', '🛋️ 全套家具',
-            '🧒 天才少年'
-        ];
+		const ALL_ACHIEVEMENTS = [
+			'💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
+			'🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
+			'☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
+			'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神',
+			'📜 高分论文', '🍀 幸运儿', '😭 倒霉蛋',
+			'🎻 曲高和寡', '💪 全力以赴', '🏆 全收集',
+			'👊 越战越勇', '🧠 人间清醒', '🔥 火力全开',
+			'🍚 食之无味', '🤖 机械飞升', '🛋️ 全套家具',
+			'🧒 天才少年',
+			'💎 无法埋没', '🔔 不鸣则已', '📊 严重偏科', '💼 打工狂人', '📖 爱看论文'
+		];
 
         // 结局名称映射
         const ENDING_NAMES = {
@@ -1722,35 +1718,40 @@
         };
 
         // 成就达成要求数据
-        const ACHIEVEMENT_REQUIREMENTS = {
-            '💕 喜结良缘': '与异性学者发展为恋人关系（社交≥12后在开会时多次交流同一人）',
-            '💰 家财万贯': '结局时金币>30',
-            '⬡ 六边形战士': '结局时科研、社交、好感、金币均>12',
-            '🏆 诺奖选手': '科研能力达到20',
-            '🌸 交际花': '社交能力达到20',
-            '🤝 铁杆师生': '导师好感度达到20',
-            '⚡ 精力满满': '结局时SAN值≥20',
-            '🎯 百发百中': '至少发表1篇论文且从未被拒稿',
-            '☕ 我爱茶歇': '在开会事件中选择茶歇+晚宴≥3次',
-            '🏖️ 公费旅游': '在开会事件中选择顺便旅游≥3次',
-            '🤖 论文机器': '发表论文总数≥10',
-            '📚 千引大佬': '总引用数≥1000',
-            '☕ 咖啡爱好者': '顺利毕业且每月都购买冰美式',
-            '✨ Buff之神': '触发过所有类型的Buff效果',
-            '📜 高分论文': '论文中稿后(可能的改进后)分数达到125',
-            '🍀 幸运儿': '论文收到三位审稿人的一致改进',
-            '😭 倒霉蛋': '三个审稿人都是坏审稿人(恶意小同行或者40个问题审稿人)',
-            '🎻 曲高和寡': '只中过A类论文，没有B和C',
-            '💪 全力以赴': '毕业时SAN和金钱都为0',
-            '🏆 全收集': '毕业时中稿A,B,C的poster，oral，best paper共9类论文',
-            '👊 越战越勇': '毕业时至少被拒稿5次',
-            '🧠 人间清醒': '拥有两次转博机会都拒绝了',
-            '🔥 火力全开': '论文槽位同时有4篇论文在审',
-            '🍚 食之无味': '一篇论文被连续拒稿3次',
-            '🤖 机械飞升': '商店购买5台GPU服务器',
-            '🛋️ 全套家具': '购买工学椅+显示器+键盘',
-            '🧒 天才少年': '转博时就达到博士毕业要求'
-        };
+		const ACHIEVEMENT_REQUIREMENTS = {
+			'💕 喜结良缘': '顺利毕业且与异性学者发展为恋人关系（社交≥12后在开会时多次交流同一人）',
+			'💰 家财万贯': '顺利毕业且结局时金币≥30',
+			'⬡ 六边形战士': '顺利毕业且结局时科研、社交、好感、金币均>15',
+			'🏆 诺奖选手': '顺利毕业且科研能力达到20',
+			'🌸 交际花': '顺利毕业且社交能力达到20',
+			'🤝 铁杆师生': '顺利毕业且导师好感度达到20',
+			'⚡ 精力满满': '顺利毕业且结局时SAN值≥20',
+			'🎯 百发百中': '顺利毕业且论文从未被拒稿',
+			'☕ 我爱茶歇': '顺利毕业且在开会事件中选择茶歇+晚宴≥3次',
+			'🏖️ 公费旅游': '顺利毕业且在开会事件中选择顺便旅游≥3次',
+			'🤖 论文机器': '顺利毕业且发表论文总数≥10',
+			'📚 千引大佬': '顺利毕业且总引用数≥1000',
+			'☕ 咖啡爱好者': '顺利毕业且每月都购买冰美式',
+			'✨ Buff之神': '顺利毕业且触发过所有类型的Buff效果',
+			'📜 高分论文': '顺利毕业且论文中稿后(可能的改进后)分数达到125',
+			'🍀 幸运儿': '顺利毕业且论文收到三位审稿人的一致改进',
+			'😭 倒霉蛋': '顺利毕业且三个审稿人都是坏审稿人(恶意小同行或者40个问题审稿人)',
+			'🎻 曲高和寡': '顺利毕业且只中过A类论文，没有B和C',
+			'💪 全力以赴': '顺利毕业且毕业时SAN和金钱都为0',
+			'🏆 全收集': '顺利毕业且毕业时中稿A,B,C的poster，oral，best paper共9类论文',
+			'👊 越战越勇': '顺利毕业且毕业时至少被拒稿5次',
+			'🧠 人间清醒': '顺利毕业且拥有两次转博机会都拒绝了',
+			'🔥 火力全开': '顺利毕业且论文槽位同时有4篇论文在审',
+			'🍚 食之无味': '顺利毕业且一篇论文被连续拒稿3次',
+			'🤖 机械飞升': '顺利毕业且商店购买5台GPU服务器',
+			'🛋️ 全套家具': '顺利毕业且购买工学椅+显示器+键盘',
+			'🧒 天才少年': '顺利毕业且转博时就达到博士毕业要求',
+			'💎 无法埋没': '顺利毕业且单篇C类论文引用超过100',
+			'🔔 不鸣则已': '顺利毕业且第一篇论文引用超过200',
+			'📊 严重偏科': '顺利毕业且毕业时科研能力、导师好感度、社交能力最高和最低的差距超过12',
+			'💼 打工狂人': '顺利毕业且毕业时至少打工10次',
+			'📖 爱看论文': '顺利毕业且毕业时至少看20次论文'
+		};
 
         // 商店物品
 		const shopItems = [
@@ -1797,6 +1798,7 @@
                 buffs: { permanent: [], temporary: [] },
                 actionUsed: false,
                 readCount: 0,
+				workCount: 0,
                 firstPaperAccepted: false,
                 firstAPaperAccepted: false,
                 hasLover: false,
@@ -1874,6 +1876,160 @@
         let visitStatsCacheTime = 0;
         const CACHE_DURATION = 10 * 60 * 1000;
 
+		// ==================== 持久化缓存系统 ====================
+		const CACHE_KEYS = {
+			STATS: 'graduateSimulator_statsCache',
+			VISIT: 'graduateSimulator_visitCache',
+			GAMES: 'graduateSimulator_gamesCache',
+			CHARACTER_RECORDS: 'graduateSimulator_charRecordsCache'
+		};
+
+		// 从localStorage获取缓存（带过期检查和有效性验证）
+		function getLocalCache(key) {
+			try {
+				const cached = localStorage.getItem(key);
+				if (!cached) return null;
+				
+				const { data, timestamp } = JSON.parse(cached);
+				
+				// 检查是否过期
+				if (Date.now() - timestamp > CACHE_DURATION) {
+					localStorage.removeItem(key);
+					console.log(`缓存已过期: ${key}`);
+					return null;
+				}
+				
+				// ★★★ 检查数据有效性 ★★★
+				if (data === null || data === undefined) {
+					localStorage.removeItem(key);
+					console.log(`缓存数据无效: ${key}`);
+					return null;
+				}
+				
+				// 对于统计数据，额外检查结构
+				if (key === CACHE_KEYS.STATS) {
+					if (!data.normal || !data.reversed) {
+						localStorage.removeItem(key);
+						console.log(`统计缓存结构无效: ${key}`);
+						return null;
+					}
+				}
+				
+				return data;
+			} catch (e) {
+				console.warn('读取缓存失败:', e);
+				// 缓存损坏时删除
+				try { localStorage.removeItem(key); } catch(err) {}
+				return null;
+			}
+		}
+
+		// 存储缓存到localStorage（只存储有效数据）
+		function setLocalCache(key, data) {
+			// ★★★ 不缓存无效数据 ★★★
+			if (data === null || data === undefined) {
+				console.log(`跳过缓存无效数据: ${key}`);
+				return;
+			}
+			
+			try {
+				localStorage.setItem(key, JSON.stringify({
+					data,
+					timestamp: Date.now()
+				}));
+				console.log(`已缓存: ${key}`);
+			} catch (e) {
+				console.error('存储缓存失败:', e);
+			}
+		}
+
+		// ★★★ 新增：清除指定缓存 ★★★
+		function clearLocalCache(key) {
+			try {
+				localStorage.removeItem(key);
+				console.log(`已清除缓存: ${key}`);
+			} catch (e) {
+				console.error('清除缓存失败:', e);
+			}
+		}
+
+		// ★★★ 新增：清除所有统计缓存（用于强制刷新）★★★
+		function clearAllStatsCache() {
+			Object.values(CACHE_KEYS).forEach(key => {
+				try { localStorage.removeItem(key); } catch(e) {}
+			});
+			console.log('已清除所有统计缓存');
+		}
+
+		// 获取玩家本地达成的结局和成就记录
+		function getPlayerAchievements() {
+			const recordKey = 'graduateSimulator_playerRecords';
+			try {
+				const records = localStorage.getItem(recordKey);
+				if (records) {
+					const parsed = JSON.parse(records);
+					return {
+						achievements: {
+							normal: new Set(parsed.achievements?.normal || []),
+							reversed: new Set(parsed.achievements?.reversed || [])
+						},
+						endings: {
+							normal: new Set(parsed.endings?.normal || []),
+							reversed: new Set(parsed.endings?.reversed || [])
+						}
+					};
+				}
+			} catch (e) {
+				console.warn('读取玩家记录失败:', e);
+			}
+			
+			return {
+				achievements: { normal: new Set(), reversed: new Set() },
+				endings: { normal: new Set(), reversed: new Set() }
+			};
+		}
+
+		// 保存玩家达成的结局和成就
+		function savePlayerRecord(endingType, achievements, isReversed) {
+			const recordKey = 'graduateSimulator_playerRecords';
+			try {
+				let records = { 
+					achievements: { normal: [], reversed: [] }, 
+					endings: { normal: [], reversed: [] } 
+				};
+				
+				const existing = localStorage.getItem(recordKey);
+				if (existing) {
+					records = JSON.parse(existing);
+					// 确保结构完整
+					if (!records.achievements) records.achievements = { normal: [], reversed: [] };
+					if (!records.endings) records.endings = { normal: [], reversed: [] };
+					if (!records.achievements.normal) records.achievements.normal = [];
+					if (!records.achievements.reversed) records.achievements.reversed = [];
+					if (!records.endings.normal) records.endings.normal = [];
+					if (!records.endings.reversed) records.endings.reversed = [];
+				}
+				
+				const mode = isReversed ? 'reversed' : 'normal';
+				
+				// 添加结局
+				if (!records.endings[mode].includes(endingType)) {
+					records.endings[mode].push(endingType);
+				}
+				
+				// 添加成就
+				achievements.forEach(ach => {
+					if (!records.achievements[mode].includes(ach)) {
+						records.achievements[mode].push(ach);
+					}
+				});
+				
+				localStorage.setItem(recordKey, JSON.stringify(records));
+			} catch (e) {
+				console.error('保存玩家记录失败:', e);
+			}
+		}
+
 		function initStats() {
 			if (statsInitialized) return;
 			
@@ -1909,37 +2065,47 @@
             }
         }
 
-        async function getVisitStats() {
-            if (visitStatsCache && (Date.now() - visitStatsCacheTime < CACHE_DURATION)) {
-                return visitStatsCache;
-            }
-            
-            if (!supabase) return { pv: 0, uv: 0 };
-            
-            try {
-                const { count: pvCount, error: pvError } = await supabase
-                    .from('site_visits')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('type', 'pv');
-                
-                if (pvError) throw pvError;
-                
-                const { count: uvCount, error: uvError } = await supabase
-                    .from('site_visits')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('type', 'uv');
-                    
-                if (uvError) throw uvError;
-                
-                visitStatsCache = { pv: pvCount || 0, uv: uvCount || 0 };
-                visitStatsCacheTime = Date.now();
-                
-                return visitStatsCache;
-            } catch (e) {
-                console.error('获取访问统计失败:', e);
-                return visitStatsCache || { pv: 0, uv: 0 };
-            }
-        }
+		async function getVisitStats() {
+			// 先检查本地缓存
+			const cached = getLocalCache(CACHE_KEYS.VISIT);
+			if (cached) {
+				console.log('使用本地缓存的访问统计');
+				visitStatsCache = cached;
+				visitStatsCacheTime = Date.now();
+				return cached;
+			}
+			
+			if (!supabase) return { pv: 0, uv: 0 };
+			
+			try {
+				const { count: pvCount, error: pvError } = await supabase
+					.from('site_visits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'pv');
+				
+				if (pvError) throw pvError;
+				
+				const { count: uvCount, error: uvError } = await supabase
+					.from('site_visits')
+					.select('*', { count: 'exact', head: true })
+					.eq('type', 'uv');
+					
+				if (uvError) throw uvError;
+				
+				const result = { pv: pvCount || 0, uv: uvCount || 0 };
+				
+				// ★★★ 成功后才缓存 ★★★
+				visitStatsCache = result;
+				visitStatsCacheTime = Date.now();
+				setLocalCache(CACHE_KEYS.VISIT, result);
+				
+				return result;
+			} catch (e) {
+				console.error('获取访问统计失败:', e);
+				// 失败时返回内存缓存或默认值，不存储缓存
+				return visitStatsCache || { pv: 0, uv: 0 };
+			}
+		}
 
 
 
@@ -2041,6 +2207,13 @@
 
 		// ★★★ 新增：快速获取游戏总数（用 count 查询）★★★
 		async function getTotalGamesCount() {
+			// 先检查本地缓存
+			const cached = getLocalCache(CACHE_KEYS.GAMES);
+			if (cached !== null && cached !== undefined) {
+				console.log('使用本地缓存的游戏总数');
+				return cached;
+			}
+			
 			if (!supabase) return 0;
 			
 			try {
@@ -2049,38 +2222,89 @@
 					.select('*', { count: 'exact', head: true });
 				
 				if (error) throw error;
-				return count || 0;
+				
+				const result = count || 0;
+				
+				// ★★★ 成功后才缓存 ★★★
+				setLocalCache(CACHE_KEYS.GAMES, result);
+				
+				return result;
 			} catch (e) {
 				console.error('获取游戏总数失败:', e);
+				// 失败时不缓存
 				return 0;
 			}
 		}
 
-		async function getGlobalStats() {
-			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
-				console.log('使用缓存的全球统计');
-				return statsCache;
+		// ★★★ 分页获取数据（最多获取指定数量）★★★
+		async function fetchRecentRows(tableName, selectColumns, maxRows = 10000) {
+			if (!supabase) return [];
+			
+			let allData = [];
+			let from = 0;
+			const pageSize = 1000; // Supabase 单次最大返回量
+			
+			while (allData.length < maxRows) {
+				const remaining = maxRows - allData.length;
+				const limit = Math.min(pageSize, remaining);
+				
+				const { data, error } = await supabase
+					.from(tableName)
+					.select(selectColumns)
+					.order('created_at', { ascending: false })
+					.range(from, from + limit - 1);
+				
+				if (error) {
+					console.error(`获取 ${tableName} 数据失败:`, error);
+					throw error;
+				}
+				
+				if (!data || data.length === 0) break;
+				
+				allData = allData.concat(data);
+				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
+				
+				// 如果返回数量小于请求数量，说明已经没有更多数据
+				if (data.length < limit) break;
+				
+				from += limit;
 			}
 			
-			if (!supabase) return null;
+			return allData;
+		}
+
+		async function getGlobalStats() {
+			// 先检查本地缓存
+			const cached = getLocalCache(CACHE_KEYS.STATS);
+			if (cached) {
+				console.log('使用本地缓存的全球统计');
+				statsCache = cached;
+				statsCacheTime = Date.now();
+				return cached;
+			}
+			
+			if (!supabase) {
+				console.warn('Supabase未初始化');
+				return null;
+			}
 			
 			try {
 				const stats = {
-					normal: { endings: {}, achievements: {}, characterEndings: {} },
-					reversed: { endings: {}, achievements: {}, characterEndings: {} }
+					normal: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} },
+					reversed: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} }
 				};
 
-				// ★★★ 使用分页获取所有结局数据 ★★★
-				const endingsData = await fetchAllRows(
-					'game_endings', 
-					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c'
+				// ★★★ 使用分页获取最近10000条结局数据 ★★★
+				const endingsData = await fetchRecentRows(
+					'game_endings',
+					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c',
+					10000
 				);
 				
-				console.log(`📊 结局数据总数: ${endingsData.length}`);
+				console.log(`📊 获取结局数据总数: ${endingsData.length}`);
 				
-				// ★★★ 简化过滤逻辑 ★★★
+				// 在10000条内过滤有效数据
 				const validEndings = endingsData.filter(e => {
-					// 必要字段检查
 					if (!e.ending_type || !e.character || typeof e.is_reversed !== 'boolean') {
 						return false;
 					}
@@ -2092,28 +2316,16 @@
 					const totalMonths = e.total_months || 0;
 					const totalPapers = paperA + paperB + paperC;
 					
-					// 1. 科研分计算是否正确
 					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
-					if (totalScore !== expectedScore) {
-						return false;
-					}
+					if (totalScore !== expectedScore) return false;
 					
-					// 判断是硕士还是博士结局
 					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
 					const isPhd = phdEndings.includes(e.ending_type);
 					
-					// 2. 月份限制：硕士≤36，博士≤61
 					if (isPhd) {
-						if (totalMonths > 61) return false;
+						if (totalMonths > 61 || totalPapers >= 22) return false;
 					} else {
-						if (totalMonths > 36) return false;
-					}
-					
-					// 3. 论文数量：硕士<12，博士<22
-					if (isPhd) {
-						if (totalPapers >= 22) return false;
-					} else {
-						if (totalPapers >= 12) return false;
+						if (totalMonths > 36 || totalPapers >= 12) return false;
 					}
 					
 					return true;
@@ -2128,6 +2340,7 @@
 					const character = e.character;
 					
 					stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
+					stats[mode].totalGames++;
 					
 					if (!stats[mode].characterEndings[character]) {
 						stats[mode].characterEndings[character] = { total: 0, hard: 0 };
@@ -2138,24 +2351,26 @@
 					}
 				});
 
-				// ★★★ 使用分页获取所有成就数据 ★★★
-				const achievementsData = await fetchAllRows(
-					'game_achievements', 
-					'achievement_name, is_reversed'
+				// ★★★ 使用分页获取最近10000条成就数据 ★★★
+				const achievementsData = await fetchRecentRows(
+					'game_achievements',
+					'achievement_name, is_reversed',
+					10000
 				);
 				
-				console.log(`📊 成就数据总数: ${achievementsData.length}`);
+				console.log(`📊 获取成就数据总数: ${achievementsData.length}`);
 				
 				achievementsData.forEach(a => {
 					if (!a.achievement_name || typeof a.is_reversed !== 'boolean') return;
 					
 					const mode = a.is_reversed ? 'reversed' : 'normal';
-					const name = a.achievement_name;
-					stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
+					stats[mode].achievements[a.achievement_name] = (stats[mode].achievements[a.achievement_name] || 0) + 1;
 				});
 
+				// 成功后才缓存
 				statsCache = stats;
 				statsCacheTime = Date.now();
+				setLocalCache(CACHE_KEYS.STATS, stats);
 				
 				return stats;
 			} catch (e) {
@@ -2165,44 +2380,108 @@
 		}
 
 		function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
-			// 渲染结局统计
-			let endingHtml = '';
-			let totalEndings = 0;
-			
-			for (const count of Object.values(modeStats.endings)) {
-				totalEndings += count;
+			if (!endingContainer || !achievementContainer) {
+				console.warn('统计容器不存在');
+				return;
 			}
+			
+			const playerRecords = getPlayerAchievements();
+			const playerEndingsSet = playerRecords.endings[mode] || new Set();
+			const playerAchievementsSet = playerRecords.achievements[mode] || new Set();
+			
+			const totalGames = modeStats.totalGames || 0;
+			
+			// ==================== 渲染结局统计 ====================
+			let achievedEndingsHtml = '';
+			let unachievedEndingsHtml = '';
 			
 			for (const [type, name] of Object.entries(ENDING_NAMES)) {
 				const count = modeStats.endings[type] || 0;
-				if (count > 0) {
-					const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
-					endingHtml += `
-						<span class="stats-tag ending-tag" onclick="showSingleEndingRequirement('${type}')" style="cursor:pointer;">
-							${name} <strong>${count}</strong> (${percent}%)
-						</span>
-					`;
+				const percent = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : '0.0';
+				
+				// 检查玩家是否达成（兼容Set和Array）
+				const isAchieved = playerEndingsSet instanceof Set 
+					? playerEndingsSet.has(type) 
+					: (Array.isArray(playerEndingsSet) && playerEndingsSet.includes(type));
+				
+				const tagHtml = `
+					<span class="stats-tag ending-tag" 
+						  onclick="showSingleEndingRequirement('${type}')" 
+						  style="cursor:pointer;${isAchieved ? '' : 'opacity:0.5;'}">
+						${name} <strong>${percent}%</strong>
+					</span>
+				`;
+				
+				if (isAchieved) {
+					achievedEndingsHtml += tagHtml;
+				} else {
+					unachievedEndingsHtml += tagHtml;
 				}
 			}
 			
+			let endingHtml = '';
+			if (achievedEndingsHtml) {
+				endingHtml += `
+					<div style="margin-bottom:8px;">
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成结局</div>
+						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedEndingsHtml}</div>
+					</div>`;
+			}
+			if (unachievedEndingsHtml) {
+				endingHtml += `
+					<div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成结局</div>
+						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedEndingsHtml}</div>
+					</div>`;
+			}
 			if (!endingHtml) {
 				endingHtml = '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
 			}
 			endingContainer.innerHTML = endingHtml;
 			
-			// 渲染成就统计
-			let achievementHtml = '';
+			// ==================== 渲染成就统计 ====================
+			let achievedAchHtml = '';
+			let unachievedAchHtml = '';
+			
 			for (const ach of ALL_ACHIEVEMENTS) {
 				const count = modeStats.achievements[ach] || 0;
-				if (count > 0) {
-					achievementHtml += `
-						<span class="stats-tag" onclick="showSingleAchievementRequirement('${ach}')" style="cursor:pointer;">
-							${ach} <strong>${count}</strong>
-						</span>
-					`;
+				const percent = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : '0.0';
+				
+				// 检查玩家是否达成
+				const isAchieved = playerAchievementsSet instanceof Set 
+					? playerAchievementsSet.has(ach) 
+					: (Array.isArray(playerAchievementsSet) && playerAchievementsSet.includes(ach));
+				
+				const tagHtml = `
+					<span class="stats-tag" 
+						  onclick="showSingleAchievementRequirement('${ach}')" 
+						  style="cursor:pointer;${isAchieved ? '' : 'opacity:0.5;'}">
+						${ach} <strong>${percent}%</strong>
+					</span>
+				`;
+				
+				if (isAchieved) {
+					achievedAchHtml += tagHtml;
+				} else {
+					unachievedAchHtml += tagHtml;
 				}
 			}
 			
+			let achievementHtml = '';
+			if (achievedAchHtml) {
+				achievementHtml += `
+					<div style="margin-bottom:8px;">
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成成就</div>
+						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedAchHtml}</div>
+					</div>`;
+			}
+			if (unachievedAchHtml) {
+				achievementHtml += `
+					<div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成成就</div>
+						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedAchHtml}</div>
+					</div>`;
+			}
 			if (!achievementHtml) {
 				achievementHtml = '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
 			}
@@ -2308,6 +2587,8 @@
 			const content = document.getElementById('stats-content');
 			
 			panel.style.display = 'block';
+			loading.style.display = 'block';
+			content.style.display = 'none';
 			
 			// 第1步：快速加载总数
 			Promise.all([
@@ -2321,23 +2602,35 @@
 				if (pvEl) pvEl.textContent = visitStats.pv || 0;
 				if (uvEl) uvEl.textContent = visitStats.uv || 0;
 				if (gamesEl) gamesEl.textContent = totalGames;
+			}).catch(e => {
+				console.error('加载访问统计失败:', e);
 			});
 			
-			// 第2步：加载详细统计（显示进度）
+			// 第2步：加载详细统计
 			setTimeout(async () => {
 				try {
 					if (!supabase) {
-						loading.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">📊 统计服务暂不可用</span>';
+						loading.innerHTML = `
+							<span style="color:var(--text-secondary);font-size:0.8rem;">📊 统计服务暂不可用</span>
+							<button class="btn btn-info" style="margin-left:10px;padding:3px 8px;font-size:0.7rem;" onclick="retryLoadStats()">
+								<i class="fas fa-redo"></i> 重试
+							</button>
+						`;
 						return;
 					}
 					
-					// ★★★ 显示加载进度 ★★★
 					loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载详细统计...';
 					
 					const stats = await getGlobalStats();
 					
 					if (!stats) {
-						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败，请刷新重试</span>';
+						// ★★★ 加载失败时显示重试按钮 ★★★
+						loading.innerHTML = `
+							<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败</span>
+							<button class="btn btn-info" style="margin-left:10px;padding:3px 8px;font-size:0.7rem;" onclick="retryLoadStats()">
+								<i class="fas fa-redo"></i> 重试
+							</button>
+						`;
 						return;
 					}
 					
@@ -2346,26 +2639,70 @@
 					loading.style.display = 'none';
 					content.style.display = 'block';
 					
-					renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
-					renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
+					// 渲染统计（使用原有的combined容器或新的分离容器）
+					const normalEndingEl = document.getElementById('normal-ending-stats');
+					const normalAchEl = document.getElementById('normal-achievement-stats');
+					const reversedEndingEl = document.getElementById('reversed-ending-stats');
+					const reversedAchEl = document.getElementById('reversed-achievement-stats');
+					
+					// 如果有分离的容器，使用分离显示
+					if (normalEndingEl && reversedEndingEl) {
+						renderModeStats('normal', stats.normal, normalEndingEl, normalAchEl);
+						renderModeStats('reversed', stats.reversed, reversedEndingEl, reversedAchEl);
+						
+						// 根据当前模式显示对应统计
+						const normalSection = document.getElementById('normal-stats-section');
+						const reversedSection = document.getElementById('reversed-stats-section');
+						if (normalSection && reversedSection) {
+							normalSection.style.display = isReversedMode ? 'none' : 'block';
+							reversedSection.style.display = isReversedMode ? 'block' : 'none';
+						}
+					} else {
+						// 兼容旧的combined容器
+						const combinedEndingEl = document.getElementById('combined-ending-stats');
+						const combinedAchEl = document.getElementById('combined-achievement-stats');
+						if (combinedEndingEl && combinedAchEl) {
+							const currentMode = isReversedMode ? 'reversed' : 'normal';
+							renderModeStats(currentMode, stats[currentMode], combinedEndingEl, combinedAchEl);
+						}
+					}
 					
 					renderCharacterGrid();
 					
 					// 角色记录异步加载
-					loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载角色记录...';
-					loading.style.display = 'block';
-					
 					getGlobalCharacterRecords().then(() => {
-						loading.style.display = 'none';
 						renderCharacterGrid();
 						console.log('✅ 全部加载完成');
+					}).catch(e => {
+						console.error('加载角色记录失败:', e);
 					});
 					
 				} catch (e) {
 					console.error('加载统计失败:', e);
-					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 加载失败</span>';
+					loading.innerHTML = `
+						<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 加载失败: ${e.message || '未知错误'}</span>
+						<button class="btn btn-info" style="margin-left:10px;padding:3px 8px;font-size:0.7rem;" onclick="retryLoadStats()">
+							<i class="fas fa-redo"></i> 重试
+						</button>
+					`;
 				}
 			}, 100);
+		}
+
+		// ★★★ 新增：重试加载统计（清除缓存后重新加载）★★★
+		function retryLoadStats() {
+			console.log('手动重试加载统计...');
+			// 清除所有统计缓存
+			clearAllStatsCache();
+			// 重置内存缓存
+			statsCache = null;
+			statsCacheTime = 0;
+			visitStatsCache = null;
+			visitStatsCacheTime = 0;
+			globalCharacterRecords = null;
+			globalCharacterRecordsTime = 0;
+			// 重新加载
+			loadGlobalStatsDisplay();
 		}
 
 
@@ -2410,6 +2747,13 @@
             
             selectedCharacter = null;
             document.getElementById('start-btn').disabled = true;
+			// ★★★ 切换统计面板显示 ★★★
+			const normalSection = document.getElementById('normal-stats-section');
+			const reversedSection = document.getElementById('reversed-stats-section');
+			if (normalSection && reversedSection) {
+				normalSection.style.display = reversed ? 'none' : 'block';
+				reversedSection.style.display = reversed ? 'block' : 'none';
+			}
             
             renderCharacterGrid();
         }
@@ -4434,32 +4778,33 @@
             changeSan(-baseSanCost);
         }
 
-        function partTimeJob() {
-            if (gameState.actionUsed) return;
-            
-            const baseSanCost = 5;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            
-            if (gameState.san < actualSanCost) {
-                const tipText = actualSanCost !== baseSanCost 
-                    ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                    : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                showModal('❌ 操作失败', tipText, 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            gameState.actionUsed = true;
-            
-            let result = `SAN值-${actualSanCost}`;
-            if (actualSanCost !== baseSanCost) {
-                result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-            }
-            result += '，金钱+2';
-            
-            addLog('打工', '辛苦工作赚取生活费', result);
-            changeStats({ san: -baseSanCost, gold: 2 });
-        }
+		function partTimeJob() {
+			if (gameState.actionUsed) return;
+			
+			const baseSanCost = 5;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			gameState.actionUsed = true;
+			gameState.workCount = (gameState.workCount || 0) + 1;
+			
+			let result = `SAN值-${actualSanCost}`;
+			if (actualSanCost !== baseSanCost) {
+				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+			}
+			result += '，金钱+2';
+			
+			addLog('打工', '辛苦工作赚取生活费', result);
+			changeStats({ san: -baseSanCost, gold: 2 });
+		}
 
 
 		function thinkIdea() {
@@ -6713,58 +7058,90 @@
             return { type: 'phd', title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
         }
 
-        function collectAchievements(endingType) {
-            const a = [];
-            if (gameState.hasLover) a.push('💕 喜结良缘');
-            if (gameState.gold > 30) a.push('💰 家财万贯');
-            if (gameState.research > 12 && gameState.social > 12 && gameState.favor > 12 && gameState.gold > 12) a.push('⬡ 六边形战士');
-            if (gameState.research >= 20) a.push('🏆 诺奖选手');
-            if (gameState.social >= 20) a.push('🌸 交际花');
-            if (gameState.favor >= 20) a.push('🤝 铁杆师生');
-            if (gameState.san >= 20) a.push('⚡ 精力满满');
-            if (gameState.rejectedCount === 0 && gameState.publishedPapers.length > 0) a.push('🎯 百发百中');
-            if (gameState.teaBreakCount >= 3) a.push('☕ 我爱茶歇');
-            if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
-            if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
-            if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
-            const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
-            if (graduationEndings.includes(endingType) && gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
-                a.push('☕ 咖啡爱好者');
-            }
-            if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
-                a.push('✨ Buff之神');
-            }
-            
-            if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
-            if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
-            if (gameState.achievementConditions && gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
-            if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
-            if (gameState.san === 0 && gameState.gold === 0) a.push('💪 全力以赴');
-            
-            const requiredTypes = [
-                'A-Poster', 'A-Oral', 'A-Best Paper',
-                'B-Poster', 'B-Oral', 'B-Best Paper',
-                'C-Poster', 'C-Oral', 'C-Best Paper'
-            ];
-            if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) {
-                a.push('🏆 全收集');
-            }
-            
-            if (gameState.rejectedCount >= 5) a.push('👊 越战越勇');
-            if (gameState.achievementConditions && gameState.achievementConditions.rejectedPhdTwice) a.push('🧠 人间清醒');
-            if (gameState.maxConcurrentReviews >= 4) a.push('🔥 火力全开');
-            if (gameState.achievementConditions && gameState.achievementConditions.tripleRejected) a.push('🍚 食之无味');
-            if (gameState.achievementConditions && gameState.achievementConditions.bought5GPUs) a.push('🤖 机械飞升');
-            if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
-            if (gameState.achievementConditions && gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
-            
-            return a;
-        }
+		function collectAchievements(endingType) {
+			const a = [];
+			
+			// 定义顺利毕业的结局类型
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+			const isGraduated = graduationEndings.includes(endingType);
+			
+			// 所有成就都需要顺利毕业才能取得
+			if (!isGraduated) {
+				return a;
+			}
+			
+			if (gameState.hasLover) a.push('💕 喜结良缘');
+			if (gameState.gold >= 30) a.push('💰 家财万贯');
+			if (gameState.research > 15 && gameState.social > 15 && gameState.favor > 15 && gameState.gold > 15) a.push('⬡ 六边形战士');
+			if (gameState.research >= 20) a.push('🏆 诺奖选手');
+			if (gameState.social >= 20) a.push('🌸 交际花');
+			if (gameState.favor >= 20) a.push('🤝 铁杆师生');
+			if (gameState.san >= 20) a.push('⚡ 精力满满');
+			if (gameState.rejectedCount === 0 && gameState.publishedPapers.length > 0) a.push('🎯 百发百中');
+			if (gameState.teaBreakCount >= 3) a.push('☕ 我爱茶歇');
+			if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
+			if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
+			if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
+			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
+				a.push('☕ 咖啡爱好者');
+			}
+			if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
+				a.push('✨ Buff之神');
+			}
+			
+			if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
+			if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
+			if (gameState.achievementConditions && gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
+			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
+			if (gameState.san === 0 && gameState.gold === 0) a.push('💪 全力以赴');
+			
+			const requiredTypes = [
+				'A-Poster', 'A-Oral', 'A-Best Paper',
+				'B-Poster', 'B-Oral', 'B-Best Paper',
+				'C-Poster', 'C-Oral', 'C-Best Paper'
+			];
+			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) {
+				a.push('🏆 全收集');
+			}
+			
+			if (gameState.rejectedCount >= 5) a.push('👊 越战越勇');
+			if (gameState.achievementConditions && gameState.achievementConditions.rejectedPhdTwice) a.push('🧠 人间清醒');
+			if (gameState.maxConcurrentReviews >= 4) a.push('🔥 火力全开');
+			if (gameState.achievementConditions && gameState.achievementConditions.tripleRejected) a.push('🍚 食之无味');
+			if (gameState.achievementConditions && gameState.achievementConditions.bought5GPUs) a.push('🤖 机械飞升');
+			if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
+			if (gameState.achievementConditions && gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
+			
+			// 新成就：无法埋没 - 单篇C类论文引用超过100
+			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
+			if (hasCPaperOver100) a.push('💎 无法埋没');
+			
+			// 新成就：不鸣则已 - 第一篇论文引用超过200
+			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) {
+				a.push('🔔 不鸣则已');
+			}
+			
+			// 新成就：严重偏科 - 毕业时科研能力、导师好感度、社交能力最高和最低的差距超过12
+			const stats = [gameState.research, gameState.favor, gameState.social];
+			const maxStat = Math.max(...stats);
+			const minStat = Math.min(...stats);
+			if (maxStat - minStat > 12) a.push('📊 严重偏科');
+			
+			// 新成就：打工狂人 - 毕业时至少打工10次
+			if ((gameState.workCount || 0) >= 10) a.push('💼 打工狂人');
+			
+			// 新成就：爱看论文 - 毕业时至少看20次论文
+			if ((gameState.readCount || 0) >= 20) a.push('📖 爱看论文');
+			
+			return a;
+		}
 
 		function showEndingModal(title, desc, emoji, endingType) {
 			currentEndingData = { title, desc, emoji, endingType };
 
 			const achievements = collectAchievements(endingType);
+			// ★★★ 保存玩家本地达成记录 ★★★
+			savePlayerRecord(endingType, achievements, gameState.isReversed);
 			const locked = ALL_ACHIEVEMENTS.filter(x => !achievements.includes(x));
 			
 			const modeLabel = gameState.isReversed 
@@ -7190,8 +7567,13 @@
 		let globalCharacterRecordsTime = 0;
 
 		async function getGlobalCharacterRecords() {
-			if (globalCharacterRecords && (Date.now() - globalCharacterRecordsTime < CACHE_DURATION)) {
-				return globalCharacterRecords;
+			// 先检查本地缓存
+			const cached = getLocalCache(CACHE_KEYS.CHARACTER_RECORDS);
+			if (cached) {
+				console.log('使用本地缓存的角色记录');
+				globalCharacterRecords = cached;
+				globalCharacterRecordsTime = Date.now();
+				return cached;
 			}
 			
 			if (!supabase) return null;
@@ -7226,25 +7608,25 @@
 					todayStr = GAME_START_DATE;
 				}
 				
-				// ★★★ 使用分页获取历史数据 ★★★
-				const historyData = await fetchAllRowsWithFilter(
+				// ★★★ 使用分页获取最近10000条历史数据 ★★★
+				const historyData = await fetchRecentRowsWithFilter(
 					'game_endings',
 					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
-					{ column: 'created_at', operator: 'gte', value: GAME_START_DATE }
+					{ column: 'created_at', operator: 'gte', value: GAME_START_DATE },
+					10000
 				);
 				
 				// ★★★ 使用分页获取今日数据 ★★★
-				const todayData = await fetchAllRowsWithFilter(
+				const todayData = await fetchRecentRowsWithFilter(
 					'game_endings',
 					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
-					{ column: 'created_at', operator: 'gte', value: todayStr }
+					{ column: 'created_at', operator: 'gte', value: todayStr },
+					10000
 				);
 				
-				// ★★★ 简化过滤函数 ★★★
+				// 过滤函数
 				const filterValid = (row) => {
-					if (!row.character || typeof row.is_reversed !== 'boolean') {
-						return false;
-					}
+					if (!row.character || typeof row.is_reversed !== 'boolean') return false;
 					
 					const paperA = row.paper_a || 0;
 					const paperB = row.paper_b || 0;
@@ -7253,28 +7635,16 @@
 					const totalMonths = row.total_months || 0;
 					const totalPapers = paperA + paperB + paperC;
 					
-					// 1. 科研分计算是否正确
 					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
-					if (totalScore !== expectedScore) {
-						return false;
-					}
+					if (totalScore !== expectedScore) return false;
 					
-					// 判断是硕士还是博士
 					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
 					const isPhd = phdEndings.includes(row.ending_type);
 					
-					// 2. 月份限制
 					if (isPhd) {
-						if (totalMonths > 61) return false;
+						if (totalMonths > 61 || totalPapers >= 22) return false;
 					} else {
-						if (totalMonths > 36) return false;
-					}
-					
-					// 3. 论文数量限制
-					if (isPhd) {
-						if (totalPapers >= 22) return false;
-					} else {
-						if (totalPapers >= 12) return false;
+						if (totalMonths > 36 || totalPapers >= 12) return false;
 					}
 					
 					return true;
@@ -7294,15 +7664,9 @@
 					if (!records[mode][charId]) return;
 					
 					const record = records[mode][charId].history;
-					if ((row.total_score || 0) > record.maxScore) {
-						record.maxScore = row.total_score || 0;
-					}
-					if ((row.total_citations || 0) > record.maxCitations) {
-						record.maxCitations = row.total_citations || 0;
-					}
-					if ((row.achievements_count || 0) > record.maxAchievements) {
-						record.maxAchievements = row.achievements_count || 0;
-					}
+					if ((row.total_score || 0) > record.maxScore) record.maxScore = row.total_score || 0;
+					if ((row.total_citations || 0) > record.maxCitations) record.maxCitations = row.total_citations || 0;
+					if ((row.achievements_count || 0) > record.maxAchievements) record.maxAchievements = row.achievements_count || 0;
 				});
 				
 				// 处理今日数据
@@ -7313,19 +7677,15 @@
 					if (!records[mode][charId]) return;
 					
 					const record = records[mode][charId].today;
-					if ((row.total_score || 0) > record.maxScore) {
-						record.maxScore = row.total_score || 0;
-					}
-					if ((row.total_citations || 0) > record.maxCitations) {
-						record.maxCitations = row.total_citations || 0;
-					}
-					if ((row.achievements_count || 0) > record.maxAchievements) {
-						record.maxAchievements = row.achievements_count || 0;
-					}
+					if ((row.total_score || 0) > record.maxScore) record.maxScore = row.total_score || 0;
+					if ((row.total_citations || 0) > record.maxCitations) record.maxCitations = row.total_citations || 0;
+					if ((row.achievements_count || 0) > record.maxAchievements) record.maxAchievements = row.achievements_count || 0;
 				});
 				
+				// 成功后才缓存
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
+				setLocalCache(CACHE_KEYS.CHARACTER_RECORDS, records);
 				
 				console.log('✅ 全球角色记录加载完成');
 				
@@ -7336,17 +7696,22 @@
 			}
 		}
 
-		async function fetchAllRowsWithFilter(tableName, selectColumns, filter = null) {
+		// ★★★ 带筛选条件的分页获取 ★★★
+		async function fetchRecentRowsWithFilter(tableName, selectColumns, filter, maxRows = 10000) {
 			if (!supabase) return [];
 			
 			let allData = [];
 			let from = 0;
 			const pageSize = 1000;
 			
-			while (true) {
+			while (allData.length < maxRows) {
+				const remaining = maxRows - allData.length;
+				const limit = Math.min(pageSize, remaining);
+				
 				let query = supabase
 					.from(tableName)
-					.select(selectColumns);
+					.select(selectColumns)
+					.order('created_at', { ascending: false });
 				
 				// 应用筛选条件
 				if (filter) {
@@ -7359,7 +7724,7 @@
 					}
 				}
 				
-				const { data, error } = await query.range(from, from + pageSize - 1);
+				const { data, error } = await query.range(from, from + limit - 1);
 				
 				if (error) {
 					console.error(`获取 ${tableName} 数据失败:`, error);
@@ -7370,9 +7735,9 @@
 				
 				allData = allData.concat(data);
 				
-				if (data.length < pageSize) break;
+				if (data.length < limit) break;
 				
-				from += pageSize;
+				from += limit;
 			}
 			
 			return allData;
@@ -7575,6 +7940,7 @@
                 
                 actionUsed: gameState.actionUsed,
                 readCount: gameState.readCount,
+				workCount: gameState.workCount || 0,
                 firstPaperAccepted: gameState.firstPaperAccepted,
                 firstAPaperAccepted: gameState.firstAPaperAccepted,
                 hasLover: gameState.hasLover,
@@ -7717,6 +8083,7 @@
                             
                             actionUsed: save.actionUsed,
                             readCount: save.readCount,
+							workCount: save.workCount || 0,
                             firstPaperAccepted: save.firstPaperAccepted,
                             firstAPaperAccepted: save.firstAPaperAccepted,
                             hasLover: save.hasLover,
