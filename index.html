@@ -1753,18 +1753,17 @@
         };
 
         // 商店物品
-        const shopItems = [
-            { id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
-            { id: 'gpu_rent', name: '租GPU服务器', desc: '临时buff-下次做实验多做1次', price: 2, once: false },
-            { id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次', price: 12, once: false },
-            { id: 'keyboard', name: '机械键盘', desc: '永久buff-写论文变为SAN-3', price: 8, once: true, bought: false },
-            { id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false },
-            { id: 'coffee', name: '冰美式', desc: 'SAN值+2', price: 1, monthlyOnce: true, boughtThisMonth: false },
-            { id: 'polish', name: '论文润色服务', desc: '临时buff-下次写论文分数+5', price: 3, monthlyOnce: true, boughtThisMonth: false },
-            { id: 'gemini', name: 'Gemini订阅', desc: '临时buff-下次想idea分数+4', price: 2, monthlyOnce: true, boughtThisMonth: false },
-            { id: 'gpt', name: 'GPT订阅', desc: '临时buff-下次写论文分数+4', price: 3, monthlyOnce: true, boughtThisMonth: false },
-            { id: 'claude', name: 'Claude订阅', desc: '临时buff-下次做实验分数+4', price: 4, monthlyOnce: true, boughtThisMonth: false }
-        ];
+		const shopItems = [
+			{ id: 'coffee', name: '冰美式', desc: 'SAN值+3', price: 2, monthlyOnce: true, boughtThisMonth: false },
+			{ id: 'gemini', name: 'Gemini订阅', desc: '本月想idea时SAN-1，分数+4', price: 2, monthlyOnce: true, boughtThisMonth: false },
+			{ id: 'gpt', name: 'GPT订阅', desc: '本月做实验时SAN-1，分数+4', price: 4, monthlyOnce: true, boughtThisMonth: false },
+			{ id: 'claude', name: 'Claude订阅', desc: '本月写论文时SAN-1，分数+4', price: 3, monthlyOnce: true, boughtThisMonth: false },
+			{ id: 'gpu_rent', name: '租GPU服务器', desc: '本月做实验多做1次', price: 2, once: false },
+			{ id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次', price: 12, once: false },
+			{ id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
+			{ id: 'keyboard', name: '机械键盘', desc: '永久buff-写论文变为SAN-3', price: 8, once: true, bought: false },
+			{ id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false }
+		];
         // ==================== 游戏状态 ====================
         let gameState = {};
         let selectedCharacter = null;
@@ -1819,9 +1818,7 @@
                 isReversed: false,
                 reversedAwakened: false,
                 blockedResearchGains: 0,
-                goldLocked: false,
-                statsLocked: false,
-                _isMonthlyFavorDecrease: false,
+                
                 pendingPhDChoice: false,
                 pendingConference: null,
                 goldSpentTotal: 0,
@@ -1834,6 +1831,11 @@
                 lastResetMonth: 0,  // 上次重置的月份（用于觉醒后半年重置）
 				socialAwakened: false,
 				reviewerDistribution: null,
+				
+				ideaClickCount: 0,      // 想idea按钮点击次数
+				expClickCount: 0,       // 做实验按钮点击次数
+				writeClickCount: 0,     // 写论文按钮点击次数
+				consecutiveAccepts: 0,  // 连续中稿计数
                 
                 // 新增成就相关状态
                 rejectedPapers: {},
@@ -1931,7 +1933,56 @@
             }
         }
 
+		function validateGameData() {
+			// 检查科研分和发表论文的关系
+			const expectedScore = gameState.paperA * 4 + gameState.paperB * 2 + gameState.paperC * 1;
+			if (gameState.totalScore !== expectedScore) {
+				console.warn('科研分与论文数不匹配');
+				return false;
+			}
+			
+			// 检查论文总数是否合理（大部分模式最多20篇）
+			const totalPapers = gameState.paperA + gameState.paperB + gameState.paperC;
+			if (totalPapers > 22) {
+				console.warn('论文数量超出合理范围');
+				return false;
+			}
+			// 论文计数与详情匹配
+			const actualA = gameState.publishedPapers.filter(p => p.grade === 'A').length;
+			const actualB = gameState.publishedPapers.filter(p => p.grade === 'B').length;
+			const actualC = gameState.publishedPapers.filter(p => p.grade === 'C').length;
+			if (actualA !== gameState.paperA || actualB !== gameState.paperB || actualC !== gameState.paperC) {
+				errors.push('论文详情与计数不符');
+			}
+			
+			// 总引用与单篇引用之和匹配
+			const sumCitations = gameState.publishedPapers.reduce((sum, p) => sum + (p.citations || 0), 0);
+			if (Math.abs(gameState.totalCitations - sumCitations) > 10) { // 允许小误差
+				errors.push('总引用与单篇之和不符');
+			}
+			// 检查月份是否合理
+			const maxMonths = gameState.degree === 'master' ? 36 : 60;
+			if (gameState.totalMonths > maxMonths + 12) {  // 允许一定的延毕
+				console.warn('游戏时长超出合理范围');
+				return false;
+			}
+			
+			// 检查属性值是否在合理范围
+			if (gameState.research > 20 || gameState.social > 20 || gameState.favor > 20) {
+				console.warn('属性值超出上限');
+				return false;
+			}
+			
+			return true;
+		}
+
 		async function recordEnding(endingType, endingTitle) {
+		    // ★★★ 防作弊数据验证 ★★★
+			const isValidData = validateGameData();
+			if (!isValidData) {
+				console.warn('⚠️ 数据异常，不上传到数据库');
+				return;
+			}
 			// 计算成就数量
 			const achievements = collectAchievements(endingType);
 			const achievementCount = achievements.length;
@@ -1990,88 +2041,190 @@
             }
         }
 
-        async function fetchAllRows(tableName, selectColumns) {
-            if (!supabase) return [];
-            
-            let allData = [];
-            let from = 0;
-            const pageSize = 1000;
-            
-            while (true) {
-                const { data, error } = await supabase
-                    .from(tableName)
-                    .select(selectColumns)
-                    .range(from, from + pageSize - 1);
-                
-                if (error) {
-                    console.error(`获取 ${tableName} 数据失败:`, error);
-                    throw error;
-                }
-                
-                if (!data || data.length === 0) break;
-                
-                allData = allData.concat(data);
-                console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
-                
-                if (data.length < pageSize) break;
-                
-                from += pageSize;
-            }
-            
-            return allData;
-        }
-        
-        async function getGlobalStats() {
-            if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
-                console.log('使用缓存的全球统计');
-                return statsCache;
-            }
-            
-            if (!supabase) return null;
-            
-            try {
-                const stats = {
-                    normal: { endings: {}, achievements: {}, characterEndings: {} },
-                    reversed: { endings: {}, achievements: {}, characterEndings: {} }
-                };
+		async function fetchAllRows(tableName, selectColumns) {
+			if (!supabase) return [];
+			
+			// ★★★ 确保获取验证所需的字段 ★★★
+			let finalColumns = selectColumns;
+			if (tableName === 'game_endings') {
+				const requiredFields = ['total_score', 'total_months', 'paper_a', 'paper_b', 'paper_c', 'total_citations', 'achievements_count', 'ending_type'];
+				requiredFields.forEach(field => {
+					if (!finalColumns.includes(field)) {
+						finalColumns += `, ${field}`;
+					}
+				});
+			}
+			
+			let allData = [];
+			let from = 0;
+			const pageSize = 1000;
+			
+			while (true) {
+				const { data, error } = await supabase
+					.from(tableName)
+					.select(finalColumns)
+					.range(from, from + pageSize - 1);
+				
+				if (error) {
+					console.error(`获取 ${tableName} 数据失败:`, error);
+					throw error;
+				}
+				
+				if (!data || data.length === 0) break;
+				
+				allData = allData.concat(data);
+				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
+				
+				if (data.length < pageSize) break;
+				
+				from += pageSize;
+			}
+			
+			return allData;
+		}
 
-                const endings = await fetchAllRows('game_endings', 'ending_type, is_reversed, character');
-                console.log(`总共获取 ${endings.length} 条结局记录`);
-                
-                endings.forEach(e => {
-                    const mode = e.is_reversed ? 'reversed' : 'normal';
-                    const type = e.ending_type;
-                    const character = e.character;
-                    
-                    stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
-                    
-                    if (!stats[mode].characterEndings[character]) {
-                        stats[mode].characterEndings[character] = { total: 0, hard: 0 };
-                    }
-                    stats[mode].characterEndings[character].total++;
-                    if (HARD_ENDINGS.includes(type)) {
-                        stats[mode].characterEndings[character].hard++;
-                    }
-                });
+		// ==================== 数据验证过滤 ====================
 
-                const achievements = await fetchAllRows('game_achievements', 'achievement_name, is_reversed');
-                console.log(`总共获取 ${achievements.length} 条成就记录`);
-                
-                achievements.forEach(a => {
-                    const mode = a.is_reversed ? 'reversed' : 'normal';
-                    const name = a.achievement_name;
-                    stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
-                });
+		/**
+		 * 验证单条结局记录是否有效
+		 * @param {Object} record - 数据库记录
+		 * @returns {Object} { valid: boolean, errors: string[] }
+		 */
+		function validateRecord(record) {
+			const errors = [];
+			
+			const paperA = record.paper_a || 0;
+			const paperB = record.paper_b || 0;
+			const paperC = record.paper_c || 0;
+			const totalScore = record.total_score || 0;
+			const totalMonths = record.total_months || 0;
+			const totalCitations = record.total_citations || 0;
+			const totalPapers = paperA + paperB + paperC;
+			
+			// R1: 科研分与论文匹配
+			const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
+			if (totalScore !== expectedScore) {
+				errors.push(`R1:科研分不匹配(${totalScore}≠${expectedScore})`);
+			}
+			
+			// R2: 论文数不超过月数
+			if (totalPapers > 22) {
+				errors.push(`R2:论文超产(${totalPapers}>${totalMonths})`);
+			}
+			
+			// R3: 无论文则无引用
+			if (totalPapers === 0 && totalCitations > 0) {
+				errors.push(`R3:无论文有引用(${totalCitations})`);
+			}			
 
-                statsCache = stats;
-                statsCacheTime = Date.now();
-                
-                return stats;
-            } catch (e) {
-                console.error('获取统计失败:', e);
-                return statsCache || null;
-            }
-        }
+			// 硕士3年 = 36个月
+			if (['master', 'excellent_master'].includes(endingType) && totalMonths > 36) {
+				errors.push('R5:硕士时间过长');
+			}
+			// 博士5年 = 60个月
+			if (['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'].includes(endingType)) {
+				if (totalMonths > 60) {
+					errors.push('R5:博士时间过长');
+				}
+			}
+			
+			return {
+				valid: errors.length === 0,
+				errors: errors
+			};
+		}
+
+		/**
+		 * 过滤有效记录
+		 * @param {Array} records - 原始记录数组
+		 * @param {boolean} logInvalid - 是否打印无效记录
+		 * @returns {Array} 有效记录数组
+		 */
+		function filterValidRecords(records, logInvalid = false) {
+			const validRecords = [];
+			let invalidCount = 0;
+			
+			records.forEach(record => {
+				const result = validateRecord(record);
+				if (result.valid) {
+					validRecords.push(record);
+				} else {
+					invalidCount++;
+					if (logInvalid) {
+						console.warn('⚠️ 无效记录:', {
+							id: record.id,
+							character: record.character,
+							errors: result.errors
+						});
+					}
+				}
+			});
+			
+			if (invalidCount > 0) {
+				console.log(`📊 数据过滤: ${records.length}条 → ${validRecords.length}条 (排除${invalidCount}条异常)`);
+			}
+			
+			return validRecords;
+		}
+       
+		async function getGlobalStats() {
+			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
+				console.log('使用缓存的全球统计');
+				return statsCache;
+			}
+			
+			if (!supabase) return null;
+			
+			try {
+				const stats = {
+					normal: { endings: {}, achievements: {}, characterEndings: {} },
+					reversed: { endings: {}, achievements: {}, characterEndings: {} }
+				};
+
+				// 获取结局数据
+				const endings = await fetchAllRows('game_endings', 'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations, achievements_count');
+				console.log(`总共获取 ${endings.length} 条结局记录`);
+				
+				// ★★★ 过滤异常记录 ★★★
+				const validEndings = filterValidRecords(endings, false); // 设为true可查看详情
+				console.log(`有效记录 ${validEndings.length} 条`);
+				
+				// 使用过滤后的数据进行统计
+				validEndings.forEach(e => {
+					const mode = e.is_reversed ? 'reversed' : 'normal';
+					const type = e.ending_type;
+					const character = e.character;
+					
+					stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
+					
+					if (!stats[mode].characterEndings[character]) {
+						stats[mode].characterEndings[character] = { total: 0, hard: 0 };
+					}
+					stats[mode].characterEndings[character].total++;
+					if (HARD_ENDINGS.includes(type)) {
+						stats[mode].characterEndings[character].hard++;
+					}
+				});
+
+				// 获取成就数据
+				const achievements = await fetchAllRows('game_achievements', 'achievement_name, is_reversed');
+				console.log(`总共获取 ${achievements.length} 条成就记录`);
+				
+				achievements.forEach(a => {
+					const mode = a.is_reversed ? 'reversed' : 'normal';
+					const name = a.achievement_name;
+					stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
+				});
+
+				statsCache = stats;
+				statsCacheTime = Date.now();
+				
+				return stats;
+			} catch (e) {
+				console.error('获取统计失败:', e);
+				return statsCache || null;
+			}
+		}
 
         function calculateCharacterDifficulty(stats) {
             const difficultyData = {};
@@ -2314,7 +2467,8 @@
             initStats();
             loadGlobalStatsDisplay();
         }
-
+		
+		
 		function renderCharacterGrid() {
 			const grid = document.getElementById('character-grid');
 			const globalRecords = globalCharacterRecords;
@@ -2353,7 +2507,7 @@
 					<div class="meta-records" style="margin-top:8px;padding:8px;background:var(--light-bg);border-radius:8px;font-size:0.6rem;">
 						<!-- 我的记录 -->
 						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
-							<div style="font-weight:600;color:var(--success-color);margin-bottom:4px;">👤 我的最高（分开统计）</div>
+							<div style="font-weight:600;color:var(--success-color);margin-bottom:4px;">👤 我的最高</div>
 							${hasLocalRecord ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${localRecord.maxScore}分</span>
@@ -2366,7 +2520,7 @@
 						</div>
 						<!-- 今日全球 -->
 						<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--border-color);">
-							<div style="font-weight:600;color:var(--warning-color);margin-bottom:4px;">☀️ 今日全球（分开统计）</div>
+							<div style="font-weight:600;color:var(--warning-color);margin-bottom:4px;">☀️ 今日全球</div>
 							${globalRecord.today.maxScore > 0 ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${globalRecord.today.maxScore}分</span>
@@ -2379,7 +2533,7 @@
 						</div>
 						<!-- 历史全球 -->
 						<div>
-							<div style="font-weight:600;color:var(--accent-color);margin-bottom:4px;">👑 历史全球（分开统计）</div>
+							<div style="font-weight:600;color:var(--accent-color);margin-bottom:4px;">👑 历史全球</div>
 							${hasGlobalRecord ? `
 								<div style="display:flex;justify-content:space-between;color:var(--text-secondary);">
 									<span>🎯${globalRecord.history.maxScore}分</span>
@@ -2960,125 +3114,189 @@
 				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
 				return;
 			}
-            
-            const mergedMap = {};
-            allBuffs.forEach(buff => {
-                if (buff.isLove) {
-                    mergedMap['lover'] = buff;
-                    return;
-                }
-                if (buff.isInternship) {
-                    mergedMap['internship'] = buff;
-                    return;
-                }
-
-                if (buff.type === 'mentorship') {
-                    mergedMap['mentorship'] = buff;
-                    return;
-                }
-                
-                const key = `${buff.type}_${buff.multiply ? 'mul' : 'add'}_${buff.permanent ? 'perm' : 'temp'}`;
-                
-                if (mergedMap[key]) {
-                    if (buff.multiply) {
-                        mergedMap[key].value += (buff.value - 1);
-                    } else {
-                        mergedMap[key].value += buff.value;
-                    }
-                } else {
-                    mergedMap[key] = { ...buff };
-                }
-                
-                if (buff.multiply && mergedMap[key].value < 0) {
-                    mergedMap[key].value = 0;
-                }
-            });
-            
-            const merged = Object.values(mergedMap).map(buff => {
-                if (buff.isLove) {
-                    return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
-                }
-                if (buff.isInternship) {
-                    return { name: buff.name, permanent: true, isInternship: true, isDebuff: false };
-                }
-
-                if (buff.type === 'mentorship') {
-                    return { 
-                        name: buff.name, 
-                        desc: buff.desc,
-                        permanent: true, 
-                        isLove: false, 
-                        isDebuff: false,
-                        isMentorship: true 
-                    };
-                }
-                
-                let name = '';
-                const prefix = buff.permanent ? '每次' : '下次';
-                const typeNames = {
-                    'idea_bonus': '想idea分数',
-                    'exp_bonus': '做实验分数',
-                    'write_bonus': '写论文分数',
-                    'idea_times': '想idea',
-                    'exp_times': '做实验',
-                    'write_times': '写论文',
-                    'monthly_san': '每月SAN',
-                    'read_san_reduce': '读论文SAN',
-                    'write_san_reduce': '写论文SAN',
-                    'citation_multiply': '中稿引用'
-                };
-                
-                const typeName = typeNames[buff.type] || buff.type;
-                let isDebuff = false;
-                
-                if (buff.type.includes('_times')) {
-                    name = `${prefix}${typeName}+${buff.value}次`;
-                } else if (buff.type === 'monthly_san') {
-                    name = `每月SAN+${buff.value}`;
-                } else if (buff.type === 'read_san_reduce') {
-                    name = `读论文SAN-1`;
-                } else if (buff.type === 'write_san_reduce') {
-                    name = `写论文SAN-3`;
-                } else if (buff.type === 'citation_multiply') {
-                    name = `下篇中稿引用×${buff.value}`;
-                } else if (buff.multiply) {
-                    if (buff.value < 1) isDebuff = true;
-                    name = `${prefix}${typeName}×${buff.value}`;
-                } else {
-                    if (buff.value < 0) isDebuff = true;
-                    const sign = buff.value >= 0 ? '+' : '';
-                    name = `${prefix}${typeName}${sign}${buff.value}`;
-                }
-                
-                return { name, permanent: buff.permanent, isLove: false, isDebuff };
-            });
-            
-            list.innerHTML = merged.map(buff => {
-                let tagClass = 'buff-tag ';
-                if (buff.isLove) tagClass += 'love';
-                else if (buff.isInternship) tagClass += 'temporary';
-                else if (buff.isSpecial) tagClass += 'debuff';  // 特殊效果用红色
-                else if (buff.isMentorship) tagClass += 'permanent';
-                else if (buff.isDebuff) tagClass += 'debuff';
-                else if (buff.permanent) tagClass += 'permanent';
-                else tagClass += 'temporary';
-                
-                const icon = buff.isLove ? 'fa-heart' :
-                            buff.isInternship ? 'fa-building' :
-                            buff.isSpecial ? 'fa-coins' :
-                            buff.isMentorship ? 'fa-user-graduate' :
-                            buff.isDebuff ? 'fa-arrow-down' : 
-                            buff.permanent ? 'fa-infinity' : 'fa-clock';
-                
-                const descText = buff.isMentorship && buff.desc ? ` (${buff.desc})` : '';
-                
-                return `<span class="${tagClass}">
-                    <i class="fas ${icon}"></i>
-                    ${buff.name}${descText}
-                </span>`;
-            }).join('');
-        }
-
+			
+			// ★★★ 定义负面debuff类型（需要单独显示，不合并）★★★
+			const negativeDebuffTypes = [
+				'idea_exhaustion',      // 灵感枯竭
+				'exp_overheat',         // 主机发烫
+				'write_block',          // 无从下笔
+				'slack_debuff',         // 松懈
+				'idea_stolen'           // 被偷idea
+			];
+			
+			// ★★★ 定义正面订阅buff类型（需要单独显示，不合并）★★★
+			const subscriptionBuffTypes = [
+				'idea_san_reduce',      // Gemini订阅
+				'exp_san_reduce',       // GPT订阅
+				'write_san_reduce_temp' // Claude订阅
+			];
+			
+			// ★★★ 定义debuff类型的显示名称 ★★★
+			const specialBuffNames = {
+				// 负面debuff
+				'idea_exhaustion': '💫 灵感枯竭：下次想idea总分÷2',
+				'exp_overheat': '🔥 主机发烫：下次做实验总分÷2',
+				'write_block': '✏️ 无从下笔：下次写论文总分÷2',
+				'slack_debuff': '😴 松懈：下月所有操作总分÷2',
+				'idea_stolen': '😈 被偷idea：下次想idea总分÷2',
+				// 正面订阅buff
+				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+4',
+				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+4',
+				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+4'
+			};
+			
+			const mergedMap = {};
+			const specialBuffs = [];  // 单独存放特殊buff/debuff
+			
+			allBuffs.forEach(buff => {
+				if (buff.isLove) {
+					mergedMap['lover'] = buff;
+					return;
+				}
+				if (buff.isInternship) {
+					mergedMap['internship'] = buff;
+					return;
+				}
+				if (buff.type === 'mentorship') {
+					mergedMap['mentorship'] = buff;
+					return;
+				}
+				
+				// ★★★ 负面debuff单独处理 ★★★
+				if (negativeDebuffTypes.includes(buff.type)) {
+					specialBuffs.push({
+						name: specialBuffNames[buff.type] || buff.name,
+						permanent: false,
+						isLove: false,
+						isDebuff: true,
+						isSpecialDebuff: true
+					});
+					return;
+				}
+				
+				// ★★★ 订阅buff单独处理（正面效果）★★★
+				if (subscriptionBuffTypes.includes(buff.type)) {
+					// 检查是否已经添加过（避免重复显示）
+					const alreadyAdded = specialBuffs.some(b => b.subscriptionType === buff.type);
+					if (!alreadyAdded) {
+						specialBuffs.push({
+							name: specialBuffNames[buff.type] || buff.name,
+							permanent: false,
+							isLove: false,
+							isDebuff: false,
+							isSubscription: true,  // ★★★ 标记为订阅buff ★★★
+							subscriptionType: buff.type
+						});
+					}
+					return;
+				}
+				
+				const key = `${buff.type}_${buff.multiply ? 'mul' : 'add'}_${buff.permanent ? 'perm' : 'temp'}`;
+				
+				if (mergedMap[key]) {
+					if (buff.multiply) {
+						mergedMap[key].value += (buff.value - 1);
+					} else {
+						mergedMap[key].value += buff.value;
+					}
+				} else {
+					mergedMap[key] = { ...buff };
+				}
+				
+				if (buff.multiply && mergedMap[key].value < 0) {
+					mergedMap[key].value = 0;
+				}
+			});
+			
+			const merged = Object.values(mergedMap).map(buff => {
+				if (buff.isLove) {
+					return { name: buff.name, permanent: true, isLove: true, isDebuff: false };
+				}
+				if (buff.isInternship) {
+					return { name: buff.name, permanent: true, isInternship: true, isDebuff: false };
+				}
+				if (buff.type === 'mentorship') {
+					return { 
+						name: buff.name, 
+						desc: buff.desc,
+						permanent: true, 
+						isLove: false, 
+						isDebuff: false,
+						isMentorship: true 
+					};
+				}
+				
+				let name = '';
+				const prefix = buff.permanent ? '每次' : '下次';
+				const typeNames = {
+					'idea_bonus': '想idea分数',
+					'exp_bonus': '做实验分数',
+					'write_bonus': '写论文分数',
+					'idea_times': '想idea',
+					'exp_times': '做实验',
+					'write_times': '写论文',
+					'monthly_san': '每月SAN',
+					'read_san_reduce': '读论文SAN',
+					'write_san_reduce': '写论文SAN',
+					'citation_multiply': '中稿引用'
+				};
+				
+				const typeName = typeNames[buff.type] || buff.type;
+				let isDebuff = false;
+				
+				if (buff.type.includes('_times')) {
+					name = `${prefix}${typeName}+${buff.value}次`;
+				} else if (buff.type === 'monthly_san') {
+					name = `每月SAN+${buff.value}`;
+				} else if (buff.type === 'read_san_reduce') {
+					name = `读论文SAN-1`;
+				} else if (buff.type === 'write_san_reduce') {
+					name = `写论文SAN-3`;
+				} else if (buff.type === 'citation_multiply') {
+					name = `下篇中稿引用×${buff.value}`;
+				} else if (buff.multiply) {
+					if (buff.value < 1) isDebuff = true;
+					name = `${prefix}${typeName}×${buff.value}`;
+				} else {
+					if (buff.value < 0) isDebuff = true;
+					const sign = buff.value >= 0 ? '+' : '';
+					name = `${prefix}${typeName}${sign}${buff.value}`;
+				}
+				
+				return { name, permanent: buff.permanent, isLove: false, isDebuff };
+			});
+			
+			// ★★★ 合并普通buff和特殊buff ★★★
+			const allDisplayBuffs = [...merged, ...specialBuffs];
+			
+			list.innerHTML = allDisplayBuffs.map(buff => {
+				let tagClass = 'buff-tag ';
+				if (buff.isLove) tagClass += 'love';
+				else if (buff.isInternship) tagClass += 'temporary';
+				else if (buff.isSubscription) tagClass += 'temporary';  // ★★★ 订阅buff用蓝色 ★★★
+				else if (buff.isSpecialDebuff) tagClass += 'debuff';
+				else if (buff.isMentorship) tagClass += 'permanent';
+				else if (buff.isDebuff) tagClass += 'debuff';
+				else if (buff.permanent) tagClass += 'permanent';
+				else tagClass += 'temporary';
+				
+				let icon = 'fa-clock';
+				if (buff.isLove) icon = 'fa-heart';
+				else if (buff.isInternship) icon = 'fa-building';
+				else if (buff.isSubscription) icon = 'fa-robot';  // ★★★ 订阅buff用机器人图标 ★★★
+				else if (buff.isSpecialDebuff) icon = 'fa-exclamation-triangle';
+				else if (buff.isMentorship) icon = 'fa-user-graduate';
+				else if (buff.isDebuff) icon = 'fa-arrow-down';
+				else if (buff.permanent) icon = 'fa-infinity';
+				
+				const descText = buff.isMentorship && buff.desc ? ` (${buff.desc})` : '';
+				
+				return `<span class="${tagClass}">
+					<i class="fas ${icon}"></i>
+					${buff.name}${descText}
+				</span>`;
+			}).join('');
+		}
         function updateResearchResults() {
             document.getElementById('paper-a-count').textContent = gameState.paperA;
             document.getElementById('paper-b-count').textContent = gameState.paperB;
@@ -3252,6 +3470,20 @@
 			gameState.month++;
 			gameState.totalMonths++;
 			
+			// ★★★ 检查并处理松懈debuff ★★★
+			// 如果这个月没有进行任何操作（休息了一个月），消除松懈debuff
+			const hadSlackBuff = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
+			if (hadSlackBuff) {
+				// 松懈debuff会在下个月自动消除（无论是否休息）
+				// 但如果玩家主动"下一月"而没有做任何操作，也视为休息
+				gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'slack_debuff');
+				addLog('状态恢复', '松懈debuff消除', '经过休整，状态恢复正常');
+			}
+			
+			// ★★★ 清除本月限定的buff ★★★
+			gameState.buffs.temporary = gameState.buffs.temporary.filter(b => !b.thisMonthOnly);
+    
+			
 			// ★★★ 贪求之富可敌国：在月初最先执行重置 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
 				let shouldReset = false;
@@ -3402,25 +3634,24 @@
                 processChosenSwap();
             }
 
-            // 论文分数衰减
-            let decayLogs = [];
-            gameState.papers.forEach((paper, idx) => {
-                if (paper) {
-                    let decayInfo = [];
-                    if (paper.ideaScore > 1) {
-                        paper.ideaScore--;
-                        decayInfo.push(`idea-1`);
-                    }
-                    if (paper.expScore > 1) {
-                        paper.expScore--;
-                        decayInfo.push(`实验-1`);
-                    }
-                    if (decayInfo.length > 0) {
-                        const status = paper.reviewing ? '(审稿中)' : '';
-                        decayLogs.push(`槽${idx + 1}${status}:${decayInfo.join('，')}`);
-                    }
-                }
-            });
+			// 论文分数衰减 - 只对非审稿中的论文生效
+			let decayLogs = [];
+			gameState.papers.forEach((paper, idx) => {
+				if (paper && !paper.reviewing) {  // ★★★ 添加 !paper.reviewing 条件 ★★★
+					let decayInfo = [];
+					if (paper.ideaScore > 1) {
+						paper.ideaScore--;
+						decayInfo.push(`idea-1`);
+					}
+					if (paper.expScore > 1) {
+						paper.expScore--;
+						decayInfo.push(`实验-1`);
+					}
+					if (decayInfo.length > 0) {
+						decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
+					}
+				}
+			});
 
             // 审稿进度
             gameState.papers.forEach((paper, idx) => {
@@ -3535,41 +3766,50 @@
 			gameState.publishedPapers.forEach(paper => {
 				paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
 				
-				// ★★★ 新增：计算引用衰减系数 ★★★
-				// 模拟论文热度曲线：先升后降
-				let decayFactor;
-				const age = paper.monthsSincePublish;
-				
-				if (age <= 6) {
-					// 初期：热度上升期，系数从0.8升到1.2
-					decayFactor = 0.8 + (age / 6) * 0.4;
-				} else if (age <= 18) {
-					// 高峰期：系数从1.2逐渐降到0.6
-					decayFactor = 1.2 - ((age - 6) / 12) * 0.6;
-				} else if (age <= 36) {
-					// 衰减期：系数从0.6降到0.3
-					decayFactor = 0.6 - ((age - 18) / 18) * 0.3;
-				} else {
-					// 长尾期：维持0.2的最低增长
-					decayFactor = 0.2;
+				// 初始化小数累积字段
+				if (paper.pendingCitationFraction === undefined) {
+					paper.pendingCitationFraction = 0;
 				}
 				
-				let shouldUpdate = false;
-				if (paper.grade === 'A') shouldUpdate = true;
-				else if (paper.grade === 'B' && paper.monthsSincePublish % 3 === 0) shouldUpdate = true;
-				else if (paper.grade === 'C' && paper.monthsSincePublish % 6 === 0) shouldUpdate = true;
-
-				if (shouldUpdate) {
-					let gain = Math.round(paper.score / 10);
-					if (paper.acceptType === 'Oral') gain = Math.round(gain * 1.5);
-					if (paper.acceptType === 'Best Paper') gain = Math.round(gain * 5);
-					gain = Math.round(gain * (paper.citationMultiplier || 1));
-					
-					// ★★★ 应用衰减系数 ★★★
-					gain = Math.max(1, Math.round(gain * decayFactor));
-					
-					paper.citations += gain;
-					gameState.totalCitations += gain;
+				// 计算基础增速：(中稿时总分+审稿人改进-每月衰减2分*月份) / 系数
+				// 注意：paper.score 已经包含了审稿人改进后的分数
+				const baseScore = Math.max(0, paper.score - 2 * paper.monthsSincePublish);
+				
+				let divisor;
+				if (paper.grade === 'A') divisor = 10;
+				else if (paper.grade === 'B') divisor = 30;
+				else divisor = 60;
+				
+				let baseGrowth = baseScore / divisor;
+				
+				// 接收类型倍率（加法）
+				let typeMultiplier = 1;
+				if (paper.acceptType === 'Oral') typeMultiplier = 1.5;
+				else if (paper.acceptType === 'Best Paper') typeMultiplier = 5; // +400% = ×5
+				
+				// 推广倍率（加法累积）
+				let promoMultiplier = 1;
+				if (paper.promotions?.arxiv) promoMultiplier += 0.25;
+				if (paper.promotions?.github) promoMultiplier += 0.5;
+				if (paper.promotions?.xiaohongshu) promoMultiplier += 0.25;
+				// 量子位不影响每月增速，直接加引用
+				
+				// 最终增速 = 基础增速 × 类型倍率 × 推广倍率
+				const finalGrowth = baseGrowth * typeMultiplier * promoMultiplier;
+				
+				// 加上之前累积的小数部分
+				const totalGrowth = finalGrowth + paper.pendingCitationFraction;
+				
+				// 下取整得到本月实际增加的引用
+				const actualGain = Math.floor(totalGrowth);
+				
+				// 保存小数部分到下个月
+				paper.pendingCitationFraction = totalGrowth - actualGain;
+				
+				// 增加引用
+				if (actualGain > 0) {
+					paper.citations += actualGain;
+					gameState.totalCitations += actualGain;
 				}
 			});
 		}
@@ -4271,192 +4511,353 @@
             changeStats({ san: -baseSanCost, gold: 2 });
         }
 
-        function thinkIdea() {
-            if (gameState.actionUsed) return;
-            
-            const baseSanCost = 2;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            
-            if (gameState.san < actualSanCost) {
-                const tipText = actualSanCost !== baseSanCost 
-                    ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                    : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                showModal('❌ 操作失败', tipText, 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('想idea', available, (index) => {
-                gameState.actionUsed = true;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('idea_times');
-                let bestScore = paper.ideaScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('idea');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值-${actualSanCost}`;
-                if (actualSanCost !== baseSanCost) {
-                    result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-                }
-                if (times > 1) result += `（想${times}次）`;
-                if (bestScore > paper.ideaScore) {
-                    paper.ideaScore = bestScore;
-                    result += `，idea分更新为${bestScore}`;
-                } else {
-                    result += `，idea分未更新（生成${lastGen}，当前${paper.ideaScore}）`;
-                }
-                
-                consumeTempBuff('idea_times');
-                consumeTempBuff('idea_bonus');
-                addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
-                renderPaperSlots();
-                changeSan(-baseSanCost);
-            });
-        }
 
-        function doExperiment() {
-            if (gameState.actionUsed) return;
-            
-            const baseSanCost = 3;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            
-            if (gameState.san < actualSanCost) {
-                const tipText = actualSanCost !== baseSanCost 
-                    ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                    : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                showModal('❌ 操作失败', tipText, 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('做实验', available, (index) => {
-                gameState.actionUsed = true;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('exp_times');
-                let bestScore = paper.expScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('exp');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值-${actualSanCost}`;
-                if (actualSanCost !== baseSanCost) {
-                    result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-                }
-                if (times > 1) result += `（实验${times}次）`;
-                if (bestScore > paper.expScore) {
-                    paper.expScore = bestScore;
-                    result += `，实验分更新为${bestScore}`;
-                } else {
-                    result += `，实验分未更新（生成${lastGen}，当前${paper.expScore}）`;
-                }
-                
-                consumeTempBuff('exp_times');
-                consumeTempBuff('exp_bonus');
-                addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
-                renderPaperSlots();
-                changeSan(-baseSanCost);
-            });
-        }
+		function thinkIdea() {
+			if (gameState.actionUsed) return;
+			
+			const hasExhaustion = gameState.buffs.temporary.some(b => b.type === 'idea_exhaustion');
+			const hasStolen = gameState.buffs.temporary.some(b => b.type === 'idea_stolen');
+			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
+			
+			const geminiSub = gameState.buffs.temporary.find(b => b.type === 'idea_san_reduce');
+			const hasGeminiSub = !!geminiSub;
+			
+			let baseSanCost = 2;
+			if (hasGeminiSub) {
+				baseSanCost = Math.max(1, baseSanCost - 1);
+			}
+			
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			showPaperSelectModal('想idea', available, (index) => {
+				gameState.actionUsed = true;
+				gameState.ideaClickCount = (gameState.ideaClickCount || 0) + 1;
+				
+				const paper = gameState.papers[index];
+				const oldScore = paper.ideaScore;
+				
+				let times = 1 + countBuff('idea_times');
+				let generatedScores = [];
+				
+				for (let i = 0; i < times; i++) {
+					let gen = calculateScore('idea');
+					
+					if (hasGeminiSub && geminiSub.bonusScore) {
+						gen += geminiSub.bonusScore;
+					}
+					if (hasExhaustion) {
+						gen = Math.floor(gen / 2);
+					}
+					if (hasStolen) {
+						gen = Math.floor(gen / 2);
+					}
+					if (hasSlack) {
+						gen = Math.floor(gen / 2);
+					}
+					
+					generatedScores.push(gen);
+				}
+				
+				const bestGenerated = Math.max(...generatedScores);
+				const newScore = Math.max(bestGenerated, oldScore + 1);
+				paper.ideaScore = newScore;
+				
+				let result = `SAN值-${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (hasGeminiSub) result += '（Gemini: SAN-1,分+4）';
+				if (hasExhaustion) result += '（灵感枯竭÷2）';
+				if (hasStolen) result += '（被偷idea÷2）';
+				if (hasSlack) result += '（松懈÷2）';
+				if (times > 1) result += `（想${times}次）`;
+				
+				if (bestGenerated > oldScore) {
+					result += `，idea分 ${oldScore} → ${newScore}`;
+				} else {
+					result += `，idea分 ${oldScore} → ${newScore}（生成${bestGenerated}，保底+1）`;
+				}
+				
+				if (hasExhaustion) {
+					gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'idea_exhaustion');
+				}
+				if (hasStolen) {
+					gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'idea_stolen');
+				}
+				
+				if (gameState.ideaClickCount % 5 === 0) {
+					gameState.buffs.temporary.push({ 
+						type: 'idea_exhaustion', 
+						name: '灵感枯竭：下次想idea总分÷2', 
+						value: 0.5, 
+						multiply: true, 
+						permanent: false 
+					});
+					addLog('⚠️ 疲劳累积', '灵感枯竭', '连续想idea5次，下次想idea总分除以2');
+				}
+				
+				consumeTempBuff('idea_times');
+				consumeTempBuff('idea_bonus');
+				
+				addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
+				renderPaperSlots();
+				changeSan(-baseSanCost);
+				updateBuffs();
+			});
+		}
 
-        function writePaper() {
-            if (gameState.actionUsed) return;
-            
-            const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-            const baseSanCost = hasKeyboard ? 3 : 4;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            
-            if (gameState.san < actualSanCost) {
-                const tipText = actualSanCost !== baseSanCost 
-                    ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                    : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                showModal('❌ 操作失败', tipText, 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-                .filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
-            if (available.length === 0) {
-                showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            showPaperSelectModal('写论文', available, (index) => {
-                gameState.actionUsed = true;
-                const paper = gameState.papers[index];
-                
-                let times = 1 + countBuff('write_times');
-                let bestScore = paper.writeScore;
-                let lastGen = 0;
-                for (let i = 0; i < times; i++) {
-                    const gen = calculateScore('write');
-                    lastGen = gen;
-                    if (gen > bestScore) bestScore = gen;
-                }
-                
-                let result = `SAN值-${actualSanCost}`;
-                if (hasKeyboard) result += '（机械键盘生效）';
-                if (actualSanCost !== baseSanCost) {
-                    result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-                }
-                if (times > 1) result += `（写${times}次）`;
-                if (bestScore > paper.writeScore) {
-                    paper.writeScore = bestScore;
-                    result += `，写作分更新为${bestScore}`;
-                } else {
-                    result += `，写作分未更新（生成${lastGen}，当前${paper.writeScore}）`;
-                }
-                
-                consumeTempBuff('write_times');
-                consumeTempBuff('write_bonus');
-                addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
-                renderPaperSlots();
-                changeSan(-baseSanCost);
-            });
-        }
+		function doExperiment() {
+			if (gameState.actionUsed) return;
+			
+			const hasOverheat = gameState.buffs.temporary.some(b => b.type === 'exp_overheat');
+			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
+			
+			const gptSub = gameState.buffs.temporary.find(b => b.type === 'exp_san_reduce');
+			const hasGptSub = !!gptSub;
+			
+			let baseSanCost = 3;
+			if (hasGptSub) {
+				baseSanCost = Math.max(1, baseSanCost - 1);
+			}
+			
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			showPaperSelectModal('做实验', available, (index) => {
+				gameState.actionUsed = true;
+				gameState.expClickCount = (gameState.expClickCount || 0) + 1;
+				
+				const paper = gameState.papers[index];
+				
+				// ★★★ 关键：记录操作前的分数 ★★★
+				const oldScore = paper.expScore;
+				
+				let times = 1 + countBuff('exp_times');
+				let generatedScores = [];
+				
+				for (let i = 0; i < times; i++) {
+					let gen = calculateScore('exp');
+					
+					if (hasGptSub && gptSub.bonusScore) {
+						gen += gptSub.bonusScore;
+					}
+					
+					if (hasOverheat) {
+						gen = Math.floor(gen / 2);
+					}
+					if (hasSlack) {
+						gen = Math.floor(gen / 2);
+					}
+					
+					generatedScores.push(gen);
+				}
+				
+				const bestGenerated = Math.max(...generatedScores);
+				
+				// ★★★ 核心逻辑：新分数 = max(生成最高分, 旧分数+1) ★★★
+				const newScore = Math.max(bestGenerated, oldScore + 1);
+				paper.expScore = newScore;
+				
+				let result = `SAN值-${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (hasGptSub) result += '（GPT: SAN-1,分+4）';
+				if (hasOverheat) result += '（主机发烫÷2）';
+				if (hasSlack) result += '（松懈÷2）';
+				if (times > 1) result += `（实验${times}次）`;
+				
+				if (bestGenerated > oldScore) {
+					result += `，实验分 ${oldScore} → ${newScore}`;
+				} else {
+					result += `，实验分 ${oldScore} → ${newScore}（生成${bestGenerated}，保底+1）`;
+				}
+				
+				if (hasOverheat) {
+					gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'exp_overheat');
+				}
+				
+				if (gameState.expClickCount % 5 === 0) {
+					gameState.buffs.temporary.push({ 
+						type: 'exp_overheat', 
+						name: '主机发烫：下次做实验总分÷2', 
+						value: 0.5, 
+						multiply: true, 
+						permanent: false 
+					});
+					addLog('⚠️ 疲劳累积', '主机发烫', '连续做实验5次，下次做实验总分除以2');
+				}
+				
+				consumeTempBuff('exp_times');
+				consumeTempBuff('exp_bonus');
+				
+				addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
+				renderPaperSlots();
+				changeSan(-baseSanCost);
+				updateBuffs();
+			});
+		}
 
-        function calculateScore(type) {
-            const base = gameState.research * (0.5 + Math.random());
-            const randomBonus = Math.floor(Math.random() * 6);
-            let score = Math.round(base + randomBonus);
+		function writePaper() {
+			if (gameState.actionUsed) return;
+			
+			const hasWritersBlock = gameState.buffs.temporary.some(b => b.type === 'write_block');
+			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
+			
+			const claudeSub = gameState.buffs.temporary.find(b => b.type === 'write_san_reduce_temp');
+			const hasClaudeSub = !!claudeSub;
+			
+			const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
+			let baseSanCost = hasKeyboard ? 3 : 4;
+			
+			if (hasClaudeSub) {
+				baseSanCost = Math.max(1, baseSanCost - 1);
+			}
+			
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			showPaperSelectModal('写论文', available, (index) => {
+				gameState.actionUsed = true;
+				gameState.writeClickCount = (gameState.writeClickCount || 0) + 1;
+				
+				const paper = gameState.papers[index];
+				
+				// ★★★ 关键：记录操作前的分数 ★★★
+				const oldScore = paper.writeScore;
+				
+				let times = 1 + countBuff('write_times');
+				let generatedScores = [];
+				
+				for (let i = 0; i < times; i++) {
+					let gen = calculateScore('write');
+					
+					if (hasClaudeSub && claudeSub.bonusScore) {
+						gen += claudeSub.bonusScore;
+					}
+					
+					if (hasWritersBlock) {
+						gen = Math.floor(gen / 2);
+					}
+					if (hasSlack) {
+						gen = Math.floor(gen / 2);
+					}
+					
+					generatedScores.push(gen);
+				}
+				
+				const bestGenerated = Math.max(...generatedScores);
+				
+				// ★★★ 核心逻辑：新分数 = max(生成最高分, 旧分数+1) ★★★
+				const newScore = Math.max(bestGenerated, oldScore + 1);
+				paper.writeScore = newScore;
+				
+				let result = `SAN值-${actualSanCost}`;
+				if (hasKeyboard) result += '（机械键盘生效）';
+				if (hasClaudeSub) result += '（Claude: SAN-1,分+4）';
+				if (hasWritersBlock) result += '（无从下笔÷2）';
+				if (hasSlack) result += '（松懈÷2）';
+				if (times > 1) result += `（写${times}次）`;
+				
+				if (bestGenerated > oldScore) {
+					result += `，写作分 ${oldScore} → ${newScore}`;
+				} else {
+					result += `，写作分 ${oldScore} → ${newScore}（生成${bestGenerated}，保底+1）`;
+				}
+				
+				if (hasWritersBlock) {
+					gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'write_block');
+				}
+				
+				if (gameState.writeClickCount % 5 === 0) {
+					gameState.buffs.temporary.push({ 
+						type: 'write_block', 
+						name: '无从下笔：下次写论文总分÷2', 
+						value: 0.5, 
+						multiply: true, 
+						permanent: false 
+					});
+					addLog('⚠️ 疲劳累积', '无从下笔', '连续写论文5次，下次写论文总分除以2');
+				}
+				
+				consumeTempBuff('write_times');
+				consumeTempBuff('write_bonus');
+				
+				addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
+				renderPaperSlots();
+				changeSan(-baseSanCost);
+				updateBuffs();
+			});
+		}
 
-            let bonus = 0, multiplier = 1;
-            const buffType = type + '_bonus';
-            [...gameState.buffs.permanent, ...gameState.buffs.temporary].forEach(b => {
-                if (b.type === buffType) {
-                    if (b.multiply) {
-                        multiplier += (b.value - 1);
-                    } else {
-                        bonus += b.value;
-                    }
-                }
-            });
-            multiplier = Math.max(0, multiplier);
-            return Math.max(0, Math.round(score * multiplier + bonus));
-        }
+		function calculateScore(type) {
+			const base = gameState.research * (0.5 + Math.random());
+			const randomBonus = Math.floor(Math.random() * 6);
+			let score = Math.round(base + randomBonus);
+
+			let bonus = 0, multiplier = 1;
+			const buffType = type + '_bonus';
+			[...gameState.buffs.permanent, ...gameState.buffs.temporary].forEach(b => {
+				if (b.type === buffType) {
+					if (b.multiply) {
+						multiplier += (b.value - 1);
+					} else {
+						bonus += b.value;
+					}
+				}
+			});
+			multiplier = Math.max(0, multiplier);
+			return Math.max(0, Math.round(score * multiplier + bonus));
+		}
 
         function countBuff(type) {
             let count = 0;
@@ -4509,8 +4910,14 @@
 			if (!paper || !paper.reviewing) return;
 			
 			const grade = paper.submittedGrade;
-			const submittedScore = paper.submittedScore;
+			const submittedScore = paper.submittedScore;  // 使用投稿时的分数判断接收
 
+			// ★★★ 计算审稿期间的衰减（每月idea和exp各-1）★★★
+			const reviewMonthsPassed = 4; // 审稿期4个月
+			const ideaDecay = reviewMonthsPassed;
+			const expDecay = reviewMonthsPassed;
+			
+			// 先记录审稿前的分数
 			const beforeScores = {
 				idea: paper.ideaScore,
 				exp: paper.expScore,
@@ -4520,13 +4927,13 @@
 
 			const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
 
+			// ★★★ 使用投稿时的分数来判断接收 ★★★
 			let totalReviewScore = 0;
 			const results = reviewers.map(reviewer => {
-				// ★★★ 传入三项分数用于几何平均计算 ★★★
 				const result = getReviewResult(
 					reviewer, 
 					grade, 
-					submittedScore, 
+					submittedScore,  // 使用投稿时总分
 					paper.ideaScore, 
 					paper.expScore, 
 					paper.writeScore
@@ -4535,28 +4942,56 @@
 				return { reviewer, ...result };
 			});
 
-            let acceptType = null, accepted = false;
-            if (totalReviewScore >= 3) { acceptType = 'Best Paper'; accepted = true; }
-            else if (totalReviewScore >= 2) { acceptType = 'Oral'; accepted = true; }
-            else if (totalReviewScore >= 0) { acceptType = 'Poster'; accepted = true; }
+			let acceptType = null, accepted = false;
+			if (totalReviewScore >= 3) { acceptType = 'Best Paper'; accepted = true; }
+			else if (totalReviewScore >= 2) { acceptType = 'Oral'; accepted = true; }
+			else if (totalReviewScore >= 0) { acceptType = 'Poster'; accepted = true; }
 
-            results.forEach(r => {
-                if (r.improvement > 0) {
-                    if (r.improvementType === 'idea') paper.ideaScore += r.improvement;
-                    else if (r.improvementType === 'exp') paper.expScore += r.improvement;
-                    else paper.writeScore += r.improvement;
-                }
-            });
+			// ★★★ 统计恶意审稿人数量 ★★★
+			const badReviewerCount = results.filter(r => 
+				r.reviewer.type === 'hostile' || r.reviewer.type === 'questions'
+			).length;
+			
+			// ★★★ 检查是否有资深大牛 ★★★
+			const hasExpert = results.some(r => r.reviewer.type === 'expert');
 
-            const afterScores = {
-                idea: paper.ideaScore,
-                exp: paper.expScore,
-                write: paper.writeScore,
-                total: paper.ideaScore + paper.expScore + paper.writeScore
-            };
+			// ★★★ 应用审稿期间的衰减 ★★★
+			paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
+			paper.expScore = Math.max(1, paper.expScore - expDecay);
 
-            showReviewResultModal(paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores);
-        }
+			// ★★★ 应用审稿人的改进 ★★★
+			results.forEach(r => {
+				if (r.improvement > 0) {
+					if (r.improvementType === 'idea') paper.ideaScore += r.improvement;
+					else if (r.improvementType === 'exp') paper.expScore += r.improvement;
+					else if (r.improvementType === 'write') paper.writeScore += r.improvement;
+				}
+				// 资深大牛的第二项改进
+				if (r.improvement2 > 0) {
+					if (r.improvementType2 === 'idea') paper.ideaScore += r.improvement2;
+					else if (r.improvementType2 === 'exp') paper.expScore += r.improvement2;
+					else if (r.improvementType2 === 'write') paper.writeScore += r.improvement2;
+				}
+			});
+
+			const afterScores = {
+				idea: paper.ideaScore,
+				exp: paper.expScore,
+				write: paper.writeScore,
+				total: paper.ideaScore + paper.expScore + paper.writeScore
+			};
+
+			// ★★★ 存储额外信息用于显示 ★★★
+			const extraInfo = {
+				badReviewerCount,
+				hasExpert,
+				accepted,
+				ideaDecay,
+				expDecay
+			};
+
+			showReviewResultModal(paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo);
+		}
 
 		function generateReviewer() {
 			// ★★★ 社交达人觉醒后使用固定的概率分布 ★★★
@@ -4595,11 +5030,10 @@
 		}
 
 		function getReviewResult(reviewer, grade, score, ideaScore, expScore, writeScore) {
-			// ★★★ 计算不同审稿人视角的加权有效分 ★★★
+			// 计算不同审稿人视角的加权有效分
 			let effectiveScore;
 			let weightInfo = '';
 			
-			// 按分数排序，找出最高、中间、最低
 			const scores = [
 				{ type: 'idea', value: ideaScore },
 				{ type: 'exp', value: expScore },
@@ -4611,18 +5045,16 @@
 			const maxScore = sortedScores[2].value;
 			
 			switch (reviewer.type) {
-				case 'expert': // 大牛审稿人：重视idea
+				case 'expert':
 					effectiveScore = ideaScore * 2 + expScore * 0.5 + writeScore * 0.5;
 					weightInfo = 'idea×2, exp×0.5, write×0.5';
 					break;
-					
-				case 'kind': // 心软审稿人：只看最高的2项
+				case 'kind':
 					effectiveScore = maxScore * 1.5 + midScore * 1.5;
 					weightInfo = '最高两项×1.5';
 					break;
-					
-				case 'normal': // 普通审稿人：随机加权
-				case 'gpt':    // GPT审稿人：同普通审稿人
+				case 'normal':
+				case 'gpt':
 					{
 						const r1 = Math.random() * 0.6;
 						const r2 = Math.random() * (0.6 - r1);
@@ -4635,17 +5067,14 @@
 						weightInfo = `idea×${w1.toFixed(2)}, exp×${w2.toFixed(2)}, write×${w3.toFixed(2)}`;
 					}
 					break;
-					
-				case 'hostile': // 恶意小同行：只看最低的2项
+				case 'hostile':
 					effectiveScore = minScore * 1.5 + midScore * 1.5;
 					weightInfo = '最低两项×1.5';
 					break;
-					
-				case 'questions': // 40问题审稿人：只看最低项
+				case 'questions':
 					effectiveScore = minScore * 3;
 					weightInfo = '最低项×3';
 					break;
-					
 				default:
 					effectiveScore = ideaScore + expScore + writeScore;
 					weightInfo = '均匀×1';
@@ -4654,28 +5083,34 @@
 			effectiveScore = Math.round(effectiveScore);
 			const balancePenalty = score - effectiveScore;
 			
-			// ★★★ 阈值判断 ★★★
+			// ★★★ 新的阈值体系 ★★★
 			let thresholds;
 			if (grade === 'A') {
 				switch (reviewer.type) {
 					case 'kind': thresholds = { reject: 40, borderline: 60 }; break;
-					case 'normal': case 'expert': thresholds = { reject: 50, borderline: 70 }; break;
-					case 'gpt': thresholds = { reject: 40, borderline: 80 }; break;
-					case 'hostile': case 'questions': thresholds = { reject: 80, borderline: 90 }; break;
+					case 'normal': thresholds = { reject: 50, borderline: 80 }; break;  // borderline上调为80
+					case 'expert': thresholds = { reject: 50, borderline: 80 }; break;  // borderline上调为80
+					case 'gpt': thresholds = { reject: 40, borderline: 90 }; break;     // borderline上调为90
+					case 'hostile': thresholds = { reject: 70, borderline: 100 }; break; // reject降为70，borderline升为100
+					case 'questions': thresholds = { reject: 70, borderline: 100 }; break; // reject降为70，borderline升为100
 				}
 			} else if (grade === 'B') {
 				switch (reviewer.type) {
 					case 'kind': thresholds = { reject: 20, borderline: 40 }; break;
-					case 'normal': case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
+					case 'normal': thresholds = { reject: 30, borderline: 50 }; break;
+					case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
 					case 'gpt': thresholds = { reject: 20, borderline: 60 }; break;
-					case 'hostile': case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
+					case 'hostile': thresholds = { reject: 40, borderline: 60 }; break;
+					case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
 				}
-			} else {
+			} else { // C类
 				switch (reviewer.type) {
 					case 'kind': thresholds = { reject: 10, borderline: 20 }; break;
-					case 'normal': case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
+					case 'normal': thresholds = { reject: 15, borderline: 30 }; break;
+					case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
 					case 'gpt': thresholds = { reject: 15, borderline: 40 }; break;
-					case 'hostile': case 'questions': thresholds = { reject: 25, borderline: 40 }; break;
+					case 'hostile': thresholds = { reject: 20, borderline: 40 }; break;  // reject降为20
+					case 'questions': thresholds = { reject: 20, borderline: 40 }; break; // reject降为20
 				}
 			}
 
@@ -4686,12 +5121,19 @@
 
 			const comment = generateComment(decision, reviewer.type);
 			
-			let improvement = 0, improvementType = '';
-			if ((reviewer.type === 'normal' || reviewer.type === 'expert') && decision !== 'Reject') {
-				improvement = reviewer.type === 'expert' ? 6 : 3;
-				if (ideaScore <= expScore && ideaScore <= writeScore) improvementType = 'idea';
-				else if (expScore <= writeScore) improvementType = 'exp';
-				else improvementType = 'write';
+			// ★★★ 新的改进逻辑 ★★★
+			let improvement = 0, improvementType = '', improvement2 = 0, improvementType2 = '';
+			
+			// 普通审稿人：无论中稿与否，随机改进idea或实验+3
+			if (reviewer.type === 'normal') {
+				improvement = 3;
+				improvementType = Math.random() < 0.5 ? 'idea' : 'exp';
+			}
+
+			// 资深大牛：无论中稿与否，随机改进idea或实验+8
+			if (reviewer.type === 'expert') {
+				improvement = 8;
+				improvementType = Math.random() < 0.5 ? 'idea' : 'exp';
 			}
 
 			return { 
@@ -4699,7 +5141,9 @@
 				score: reviewScore, 
 				comment, 
 				improvement, 
-				improvementType, 
+				improvementType,
+				improvement2,
+				improvementType2,
 				effectiveScore,
 				balancePenalty,
 				weightInfo
@@ -4716,7 +5160,7 @@
             return rand([...positive, ...negative, ...neutral]);
         }
 
-        function showReviewResultModal(paper, grade, results, totalScore, acceptType, accepted, slot, beforeScores, afterScores) {
+        function showReviewResultModal(paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo) {
             const improved = afterScores.total > beforeScores.total;
             
             if (afterScores.total >= 125) {
@@ -4768,7 +5212,6 @@
 						📐 评审视角: ${r.weightInfo} → 有效分${r.effectiveScore}${r.balancePenalty !== 0 ? ` (${r.balancePenalty > 0 ? '-' : '+'}${Math.abs(r.balancePenalty)})` : ''}
 					</div>
 					<div style="font-size:0.8rem;color:var(--text-secondary);">"${r.comment}"</div>
-					...
 				</div>`;
             });
             html += '</div>';
@@ -4824,34 +5267,56 @@
                 </div>`;
             }
 
-            showModal('📝 审稿结果', html, [
-                { text: '确定', class: 'btn-primary', action: () => {
-                    if (accepted) {
-                        handlePaperAccepted(paper, grade, acceptType, slot);
-                    } else {
-                        gameState.rejectedCount++;
-                        gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
-                        
-                        if (gameState.rejectedPapers[paper.title] >= 3) {
-                            gameState.achievementConditions.tripleRejected = true;
-                        }
-                        paper.reviewing = false;
-                        paper.submittedGrade = null;
-                        paper.submittedScore = null;
-                        paper.reviewMonths = 0;
-                        let logMsg = '可继续修改后重投';
-                        if (improved) {
-                            const impDetail = improvements.map(i => `${i.typeName}+${i.value}`).join('，');
-                            logMsg = `审稿改进(${impDetail})，总分${beforeScores.total}→${afterScores.total}，可重投`;
-                        }
-                        addLog('拒稿', `"${paper.title.substring(0, 15)}..."被${grade}类会议拒稿`, logMsg);
-                    }
-                    closeModal();
-                    renderPaperSlots();
-                    updateAllUI();
-                }}
-            ]);
-        }
+			showModal('📝 审稿结果', html, [
+				{ text: '确定', class: 'btn-primary', action: () => {
+					if (accepted) {
+						handlePaperAccepted(paper, grade, acceptType, slot);
+					} else {
+						gameState.rejectedCount++;
+						gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
+						
+						if (gameState.rejectedPapers[paper.title] >= 3) {
+							gameState.achievementConditions.tripleRejected = true;
+						}
+						
+						// ★★★ 拒稿时：每有一个恶意审稿人SAN-1 ★★★
+						if (extraInfo.badReviewerCount > 0) {
+							const sanLoss = extraInfo.badReviewerCount;
+							changeSan(-sanLoss);
+							addLog('审稿打击', `${extraInfo.badReviewerCount}个恶意审稿人`, `SAN-${sanLoss}`);
+						}
+						
+						// ★★★ 拒稿时：有资深大牛则获得永久buff ★★★
+						if (extraInfo.hasExpert) {
+							// 检查是否已有此buff
+							const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name === '指点迷津：每次想idea分数+1');
+							if (!existingBuff) {
+								gameState.buffs.permanent.push({ 
+									type: 'idea_bonus', 
+									name: '指点迷津：每次想idea分数+1', 
+									value: 1, 
+									permanent: true 
+								});
+								addLog('因祸得福', '资深大牛的指点迷津', '永久buff-每次想idea分数+1');
+							}
+						}
+						
+						// ★★★ 重置连续中稿计数 ★★★
+						gameState.consecutiveAccepts = 0;
+						
+						paper.reviewing = false;
+						paper.submittedGrade = null;
+						paper.submittedScore = null;
+						paper.reviewMonths = 0;
+						
+						// ... 原有日志代码 ...
+					}
+					closeModal();
+					renderPaperSlots();
+					updateAllUI();
+				}}
+			]);
+		}
 
 		function handlePaperAccepted(paper, grade, acceptType, slot) {
 			const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
@@ -4866,7 +5331,7 @@
 				'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } 
 			};
 
-			// ★★★ 定义论文水平等级 ★★★
+			// 定义论文水平等级
 			const paperRankMap = {
 				'A-Best Paper': 9,
 				'A-Oral': 8,
@@ -4881,13 +5346,13 @@
 			
 			const currentRank = paperRankMap[`${grade}-${acceptType}`];
 			
-			// ★★★ 统计同等或更高水平的已发表论文数量 ★★★
+			// 统计同等或更高水平的已发表论文数量
 			const higherOrEqualCount = gameState.publishedPapers.filter(p => {
 				const pRank = paperRankMap[`${p.grade}-${p.acceptType}`];
 				return pRank >= currentRank;
 			}).length;
 			
-			// ★★★ 计算递减后的奖励 ★★★
+			// 计算递减后的奖励
 			const baseSan = sanGain[grade][acceptType];
 			const baseFavor = favorGain[grade][acceptType];
 			
@@ -4895,7 +5360,7 @@
 			const favorReduction = Math.floor(higherOrEqualCount / 2);
 			const actualFavorGain = baseFavor > 0 ? Math.max(0, baseFavor - favorReduction) : 0;
 			
-			// ★★★ 判断是否有递减 ★★★
+			// 判断是否有递减
 			const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
 			
 			gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
@@ -4927,16 +5392,36 @@
 				changeResearch(bonusResearch);
 			}
 
+			// ★★★ 连续中稿计数 ★★★
+			gameState.consecutiveAccepts = (gameState.consecutiveAccepts || 0) + 1;
+			
+			// ★★★ 连续中3篇获得松懈debuff ★★★
+			if (gameState.consecutiveAccepts >= 3) {
+				gameState.buffs.temporary.push({ 
+					type: 'slack_debuff', 
+					name: '松懈：下月所有操作总分÷2', 
+					value: 0.5, 
+					multiply: true, 
+					permanent: false,
+					expiresOnRest: true  // 休息一个月消除的标记
+				});
+				addLog('⚠️ 志得意满', '连续中稿3篇', '获得松懈debuff，下月想idea/做实验/写论文总分÷2（休息一个月可消除）');
+				gameState.consecutiveAccepts = 0;  // 重置计数
+			}
+
 			const finalScore = paper.ideaScore + paper.expScore + paper.writeScore;
+			
+			// ★★★ 将论文最终分数保存，用于引用计算 ★★★
 			gameState.publishedPapers.push({
 				title: paper.title,
 				grade,
 				acceptType,
-				score: finalScore,
+				score: finalScore,  // 中稿时的最终分数（包含审稿人改进）
 				citations: 0,
 				monthsSincePublish: 0,
 				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-				citationMultiplier: 1
+				citationMultiplier: 1,
+				pendingCitationFraction: 0  // ★★★ 新增：累积小数部分 ★★★
 			});
 
 			if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
@@ -4946,16 +5431,25 @@
 
 			gameState.papers[slot] = null;
 
-			// ★★★ 日志显示详情（带友好提示）★★★
+			// 日志显示详情（带友好提示）
 			let result = `SAN+${actualSanGain}，好感+${actualFavorGain}，科研分+${scoreMap[grade]}`;
 			if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
 			
-			// ★★★ 添加递减提示 ★★★
+			// 添加递减提示
 			if (hasDecay) {
-				result += `（已发${higherOrEqualCount}篇同级或更高，有点麻木了）`;
+				result += `（已发${higherOrEqualCount}篇同级或更高，边际效益递减）`;
 			}
 			
-			addLog('论文中稿', `${grade}类会议被接收为${acceptType}`, result);
+			// 添加连续中稿提示
+			if (gameState.consecutiveAccepts > 0) {
+				result += `（连续中稿${gameState.consecutiveAccepts}/3）`;
+			}
+			
+			addLog('🎉 论文中稿', `${grade}类会议被接收为${acceptType}`, result);
+
+			// 记录论文类型用于成就
+			gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
+			gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
 
 			const canPhD = gameState.degree === 'master' && (
 				(gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
@@ -4968,6 +5462,8 @@
 			} else {
 				setTimeout(() => showConferenceModal(grade), 300);
 			}
+			
+			updateBuffs();
 		}
 		
         // ==================== 开会系统 ====================
@@ -5091,9 +5587,9 @@
 
             if (gameState.metBigBull && !gameState.bigBullCooperation) {
                 options.push({ text: '🌟 和上次那个大牛深入合作', fn: () => {
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+10', value: 10, permanent: false });
+                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
                     gameState.bigBullDeepCount++;
-                    addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+10');
+                    addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
                     updateBuffs();
                     if (gameState.research >= 12 && gameState.bigBullDeepCount >= 2) {
                         setTimeout(showBigBullCoopModal, 300);
@@ -5233,8 +5729,8 @@
                 { text: '婉拒', class: 'btn-info', action: closeModal },
                 { text: '✨ 接受联合培养', class: 'btn-primary', action: () => {
                     gameState.bigBullCooperation = true;
-                    gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+10', value: 10, permanent: true });
-                    addLog('联合培养', '导师与大牛联合培养', '永久buff-每次写论文分数+10');
+                    gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+8', value: 8, permanent: true });
+                    addLog('联合培养', '导师与大牛联合培养', '永久buff-每次写论文分数+8');
                     closeModal();
                     updateBuffs();
                 }}
@@ -5252,12 +5748,12 @@
 				let itemDesc = item.desc;
 				if (item.id === 'coffee') {
 					const count = gameState.coffeeBoughtCount || 0;
-					const currentBonus = count >= 15 ? 3 : 2;
+					const currentBonus = 3 + Math.floor(count / 15);  // 每15杯+1
 					itemDesc = `SAN值+${currentBonus}`;
 					if (count < 15) {
-						itemDesc += ` (${count}/15杯后+3)`;
-					} else {
-						itemDesc += ' (已升级)';
+						itemDesc += ` (${count}/15杯后+4)`;
+					} else if (count < 30) {
+						itemDesc += ` (${count}/30杯后+5)`;
 					}
 				}
 				
@@ -5346,10 +5842,6 @@
                     gameState.buffs.permanent.push({ type: 'monthly_san', name: '每月SAN值+1', value: 1, permanent: true });
                     result += '，获得永久buff-每月SAN值+1';
                     break;
-                case 'gpu_rent':
-                    gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做1次', value: 1, permanent: false });
-                    result += '，获得临时buff-下次做实验多做1次';
-                    break;
                 case 'gpu_buy':
                     gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true });
                     result += '，获得永久buff-每次做实验多做1次';
@@ -5367,38 +5859,62 @@
 				case 'coffee':
 					item.boughtThisMonth = true;
 					gameState.coffeeBoughtCount = (gameState.coffeeBoughtCount || 0) + 1;
-					
-					// ★★★ 新增：喝满15次后效果+1 ★★★
-					const coffeeBonus = gameState.coffeeBoughtCount >= 15 ? 3 : 2;
+					const coffeeBonus = 3 + Math.floor(gameState.coffeeBoughtCount / 15);
 					gameState.san = Math.min(gameState.sanMax, gameState.san + coffeeBonus);
 					result += `，SAN值+${coffeeBonus}`;
-					
-					// 达到15次时提示
-					if (gameState.coffeeBoughtCount === 15) {
-						result += '（咖啡因耐受，效果提升！）';
-						addLog('☕ 咖啡升级', '你已经喝了15杯冰美式', '产生咖啡因耐受，以后每杯SAN+3！');
-					}
 					break;
-                case 'polish':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次论文写作分数+5', value: 5, permanent: false });
-                    result += '，获得临时buff-下次论文写作分数+5';
-                    break;
-                case 'gemini':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次想idea分数+4';
-                    break;
-                case 'gpt':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次写论文分数+4';
-                    break;
-                case 'claude':
-                    item.boughtThisMonth = true;
-                    gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+4', value: 4, permanent: false });
-                    result += '，获得临时buff-下次做实验分数+4';
-                    break;
+					
+				case 'gemini':
+					item.boughtThisMonth = true;
+					// ★★★ 只添加一个综合buff，不再单独添加分数buff ★★★
+					gameState.buffs.temporary.push({ 
+						type: 'idea_san_reduce', 
+						name: 'Gemini订阅', 
+						value: 1, 
+						permanent: false,
+						thisMonthOnly: true,
+						bonusScore: 4  // ★★★ 在buff中记录分数加成 ★★★
+					});
+					result += '，获得本月buff-想idea时SAN消耗-1，分数+4';
+					break;
+					
+				case 'gpt':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ 
+						type: 'exp_san_reduce', 
+						name: 'GPT订阅', 
+						value: 1, 
+						permanent: false,
+						thisMonthOnly: true,
+						bonusScore: 4
+					});
+					result += '，获得本月buff-做实验时SAN消耗-1，分数+4';
+					break;
+					
+				case 'claude':
+					item.boughtThisMonth = true;
+					gameState.buffs.temporary.push({ 
+						type: 'write_san_reduce_temp', 
+						name: 'Claude订阅', 
+						value: 1, 
+						permanent: false,
+						thisMonthOnly: true,
+						bonusScore: 4
+					});
+					result += '，获得本月buff-写论文时SAN消耗-1，分数+4';
+					break;
+					
+				case 'gpu_rent':
+					// 改为本月buff而不是下次
+					gameState.buffs.temporary.push({ 
+						type: 'exp_times', 
+						name: '本月做实验多做1次', 
+						value: 1, 
+						permanent: false,
+						thisMonthOnly: true
+					});
+					result += '，获得本月buff-做实验多做1次';
+					break;
             }
             
             addLog('购买', `购买了${item.name}`, result);
@@ -5910,10 +6426,10 @@
             showModal('🤝 随机事件', '<p>同门找你合作论文，你会选择。</p>', [
                 { text: '学术交流', class: 'btn-primary', action: () => {
                     closeModal();
-                    if (Math.random() < 0.5) {
-                        gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×0.5', value: 0.5, multiply: true, permanent: false });
-                        addLog('随机事件', '同门找你合作论文 - 学术交流', '被同门偷走idea，临时buff-下次想idea分数×0.5');
-                    } else {
+					if (Math.random() < 0.5) {
+						gameState.buffs.temporary.push({ type: 'idea_stolen', name: '下次想idea总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
+						addLog('随机事件', '同门找你合作论文 - 学术交流', '被同门偷走idea，临时debuff-下次想idea总分÷2');
+					} else {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
                         addLog('随机事件', '同门找你合作论文 - 学术交流', '共同进步，临时buff-下次想idea分数+5');
                     }
@@ -5999,7 +6515,7 @@
 						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
 						updateAllUI();
 					} else {
-						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-3', value: -3, permanent: false });
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-5', value: -5, permanent: false });
 						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
 						updateAllUI();
 						updateBuffs();
@@ -6073,7 +6589,7 @@
                         addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `费劲周折修好了，${sanText}`);
                     } else {
                         changeSocial(-1);
-                        gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验分数×0', value: 0, multiply: true, permanent: false });
+                        gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
                         addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `服务器数据忘了备份了，临时debuff-下次实验分数×0，社交能力-1，${sanText}`);
                         updateBuffs();
                     }
@@ -6604,7 +7120,7 @@
 
 		// ==================== Meta进度系统 ====================
 		const META_KEY = 'graduateSimulatorMeta';
-		const META_START_DATE = '2025-12-11T00:00:00Z';
+		const GAME_START_DATE = '2025-12-12T00:00:00Z';
 
 		function getLocalMeta() {
 			const meta = localStorage.getItem(META_KEY);
@@ -6651,38 +7167,25 @@
 			if (!supabase) return null;
 			
 			try {
-				// ★★★ 游戏上线日期（北京时间 2025-12-11 08:00 = UTC 2025-12-11 00:00）★★★
-				const GAME_START_DATE = '2025-12-11T00:00:00Z';
 				
-				// ★★★ 计算今天北京时间0点的UTC时间 ★★★
+				
 				const now = new Date();
-				// 获取当前UTC时间戳，加上8小时得到北京时间
 				const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-				// 取北京时间的年月日，构造当天0点
 				const year = beijingTime.getUTCFullYear();
 				const month = beijingTime.getUTCMonth();
 				const day = beijingTime.getUTCDate();
-				// 北京时间今天0点 = UTC时间前一天16点
 				const todayBeijingMidnightUTC = new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000);
 				let todayStr = todayBeijingMidnightUTC.toISOString();
 				
-				// ★★★ 关键修复：确保今日起点不早于游戏上线日期 ★★★
 				if (todayStr < GAME_START_DATE) {
 					todayStr = GAME_START_DATE;
 				}
-				
-				console.log('全球记录查询范围:', { 
-					历史起点: GAME_START_DATE, 
-					今日起点: todayStr,
-					当前时间: now.toISOString()
-				});
 				
 				const records = {
 					normal: {},
 					reversed: {}
 				};
 				
-				// 初始化所有角色
 				characters.forEach(char => {
 					records.normal[char.id] = {
 						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
@@ -6694,27 +7197,33 @@
 					};
 				});
 				
-				// 1. 查询历史最高（从游戏上线日开始）
+				// 获取历史数据
 				const { data: historyData, error: historyError } = await supabase
 					.from('game_endings')
-					.select('character, is_reversed, total_score, total_citations, achievements_count')
+					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
 					.gte('created_at', GAME_START_DATE)
 					.order('total_score', { ascending: false });
 				
 				if (historyError) throw historyError;
 				
-				// 2. 查询今日最高
+				// 获取今日数据
 				const { data: todayData, error: todayError } = await supabase
 					.from('game_endings')
-					.select('character, is_reversed, total_score, total_citations, achievements_count')
+					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
 					.gte('created_at', todayStr)
 					.order('total_score', { ascending: false });
 				
 				if (todayError) throw todayError;
 				
-				// 处理历史数据 - 只取每个角色的最高值
+				// ★★★ 过滤历史数据 ★★★
+				const validHistoryData = filterValidRecords(historyData || [], false);
+				
+				// ★★★ 过滤今日数据 ★★★
+				const validTodayData = filterValidRecords(todayData || [], false);
+				
+				// 处理历史数据
 				const historyProcessed = {};
-				(historyData || []).forEach(row => {
+				validHistoryData.forEach(row => {
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character;
 					const key = `${mode}_${charId}`;
@@ -6737,7 +7246,7 @@
 				
 				// 处理今日数据
 				const todayProcessed = {};
-				(todayData || []).forEach(row => {
+				validTodayData.forEach(row => {
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character;
 					const key = `${mode}_${charId}`;
@@ -6774,10 +7283,13 @@
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
 				
-				console.log('✅ 全球角色记录加载完成', {
-					历史数据条数: historyData?.length || 0,
-					今日数据条数: todayData?.length || 0
+				console.log('✅ 全球角色记录加载完成（已过滤异常数据）', {
+					原始历史: historyData?.length || 0,
+					有效历史: validHistoryData.length,
+					原始今日: todayData?.length || 0,
+					有效今日: validTodayData.length
 				});
+				
 				return records;
 			} catch (e) {
 				console.error('获取全球角色记录失败:', e);
@@ -7020,6 +7532,13 @@
 				socialAwakened: gameState.socialAwakened || false,
 				reviewerDistribution: gameState.reviewerDistribution || null,
 				badmintonMonth: gameState.badmintonMonth || -1,
+				ideaClickCount: gameState.ideaClickCount || 0,
+				expClickCount: gameState.expClickCount || 0,
+				writeClickCount: gameState.writeClickCount || 0,
+				consecutiveAccepts: gameState.consecutiveAccepts || 0,
+				lastIdeaScore: gameState.lastIdeaScore || 0,
+				lastExpScore: gameState.lastExpScore || 0,
+				lastWriteScore: gameState.lastWriteScore || 0,
                 
                 rejectedPapers: {...(gameState.rejectedPapers || {})},
                 maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -7147,15 +7666,18 @@
                             isReversed: save.isReversed || false,
                             reversedAwakened: save.reversedAwakened || false,
                             blockedResearchGains: save.blockedResearchGains || 0,
-                            goldLocked: save.goldLocked || false,
-                            statsLocked: save.statsLocked || false,
-                            _isMonthlyFavorDecrease: false,
+                            
                             
                             // ★★★ 新增：逆位富可敌国的读档字段 ★★★
                             lastResetMonth: save.lastResetMonth || 0,
 							socialAwakened: save.socialAwakened || false,
 							reviewerDistribution: save.reviewerDistribution || null,
 							badmintonMonth: save.badmintonMonth || -1,
+							ideaClickCount: save.ideaClickCount || 0,
+							expClickCount: save.expClickCount || 0,
+							writeClickCount: save.writeClickCount || 0,
+							consecutiveAccepts: save.consecutiveAccepts || 0,
+				
                             
                             rejectedPapers: save.rejectedPapers ? {...save.rejectedPapers} : {},
                             furnitureBought: save.furnitureBought ? {...save.furnitureBought} : {
