@@ -2190,7 +2190,39 @@
 			
 			return validRecords;
 		}
-       
+
+		// ★★★ 新增：快速获取游戏总数（用 count 查询）★★★
+		async function getTotalGamesCount() {
+			if (!supabase) return 0;
+			
+			try {
+				// ★★★ 方案1：简单 count（快但不过滤）★★★
+				// 如果想要极快加载，用这个
+				const { count, error } = await supabase
+					.from('game_endings')
+					.select('*', { count: 'exact', head: true });
+				
+				if (error) throw error;
+				return count || 0;
+				
+				// ★★★ 方案2：获取后过滤（准确但稍慢）★★★
+				// 如果想要准确数字，用这个（注释掉上面的，启用下面的）
+				/*
+				const { data, error } = await supabase
+					.from('game_endings')
+					.select('total_score, total_months, paper_a, paper_b, paper_c, total_citations, ending_type');
+				
+				if (error) throw error;
+				
+				const validData = filterValidRecords(data || [], false);
+				return validData.length;
+				*/
+			} catch (e) {
+				console.error('获取游戏总数失败:', e);
+				return 0;
+			}
+		}
+
 		async function getGlobalStats() {
 			if (statsCache && (Date.now() - statsCacheTime < CACHE_DURATION)) {
 				console.log('使用缓存的全球统计');
@@ -2205,15 +2237,17 @@
 					reversed: { endings: {}, achievements: {}, characterEndings: {} }
 				};
 
-				// 获取结局数据
-				const endings = await fetchAllRows('game_endings', 'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations, achievements_count');
-				console.log(`总共获取 ${endings.length} 条结局记录`);
+				// ★★★ 获取结局数据（只获取过滤和统计所需字段）★★★
+				const { data: endingsData, error: endingsError } = await supabase
+					.from('game_endings')
+					.select('ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations');
 				
-				// ★★★ 过滤异常记录 ★★★
-				const validEndings = filterValidRecords(endings, false); // 设为true可查看详情
-				console.log(`有效记录 ${validEndings.length} 条`);
+				if (endingsError) throw endingsError;
 				
-				// 使用过滤后的数据进行统计
+				// ★★★ 过滤异常数据 ★★★
+				const validEndings = filterValidRecords(endingsData || [], false);
+				
+				// 统计结局
 				validEndings.forEach(e => {
 					const mode = e.is_reversed ? 'reversed' : 'normal';
 					const type = e.ending_type;
@@ -2230,11 +2264,14 @@
 					}
 				});
 
-				// 获取成就数据
-				const achievements = await fetchAllRows('game_achievements', 'achievement_name, is_reversed');
-				console.log(`总共获取 ${achievements.length} 条成就记录`);
+				// ★★★ 获取成就数据（成就不需要过滤）★★★
+				const { data: achievementsData, error: achievementsError } = await supabase
+					.from('game_achievements')
+					.select('achievement_name, is_reversed');
 				
-				achievements.forEach(a => {
+				if (achievementsError) throw achievementsError;
+				
+				(achievementsData || []).forEach(a => {
 					const mode = a.is_reversed ? 'reversed' : 'normal';
 					const name = a.achievement_name;
 					stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
@@ -2350,43 +2387,38 @@
 			
 			panel.style.display = 'block';
 			
-			// 先快速显示访问统计
-			getVisitStats().then(visitStats => {
+			// ★★★ 第1步：并行快速加载访问统计和游戏总数 ★★★
+			Promise.all([
+				getVisitStats(),
+				getTotalGamesCount()
+			]).then(([visitStats, totalGames]) => {
 				const pvEl = document.getElementById('busuanzi_value_site_pv');
 				const uvEl = document.getElementById('busuanzi_value_site_uv');
+				const gamesEl = document.getElementById('total-games-value');
+				
 				if (pvEl) pvEl.textContent = visitStats.pv || 0;
 				if (uvEl) uvEl.textContent = visitStats.uv || 0;
+				if (gamesEl) gamesEl.textContent = totalGames;
+				
+				console.log('✅ 快速统计加载完成');
 			}).catch(e => {
-				console.warn('访问统计加载失败:', e);
+				console.warn('快速统计加载失败:', e);
 			});
 			
-			// 异步加载全球统计
+			// ★★★ 第2步：异步加载详细统计（不阻塞页面）★★★
 			setTimeout(async () => {
 				try {
-					// ★★★ 检查 Supabase 是否可用 ★★★
 					if (!supabase) {
 						loading.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">📊 统计服务暂不可用</span>';
-						document.getElementById('total-games-value').textContent = '-';
 						return;
 					}
 					
 					const stats = await getGlobalStats();
 					
 					if (!stats) {
-						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败，请刷新重试</span>';
-						document.getElementById('total-games-value').textContent = 0;
+						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 详细统计加载失败</span>';
 						return;
 					}
-					
-					// 计算总游戏数
-					let totalGames = 0;
-					for (const count of Object.values(stats.normal.endings)) {
-						totalGames += count;
-					}
-					for (const count of Object.values(stats.reversed.endings)) {
-						totalGames += count;
-					}
-					document.getElementById('total-games-value').textContent = totalGames;
 					
 					// 计算角色难度
 					characterDifficultyData = calculateCharacterDifficulty(stats);
@@ -2398,7 +2430,7 @@
 					renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
 					renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
 					
-					// 先渲染角色卡片
+					// 渲染角色卡片
 					renderCharacterGrid();
 					
 					// 角色记录单独异步加载
@@ -2411,9 +2443,9 @@
 					
 				} catch (e) {
 					console.error('加载统计失败:', e);
-					loading.innerHTML = `<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败: ${e.message || '未知错误'}</span>`;
+					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败</span>';
 				}
-			}, 50);
+			}, 100);
 		}
 
         function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
@@ -7282,20 +7314,6 @@
 			if (!supabase) return null;
 			
 			try {
-				
-				
-				const now = new Date();
-				const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-				const year = beijingTime.getUTCFullYear();
-				const month = beijingTime.getUTCMonth();
-				const day = beijingTime.getUTCDate();
-				const todayBeijingMidnightUTC = new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000);
-				let todayStr = todayBeijingMidnightUTC.toISOString();
-				
-				if (todayStr < GAME_START_DATE) {
-					todayStr = GAME_START_DATE;
-				}
-				
 				const records = {
 					normal: {},
 					reversed: {}
@@ -7312,42 +7330,47 @@
 					};
 				});
 				
-				// 获取历史数据
+				// 计算今日起始时间
+				const now = new Date();
+				const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+				const year = beijingTime.getUTCFullYear();
+				const month = beijingTime.getUTCMonth();
+				const day = beijingTime.getUTCDate();
+				const todayBeijingMidnightUTC = new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000);
+				let todayStr = todayBeijingMidnightUTC.toISOString();
+				
+				if (todayStr < GAME_START_DATE) {
+					todayStr = GAME_START_DATE;
+				}
+				
+				// ★★★ 获取历史数据（包含过滤所需字段）★★★
 				const { data: historyData, error: historyError } = await supabase
 					.from('game_endings')
 					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
-					.gte('created_at', GAME_START_DATE)
-					.order('total_score', { ascending: false });
+					.gte('created_at', GAME_START_DATE);
 				
 				if (historyError) throw historyError;
 				
-				// 获取今日数据
+				// ★★★ 获取今日数据 ★★★
 				const { data: todayData, error: todayError } = await supabase
 					.from('game_endings')
 					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
-					.gte('created_at', todayStr)
-					.order('total_score', { ascending: false });
+					.gte('created_at', todayStr);
 				
 				if (todayError) throw todayError;
 				
-				// ★★★ 过滤历史数据 ★★★
+				// ★★★ 过滤异常数据 ★★★
 				const validHistoryData = filterValidRecords(historyData || [], false);
-				
-				// ★★★ 过滤今日数据 ★★★
 				const validTodayData = filterValidRecords(todayData || [], false);
 				
 				// 处理历史数据
-				const historyProcessed = {};
 				validHistoryData.forEach(row => {
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character;
-					const key = `${mode}_${charId}`;
 					
-					if (!historyProcessed[key]) {
-						historyProcessed[key] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
-					}
+					if (!records[mode][charId]) return;
 					
-					const record = historyProcessed[key];
+					const record = records[mode][charId].history;
 					if ((row.total_score || 0) > record.maxScore) {
 						record.maxScore = row.total_score || 0;
 					}
@@ -7360,17 +7383,13 @@
 				});
 				
 				// 处理今日数据
-				const todayProcessed = {};
 				validTodayData.forEach(row => {
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character;
-					const key = `${mode}_${charId}`;
 					
-					if (!todayProcessed[key]) {
-						todayProcessed[key] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
-					}
+					if (!records[mode][charId]) return;
 					
-					const record = todayProcessed[key];
+					const record = records[mode][charId].today;
 					if ((row.total_score || 0) > record.maxScore) {
 						record.maxScore = row.total_score || 0;
 					}
@@ -7382,28 +7401,10 @@
 					}
 				});
 				
-				// 合并到 records
-				characters.forEach(char => {
-					['normal', 'reversed'].forEach(mode => {
-						const key = `${mode}_${char.id}`;
-						if (historyProcessed[key]) {
-							records[mode][char.id].history = historyProcessed[key];
-						}
-						if (todayProcessed[key]) {
-							records[mode][char.id].today = todayProcessed[key];
-						}
-					});
-				});
-				
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
 				
-				console.log('✅ 全球角色记录加载完成（已过滤异常数据）', {
-					原始历史: historyData?.length || 0,
-					有效历史: validHistoryData.length,
-					原始今日: todayData?.length || 0,
-					有效今日: validTodayData.length
-				});
+				console.log('✅ 全球角色记录加载完成（已过滤异常数据）');
 				
 				return records;
 			} catch (e) {
