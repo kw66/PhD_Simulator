@@ -1941,69 +1941,16 @@
             }
         }
 
-		function validateGameData() {
-			const errors = [];  // ★★★ 修复：添加这行 ★★★
-			
-			// 检查科研分和发表论文的关系
-			const expectedScore = gameState.paperA * 4 + gameState.paperB * 2 + gameState.paperC * 1;
-			if (gameState.totalScore !== expectedScore) {
-				console.warn('科研分与论文数不匹配');
-				errors.push('科研分不匹配');
-			}
-			
-			// 检查论文总数是否合理
-			const totalPapers = gameState.paperA + gameState.paperB + gameState.paperC;
-			if (totalPapers > 22) {
-				console.warn('论文数量超出合理范围');
-				errors.push('论文数量异常');
-			}
-			
-			// 论文计数与详情匹配
-			const actualA = gameState.publishedPapers.filter(p => p.grade === 'A').length;
-			const actualB = gameState.publishedPapers.filter(p => p.grade === 'B').length;
-			const actualC = gameState.publishedPapers.filter(p => p.grade === 'C').length;
-			if (actualA !== gameState.paperA || actualB !== gameState.paperB || actualC !== gameState.paperC) {
-				errors.push('论文详情与计数不符');
-			}
-			
-			// 总引用与单篇引用之和匹配
-			const sumCitations = gameState.publishedPapers.reduce((sum, p) => sum + (p.citations || 0), 0);
-			if (Math.abs(gameState.totalCitations - sumCitations) > 10) {
-				errors.push('总引用与单篇之和不符');
-			}
-			
-			// 检查月份是否合理
-			const maxMonths = gameState.degree === 'master' ? 36 : 60;
-			if (gameState.totalMonths > maxMonths + 12) {
-				console.warn('游戏时长超出合理范围');
-				errors.push('游戏时长异常');
-			}
-			
-			// 检查属性值是否在合理范围
-			if (gameState.research > 20 || gameState.social > 20 || gameState.favor > 20) {
-				console.warn('属性值超出上限');
-				errors.push('属性值异常');
-			}
-			
-			if (errors.length > 0) {
-				console.warn('数据验证失败:', errors);
-			}
-			
-			return errors.length === 0;
-		}
+
 
 		async function recordEnding(endingType, endingTitle) {
-		    // ★★★ 防作弊数据验证 ★★★
-			const isValidData = validateGameData();
-			if (!isValidData) {
-				console.warn('⚠️ 数据异常，不上传到数据库');
-				return;
-			}
+			// ★★★ 移除数据验证，直接上传 ★★★
+			
 			// 计算成就数量
 			const achievements = collectAchievements(endingType);
 			const achievementCount = achievements.length;
 			
-			// ★★★ 更新本地记录 ★★★
+			// 更新本地记录
 			updateLocalMeta(
 				gameState.character, 
 				gameState.isReversed, 
@@ -2057,19 +2004,9 @@
             }
         }
 
+
 		async function fetchAllRows(tableName, selectColumns) {
 			if (!supabase) return [];
-			
-			// ★★★ 确保获取验证所需的字段 ★★★
-			let finalColumns = selectColumns;
-			if (tableName === 'game_endings') {
-				const requiredFields = ['total_score', 'total_months', 'paper_a', 'paper_b', 'paper_c', 'total_citations', 'achievements_count', 'ending_type'];
-				requiredFields.forEach(field => {
-					if (!finalColumns.includes(field)) {
-						finalColumns += `, ${field}`;
-					}
-				});
-			}
 			
 			let allData = [];
 			let from = 0;
@@ -2078,7 +2015,7 @@
 			while (true) {
 				const { data, error } = await supabase
 					.from(tableName)
-					.select(finalColumns)
+					.select(selectColumns)
 					.range(from, from + pageSize - 1);
 				
 				if (error) {
@@ -2091,6 +2028,7 @@
 				allData = allData.concat(data);
 				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
 				
+				// 如果返回数量小于 pageSize，说明已经是最后一页
 				if (data.length < pageSize) break;
 				
 				from += pageSize;
@@ -2099,124 +2037,19 @@
 			return allData;
 		}
 
-		// ==================== 数据验证过滤 ====================
 
-		/**
-		 * 验证单条结局记录是否有效
-		 * @param {Object} record - 数据库记录
-		 * @returns {Object} { valid: boolean, errors: string[] }
-		 */
-		function validateRecord(record) {
-			const errors = [];
-			
-			const paperA = record.paper_a || 0;
-			const paperB = record.paper_b || 0;
-			const paperC = record.paper_c || 0;
-			const totalScore = record.total_score || 0;
-			const totalMonths = record.total_months || 0;
-			const totalCitations = record.total_citations || 0;
-			const totalPapers = paperA + paperB + paperC;
-			const endingType = record.ending_type || '';  // ★★★ 修复：添加这行 ★★★
-			
-			// R1: 科研分与论文匹配
-			const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
-			if (totalScore !== expectedScore) {
-				errors.push(`R1:科研分不匹配(${totalScore}≠${expectedScore})`);
-			}
-			
-			// R2: 论文数不超过合理范围
-			if (totalPapers > 22) {
-				errors.push(`R2:论文超产(${totalPapers}>22)`);
-			}
-			
-			// R3: 无论文则无引用
-			if (totalPapers === 0 && totalCitations > 0) {
-				errors.push(`R3:无论文有引用(${totalCitations})`);
-			}
-
-			// R5: 时间范围检查
-			if (['master', 'excellent_master'].includes(endingType) && totalMonths > 36) {
-				errors.push('R5:硕士时间过长');
-			}
-			if (['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'].includes(endingType)) {
-				if (totalMonths > 60) {
-					errors.push('R5:博士时间过长');
-				}
-			}
-			
-			return {
-				valid: errors.length === 0,
-				errors: errors
-			};
-		}
-
-		/**
-		 * 过滤有效记录
-		 * @param {Array} records - 原始记录数组
-		 * @param {boolean} logInvalid - 是否打印无效记录
-		 * @returns {Array} 有效记录数组
-		 */
-		function filterValidRecords(records, logInvalid = false) {
-			const validRecords = [];
-			let invalidCount = 0;
-			
-			records.forEach(record => {
-				try {
-					const result = validateRecord(record);
-					if (result.valid) {
-						validRecords.push(record);
-					} else {
-						invalidCount++;
-						if (logInvalid) {
-							console.warn('⚠️ 无效记录:', {
-								id: record.id,
-								character: record.character,
-								errors: result.errors
-							});
-						}
-					}
-				} catch (e) {
-					// ★★★ 新增：捕获单条记录验证错误，不影响其他记录 ★★★
-					invalidCount++;
-					if (logInvalid) {
-						console.warn('⚠️ 记录验证出错:', e);
-					}
-				}
-			});
-			
-			if (invalidCount > 0) {
-				console.log(`📊 数据过滤: ${records.length}条 → ${validRecords.length}条 (排除${invalidCount}条异常)`);
-			}
-			
-			return validRecords;
-		}
 
 		// ★★★ 新增：快速获取游戏总数（用 count 查询）★★★
 		async function getTotalGamesCount() {
 			if (!supabase) return 0;
 			
 			try {
-				// ★★★ 方案1：简单 count（快但不过滤）★★★
-				// 如果想要极快加载，用这个
 				const { count, error } = await supabase
 					.from('game_endings')
 					.select('*', { count: 'exact', head: true });
 				
 				if (error) throw error;
 				return count || 0;
-				
-				// ★★★ 方案2：获取后过滤（准确但稍慢）★★★
-				// 如果想要准确数字，用这个（注释掉上面的，启用下面的）
-				/*
-				const { data, error } = await supabase
-					.from('game_endings')
-					.select('total_score, total_months, paper_a, paper_b, paper_c, total_citations, ending_type');
-				
-				if (error) throw error;
-				
-				const validData = filterValidRecords(data || [], false);
-				return validData.length;
-				*/
 			} catch (e) {
 				console.error('获取游戏总数失败:', e);
 				return 0;
@@ -2237,15 +2070,56 @@
 					reversed: { endings: {}, achievements: {}, characterEndings: {} }
 				};
 
-				// ★★★ 获取结局数据（只获取过滤和统计所需字段）★★★
-				const { data: endingsData, error: endingsError } = await supabase
-					.from('game_endings')
-					.select('ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations');
+				// ★★★ 使用分页获取所有结局数据 ★★★
+				const endingsData = await fetchAllRows(
+					'game_endings', 
+					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c'
+				);
 				
-				if (endingsError) throw endingsError;
+				console.log(`📊 结局数据总数: ${endingsData.length}`);
 				
-				// ★★★ 过滤异常数据 ★★★
-				const validEndings = filterValidRecords(endingsData || [], false);
+				// ★★★ 简化过滤逻辑 ★★★
+				const validEndings = endingsData.filter(e => {
+					// 必要字段检查
+					if (!e.ending_type || !e.character || typeof e.is_reversed !== 'boolean') {
+						return false;
+					}
+					
+					const paperA = e.paper_a || 0;
+					const paperB = e.paper_b || 0;
+					const paperC = e.paper_c || 0;
+					const totalScore = e.total_score || 0;
+					const totalMonths = e.total_months || 0;
+					const totalPapers = paperA + paperB + paperC;
+					
+					// 1. 科研分计算是否正确
+					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
+					if (totalScore !== expectedScore) {
+						return false;
+					}
+					
+					// 判断是硕士还是博士结局
+					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+					const isPhd = phdEndings.includes(e.ending_type);
+					
+					// 2. 月份限制：硕士≤36，博士≤61
+					if (isPhd) {
+						if (totalMonths > 61) return false;
+					} else {
+						if (totalMonths > 36) return false;
+					}
+					
+					// 3. 论文数量：硕士<12，博士<22
+					if (isPhd) {
+						if (totalPapers >= 22) return false;
+					} else {
+						if (totalPapers >= 12) return false;
+					}
+					
+					return true;
+				});
+				
+				console.log(`📊 有效结局数据: ${validEndings.length}/${endingsData.length}`);
 				
 				// 统计结局
 				validEndings.forEach(e => {
@@ -2264,14 +2138,17 @@
 					}
 				});
 
-				// ★★★ 获取成就数据（成就不需要过滤）★★★
-				const { data: achievementsData, error: achievementsError } = await supabase
-					.from('game_achievements')
-					.select('achievement_name, is_reversed');
+				// ★★★ 使用分页获取所有成就数据 ★★★
+				const achievementsData = await fetchAllRows(
+					'game_achievements', 
+					'achievement_name, is_reversed'
+				);
 				
-				if (achievementsError) throw achievementsError;
+				console.log(`📊 成就数据总数: ${achievementsData.length}`);
 				
-				(achievementsData || []).forEach(a => {
+				achievementsData.forEach(a => {
+					if (!a.achievement_name || typeof a.is_reversed !== 'boolean') return;
+					
 					const mode = a.is_reversed ? 'reversed' : 'normal';
 					const name = a.achievement_name;
 					stats[mode].achievements[name] = (stats[mode].achievements[name] || 0) + 1;
@@ -2285,6 +2162,51 @@
 				console.error('获取统计失败:', e);
 				return statsCache || null;
 			}
+		}
+
+		function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
+			// 渲染结局统计
+			let endingHtml = '';
+			let totalEndings = 0;
+			
+			for (const count of Object.values(modeStats.endings)) {
+				totalEndings += count;
+			}
+			
+			for (const [type, name] of Object.entries(ENDING_NAMES)) {
+				const count = modeStats.endings[type] || 0;
+				if (count > 0) {
+					const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
+					endingHtml += `
+						<span class="stats-tag ending-tag" onclick="showSingleEndingRequirement('${type}')" style="cursor:pointer;">
+							${name} <strong>${count}</strong> (${percent}%)
+						</span>
+					`;
+				}
+			}
+			
+			if (!endingHtml) {
+				endingHtml = '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
+			}
+			endingContainer.innerHTML = endingHtml;
+			
+			// 渲染成就统计
+			let achievementHtml = '';
+			for (const ach of ALL_ACHIEVEMENTS) {
+				const count = modeStats.achievements[ach] || 0;
+				if (count > 0) {
+					achievementHtml += `
+						<span class="stats-tag" onclick="showSingleAchievementRequirement('${ach}')" style="cursor:pointer;">
+							${ach} <strong>${count}</strong>
+						</span>
+					`;
+				}
+			}
+			
+			if (!achievementHtml) {
+				achievementHtml = '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
+			}
+			achievementContainer.innerHTML = achievementHtml;
 		}
 
         function calculateCharacterDifficulty(stats) {
@@ -2387,7 +2309,7 @@
 			
 			panel.style.display = 'block';
 			
-			// ★★★ 第1步：并行快速加载访问统计和游戏总数 ★★★
+			// 第1步：快速加载总数
 			Promise.all([
 				getVisitStats(),
 				getTotalGamesCount()
@@ -2399,13 +2321,9 @@
 				if (pvEl) pvEl.textContent = visitStats.pv || 0;
 				if (uvEl) uvEl.textContent = visitStats.uv || 0;
 				if (gamesEl) gamesEl.textContent = totalGames;
-				
-				console.log('✅ 快速统计加载完成');
-			}).catch(e => {
-				console.warn('快速统计加载失败:', e);
 			});
 			
-			// ★★★ 第2步：异步加载详细统计（不阻塞页面）★★★
+			// 第2步：加载详细统计（显示进度）
 			setTimeout(async () => {
 				try {
 					if (!supabase) {
@@ -2413,72 +2331,42 @@
 						return;
 					}
 					
+					// ★★★ 显示加载进度 ★★★
+					loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载详细统计...';
+					
 					const stats = await getGlobalStats();
 					
 					if (!stats) {
-						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 详细统计加载失败</span>';
+						loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败，请刷新重试</span>';
 						return;
 					}
 					
-					// 计算角色难度
 					characterDifficultyData = calculateCharacterDifficulty(stats);
 					
-					// 显示统计内容
 					loading.style.display = 'none';
 					content.style.display = 'block';
 					
 					renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
 					renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
 					
-					// 渲染角色卡片
 					renderCharacterGrid();
 					
-					// 角色记录单独异步加载
+					// 角色记录异步加载
+					loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载角色记录...';
+					loading.style.display = 'block';
+					
 					getGlobalCharacterRecords().then(() => {
+						loading.style.display = 'none';
 						renderCharacterGrid();
-						console.log('✅ 角色全球记录已更新');
-					}).catch(e => {
-						console.warn('角色记录加载失败:', e);
+						console.log('✅ 全部加载完成');
 					});
 					
 				} catch (e) {
 					console.error('加载统计失败:', e);
-					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败</span>';
+					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 加载失败</span>';
 				}
 			}, 100);
 		}
-
-        function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
-            let totalEndings = 0;
-            for (const count of Object.values(modeStats.endings)) {
-                totalEndings += count;
-            }
-
-            let endingHtml = '';
-            for (const [type, name] of Object.entries(ENDING_NAMES)) {
-                const count = modeStats.endings[type] || 0;
-                const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
-                const opacity = count > 0 ? '1' : '0.4';
-                endingHtml += `
-                    <div class="stats-tag ending-tag" style="opacity:${opacity};">
-                        ${name} <strong>${count}</strong>
-                        <span style="color:var(--text-secondary);">(${percent}%)</span>
-                    </div>`;
-            }
-            endingContainer.innerHTML = endingHtml || '<span style="color:var(--text-secondary);font-size:0.75rem;">暂无数据</span>';
-
-            let achievementHtml = '';
-            for (const ach of ALL_ACHIEVEMENTS) {
-                const count = modeStats.achievements[ach] || 0;
-                const opacity = count > 0 ? '1' : '0.5';
-                achievementHtml += `
-                    <div class="stats-tag" style="opacity:${opacity};">
-                        ${ach} <strong>${count}</strong>
-                    </div>
-                `;
-            }
-            achievementContainer.innerHTML = achievementHtml;
-        }
 
 
         // ==================== 模式切换 ====================
@@ -2912,11 +2800,6 @@
             return true;
         }
 
-        function changeSanMax(delta) {
-            gameState.sanMax += delta;
-            updateAllUI();
-            return true;
-        }
 
         // ★★★ 关键修改：changeStats函数 ★★★
         function changeStats(changes) {
@@ -7330,7 +7213,7 @@
 					};
 				});
 				
-				// 计算今日起始时间
+				// 计算今日起始时间（北京时间0点）
 				const now = new Date();
 				const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
 				const year = beijingTime.getUTCFullYear();
@@ -7343,25 +7226,65 @@
 					todayStr = GAME_START_DATE;
 				}
 				
-				// ★★★ 获取历史数据（包含过滤所需字段）★★★
-				const { data: historyData, error: historyError } = await supabase
-					.from('game_endings')
-					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
-					.gte('created_at', GAME_START_DATE);
+				// ★★★ 使用分页获取历史数据 ★★★
+				const historyData = await fetchAllRowsWithFilter(
+					'game_endings',
+					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
+					{ column: 'created_at', operator: 'gte', value: GAME_START_DATE }
+				);
 				
-				if (historyError) throw historyError;
+				// ★★★ 使用分页获取今日数据 ★★★
+				const todayData = await fetchAllRowsWithFilter(
+					'game_endings',
+					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
+					{ column: 'created_at', operator: 'gte', value: todayStr }
+				);
 				
-				// ★★★ 获取今日数据 ★★★
-				const { data: todayData, error: todayError } = await supabase
-					.from('game_endings')
-					.select('character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type')
-					.gte('created_at', todayStr);
+				// ★★★ 简化过滤函数 ★★★
+				const filterValid = (row) => {
+					if (!row.character || typeof row.is_reversed !== 'boolean') {
+						return false;
+					}
+					
+					const paperA = row.paper_a || 0;
+					const paperB = row.paper_b || 0;
+					const paperC = row.paper_c || 0;
+					const totalScore = row.total_score || 0;
+					const totalMonths = row.total_months || 0;
+					const totalPapers = paperA + paperB + paperC;
+					
+					// 1. 科研分计算是否正确
+					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
+					if (totalScore !== expectedScore) {
+						return false;
+					}
+					
+					// 判断是硕士还是博士
+					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+					const isPhd = phdEndings.includes(row.ending_type);
+					
+					// 2. 月份限制
+					if (isPhd) {
+						if (totalMonths > 61) return false;
+					} else {
+						if (totalMonths > 36) return false;
+					}
+					
+					// 3. 论文数量限制
+					if (isPhd) {
+						if (totalPapers >= 22) return false;
+					} else {
+						if (totalPapers >= 12) return false;
+					}
+					
+					return true;
+				};
 				
-				if (todayError) throw todayError;
+				const validHistoryData = historyData.filter(filterValid);
+				const validTodayData = todayData.filter(filterValid);
 				
-				// ★★★ 过滤异常数据 ★★★
-				const validHistoryData = filterValidRecords(historyData || [], false);
-				const validTodayData = filterValidRecords(todayData || [], false);
+				console.log(`📊 历史有效数据: ${validHistoryData.length}/${historyData.length}`);
+				console.log(`📊 今日有效数据: ${validTodayData.length}/${todayData.length}`);
 				
 				// 处理历史数据
 				validHistoryData.forEach(row => {
@@ -7404,13 +7327,55 @@
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
 				
-				console.log('✅ 全球角色记录加载完成（已过滤异常数据）');
+				console.log('✅ 全球角色记录加载完成');
 				
 				return records;
 			} catch (e) {
 				console.error('获取全球角色记录失败:', e);
 				return globalCharacterRecords || null;
 			}
+		}
+
+		async function fetchAllRowsWithFilter(tableName, selectColumns, filter = null) {
+			if (!supabase) return [];
+			
+			let allData = [];
+			let from = 0;
+			const pageSize = 1000;
+			
+			while (true) {
+				let query = supabase
+					.from(tableName)
+					.select(selectColumns);
+				
+				// 应用筛选条件
+				if (filter) {
+					if (filter.operator === 'gte') {
+						query = query.gte(filter.column, filter.value);
+					} else if (filter.operator === 'lte') {
+						query = query.lte(filter.column, filter.value);
+					} else if (filter.operator === 'eq') {
+						query = query.eq(filter.column, filter.value);
+					}
+				}
+				
+				const { data, error } = await query.range(from, from + pageSize - 1);
+				
+				if (error) {
+					console.error(`获取 ${tableName} 数据失败:`, error);
+					throw error;
+				}
+				
+				if (!data || data.length === 0) break;
+				
+				allData = allData.concat(data);
+				
+				if (data.length < pageSize) break;
+				
+				from += pageSize;
+			}
+			
+			return allData;
 		}
 
         // ==================== 存档系统 ====================
