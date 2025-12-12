@@ -3073,11 +3073,31 @@
 			const trueNormalUnlocked = isTrueNormalUnlocked();
 			const unlockProgress = getTrueNormalUnlockProgress();
 			
+			// ★★★ 获取全球博士通关统计 ★★★
+			const globalPhdStats = {};
+			let trueNormalUnlockedCount = 0;  // 全部解锁的人数
+			
+			if (statsCache) {
+				const allCharIds = ['genius', 'social', 'rich', 'teacher-child', 'chosen', 'normal'];
+				allCharIds.forEach(charId => {
+					// 正位博士通关数
+					const normalData = statsCache.normal?.characterEndings?.[charId];
+					globalPhdStats[`${charId}_normal`] = normalData?.hard || 0;
+					
+					// 逆位博士通关数
+					const reversedData = statsCache.reversed?.characterEndings?.[charId];
+					globalPhdStats[`${charId}_reversed`] = reversedData?.hard || 0;
+				});
+				
+				// ★★★ 获取真-大多数的博士通关数（代表全部解锁的人数）★★★
+				const trueNormalData = statsCache.normal?.characterEndings?.['true-normal'];
+				trueNormalUnlockedCount = trueNormalData?.hard || 0;
+			}
+			
 			// ★★★ 修改：正位模式下始终显示解锁进度栏 ★★★
 			const progressContainer = document.getElementById('true-normal-progress');
 			if (progressContainer) {
 				if (!isReversedMode) {
-					// 根据是否解锁显示不同样式
 					const bgStyle = trueNormalUnlocked 
 						? 'background:linear-gradient(135deg,rgba(0,184,148,0.15),rgba(46,204,113,0.2));border:1px solid rgba(0,184,148,0.4);'
 						: 'background:linear-gradient(135deg,rgba(149,165,166,0.1),rgba(127,140,141,0.15));border:1px dashed rgba(149,165,166,0.4);';
@@ -3096,21 +3116,30 @@
 								<div style="font-size:0.8rem;${titleStyle}">
 									${statusText} ${unlockProgress.unlocked}/${unlockProgress.total}
 								</div>
+								<div style="font-size:0.7rem;color:var(--info-color);">
+									🌍 全球已解锁: <strong>${trueNormalUnlockedCount}</strong>
+								</div>
 							</div>
 							<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-								${unlockProgress.details.map(d => `
+								${unlockProgress.details.map(d => {
+									const normalCount = globalPhdStats[`${d.id}_normal`] || 0;
+									const reversedCount = globalPhdStats[`${d.id}_reversed`] || 0;
+									
+									return `
 									<div style="display:flex;flex-direction:column;gap:2px;padding:4px 8px;background:rgba(255,255,255,0.5);border-radius:6px;font-size:0.65rem;">
 										<span style="font-weight:600;color:var(--text-primary);">${d.name}</span>
 										<div style="display:flex;gap:4px;">
 											<span style="${d.normalUnlocked ? 'color:var(--success-color);' : 'color:var(--text-secondary);opacity:0.5;'}">
 												${d.normalUnlocked ? '✓' : '○'}正位
+												<span style="font-size:0.55rem;color:var(--info-color);">(${normalCount})</span>
 											</span>
 											<span style="${d.reversedUnlocked ? 'color:#9b59b6;' : 'color:var(--text-secondary);opacity:0.5;'}">
 												${d.reversedUnlocked ? '✓' : '○'}逆位
+												<span style="font-size:0.55rem;color:var(--info-color);">(${reversedCount})</span>
 											</span>
 										</div>
 									</div>
-								`).join('')}
+								`}).join('')}
 							</div>
 							<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:8px;text-align:center;">
 								💡 每个角色需要正位和逆位都达成博士毕业才能解锁真-大多数
