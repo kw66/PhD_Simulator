@@ -1278,7 +1278,7 @@
     <!-- 开始界面 -->
     <div id="start-screen">
         <div class="start-container">
-            <h1 class="game-title">🎓 研究生模拟器v2.2</h1>
+            <h1 class="game-title">🎓 研究生模拟器v2.1</h1>
             <p class="game-author">
                 作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
                 &nbsp;|&nbsp;
@@ -2423,14 +2423,14 @@
 			if (achievedEndingsHtml) {
 				endingHtml += `
 					<div style="margin-bottom:8px;">
-						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成结局</div>
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成结局（全球玩家达成率）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedEndingsHtml}</div>
 					</div>`;
 			}
 			if (unachievedEndingsHtml) {
 				endingHtml += `
 					<div>
-						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成结局</div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成结局（全球玩家达成率）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedEndingsHtml}</div>
 					</div>`;
 			}
@@ -2471,14 +2471,14 @@
 			if (achievedAchHtml) {
 				achievementHtml += `
 					<div style="margin-bottom:8px;">
-						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成成就</div>
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成成就（全球玩家达成率）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedAchHtml}</div>
 					</div>`;
 			}
 			if (unachievedAchHtml) {
 				achievementHtml += `
 					<div>
-						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成成就</div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成成就（全球玩家达成率）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedAchHtml}</div>
 					</div>`;
 			}
