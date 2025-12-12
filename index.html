@@ -1874,17 +1874,25 @@
         let visitStatsCacheTime = 0;
         const CACHE_DURATION = 10 * 60 * 1000;
 
-        function initStats() {
-            if (statsInitialized) return;
-            try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                statsInitialized = true;
-                console.log('✅ Supabase 统计系统初始化成功');
-                recordVisit();
-            } catch (e) {
-                console.error('❌ 统计系统初始化失败:', e);
-            }
-        }
+		function initStats() {
+			if (statsInitialized) return;
+			
+			try {
+				// ★★★ 检查 Supabase SDK 是否已加载 ★★★
+				if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+					console.warn('⚠️ Supabase SDK 未加载，统计功能不可用');
+					return;
+				}
+				
+				supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+				statsInitialized = true;
+				console.log('✅ Supabase 统计系统初始化成功');
+				recordVisit();
+			} catch (e) {
+				console.error('❌ 统计系统初始化失败:', e);
+				supabase = null;
+			}
+		}
 
         async function recordVisit() {
             if (!supabase) return;
@@ -1934,19 +1942,22 @@
         }
 
 		function validateGameData() {
+			const errors = [];  // ★★★ 修复：添加这行 ★★★
+			
 			// 检查科研分和发表论文的关系
 			const expectedScore = gameState.paperA * 4 + gameState.paperB * 2 + gameState.paperC * 1;
 			if (gameState.totalScore !== expectedScore) {
 				console.warn('科研分与论文数不匹配');
-				return false;
+				errors.push('科研分不匹配');
 			}
 			
-			// 检查论文总数是否合理（大部分模式最多20篇）
+			// 检查论文总数是否合理
 			const totalPapers = gameState.paperA + gameState.paperB + gameState.paperC;
 			if (totalPapers > 22) {
 				console.warn('论文数量超出合理范围');
-				return false;
+				errors.push('论文数量异常');
 			}
+			
 			// 论文计数与详情匹配
 			const actualA = gameState.publishedPapers.filter(p => p.grade === 'A').length;
 			const actualB = gameState.publishedPapers.filter(p => p.grade === 'B').length;
@@ -1957,23 +1968,28 @@
 			
 			// 总引用与单篇引用之和匹配
 			const sumCitations = gameState.publishedPapers.reduce((sum, p) => sum + (p.citations || 0), 0);
-			if (Math.abs(gameState.totalCitations - sumCitations) > 10) { // 允许小误差
+			if (Math.abs(gameState.totalCitations - sumCitations) > 10) {
 				errors.push('总引用与单篇之和不符');
 			}
+			
 			// 检查月份是否合理
 			const maxMonths = gameState.degree === 'master' ? 36 : 60;
-			if (gameState.totalMonths > maxMonths + 12) {  // 允许一定的延毕
+			if (gameState.totalMonths > maxMonths + 12) {
 				console.warn('游戏时长超出合理范围');
-				return false;
+				errors.push('游戏时长异常');
 			}
 			
 			// 检查属性值是否在合理范围
 			if (gameState.research > 20 || gameState.social > 20 || gameState.favor > 20) {
 				console.warn('属性值超出上限');
-				return false;
+				errors.push('属性值异常');
 			}
 			
-			return true;
+			if (errors.length > 0) {
+				console.warn('数据验证失败:', errors);
+			}
+			
+			return errors.length === 0;
 		}
 
 		async function recordEnding(endingType, endingTitle) {
@@ -2100,6 +2116,7 @@
 			const totalMonths = record.total_months || 0;
 			const totalCitations = record.total_citations || 0;
 			const totalPapers = paperA + paperB + paperC;
+			const endingType = record.ending_type || '';  // ★★★ 修复：添加这行 ★★★
 			
 			// R1: 科研分与论文匹配
 			const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
@@ -2107,21 +2124,20 @@
 				errors.push(`R1:科研分不匹配(${totalScore}≠${expectedScore})`);
 			}
 			
-			// R2: 论文数不超过月数
+			// R2: 论文数不超过合理范围
 			if (totalPapers > 22) {
-				errors.push(`R2:论文超产(${totalPapers}>${totalMonths})`);
+				errors.push(`R2:论文超产(${totalPapers}>22)`);
 			}
 			
 			// R3: 无论文则无引用
 			if (totalPapers === 0 && totalCitations > 0) {
 				errors.push(`R3:无论文有引用(${totalCitations})`);
-			}			
+			}
 
-			// 硕士3年 = 36个月
+			// R5: 时间范围检查
 			if (['master', 'excellent_master'].includes(endingType) && totalMonths > 36) {
 				errors.push('R5:硕士时间过长');
 			}
-			// 博士5年 = 60个月
 			if (['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'].includes(endingType)) {
 				if (totalMonths > 60) {
 					errors.push('R5:博士时间过长');
@@ -2145,17 +2161,25 @@
 			let invalidCount = 0;
 			
 			records.forEach(record => {
-				const result = validateRecord(record);
-				if (result.valid) {
-					validRecords.push(record);
-				} else {
+				try {
+					const result = validateRecord(record);
+					if (result.valid) {
+						validRecords.push(record);
+					} else {
+						invalidCount++;
+						if (logInvalid) {
+							console.warn('⚠️ 无效记录:', {
+								id: record.id,
+								character: record.character,
+								errors: result.errors
+							});
+						}
+					}
+				} catch (e) {
+					// ★★★ 新增：捕获单条记录验证错误，不影响其他记录 ★★★
 					invalidCount++;
 					if (logInvalid) {
-						console.warn('⚠️ 无效记录:', {
-							id: record.id,
-							character: record.character,
-							errors: result.errors
-						});
+						console.warn('⚠️ 记录验证出错:', e);
 					}
 				}
 			});
@@ -2326,17 +2350,26 @@
 			
 			panel.style.display = 'block';
 			
-			// ★★★ 先快速显示访问统计 ★★★
+			// 先快速显示访问统计
 			getVisitStats().then(visitStats => {
 				const pvEl = document.getElementById('busuanzi_value_site_pv');
 				const uvEl = document.getElementById('busuanzi_value_site_uv');
 				if (pvEl) pvEl.textContent = visitStats.pv || 0;
 				if (uvEl) uvEl.textContent = visitStats.uv || 0;
+			}).catch(e => {
+				console.warn('访问统计加载失败:', e);
 			});
 			
-			// ★★★ 异步加载全球统计，不阻塞页面 ★★★
+			// 异步加载全球统计
 			setTimeout(async () => {
 				try {
+					// ★★★ 检查 Supabase 是否可用 ★★★
+					if (!supabase) {
+						loading.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">📊 统计服务暂不可用</span>';
+						document.getElementById('total-games-value').textContent = '-';
+						return;
+					}
+					
 					const stats = await getGlobalStats();
 					
 					if (!stats) {
@@ -2365,20 +2398,22 @@
 					renderModeStats('normal', stats.normal, document.getElementById('normal-ending-stats'), document.getElementById('normal-achievement-stats'));
 					renderModeStats('reversed', stats.reversed, document.getElementById('reversed-ending-stats'), document.getElementById('reversed-achievement-stats'));
 					
-					// ★★★ 先渲染角色卡片（用旧数据或空数据）★★★
+					// 先渲染角色卡片
 					renderCharacterGrid();
 					
-					// ★★★ 角色记录单独异步加载，加载完后再更新 ★★★
+					// 角色记录单独异步加载
 					getGlobalCharacterRecords().then(() => {
 						renderCharacterGrid();
 						console.log('✅ 角色全球记录已更新');
+					}).catch(e => {
+						console.warn('角色记录加载失败:', e);
 					});
 					
 				} catch (e) {
 					console.error('加载统计失败:', e);
-					loading.innerHTML = '<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败</span>';
+					loading.innerHTML = `<span style="color:var(--warning-color);font-size:0.8rem;">⚠️ 统计加载失败: ${e.message || '未知错误'}</span>`;
 				}
-			}, 50);  // 延迟50ms，让页面先渲染
+			}, 50);
 		}
 
         function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
@@ -5096,10 +5131,10 @@
 				}
 			} else if (grade === 'B') {
 				switch (reviewer.type) {
-					case 'kind': thresholds = { reject: 20, borderline: 40 }; break;
+					case 'kind': thresholds = { reject: 25, borderline: 40 }; break;
 					case 'normal': thresholds = { reject: 30, borderline: 50 }; break;
 					case 'expert': thresholds = { reject: 30, borderline: 50 }; break;
-					case 'gpt': thresholds = { reject: 20, borderline: 60 }; break;
+					case 'gpt': thresholds = { reject: 25, borderline: 60 }; break;
 					case 'hostile': thresholds = { reject: 40, borderline: 60 }; break;
 					case 'questions': thresholds = { reject: 40, borderline: 60 }; break;
 				}
@@ -5109,8 +5144,8 @@
 					case 'normal': thresholds = { reject: 15, borderline: 30 }; break;
 					case 'expert': thresholds = { reject: 15, borderline: 30 }; break;
 					case 'gpt': thresholds = { reject: 15, borderline: 40 }; break;
-					case 'hostile': thresholds = { reject: 20, borderline: 40 }; break;  // reject降为20
-					case 'questions': thresholds = { reject: 20, borderline: 40 }; break; // reject降为20
+					case 'hostile': thresholds = { reject: 25, borderline: 40 }; break;
+					case 'questions': thresholds = { reject: 25, borderline: 40 }; break; 
 				}
 			}
 
@@ -5160,49 +5195,64 @@
             return rand([...positive, ...negative, ...neutral]);
         }
 
-        function showReviewResultModal(paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo) {
-            const improved = afterScores.total > beforeScores.total;
-            
-            if (afterScores.total >= 125) {
-                gameState.achievementConditions = gameState.achievementConditions || {};
-                gameState.achievementConditions.highScorePaper = true;
-            }
-            
-            const allImproved = results.every(r => r.improvement > 0);
-            if (allImproved) {
-                gameState.achievementConditions = gameState.achievementConditions || {};
-                gameState.achievementConditions.unanimousImprovement = true;
-            }
-            
-            const isBadReviewer = r => r.reviewer.type === 'hostile' || r.reviewer.type === 'questions';
-            if (results.every(isBadReviewer)) {
-                gameState.achievementConditions = gameState.achievementConditions || {};
-                gameState.achievementConditions.allBadReviewers = true;
-            }
-            
-            if (accepted) {
-                gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
-                gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
-            }
-            
-            const improvements = results.filter(r => r.improvement > 0).map(r => ({
-                reviewer: r.reviewer.name,
-                type: r.improvementType,
-                typeName: r.improvementType === 'idea' ? 'Idea' : r.improvementType === 'exp' ? '实验' : '写作',
-                value: r.improvement
-            }));
-            
-			const firstResult = results[0];  // 取第一个审稿人的有效分（都一样）
+		function showReviewResultModal(paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo) {
+			
+			// 成就检测
+			if (afterScores.total >= 125) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.highScorePaper = true;
+			}
+			
+			const allImproved = results.every(r => r.improvement > 0);
+			if (allImproved) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.unanimousImprovement = true;
+			}
+			
+			const isBadReviewer = r => r.reviewer.type === 'hostile' || r.reviewer.type === 'questions';
+			if (results.every(isBadReviewer)) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.allBadReviewers = true;
+			}
+			
+			if (accepted) {
+				gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
+				gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
+			}
+			
+			// ★★★ 收集所有审稿人的改进 ★★★
+			const improvements = results.filter(r => r.improvement > 0).map(r => ({
+				reviewer: r.reviewer.name,
+				type: r.improvementType,
+				typeName: r.improvementType === 'idea' ? 'Idea' : r.improvementType === 'exp' ? '实验' : '写作',
+				value: r.improvement
+			}));
+			
+			// ★★★ 计算总改进值 ★★★
+			const totalImprovement = improvements.reduce((sum, imp) => sum + imp.value, 0);
+			
+			// ★★★ 审稿期间的衰减值 ★★★
+			const ideaDecay = extraInfo.ideaDecay || 4;
+			const expDecay = extraInfo.expDecay || 4;
+			const totalDecay = ideaDecay + expDecay;
+			
+			// ★★★ 判断是否有分数变化需要显示 ★★★
+			const hasScoreChanges = totalImprovement > 0 || totalDecay > 0;
+			
+			const firstResult = results[0];
 			const hasBalancePenalty = firstResult.balancePenalty > 0;
 
+			// ==================== 构建HTML ====================
+			
 			let html = `<div style="margin-bottom:12px;font-size:0.9rem;">
 				<strong>论文：</strong>${paper.title.substring(0, 30)}${paper.title.length > 30 ? '...' : ''}<br>
 				<strong>投稿：</strong>${grade}类会议 | <strong>投稿时总分：</strong>${paper.submittedScore}
 				${hasBalancePenalty ? `<br><span style="color:var(--warning-color);font-size:0.85rem;">⚠️ 论文不均衡，有效分：${firstResult.effectiveScore}（-${firstResult.balancePenalty}）</span>` : ''}
 			</div>`;
-            
-            results.forEach(r => {
-                const color = r.decision === 'Accept' ? 'var(--success-color)' : r.decision === 'Reject' ? 'var(--danger-color)' : 'var(--warning-color)';
+			
+			// ==================== 审稿人评审详情 ====================
+			results.forEach(r => {
+				const color = r.decision === 'Accept' ? 'var(--success-color)' : r.decision === 'Reject' ? 'var(--danger-color)' : 'var(--warning-color)';
 				html += `<div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;font-size:0.85rem;">
 					<div style="display:flex;justify-content:space-between;margin-bottom:4px;">
 						<strong>${r.reviewer.name}</strong>
@@ -5213,60 +5263,99 @@
 					</div>
 					<div style="font-size:0.8rem;color:var(--text-secondary);">"${r.comment}"</div>
 				</div>`;
-            });
-            html += '</div>';
+			});
 
-            if (improved) {
-                html += `<div style="padding:10px;background:rgba(0,184,148,0.1);border-radius:8px;margin-bottom:12px;font-size:0.85rem;">
-                    <div style="font-weight:600;color:var(--success-color);margin-bottom:8px;">📈 审稿意见改进了论文质量</div>`;
-                
-                if (improvements.length > 0) {
-                    html += `<div style="margin-bottom:8px;font-size:0.8rem;">`;
-                    improvements.forEach(imp => {
-                        html += `<div style="margin-bottom:3px;">• <strong>${imp.reviewer}</strong>：${imp.typeName}分 +${imp.value}</div>`;
-                    });
-                    html += `</div>`;
-                }
-                
-                html += `<div style="display:flex;justify-content:space-around;text-align:center;padding:8px;background:white;border-radius:6px;">
-                        <div>
-                            <div style="color:var(--text-secondary);font-size:0.7rem;">Idea分</div>
-                            <div style="font-size:0.9rem;">${beforeScores.idea}${beforeScores.idea !== afterScores.idea ? ` → <strong style="color:var(--success-color);">${afterScores.idea}</strong>` : ''}</div>
-                        </div>
-                        <div>
-                            <div style="color:var(--text-secondary);font-size:0.7rem;">实验分</div>
-                            <div style="font-size:0.9rem;">${beforeScores.exp}${beforeScores.exp !== afterScores.exp ? ` → <strong style="color:var(--success-color);">${afterScores.exp}</strong>` : ''}</div>
-                        </div>
-                        <div>
-                            <div style="color:var(--text-secondary);font-size:0.7rem;">写作分</div>
-                            <div style="font-size:0.9rem;">${beforeScores.write}${beforeScores.write !== afterScores.write ? ` → <strong style="color:var(--success-color);">${afterScores.write}</strong>` : ''}</div>
-                        </div>
-                    </div>
-                    <div style="text-align:center;margin-top:8px;font-weight:600;">
-                        总分：${beforeScores.total} → <span style="color:var(--success-color);">${afterScores.total}</span> 
-                        <span style="color:var(--success-color);">(+${afterScores.total - beforeScores.total})</span>
-                    </div>
-                </div>`;
-            }
+			// ==================== ★★★ 分数变化说明（无论中稿拒稿都显示）★★★ ====================
+			if (hasScoreChanges) {
+				const netChange = afterScores.total - beforeScores.total;
+				const netColor = netChange > 0 ? 'var(--success-color)' : netChange < 0 ? 'var(--danger-color)' : 'var(--text-secondary)';
+				const netSign = netChange > 0 ? '+' : '';
+				
+				html += `<div style="padding:12px;background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(116,185,255,0.1));border-radius:8px;margin-bottom:12px;font-size:0.85rem;border:1px solid var(--border-color);">
+					<div style="font-weight:600;color:var(--primary-color);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+						<i class="fas fa-chart-line"></i> 审稿期间分数变化
+					</div>`;
+				
+				// ★★★ 时间衰减说明 ★★★
+				html += `<div style="margin-bottom:8px;padding:8px;background:rgba(225,112,85,0.1);border-radius:6px;border-left:3px solid var(--danger-color);">
+					<div style="font-size:0.8rem;color:var(--danger-color);font-weight:500;margin-bottom:4px;">
+						⏳ 时间流逝衰减（4个月审稿期）
+					</div>
+					<div style="font-size:0.75rem;color:var(--text-secondary);">
+						• Idea分 -${ideaDecay}（每月-1）<br>
+						• 实验分 -${expDecay}（每月-1）<br>
+						• 写作分不衰减
+					</div>
+				</div>`;
+				
+				// ★★★ 审稿人改进说明 ★★★
+				if (improvements.length > 0) {
+					html += `<div style="margin-bottom:8px;padding:8px;background:rgba(0,184,148,0.1);border-radius:6px;border-left:3px solid var(--success-color);">
+						<div style="font-size:0.8rem;color:var(--success-color);font-weight:500;margin-bottom:4px;">
+							💡 审稿人建设性意见
+						</div>
+						<div style="font-size:0.75rem;color:var(--text-secondary);">`;
+					improvements.forEach(imp => {
+						html += `• <strong>${imp.reviewer}</strong>：${imp.typeName}分 +${imp.value}<br>`;
+					});
+					html += `</div></div>`;
+				} else {
+					html += `<div style="margin-bottom:8px;padding:8px;background:rgba(149,165,166,0.1);border-radius:6px;border-left:3px solid var(--text-secondary);">
+						<div style="font-size:0.8rem;color:var(--text-secondary);">
+							💭 审稿人未提供建设性改进意见
+						</div>
+					</div>`;
+				}
+				
+				// ★★★ 分数汇总表格 ★★★
+				html += `<div style="background:white;border-radius:6px;padding:10px;margin-top:8px;">
+					<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-size:0.75rem;">
+						<div>
+							<div style="color:var(--text-secondary);">Idea</div>
+							<div>${beforeScores.idea} → <span style="color:${afterScores.idea >= beforeScores.idea ? 'var(--success-color)' : 'var(--danger-color)'};">${afterScores.idea}</span></div>
+						</div>
+						<div>
+							<div style="color:var(--text-secondary);">实验</div>
+							<div>${beforeScores.exp} → <span style="color:${afterScores.exp >= beforeScores.exp ? 'var(--success-color)' : 'var(--danger-color)'};">${afterScores.exp}</span></div>
+						</div>
+						<div>
+							<div style="color:var(--text-secondary);">写作</div>
+							<div>${beforeScores.write} → <span style="color:${afterScores.write >= beforeScores.write ? 'var(--success-color)' : 'var(--text-secondary)'};">${afterScores.write}</span></div>
+						</div>
+						<div>
+							<div style="color:var(--text-secondary);font-weight:600;">总分</div>
+							<div style="font-weight:600;">${beforeScores.total} → <span style="color:${netColor};">${afterScores.total}</span></div>
+						</div>
+					</div>
+					<div style="text-align:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border-color);font-size:0.8rem;">
+						净变化：<span style="color:${netColor};font-weight:600;">${netSign}${netChange}</span>
+						<span style="color:var(--text-secondary);font-size:0.7rem;">（衰减-${totalDecay}，改进+${totalImprovement}）</span>
+					</div>
+				</div>`;
+				
+				html += `</div>`;
+			}
 
-            if (accepted) {
-                const colors = { 'Poster': '#74b9ff', 'Oral': '#fdcb6e', 'Best Paper': '#fd79a8' };
-                html += `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,${colors[acceptType]}33,${colors[acceptType]}66);border-radius:10px;">
-                    <div style="font-size:1.8rem;margin-bottom:8px;">🎉</div>
-                    <div style="font-size:1.1rem;font-weight:700;color:${colors[acceptType]};">恭喜！论文被${grade}类会议接收为 ${acceptType}！</div>
-                    <div style="margin-top:6px;font-size:0.85rem;">总审稿分: ${totalScore}</div>
-                </div>`;
-            } else {
-                html += `<div style="text-align:center;padding:12px;background:rgba(225,112,85,0.15);border-radius:10px;">
-                    <div style="font-size:1.8rem;margin-bottom:8px;">😢</div>
-                    <div style="font-size:1.1rem;font-weight:700;color:var(--danger-color);">很遗憾，论文被${grade}类会议拒稿了</div>
-                    <div style="margin-top:6px;font-size:0.85rem;">总审稿分: ${totalScore}（需要≥0才能接收）</div>
-                    <div style="margin-top:6px;font-size:0.8rem;color:var(--text-secondary);">
-                        ${improved ? '论文已根据审稿意见改进，' : ''}可继续修改后重投
-                    </div>
-                </div>`;
-            }
+			// ==================== 最终结果 ====================
+			if (accepted) {
+				const colors = { 'Poster': '#74b9ff', 'Oral': '#fdcb6e', 'Best Paper': '#fd79a8' };
+				html += `<div style="text-align:center;padding:12px;background:linear-gradient(135deg,${colors[acceptType]}33,${colors[acceptType]}66);border-radius:10px;">
+					<div style="font-size:1.8rem;margin-bottom:8px;">🎉</div>
+					<div style="font-size:1.1rem;font-weight:700;color:${colors[acceptType]};">恭喜！论文被${grade}类会议接收为 ${acceptType}！</div>
+					<div style="margin-top:6px;font-size:0.85rem;">总审稿分: ${totalReviewScore}</div>
+				</div>`;
+			} else {
+				html += `<div style="text-align:center;padding:12px;background:rgba(225,112,85,0.15);border-radius:10px;">
+					<div style="font-size:1.8rem;margin-bottom:8px;">😢</div>
+					<div style="font-size:1.1rem;font-weight:700;color:var(--danger-color);">很遗憾，论文被${grade}类会议拒稿了</div>
+					<div style="margin-top:6px;font-size:0.85rem;">总审稿分: ${totalReviewScore}（需要≥0才能接收）</div>
+					<div style="margin-top:6px;font-size:0.8rem;color:var(--text-secondary);">
+						${totalImprovement > 0 ? '论文已根据审稿意见改进，' : ''}可继续修改后重投
+					</div>
+				</div>`;
+			}
 
+			// ==================== 弹窗按钮 ====================
 			showModal('📝 审稿结果', html, [
 				{ text: '确定', class: 'btn-primary', action: () => {
 					if (accepted) {
@@ -5279,16 +5368,15 @@
 							gameState.achievementConditions.tripleRejected = true;
 						}
 						
-						// ★★★ 拒稿时：每有一个恶意审稿人SAN-1 ★★★
+						// 拒稿时：每有一个恶意审稿人SAN-1
 						if (extraInfo.badReviewerCount > 0) {
 							const sanLoss = extraInfo.badReviewerCount;
 							changeSan(-sanLoss);
 							addLog('审稿打击', `${extraInfo.badReviewerCount}个恶意审稿人`, `SAN-${sanLoss}`);
 						}
 						
-						// ★★★ 拒稿时：有资深大牛则获得永久buff ★★★
+						// 拒稿时：有资深大牛则获得永久buff
 						if (extraInfo.hasExpert) {
-							// 检查是否已有此buff
 							const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name === '指点迷津：每次想idea分数+1');
 							if (!existingBuff) {
 								gameState.buffs.permanent.push({ 
@@ -5301,15 +5389,13 @@
 							}
 						}
 						
-						// ★★★ 重置连续中稿计数 ★★★
+						// 重置连续中稿计数
 						gameState.consecutiveAccepts = 0;
 						
 						paper.reviewing = false;
 						paper.submittedGrade = null;
 						paper.submittedScore = null;
 						paper.reviewMonths = 0;
-						
-						// ... 原有日志代码 ...
 					}
 					closeModal();
 					renderPaperSlots();
@@ -5748,13 +5834,12 @@
 				let itemDesc = item.desc;
 				if (item.id === 'coffee') {
 					const count = gameState.coffeeBoughtCount || 0;
-					const currentBonus = 3 + Math.floor(count / 15);  // 每15杯+1
+					const currentBonus = 3 + Math.floor(count / 15);
+					const nextMilestone = (Math.floor(count / 15) + 1) * 15;
+					const nextBonus = currentBonus + 1;
+					
 					itemDesc = `SAN值+${currentBonus}`;
-					if (count < 15) {
-						itemDesc += ` (${count}/15杯后+4)`;
-					} else if (count < 30) {
-						itemDesc += ` (${count}/30杯后+5)`;
-					}
+					itemDesc += ` (${count}/${nextMilestone}杯时+${nextBonus})`;
 				}
 				
 				html += `<div class="shop-item ${!canBuy ? 'disabled' : ''}">
@@ -7071,6 +7156,36 @@
             }]);
         }
 		
+		function showAchievementRequirements() {
+			let html = '<div style="max-height:60vh;overflow-y:auto;">';
+			
+			for (const [name, req] of Object.entries(ACHIEVEMENT_REQUIREMENTS)) {
+				const achieved = collectAchievements(null).includes(name);
+				html += `
+					<div style="padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;${achieved ? 'border-left:3px solid var(--success-color);' : ''}">
+						<div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">
+							${name} ${achieved ? '<span style="color:var(--success-color);">✓</span>' : ''}
+						</div>
+						<div style="font-size:0.75rem;color:var(--text-secondary);">${req}</div>
+					</div>
+				`;
+			}
+			html += '</div>';
+			
+			showModal('🏆 成就达成要求', html, [{ 
+				text: currentEndingData ? '返回结局' : '关闭', 
+				class: 'btn-primary', 
+				action: () => {
+					closeModal();
+					if (currentEndingData) {
+						setTimeout(() => {
+							showEndingModal(currentEndingData.title, currentEndingData.desc, 
+										   currentEndingData.emoji, currentEndingData.endingType);
+						}, 100);
+					}
+				}
+			}]);
+		}
         // ==================== 重开确认 ====================
         function confirmRestart() {
             if (gameState.totalMonths > 0) {
