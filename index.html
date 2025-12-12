@@ -7526,14 +7526,14 @@
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">📝</div>
 					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">第${gameState.year}年学年总结</div>
-					<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:5px;">回顾过去一年，你主要在做什么？</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:5px;">除了科研，你今年都干了什么？</div>
 				</div>
-				<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">选择一项作为你今年的主要成长方向：</p>`,
+				<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">选择一项作为你今年的主要活动：</p>`,
 				[
-					{ text: '🔬 认真科研', class: 'btn-primary', action: () => {
-						addLog('学年总结', '今年主要在认真科研', '科研能力+1');
+					{ text: '😴 都在睡大觉', class: 'btn-info', action: () => {
+						addLog('学年总结', '今年除了科研都在睡大觉', 'SAN+5');
 						closeModal();
-						changeResearch(1);
+						changeSan(5);
 					}},
 					{ text: '🎉 和同学玩耍', class: 'btn-success', action: () => {
 						addLog('学年总结', '今年主要在和同学玩耍', '社交能力+1');
@@ -8174,27 +8174,18 @@
                     closeModal();
                 }},
                 { text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
-                    const baseCost = 5;
-                    const actualCost = Math.abs(getActualSanChange(-baseCost));
-                    
-                    if (gameState.san < actualCost) {
-                        const tipText = actualCost !== baseCost 
-                            ? `<p>SAN值不足！基础消耗${baseCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualCost}点SAN值。</p>` 
-                            : `<p>SAN值不足！需要至少${baseCost}点SAN值。</p>`;
-                        showModal('❌ 操作失败', tipText, 
-                            [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                        return;
-                    }
-                    
-                    let sanText = `SAN-${actualCost}`;
-                    if (actualCost !== baseCost) {
-                        sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-                    }
-                    addLog('随机事件', '指导师弟师妹 - 合作一个idea', `${sanText}，社交+1`);
-                    closeModal();
-                    changeSan(-baseCost);
-                    changeSocial(1);
-                }},
+					const baseCost = 5;
+					const actualCost = Math.abs(getActualSanChange(-baseCost));
+					
+					let sanText = `SAN-${actualCost}`;
+					if (actualCost !== baseCost) {
+						sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+					}
+					addLog('随机事件', '指导师弟师妹 - 合作一个idea', `${sanText}，社交+1`);
+					closeModal();
+					changeSocial(1);
+					changeSan(-baseCost);  // 直接扣除，如果变负会自动触发burnout结局
+				}},
                 { text: '展开长期合作', class: 'btn-success', action: () => {
                     gameState.buffs.permanent.push({
                         type: 'mentorship',
@@ -8212,7 +8203,7 @@
 		function showRandomEvent15() {
 			showModal('🎮 随机事件', '<p>学了一天你打算玩游戏放松一下。</p>', [
 				{ text: '🌲 玩泰拉瑞亚', class: 'btn-success', action: () => {
-					const baseSanCost = 4;
+					const baseSanCost = 5;  // ★ 改为5
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					const sanText = actualSanCost !== baseSanCost 
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
@@ -8223,7 +8214,7 @@
 					changeSan(-baseSanCost);
 				}},
 				{ text: '🗼 玩魔塔50层', class: 'btn-primary', action: () => {
-					const baseSanCost = 5;
+					const baseSanCost = 7;  // ★ 改为7
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					const sanText = actualSanCost !== baseSanCost 
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
