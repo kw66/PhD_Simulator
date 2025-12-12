@@ -1526,134 +1526,164 @@
     <script>
 	
         // ==================== 游戏数据 ====================
-        const characters = [
-            { 
-                id: 'normal', 
-                name: '大多数', 
-                icon: '👤', 
-                awakenIcon: '🔥',
-                desc: '芸芸众生中的普通一员', 
-                bonus: '无特殊能力', 
-                awakenName: '我命由我不由天',
-                awakenDesc: '转博时所有属性×2', 
-                stats: { research: 0, social: 0, favor: 0, gold: 0 },
-                reversed: {
-                    name: '怠惰之《大多数》',
-                    icon: '😴',
-                    awakenIcon: '💀',
-                    desc: '懒惰是原罪，也是护盾',
-                    bonus: 'SAN减少翻倍，初始属性全5，每月SAN+3',
-                    awakenName: '极致怠惰',
-                    awakenDesc: '转博时属性翻倍。SAN减少3倍，每月SAN+5',
-                    stats: { research: 4, social: 4, favor: 4, gold: 4 }
-                }
-            },
-            { 
-                id: 'genius', 
-                name: '院士转世', 
-                icon: '🔬', 
-                awakenIcon: '🧬',
-                desc: '天生就是做科研的料', 
-                bonus: '科研能力初始+5', 
-                awakenName: '学术天赋觉醒',
-                awakenDesc: '转博时每有1篇A类论文，科研+2',
-                stats: { research: 5 },
-                reversed: {
-                    name: '愚钝之《院士转世》',
-                    icon: '🤡',
-                    awakenIcon: '🎭',
-                    desc: '科研是什么？能吃吗？',
-                    bonus: '科研固定0，全论文槽，科研提升→SAN+4,金+4',
-                    awakenName: '大智若愚',
-                    awakenDesc: '科研提升→SAN+6,金+6,好感+2,社交+2',
-                    stats: {}
-                }
-            },
-            { 
-                id: 'social', 
-                name: '社交达人', 
-                icon: '🤝', 
-                awakenIcon: '🌐',
-                desc: '八面玲珑的社交高手', 
-                bonus: '社交能力初始+5', 
-                awakenName: '人脉网络激活',
-                awakenDesc: '转博时根据社交能力改变审稿人分布',
-                stats: { social: 5 },
-                reversed: {
-                    name: '嫉妒之《社交达人》',
-                    icon: '🐍',
-                    awakenIcon: '👁️',
-                    desc: '见不得别人好，也见不得自己差',
-                    bonus: '社交初始5，社交-1→科研+1,好感+1 | 社交+1→SAN+1,金+1',
-                    awakenName: '嫉妒重置',
-                    awakenDesc: '转博时社交能力变为5',
-                    stats: { social: 4 }
-                }
-            },
-            { 
-                id: 'rich', 
-                name: '富可敌国', 
-                icon: '💰', 
-                awakenIcon: '💎',
-                desc: '家境殷实无忧无虑', 
-                bonus: '金币值初始+5', 
-                awakenName: '财富倍增术',
-                awakenDesc: '转博时金币×3',  // ★★★ 修改：正位觉醒改为×3 ★★★
-                stats: { gold: 5 },
-                reversed: {
-                    name: '贪求之《富可敌国》',
-                    icon: '🏴‍☠️',
-                    awakenIcon: '👑',
-                    desc: '除了钱一无所有',
-                    bonus: '每月SAN/科研/社交/好感重置为0，每月金钱+3',  // ★★★ 修改：新效果描述 ★★★
-                    awakenName: '金钱的力量',
-                    awakenDesc: '半年重置一次，每花费6金币属性各+1',  // ★★★ 修改：新觉醒描述 ★★★
-                    stats: {}  // ★★★ 修改：给一些初始金币 ★★★
-                }
-            },
-            { 
-                id: 'teacher-child', 
-                name: '导师子女', 
-                icon: '👨‍👧', 
-                awakenIcon: '👑',
-                desc: '近水楼台先得月', 
-                bonus: '导师好感度初始+5', 
-                awakenName: '血脉共鸣',
-                awakenDesc: '转博时好感度超12的部分转化为科研和金币',
-                stats: { favor: 5 },
-                reversed: {
-                    name: '玩世之《导师子女》',
-                    icon: '🎪',
-                    awakenIcon: '🃏',
-                    desc: '叛逆是我的代名词',
-                    bonus: '好感初始16，好感↓翻倍，每月好感-1，好感-1→SAN+1,金+1',
-                    awakenName: '浪子回头',
-                    awakenDesc: '转博时好感度倒置为20-好感度',
-                    stats: { favor: 15 }
-                }
-            },
-            { 
-                id: 'chosen', 
-                name: '天选之人', 
-                icon: '⭐', 
-                awakenIcon: '✨',
-                desc: '命运的宠儿全面发展', 
-                bonus: '科研+2 社交+2 好感+2 金币+2', 
-                awakenName: '查缺补漏',
-                awakenDesc: '转博时补齐所有短板',
-                stats: { research: 2, social: 2, favor: 2, gold: 2 },
-                reversed: {
-                    name: '空想之《天选之人》',
-                    icon: '🌀',
-                    awakenIcon: '🎲',
-                    desc: '命运是一场轮盘赌',
-                    bonus: '每月:科研/社交/好感随机交换，SAN/金随机交换',
-                    awakenName: '命运轮盘',
-                    awakenDesc: '每月:科研/社交/好感/SAN/金全部随机交换',
-                    stats: {}
-                }
-            }
-        ];
+		 const characters = [
+		{ 
+			id: 'normal', 
+			name: '大多数', 
+			icon: '👤', 
+			awakenIcon: '🔥',
+			desc: '芸芸众生中的普通一员', 
+			bonus: '无特殊能力', 
+			awakenName: '我命由我不由天',
+			awakenDesc: '转博时所有属性×2', 
+			// 隐藏觉醒
+			hiddenAwakenName: '勤能补拙',
+			hiddenAwakenIcon: '💪',
+			hiddenAwakenDesc: '每个月行动次数+1（看论文、写论文、想idea、打工、做实验可以做2次）',
+			hiddenAwakenCondition: (gs) => gs.research <= 3 && gs.favor <= 3 && gs.social <= 3,
+			stats: { research: 0, social: 0, favor: 0, gold: 0 },
+			reversed: {
+				name: '怠惰之《大多数》',
+				icon: '😴',
+				awakenIcon: '💀',
+				desc: '懒惰是原罪，也是护盾',
+				bonus: 'SAN减少翻倍，初始属性全5，每月SAN+3',
+				awakenName: '极致怠惰',
+				awakenDesc: '转博时属性翻倍。SAN减少3倍，每月SAN+5',
+				stats: { research: 4, social: 4, favor: 4, gold: 4 }
+			}
+		},
+		{ 
+			id: 'genius', 
+			name: '院士转世', 
+			icon: '🔬', 
+			awakenIcon: '🧬',
+			desc: '天生就是做科研的料', 
+			bonus: '科研能力初始+5', 
+			awakenName: '学术天赋觉醒',
+			awakenDesc: '转博时每有1篇A类论文，科研+2',
+			// 隐藏觉醒
+			hiddenAwakenName: '预见未来热点',
+			hiddenAwakenIcon: '🔮',
+			hiddenAwakenDesc: '论文的idea和实验分数每月不再衰减',
+			hiddenAwakenCondition: (gs) => gs.paperA === 0 && gs.paperB === 0,
+			stats: { research: 5 },
+			reversed: {
+				name: '愚钝之《院士转世》',
+				icon: '🤡',
+				awakenIcon: '🎭',
+				desc: '科研是什么？能吃吗？',
+				bonus: '科研固定0，全论文槽，科研提升→SAN+4,金+4',
+				awakenName: '大智若愚',
+				awakenDesc: '科研提升→SAN+6,金+6,好感+2,社交+2',
+				stats: {}
+			}
+		},
+		{ 
+			id: 'social', 
+			name: '社交达人', 
+			icon: '🤝', 
+			awakenIcon: '🌐',
+			desc: '八面玲珑的社交高手', 
+			bonus: '社交能力初始+5', 
+			awakenName: '人脉网络激活',
+			awakenDesc: '转博时根据社交能力改变审稿人分布',
+			// 隐藏觉醒
+			hiddenAwakenName: '师兄师姐救我',
+			hiddenAwakenIcon: '🆘',
+			hiddenAwakenDesc: '获得主动技能（限用1次）：下次想idea时，科研能力视为科研+社交',
+			hiddenAwakenCondition: (gs) => gs.social <= 6,
+			stats: { social: 5 },
+			reversed: {
+				name: '嫉妒之《社交达人》',
+				icon: '🐍',
+				awakenIcon: '👁️',
+				desc: '见不得别人好，也见不得自己差',
+				bonus: '社交初始5，社交-1→科研+1,好感+1 | 社交+1→SAN+1,金+1',
+				awakenName: '嫉妒重置',
+				awakenDesc: '转博时社交能力变为5',
+				stats: { social: 4 }
+			}
+		},
+		{ 
+			id: 'rich', 
+			name: '富可敌国', 
+			icon: '💰', 
+			awakenIcon: '💎',
+			desc: '家境殷实无忧无虑', 
+			bonus: '金币值初始+5', 
+			awakenName: '财富倍增术',
+			awakenDesc: '转博时金币×3',
+			// 隐藏觉醒
+			hiddenAwakenName: '不求暴富但求稳定',
+			hiddenAwakenIcon: '🏦',
+			hiddenAwakenDesc: '每月工资+1',
+			hiddenAwakenCondition: (gs) => gs.gold <= 2,
+			stats: { gold: 5 },
+			reversed: {
+				name: '贪求之《富可敌国》',
+				icon: '🏴‍☠️',
+				awakenIcon: '👑',
+				desc: '除了钱一无所有',
+				bonus: '每月SAN/科研/社交/好感重置为0，每月金钱+3',
+				awakenName: '金钱的力量',
+				awakenDesc: '半年重置一次，每花费6金币属性各+1',
+				stats: {}
+			}
+		},
+		{ 
+			id: 'teacher-child', 
+			name: '导师子女', 
+			icon: '👨‍👧', 
+			awakenIcon: '👑',
+			desc: '近水楼台先得月', 
+			bonus: '导师好感度初始+5', 
+			awakenName: '血脉共鸣',
+			awakenDesc: '转博时好感度超12的部分转化为科研和金币',
+			// 隐藏觉醒
+			hiddenAwakenName: '导师救我',
+			hiddenAwakenIcon: '🛡️',
+			hiddenAwakenDesc: '获得主动技能（限用1次）：下次想idea时，科研能力视为科研+好感度',
+			hiddenAwakenCondition: (gs) => gs.favor <= 6,
+			stats: { favor: 5 },
+			reversed: {
+				name: '玩世之《导师子女》',
+				icon: '🎪',
+				awakenIcon: '🃏',
+				desc: '叛逆是我的代名词',
+				bonus: '好感初始16，好感↓翻倍，每月好感-1，好感-1→SAN+1,金+1',
+				awakenName: '浪子回头',
+				awakenDesc: '转博时好感度倒置为20-好感度',
+				stats: { favor: 15 }
+			}
+		},
+		{ 
+			id: 'chosen', 
+			name: '天选之人', 
+			icon: '⭐', 
+			awakenIcon: '✨',
+			desc: '命运的宠儿全面发展', 
+			bonus: '科研+2 社交+2 好感+2 金币+2', 
+			awakenName: '查缺补漏',
+			awakenDesc: '转博时补齐所有短板',
+			// 隐藏觉醒
+			hiddenAwakenName: '孤注一掷',
+			hiddenAwakenIcon: '🎯',
+			hiddenAwakenDesc: '选择一项属性，其他两项变为1并将值转化到该属性',
+			hiddenAwakenCondition: (gs) => gs.research === gs.social && gs.social === gs.favor,
+			stats: { research: 2, social: 2, favor: 2, gold: 2 },
+			reversed: {
+				name: '空想之《天选之人》',
+				icon: '🌀',
+				awakenIcon: '🎲',
+				desc: '命运是一场轮盘赌',
+				bonus: '每月:科研/社交/好感随机交换，SAN/金随机交换',
+				awakenName: '命运轮盘',
+				awakenDesc: '每月:科研/社交/好感/SAN/金全部随机交换',
+				stats: {}
+			}
+		}
+	];
 
         const paperTitleWords = {
             adjectives: ['Deep', 'Neural', 'Efficient', 'Scalable', 'Robust', 'Adaptive', 'Dynamic', 'Multi-modal', 'Self-supervised', 'Federated', 'Attention-based', 'Graph-based', 'Hierarchical', 'Contrastive', 'Progressive', 'Unified'],
@@ -1735,7 +1765,7 @@
 			'✨ Buff之神': '顺利毕业且触发过所有类型的Buff效果',
 			'📜 高分论文': '顺利毕业且论文中稿后(可能的改进后)分数达到125',
 			'🍀 幸运儿': '顺利毕业且论文收到三位审稿人的一致改进',
-			'😭 倒霉蛋': '顺利毕业且三个审稿人都是坏审稿人(恶意小同行或者40个问题审稿人)',
+			'😭 倒霉蛋': '顺利毕业且三个审稿人都是坏审稿人(恶意小同行或者39个问题审稿人)',
 			'🎻 曲高和寡': '顺利毕业且只中过A类论文，没有B和C',
 			'💪 全力以赴': '顺利毕业且毕业时SAN和金钱都为0',
 			'🏆 全收集': '顺利毕业且毕业时中稿A,B,C的poster，oral，best paper共9类论文',
@@ -1772,96 +1802,108 @@
         let characterDifficultyData = {};
         let currentEndingData = null;
 
-        function getInitialState() {
-            return {
-                character: null,
-                characterName: '',
-                degree: 'master',
-                year: 1,
-                month: 1,
-                totalMonths: 0,
-                maxYears: 3,
-                san: 20,
-                sanMax: 20,
-                research: 1,
-                social: 1,
-                favor: 1,
-                gold: 1,
-                paperA: 0,
-                paperB: 0,
-                paperC: 0,
-                totalScore: 0,
-                totalCitations: 0,
-                publishedPapers: [],
-                paperSlots: 1,
-                papers: [null, null, null, null],
-                buffs: { permanent: [], temporary: [] },
-                actionUsed: false,
-                readCount: 0,
+		function getInitialState() {
+			return {
+				character: null,
+				characterName: '',
+				degree: 'master',
+				year: 1,
+				month: 1,
+				totalMonths: 0,
+				maxYears: 3,
+				san: 20,
+				sanMax: 20,
+				research: 1,
+				social: 1,
+				favor: 1,
+				gold: 1,
+				paperA: 0,
+				paperB: 0,
+				paperC: 0,
+				totalScore: 0,
+				totalCitations: 0,
+				publishedPapers: [],
+				paperSlots: 1,
+				papers: [null, null, null, null],
+				buffs: { permanent: [], temporary: [] },
+				actionUsed: false,
+				readCount: 0,
 				workCount: 0,
-                firstPaperAccepted: false,
-                firstAPaperAccepted: false,
-                hasLover: false,
-                loverType: null,
-                bigBullCooperation: false,
-                rejectedCount: 0,
-                teaBreakCount: 0,
-                tourCount: 0,
-                metBigBull: false,
-                metBeautiful: false,
-                metSmart: false,
-                bigBullDeepCount: 0,
-                beautifulCount: 0,
-                smartCount: 0,
-                availableRandomEvents: [],
-                usedRandomEvents: [],
-                triggeredBuffTypes: [],
-                coffeeBoughtCount: 0,
-                isReversed: false,
-                reversedAwakened: false,
-                blockedResearchGains: 0,
-                
-                pendingPhDChoice: false,
-                pendingConference: null,
-                goldSpentTotal: 0,
-                enterpriseCount: 0,
-                ailabInternship: false,
-                firstBestPaperAccepted: false,
-				badmintonMonth: -1,  // ★★★ 新增：记录打羽毛球的月份 ★★★
-                
-                // ★★★ 新增：逆位富可敌国相关状态 ★★★
-                lastResetMonth: 0,  // 上次重置的月份（用于觉醒后半年重置）
+				firstPaperAccepted: false,
+				firstAPaperAccepted: false,
+				hasLover: false,
+				loverType: null,
+				bigBullCooperation: false,
+				rejectedCount: 0,
+				teaBreakCount: 0,
+				tourCount: 0,
+				metBigBull: false,
+				metBeautiful: false,
+				metSmart: false,
+				bigBullDeepCount: 0,
+				beautifulCount: 0,
+				smartCount: 0,
+				availableRandomEvents: [],
+				usedRandomEvents: [],
+				triggeredBuffTypes: [],
+				coffeeBoughtCount: 0,
+				isReversed: false,
+				reversedAwakened: false,
+				blockedResearchGains: 0,
+				
+				pendingPhDChoice: false,
+				pendingConference: null,
+				goldSpentTotal: 0,
+				enterpriseCount: 0,
+				ailabInternship: false,
+				firstBestPaperAccepted: false,
+				badmintonMonth: -1,
+				
+				lastResetMonth: 0,
 				socialAwakened: false,
 				reviewerDistribution: null,
 				
-				ideaClickCount: 0,      // 想idea按钮点击次数
-				expClickCount: 0,       // 做实验按钮点击次数
-				writeClickCount: 0,     // 写论文按钮点击次数
-				consecutiveAccepts: 0,  // 连续中稿计数
-                
-                // 新增成就相关状态
-                rejectedPapers: {},
-                maxConcurrentReviews: 0,
-                phdOpportunitiesRejected: 0,
-                gpuServersBought: 0,
-                furnitureBought: {
-                    chair: false,
-                    monitor: false,
-                    keyboard: false
-                },
-                achievementConditions: {
-                    highScorePaper: false,
-                    unanimousImprovement: false,
-                    allBadReviewers: false,
-                    tripleRejected: false,
-                    bought5GPUs: false,
-                    fullFurnitureSet: false,
-                    phdRequirementMetEarly: false,
-                    rejectedPhdTwice: false
-                },
-                paperTypeCollection: new Set()
-            };
-        }
+				ideaClickCount: 0,
+				expClickCount: 0,
+				writeClickCount: 0,
+				consecutiveAccepts: 0,
+				
+				rejectedPapers: {},
+				maxConcurrentReviews: 0,
+				phdOpportunitiesRejected: 0,
+				gpuServersBought: 0,
+				furnitureBought: {
+					chair: false,
+					monitor: false,
+					keyboard: false
+				},
+				achievementConditions: {
+					highScorePaper: false,
+					unanimousImprovement: false,
+					allBadReviewers: false,
+					tripleRejected: false,
+					bought5GPUs: false,
+					fullFurnitureSet: false,
+					phdRequirementMetEarly: false,
+					rejectedPhdTwice: false
+				},
+				paperTypeCollection: new Set(),
+				
+				// ★★★ 新增：隐藏觉醒相关状态 ★★★
+				hiddenAwakened: false,           // 是否触发了隐藏觉醒
+				hiddenAwakenType: null,          // 隐藏觉醒类型
+				actionLimit: 1,                  // 每月行动次数限制（勤能补拙为2）
+				actionCount: 0,                  // 本月已使用行动次数
+				noDecay: false,                  // 是否禁止论文分数衰减（预见未来热点）
+				hasSeniorHelpSkill: false,       // 是否有师兄师姐救我技能
+				usedSeniorHelpSkill: false,      // 是否已使用师兄师姐救我
+				hasTeacherHelpSkill: false,      // 是否有导师救我技能
+				usedTeacherHelpSkill: false,     // 是否已使用导师救我
+				monthlyWageBonus: 0,             // 每月工资加成（不求暴富但求稳定）
+				nextIdeaResearchBonus: 0,        // 下次想idea的临时科研加成（主动技能用，不算buff）
+				nextIdeaBonusSource: null        // 加成来源（'senior' 或 'teacher'）
+			};
+		}
 
 
         // ==================== Supabase 统计系统 ====================
@@ -2801,6 +2843,19 @@
 					: 'background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(118,75,162,0.1));border-color:rgba(102,126,234,0.3);';
 				const awakenColor = isReversedMode ? '#e74c3c' : 'var(--primary-color)';
 
+				// ★★★ 新增：隐藏觉醒提示（仅正位模式显示）★★★
+				let hiddenAwakenHint = '';
+				if (!isReversedMode && char.hiddenAwakenName) {
+					hiddenAwakenHint = `
+						<div style="margin-top:6px;padding:4px 8px;background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(243,156,18,0.15));border-radius:6px;border:1px dashed rgba(243,156,18,0.4);">
+							<div style="font-size:0.6rem;color:#d68910;display:flex;align-items:center;gap:4px;">
+								<span>🔮</span>
+								<span>隐藏觉醒：游戏中特定条件触发</span>
+							</div>
+						</div>
+					`;
+				}
+
 				// Meta记录HTML
 				const metaRecordHtml = `
 					<div class="meta-records" style="margin-top:8px;padding:8px;background:var(--light-bg);border-radius:8px;font-size:0.6rem;">
@@ -2857,6 +2912,7 @@
 							<span style="margin-right:3px;">⚡</span>转博觉醒: ${data.awakenIcon} ${data.awakenName}
 						</div>
 						<div style="font-size:0.6rem;color:var(--text-secondary);">${data.awakenDesc}</div>
+						${hiddenAwakenHint}
 					</div>
 					${metaRecordHtml}
 					<div class="difficulty-container">
@@ -3590,7 +3646,101 @@
 					${buff.name}${descText}
 				</span>`;
 			}).join('');
+			const buffListEl = document.getElementById('buff-list');
+			
+			// 师兄师姐救我技能
+			if (gameState.hasSeniorHelpSkill && !gameState.usedSeniorHelpSkill) {
+				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(243,156,18,0.3),rgba(230,126,34,0.3));border-color:#f39c12;" onclick="useSeniorHelpSkill()">
+					<i class="fas fa-hands-helping"></i>
+					🆘 师兄师姐救我（点击使用）
+				</span>`;
+				buffListEl.innerHTML += skillHtml;
+			}
+			
+			// 导师救我技能
+			if (gameState.hasTeacherHelpSkill && !gameState.usedTeacherHelpSkill) {
+				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(253,121,168,0.3),rgba(232,67,147,0.3));border-color:#fd79a8;" onclick="useTeacherHelpSkill()">
+					<i class="fas fa-user-shield"></i>
+					🛡️ 导师救我（点击使用）
+				</span>`;
+				buffListEl.innerHTML += skillHtml;
+			}
+		}			
+
+		// ★★★ 新增：师兄师姐救我技能 ★★★
+		function useSeniorHelpSkill() {
+			if (!gameState.hasSeniorHelpSkill || gameState.usedSeniorHelpSkill) {
+				showModal('❌ 无法使用', '<p>技能不可用或已使用过。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const bonusValue = gameState.social;
+			
+			showModal('🆘 师兄师姐救我', 
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">🆘</div>
+					<div style="font-size:1.1rem;font-weight:600;color:#f39c12;">师兄师姐救我</div>
+				</div>
+				<p>使用此技能后，<strong>下次想idea时</strong>，你的科研能力将视为：</p>
+				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
+					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
+						科研(${gameState.research}) + 社交(${bonusValue}) = ${gameState.research + bonusValue}
+					</span>
+				</div>
+				<p style="color:var(--danger-color);font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> 注意：此技能仅可使用一次！</p>`,
+				[
+					{ text: '取消', class: 'btn-info', action: closeModal },
+					{ text: '✨ 使用技能', class: 'btn-warning', action: () => {
+						gameState.usedSeniorHelpSkill = true;
+						gameState.nextIdeaResearchBonus = gameState.social;
+						gameState.nextIdeaBonusSource = 'senior';
+						addLog('主动技能', '师兄师姐救我', `下次想idea时科研能力+${gameState.social}（社交值）`);
+						closeModal();
+						updateBuffs();
+						updateAllUI();
+					}}
+				]
+			);
 		}
+
+		// ★★★ 新增：导师救我技能 ★★★
+		function useTeacherHelpSkill() {
+			if (!gameState.hasTeacherHelpSkill || gameState.usedTeacherHelpSkill) {
+				showModal('❌ 无法使用', '<p>技能不可用或已使用过。</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const bonusValue = gameState.favor;
+			
+			showModal('🛡️ 导师救我', 
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">🛡️</div>
+					<div style="font-size:1.1rem;font-weight:600;color:#fd79a8;">导师救我</div>
+				</div>
+				<p>使用此技能后，<strong>下次想idea时</strong>，你的科研能力将视为：</p>
+				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
+					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
+						科研(${gameState.research}) + 好感度(${bonusValue}) = ${gameState.research + bonusValue}
+					</span>
+				</div>
+				<p style="color:var(--danger-color);font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> 注意：此技能仅可使用一次！</p>`,
+				[
+					{ text: '取消', class: 'btn-info', action: closeModal },
+					{ text: '✨ 使用技能', class: 'btn-accent', action: () => {
+						gameState.usedTeacherHelpSkill = true;
+						gameState.nextIdeaResearchBonus = gameState.favor;
+						gameState.nextIdeaBonusSource = 'teacher';
+						addLog('主动技能', '导师救我', `下次想idea时科研能力+${gameState.favor}（好感度值）`);
+						closeModal();
+						updateBuffs();
+						updateAllUI();
+					}}
+				]
+			);
+		}
+
         function updateResearchResults() {
             document.getElementById('paper-a-count').textContent = gameState.paperA;
             document.getElementById('paper-b-count').textContent = gameState.paperB;
@@ -3662,72 +3812,86 @@
             return parts.join(' ');
         }
 
-        function updateActionButtons() {
-            const btns = ['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'];
-            btns.forEach(id => {
-                const btn = document.getElementById(id);
-                btn.disabled = gameState.actionUsed;
-                btn.style.opacity = gameState.actionUsed ? '0.5' : '1';
-            });
-            
-            const costs = getActionCosts();
-            
-            document.getElementById('btn-read').innerHTML = `<i class="fas fa-book-open"></i><span>看论文</span><span class="action-cost">${formatCost(costs.read)}</span>`;
-            document.getElementById('btn-work').innerHTML = `<i class="fas fa-briefcase"></i><span>打工</span><span class="action-cost">${formatCost(costs.work)}</span>`;
-            document.getElementById('btn-idea').innerHTML = `<i class="fas fa-lightbulb"></i><span>想idea</span><span class="action-cost">${formatCost(costs.idea)}</span>`;
-            document.getElementById('btn-experiment').innerHTML = `<i class="fas fa-vial"></i><span>做实验</span><span class="action-cost">${formatCost(costs.experiment)}</span>`;
-            document.getElementById('btn-write').innerHTML = `<i class="fas fa-pen-fancy"></i><span>写论文</span><span class="action-cost">${formatCost(costs.write)}</span>`;
-        }
+		function updateActionButtons() {
+			const btns = ['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'];
+			
+			// ★★★ 修改：基于行动次数判断 ★★★
+			const actionsRemaining = gameState.actionLimit - gameState.actionCount;
+			const allUsed = actionsRemaining <= 0;
+			
+			btns.forEach(id => {
+				const btn = document.getElementById(id);
+				btn.disabled = allUsed;
+				btn.style.opacity = allUsed ? '0.5' : '1';
+			});
+			
+			const costs = getActionCosts();
+			
+			// ★★★ 新增：显示剩余行动次数 ★★★
+			const actionCountDisplay = gameState.actionLimit > 1 
+				? `<span style="font-size:0.6rem;color:var(--warning-color);">(${actionsRemaining}/${gameState.actionLimit})</span>` 
+				: '';
+			
+			document.getElementById('btn-read').innerHTML = `<i class="fas fa-book-open"></i><span>看论文${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.read)}</span>`;
+			document.getElementById('btn-work').innerHTML = `<i class="fas fa-briefcase"></i><span>打工${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.work)}</span>`;
+			document.getElementById('btn-idea').innerHTML = `<i class="fas fa-lightbulb"></i><span>想idea${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.idea)}</span>`;
+			document.getElementById('btn-experiment').innerHTML = `<i class="fas fa-vial"></i><span>做实验${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.experiment)}</span>`;
+			document.getElementById('btn-write').innerHTML = `<i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.write)}</span>`;
+		}
 
         // ==================== 事件预告系统 ====================
-        function getUpcomingEvents() {
-            const events = [];
-            
-            for (let i = 1; i <= 2; i++) {
-                let checkMonth = gameState.month + i;
-                let checkYear = gameState.year;
-                
-                if (checkMonth > 12) {
-                    checkMonth -= 12;
-                    checkYear++;
-                }
-                
-                const checkTotalMonths = gameState.totalMonths + i;
-                const maxMonths = gameState.maxYears * 12;
-                if (checkTotalMonths > maxMonths) continue;
-                
-                let eventName = null;
-                let eventIcon = '';
-                
-                if (checkMonth === 5) {
-                    eventName = '寒假';
-                    eventIcon = '❄️';
-                } else if (checkMonth === 11) {
-                    eventName = '暑假';
-                    eventIcon = '☀️';
-                } else if (checkMonth === 1 && checkYear >= 2) {
-                    eventName = '奖学金';
-                    eventIcon = '🎓';
-                } else if (checkMonth === 2) {
-                    eventName = '教师节';
-                    eventIcon = '🎁';
-                } else if (checkMonth % 2 === 0) {
-                    eventName = '随机事件';
-                    eventIcon = '🎲';
-                }
-                
-                if (eventName) {
-                    events.push({
-                        month: i,
-                        name: eventName,
-                        icon: eventIcon,
-                        label: i === 1 ? '下月' : '2月后'
-                    });
-                }
-            }
-            
-            return events;
-        }
+		function getUpcomingEvents() {
+			const events = [];
+			
+			for (let i = 1; i <= 2; i++) {
+				let checkMonth = gameState.month + i;
+				let checkYear = gameState.year;
+				
+				if (checkMonth > 12) {
+					checkMonth -= 12;
+					checkYear++;
+				}
+				
+				const checkTotalMonths = gameState.totalMonths + i;
+				const maxMonths = gameState.maxYears * 12;
+				if (checkTotalMonths > maxMonths) continue;
+				
+				let eventName = null;
+				let eventIcon = '';
+				
+				if (checkMonth === 5) {
+					eventName = '寒假';
+					eventIcon = '❄️';
+				} else if (checkMonth === 11) {
+					eventName = '暑假';
+					eventIcon = '☀️';
+				} else if (checkMonth === 1 && checkYear >= 2) {
+					eventName = '奖学金';
+					eventIcon = '🎓';
+				} else if (checkMonth === 2) {
+					eventName = '教师节';
+					eventIcon = '🎁';
+				} else if (checkMonth === 12) {
+					// ★★★ 新增：12月年终总结预告 ★★★
+					eventName = '年终总结';
+					eventIcon = '📅';
+				} else if (checkMonth % 2 === 0) {
+					eventName = '随机事件';
+					eventIcon = '🎲';
+				}
+				
+				if (eventName) {
+					events.push({
+						month: i,
+						name: eventName,
+						icon: eventIcon,
+						label: i === 1 ? '下月' : '2月后'
+					});
+				}
+			}
+			
+			return events;
+		}
 
         function updateEventPreview() {
             const previewEl = document.getElementById('event-preview');
@@ -3747,36 +3911,36 @@
             previewEl.innerHTML = `📅${previewHtml}`;
         }
 
-        function getEventColor(eventName) {
-            const colors = {
-                '寒假': 'rgba(116,185,255,0.25)',
-                '暑假': 'rgba(253,203,110,0.25)',
-                '奖学金': 'rgba(108,92,231,0.25)',
-                '教师节': 'rgba(253,121,168,0.25)',
-                '随机事件': 'rgba(0,184,148,0.2)'
-            };
-            return colors[eventName] || 'rgba(99,110,114,0.15)';
-        }
+		function getEventColor(eventName) {
+			const colors = {
+				'寒假': 'rgba(116,185,255,0.25)',
+				'暑假': 'rgba(253,203,110,0.25)',
+				'奖学金': 'rgba(108,92,231,0.25)',
+				'教师节': 'rgba(253,121,168,0.25)',
+				'随机事件': 'rgba(0,184,148,0.2)',
+				'年终总结': 'rgba(162,155,254,0.25)'  // ★★★ 新增 ★★★
+			};
+			return colors[eventName] || 'rgba(99,110,114,0.15)';
+		}
 
         // ==================== 下一个月 ====================
 		function nextMonth() {
+			// ★★★ 新增：重置行动次数 ★★★
+			gameState.actionCount = 0;
 			gameState.actionUsed = false;
+			
 			gameState.month++;
 			gameState.totalMonths++;
 			
 			// ★★★ 检查并处理松懈debuff ★★★
-			// 如果这个月没有进行任何操作（休息了一个月），消除松懈debuff
 			const hadSlackBuff = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
 			if (hadSlackBuff) {
-				// 松懈debuff会在下个月自动消除（无论是否休息）
-				// 但如果玩家主动"下一月"而没有做任何操作，也视为休息
 				gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'slack_debuff');
 				addLog('状态恢复', '松懈debuff消除', '经过休整，状态恢复正常');
 			}
 			
 			// ★★★ 清除本月限定的buff ★★★
 			gameState.buffs.temporary = gameState.buffs.temporary.filter(b => !b.thisMonthOnly);
-    
 			
 			// ★★★ 贪求之富可敌国：在月初最先执行重置 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
@@ -3808,22 +3972,19 @@
 						`SAN ${oldSan}→0, 科研 ${oldResearch}→0, 社交 ${oldSocial}→0, 好感 ${oldFavor}→0`);
 				}
 			}
-					
-			let newYearBonus = false;
+			
+			// ★★★ 修改：取消每年自动加成 ★★★
 			if (gameState.month > 12) {
 				gameState.month = 1;
 				gameState.year++;
-				
-				if (gameState.year >= 2) {
-					newYearBonus = true;
-					gameState.social = Math.min(20, gameState.social + 1);
-					gameState.favor = Math.min(20, gameState.favor + 1);
-				}
+				// 移除了原来的社交+1和好感+1
 			}
 
-			const salary = gameState.degree === 'master' ? 1 : 3;
+			// ★★★ 修改：工资计算（加入月度工资加成）★★★
+			const baseSalary = gameState.degree === 'master' ? 1 : 3;
+			const salary = baseSalary + (gameState.monthlyWageBonus || 0);  // 不求暴富但求稳定加成
 			
-			// ★★★ 贪求之富可敌国：只保留每月+3金，移除重置逻辑（已在上面执行）★★★
+			// ★★★ 贪求之富可敌国：只保留每月+3金 ★★★
 			let extraGold = 0;
 			if (gameState.isReversed && gameState.character === 'rich') {
 				extraGold = 3;
@@ -3867,7 +4028,7 @@
 				}
 			}
 
-			// ★★★ AILab 实习效果 - 移除对贪求的特殊判断 ★★★
+			// ★★★ AILab 实习效果 ★★★
 			if (gameState.ailabInternship) {
 				gameState.gold += 2;
 				
@@ -3881,7 +4042,7 @@
 				}
 			}
 
-			// ★★★ 人体工学椅效果 - 移除对贪求的特殊判断 ★★★
+			// ★★★ 人体工学椅效果 ★★★
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
 				gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
 			}
@@ -3906,79 +4067,87 @@
 				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
 			}
 
-            // 玩世之导师子女：每月好感-1（不翻倍）
-            if (gameState.isReversed && gameState.character === 'teacher-child') {
-                const oldFavor = gameState.favor;
-                gameState.favor = gameState.favor - 1;
-                const decreased = Math.max(0, oldFavor - gameState.favor);
-                if (decreased > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-                    gameState.gold += decreased;
-                    addLog('逆位效果', '玩世不恭（每月）', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
-                }
-                
-                if (gameState.favor < 0) {
-                    triggerEnding('expelled');
-                    return;
-                }
-            }
-            
-            // 空想之天选之人：每月随机交换属性
-            if (gameState.isReversed && gameState.character === 'chosen') {
-                processChosenSwap();
-            }
+			// 玩世之导师子女：每月好感-1（不翻倍）
+			if (gameState.isReversed && gameState.character === 'teacher-child') {
+				const oldFavor = gameState.favor;
+				gameState.favor = gameState.favor - 1;
+				const decreased = Math.max(0, oldFavor - gameState.favor);
+				if (decreased > 0) {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+					gameState.gold += decreased;
+					addLog('逆位效果', '玩世不恭（每月）', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
+				}
+				
+				if (gameState.favor < 0) {
+					triggerEnding('expelled');
+					return;
+				}
+			}
+			
+			// 空想之天选之人：每月随机交换属性
+			if (gameState.isReversed && gameState.character === 'chosen') {
+				processChosenSwap();
+			}
 
-			// 论文分数衰减 - 只对非审稿中的论文生效
+			// ★★★ 修改：论文分数衰减（支持预见未来热点）★★★
 			let decayLogs = [];
 			gameState.papers.forEach((paper, idx) => {
-				if (paper && !paper.reviewing) {  // ★★★ 添加 !paper.reviewing 条件 ★★★
-					let decayInfo = [];
-					if (paper.ideaScore > 1) {
-						paper.ideaScore--;
-						decayInfo.push(`idea-1`);
-					}
-					if (paper.expScore > 1) {
-						paper.expScore--;
-						decayInfo.push(`实验-1`);
-					}
-					if (decayInfo.length > 0) {
-						decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
+				if (paper && !paper.reviewing) {
+					// ★★★ 新增：如果有noDecay标志，跳过衰减 ★★★
+					if (gameState.noDecay) {
+						// 不衰减，什么都不做
+					} else {
+						let decayInfo = [];
+						if (paper.ideaScore > 1) {
+							paper.ideaScore--;
+							decayInfo.push(`idea-1`);
+						}
+						if (paper.expScore > 1) {
+							paper.expScore--;
+							decayInfo.push(`实验-1`);
+						}
+						if (decayInfo.length > 0) {
+							decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
+						}
 					}
 				}
 			});
 
-            // 审稿进度
-            gameState.papers.forEach((paper, idx) => {
-                if (paper && paper.reviewing) {
-                    paper.reviewMonths--;
-                    if (paper.reviewMonths < 1) {
-                        paper.reviewMonths = 0;
-                        setTimeout(() => {
-                            if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
-                                processPaperResult(idx);
-                            }
-                        }, 100 * idx);
-                    }
-                }
-            });
+			// 审稿进度
+			gameState.papers.forEach((paper, idx) => {
+				if (paper && paper.reviewing) {
+					paper.reviewMonths--;
+					if (paper.reviewMonths < 1) {
+						paper.reviewMonths = 0;
+						setTimeout(() => {
+							if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
+								processPaperResult(idx);
+							}
+						}, 100 * idx);
+					}
+				}
+			});
 
-            // 更新引用
-            updateCitations();
+			// 更新引用
+			updateCitations();
 
-            // 重置月度商品
-            shopItems.forEach(item => {
-                if (item.monthlyOnce) item.boughtThisMonth = false;
-            });
+			// 重置月度商品
+			shopItems.forEach(item => {
+				if (item.monthlyOnce) item.boughtThisMonth = false;
+			});
 
-            // 日志
-            if (newYearBonus) {
-				addLog('🎊 新的一年', `第${gameState.year}年开始了`, '与导师和同学的磨合更加顺利，社交能力+1，导师好感度+1');
+			// ★★★ 修改：移除新年奖励日志 ★★★
+			// 不再显示"新的一年"的社交+1好感+1奖励
+
+			let logResult = `工资+${salary}`;
+			// ★★★ 新增：显示工资加成来源 ★★★
+			if (gameState.monthlyWageBonus > 0) {
+				logResult += `（含稳定加成+${gameState.monthlyWageBonus}）`;
 			}
-
-            let logResult = `工资+${salary}，开销-1`;
-            if (extraGold > 0) logResult += `，逆位额外+${extraGold}金`;
-            logResult += `，休息SAN+${sanRecovery}`;
-            if (gameState.hasLover) {
+			logResult += `，开销-1`;
+			if (extraGold > 0) logResult += `，逆位额外+${extraGold}金`;
+			logResult += `，休息SAN+${sanRecovery}`;
+			if (gameState.hasLover) {
 				if (gameState.loverType === 'beautiful') {
 					logResult += '，恋人SAN+3';
 				}
@@ -3988,35 +4157,44 @@
 				const actualSanCost = Math.abs(getActualSanChange(-3));
 				logResult += `，实习+2金，实习SAN-${actualSanCost}`;
 			}
-            
+			
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
 				logResult += '，工学椅SAN+1';
 			}
-            addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
+			addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
 
-            if (decayLogs.length > 0) {
-                addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
-            }
+			// ★★★ 修改：衰减日志（预见未来热点时显示不同信息）★★★
+			if (gameState.noDecay) {
+				// 每5个月提示一次，避免日志刷屏
+				if (gameState.totalMonths % 5 === 0) {
+					addLog('预见热点', '论文分数保持稳定', 'idea和实验分数不衰减');
+				}
+			} else if (decayLogs.length > 0) {
+				addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
+			}
 
-            // 事件触发
-            if (gameState.month === 5) {
-                triggerWinterVacationEvent();
-            } else if (gameState.month === 11) {
-                triggerSummerVacationEvent();
-            } else if (gameState.month === 1 && gameState.year >= 2) {
-                triggerScholarshipEvent();
-            } else if (gameState.month === 2) {
-                triggerTeachersDayEvent();
-            } else if (gameState.month % 2 === 0) {
-                triggerOtherRandomEvent();
-            }
-            
-            // 检查毕业
-            checkGraduation();
+			// ★★★ 修改：事件触发逻辑，12月改为年终总结 ★★★
+			if (gameState.month === 5) {
+				triggerWinterVacationEvent();
+			} else if (gameState.month === 11) {
+				triggerSummerVacationEvent();
+			} else if (gameState.month === 1 && gameState.year >= 2) {
+				triggerScholarshipEvent();
+			} else if (gameState.month === 2) {
+				triggerTeachersDayEvent();
+			} else if (gameState.month === 12) {
+				// ★★★ 新增：12月固定触发年终总结 ★★★
+				triggerYearEndSummaryEvent();
+			} else if (gameState.month % 2 === 0) {
+				triggerOtherRandomEvent();
+			}
+			
+			// 检查毕业
+			checkGraduation();
 
-            updateAllUI();
-            renderPaperSlots();
-        }
+			updateAllUI();
+			renderPaperSlots();
+		}
 
         // 空想之天选之人：属性随机交换
         function processChosenSwap() {
@@ -4196,154 +4374,410 @@
         }
 
         // ★★★ 关键修改：转博觉醒函数 ★★★
-        function showPhDTribulationModal() {
-            const character = gameState.character;
-            let effectName = '';
-            let effectDesc = '';
-            let bonusDetails = [];
-            
-            // 逆位角色觉醒
-            if (gameState.isReversed) {
-                gameState.reversedAwakened = true;
-                
-                switch (character) {
-                    case 'normal': // 怠惰之大多数
-                        effectName = '💀 极致怠惰';
-                        effectDesc = '懒惰的极致就是一切都翻倍...包括痛苦';
-                        const oldR1 = gameState.research, oldS1 = gameState.social, oldF1 = gameState.favor, oldG1 = gameState.gold;
-                        gameState.research = Math.min(20, gameState.research * 2);
-                        gameState.social = Math.min(20, gameState.social * 2);
-                        gameState.favor = Math.min(20, gameState.favor * 2);
-                        gameState.gold = gameState.gold * 2;
-                        bonusDetails.push(`科研 ${oldR1} → ${gameState.research}`);
-                        bonusDetails.push(`社交 ${oldS1} → ${gameState.social}`);
-                        bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
-                        bonusDetails.push(`金币 ${oldG1} → ${gameState.gold}`);
-                        bonusDetails.push('⚠️ SAN减少变为3倍');
-                        bonusDetails.push('✨ 每月SAN回复变为5');
-                        
-                        const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
-                        if (mentorshipBuff) {
-                            mentorshipBuff.desc = '每月SAN-3（怠惰×3），总引用+科研能力值';
-                        }
-                        break;
-                        
-                    case 'genius': // 愚钝之院士转世
-                        effectName = '🎭 大智若愚';
-                        effectDesc = '真正的智慧不在于科研数值';
-                        bonusDetails.push('科研提升转化效果升级');
-                        bonusDetails.push('每1点科研提升 → 好感+2, SAN+6, 社交+2, 金+6');
-                        break;
-                        
-                    case 'social': // 嫉妒之社交达人
-                        effectName = '👁️ 嫉妒重置';
-                        effectDesc = '社交能力重置，触发连带效果';
-                        const oldSocialVal = gameState.social;
-                        if (oldSocialVal > 5) {
-                            const decrease = oldSocialVal - 5;
-                            gameState.research = Math.min(20, gameState.research + decrease);
-                            gameState.favor = Math.min(20, gameState.favor + decrease);
-                            bonusDetails.push(`社交 ${oldSocialVal} → 5`);
-                            bonusDetails.push(`触发嫉妒转化：科研+${decrease}, 好感+${decrease}`);
-                        } else if (oldSocialVal < 5) {
-                            const increase = 5 - oldSocialVal;
-                            gameState.san = Math.min(gameState.sanMax, gameState.san + increase);
-                            gameState.gold += increase;
-                            bonusDetails.push(`社交 ${oldSocialVal} → 5`);
-                            bonusDetails.push(`触发嫉妒反馈：SAN+${increase}, 金钱+${increase}`);
-                        } else {
-                            bonusDetails.push('社交已经是5，无变化');
-                        }
-                        gameState.social = 5;
-                        break;
-                        
-                    // ★★★ 关键修改：逆位富可敌国觉醒 ★★★
-                    case 'rich':
-                        effectName = '👑 金钱的力量';
-                        effectDesc = '半年重置一次，消费金币可提升属性';
-                        gameState.goldSpentTotal = 0;  // 重置消费计数
-                        gameState.lastResetMonth = gameState.totalMonths;  // 记录觉醒时间点
-                        bonusDetails.push('✨ 属性重置周期：每月 → 每半年');
-                        bonusDetails.push('✨ 每花费6金币 → SAN+1, 科研+1, 社交+1, 好感+1');
-                        bonusDetails.push('💰 快去花钱提升属性吧！');
-                        break;
-                        
-                    case 'teacher-child': // 玩世之导师子女
-                        effectName = '🃏 浪子回头';
-                        effectDesc = '好感度倒置，从叛逆走向和解';
-                        const oldFavorVal = gameState.favor;
-                        const newFavorVal = Math.min(20, Math.max(0, 20 - oldFavorVal));
-                        gameState.favor = newFavorVal;
-                        bonusDetails.push(`好感度倒置：${oldFavorVal} → ${newFavorVal} (20-${oldFavorVal})`);
-                        break;
-                        
-                    case 'chosen': // 空想之天选之人
-                        effectName = '🎲 命运轮盘';
-                        effectDesc = '五属性全部加入轮盘赌局';
-                        bonusDetails.push('每月随机交换升级');
-                        bonusDetails.push('科研/社交/好感/SAN/金 全部参与交换');
-                        break;
-                }
-                
-                checkResearchUnlock(true);
-                
-                const html = `
-                    <div style="text-align:center;">
-                        <div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">🌑</div>
-                        <div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#9b59b6,#e74c3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
-                            逆位觉醒！
-                        </div>
-                        <div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
-                            黑暗中蕴含的力量已被激活...
-                        </div>
-                    </div>
-                    
-                    <div style="background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(231,76,60,0.2));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(231,76,60,0.5);">
-                        <div style="text-align:center;margin-bottom:12px;">
-                            <div style="font-size:1.3rem;font-weight:700;color:#e74c3c;margin-bottom:5px;">${effectName}</div>
-                            <div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;">
-                            <div style="font-size:0.8rem;color:#a0a0a0;margin-bottom:8px;text-align:center;">🌙 觉醒效果 🌙</div>
-                            <div style="display:flex;flex-direction:column;gap:6px;">
-                                ${bonusDetails.map(detail => `
-                                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(231,76,60,0.2));border-radius:6px;font-size:0.85rem;font-weight:500;color:#e74c3c;">
-                                        ${detail.startsWith('⚠️') || detail.startsWith('✨') || detail.startsWith('💰') ? '' : '<i class="fas fa-moon"></i>'} ${detail}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align:center;padding:10px;background:rgba(0,0,0,0.1);border-radius:8px;font-size:0.85rem;">
-                        <div style="color:#9b59b6;font-weight:600;margin-bottom:5px;">📜 继续你的黑暗旅程</div>
-                        <div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
-                    </div>
-                `;
-                
-                showModal('🌑 逆位觉醒', html, [
-                    { text: '🌙 拥抱黑暗', class: 'btn-danger', action: () => {
-                        addLog('逆位觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
-                        closeModal();
-                        updateAllUI();
-                        renderPaperSlots();
-                        
-                        if (gameState.pendingConference) {
-                            const grade = gameState.pendingConference;
-                            gameState.pendingConference = null;
-                            setTimeout(() => showConferenceModal(grade), 300);
-                        }
-                    }}
-                ]);
-                
-                return;
-            }
-            
-            // ★★★ 关键修改：正位角色觉醒 ★★★
-            switch (character) {
-                case 'genius':
-                    effectName = '🧬 学术天赋觉醒';
-                    effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
+		function showPhDTribulationModal() {
+			const character = gameState.character;
+			const charData = characters.find(c => c.id === character);
+			
+			// ★★★ 逆位角色觉醒（保持原有逻辑不变）★★★
+			if (gameState.isReversed) {
+				gameState.reversedAwakened = true;
+				
+				let effectName = '';
+				let effectDesc = '';
+				let bonusDetails = [];
+				
+				switch (character) {
+					case 'normal': // 怠惰之大多数
+						effectName = '💀 极致怠惰';
+						effectDesc = '懒惰的极致就是一切都翻倍...包括痛苦';
+						const oldR1 = gameState.research, oldS1 = gameState.social, oldF1 = gameState.favor, oldG1 = gameState.gold;
+						gameState.research = Math.min(20, gameState.research * 2);
+						gameState.social = Math.min(20, gameState.social * 2);
+						gameState.favor = Math.min(20, gameState.favor * 2);
+						gameState.gold = gameState.gold * 2;
+						bonusDetails.push(`科研 ${oldR1} → ${gameState.research}`);
+						bonusDetails.push(`社交 ${oldS1} → ${gameState.social}`);
+						bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
+						bonusDetails.push(`金币 ${oldG1} → ${gameState.gold}`);
+						bonusDetails.push('⚠️ SAN减少变为3倍');
+						bonusDetails.push('✨ 每月SAN回复变为5');
+						
+						const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
+						if (mentorshipBuff) {
+							mentorshipBuff.desc = '每月SAN-3（怠惰×3），总引用+科研能力值';
+						}
+						break;
+						
+					case 'genius': // 愚钝之院士转世
+						effectName = '🎭 大智若愚';
+						effectDesc = '真正的智慧不在于科研数值';
+						bonusDetails.push('科研提升转化效果升级');
+						bonusDetails.push('每1点科研提升 → 好感+2, SAN+6, 社交+2, 金+6');
+						break;
+						
+					case 'social': // 嫉妒之社交达人
+						effectName = '👁️ 嫉妒重置';
+						effectDesc = '社交能力重置，触发连带效果';
+						const oldSocialVal = gameState.social;
+						if (oldSocialVal > 5) {
+							const decrease = oldSocialVal - 5;
+							gameState.research = Math.min(20, gameState.research + decrease);
+							gameState.favor = Math.min(20, gameState.favor + decrease);
+							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
+							bonusDetails.push(`触发嫉妒转化：科研+${decrease}, 好感+${decrease}`);
+						} else if (oldSocialVal < 5) {
+							const increase = 5 - oldSocialVal;
+							gameState.san = Math.min(gameState.sanMax, gameState.san + increase);
+							gameState.gold += increase;
+							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
+							bonusDetails.push(`触发嫉妒反馈：SAN+${increase}, 金钱+${increase}`);
+						} else {
+							bonusDetails.push('社交已经是5，无变化');
+						}
+						gameState.social = 5;
+						break;
+						
+					case 'rich':
+						effectName = '👑 金钱的力量';
+						effectDesc = '半年重置一次，消费金币可提升属性';
+						gameState.goldSpentTotal = 0;
+						gameState.lastResetMonth = gameState.totalMonths;
+						bonusDetails.push('✨ 属性重置周期：每月 → 每半年');
+						bonusDetails.push('✨ 每花费6金币 → SAN+1, 科研+1, 社交+1, 好感+1');
+						bonusDetails.push('💰 快去花钱提升属性吧！');
+						break;
+						
+					case 'teacher-child': // 玩世之导师子女
+						effectName = '🃏 浪子回头';
+						effectDesc = '好感度倒置，从叛逆走向和解';
+						const oldFavorVal = gameState.favor;
+						const newFavorVal = Math.min(20, Math.max(0, 20 - oldFavorVal));
+						gameState.favor = newFavorVal;
+						bonusDetails.push(`好感度倒置：${oldFavorVal} → ${newFavorVal} (20-${oldFavorVal})`);
+						break;
+						
+					case 'chosen': // 空想之天选之人
+						effectName = '🎲 命运轮盘';
+						effectDesc = '五属性全部加入轮盘赌局';
+						bonusDetails.push('每月随机交换升级');
+						bonusDetails.push('科研/社交/好感/SAN/金 全部参与交换');
+						break;
+				}
+				
+				checkResearchUnlock(true);
+				
+				const html = `
+					<div style="text-align:center;">
+						<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">🌑</div>
+						<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#9b59b6,#e74c3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+							逆位觉醒！
+						</div>
+						<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
+							黑暗中蕴含的力量已被激活...
+						</div>
+					</div>
+					
+					<div style="background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(231,76,60,0.2));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(231,76,60,0.5);">
+						<div style="text-align:center;margin-bottom:12px;">
+							<div style="font-size:1.3rem;font-weight:700;color:#e74c3c;margin-bottom:5px;">${effectName}</div>
+							<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
+						</div>
+						<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;">
+							<div style="font-size:0.8rem;color:#a0a0a0;margin-bottom:8px;text-align:center;">🌙 觉醒效果 🌙</div>
+							<div style="display:flex;flex-direction:column;gap:6px;">
+								${bonusDetails.map(detail => `
+									<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(231,76,60,0.2));border-radius:6px;font-size:0.85rem;font-weight:500;color:#e74c3c;">
+										${detail.startsWith('⚠️') || detail.startsWith('✨') || detail.startsWith('💰') ? '' : '<i class="fas fa-moon"></i>'} ${detail}
+									</div>
+								`).join('')}
+							</div>
+						</div>
+					</div>
+					
+					<div style="text-align:center;padding:10px;background:rgba(0,0,0,0.1);border-radius:8px;font-size:0.85rem;">
+						<div style="color:#9b59b6;font-weight:600;margin-bottom:5px;">📜 继续你的黑暗旅程</div>
+						<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
+					</div>
+				`;
+				
+				showModal('🌑 逆位觉醒', html, [
+					{ text: '🌙 拥抱黑暗', class: 'btn-danger', action: () => {
+						addLog('逆位觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
+						closeModal();
+						updateAllUI();
+						renderPaperSlots();
+						
+						if (gameState.pendingConference) {
+							const grade = gameState.pendingConference;
+							gameState.pendingConference = null;
+							setTimeout(() => showConferenceModal(grade), 300);
+						}
+					}}
+				]);
+				
+				return;
+			}
+			
+			// ★★★ 正位角色：检查是否满足隐藏觉醒条件 ★★★
+			const hasHiddenAwaken = charData.hiddenAwakenCondition && charData.hiddenAwakenCondition(gameState);
+			
+			if (hasHiddenAwaken) {
+				// 显示二选一弹窗
+				showAwakenChoiceModal(charData);
+			} else {
+				// 直接触发普通觉醒
+				applyNormalAwaken(charData);
+			}
+		}
+
+		// ★★★ 新增：显示觉醒二选一弹窗 ★★★
+		function showAwakenChoiceModal(charData) {
+			const character = gameState.character;
+			
+			const html = `
+				<div style="text-align:center;">
+					<div style="font-size:3rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
+					<div style="font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+						渡劫成功！觉醒分支出现！
+					</div>
+					<div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">
+						你满足了隐藏觉醒的触发条件，请选择你的觉醒路线：
+					</div>
+				</div>
+				
+				<div style="display:flex;flex-direction:column;gap:15px;margin-bottom:20px;">
+					<!-- 普通觉醒选项 -->
+					<div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;border:2px solid rgba(102,126,234,0.3);cursor:pointer;transition:all 0.3s;" 
+						 onmouseover="this.style.borderColor='rgba(102,126,234,0.8)';this.style.transform='translateY(-2px)'"
+						 onmouseout="this.style.borderColor='rgba(102,126,234,0.3)';this.style.transform='translateY(0)'"
+						 onclick="selectAwaken('normal')">
+						<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+							<span style="font-size:1.5rem;">${charData.awakenIcon}</span>
+							<span style="font-size:1.1rem;font-weight:700;color:#667eea;">${charData.awakenName}</span>
+						</div>
+						<div style="font-size:0.85rem;color:var(--text-secondary);">${charData.awakenDesc}</div>
+					</div>
+					
+					<!-- 隐藏觉醒选项 -->
+					<div style="background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:12px;padding:15px;border:2px dashed rgba(243,156,18,0.5);cursor:pointer;transition:all 0.3s;position:relative;" 
+						 onmouseover="this.style.borderColor='rgba(243,156,18,1)';this.style.transform='translateY(-2px)'"
+						 onmouseout="this.style.borderColor='rgba(243,156,18,0.5)';this.style.transform='translateY(0)'"
+						 onclick="selectAwaken('hidden')">
+						<div style="position:absolute;top:-8px;right:10px;background:linear-gradient(135deg,#f39c12,#e74c3c);color:white;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;">🔮 隐藏觉醒</div>
+						<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+							<span style="font-size:1.5rem;">${charData.hiddenAwakenIcon}</span>
+							<span style="font-size:1.1rem;font-weight:700;color:#f39c12;">${charData.hiddenAwakenName}</span>
+						</div>
+						<div style="font-size:0.85rem;color:var(--text-secondary);">${charData.hiddenAwakenDesc}</div>
+					</div>
+				</div>
+				
+				<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.8rem;color:var(--text-secondary);">
+					<i class="fas fa-info-circle"></i> 选择后无法更改，请谨慎决定！
+				</div>
+			`;
+			
+			// 定义全局选择函数
+			window.selectAwaken = function(type) {
+				closeModal();
+				if (type === 'hidden') {
+					applyHiddenAwaken(charData);
+				} else {
+					applyNormalAwaken(charData);
+				}
+			};
+			
+			showModal('⚡ 觉醒选择', html, []);
+		}
+
+		// ★★★ 新增：应用隐藏觉醒效果 ★★★
+		function applyHiddenAwaken(charData) {
+			const character = gameState.character;
+			gameState.hiddenAwakened = true;
+			gameState.hiddenAwakenType = character;
+			
+			let effectName = charData.hiddenAwakenIcon + ' ' + charData.hiddenAwakenName;
+			let effectDesc = charData.hiddenAwakenDesc;
+			let bonusDetails = [];
+			
+			switch (character) {
+				case 'normal': // 勤能补拙
+					gameState.actionLimit = 2;
+					bonusDetails.push('每月行动次数：1 → 2');
+					bonusDetails.push('看论文/打工/想idea/做实验/写论文每月可执行2次');
+					break;
+					
+				case 'genius': // 预见未来热点
+					gameState.noDecay = true;
+					bonusDetails.push('论文idea分数不再每月衰减');
+					bonusDetails.push('论文实验分数不再每月衰减');
+					bonusDetails.push('✨ 论文质量将更加稳定！');
+					break;
+					
+				case 'social': // 师兄师姐救我
+					gameState.hasSeniorHelpSkill = true;
+					bonusDetails.push('获得主动技能【师兄师姐救我】');
+					bonusDetails.push('使用后：下次想idea时科研能力视为 科研+社交');
+					bonusDetails.push('⚠️ 此技能仅可使用1次');
+					break;
+					
+				case 'rich': // 不求暴富但求稳定
+					gameState.monthlyWageBonus = 1;
+					bonusDetails.push('每月工资额外+1');
+					bonusDetails.push('✨ 稳定的收入让生活更从容');
+					break;
+					
+				case 'teacher-child': // 导师救我
+					gameState.hasTeacherHelpSkill = true;
+					bonusDetails.push('获得主动技能【导师救我】');
+					bonusDetails.push('使用后：下次想idea时科研能力视为 科研+好感度');
+					bonusDetails.push('⚠️ 此技能仅可使用1次');
+					break;
+					
+				case 'chosen': // 孤注一掷
+					// 需要让玩家选择保留哪个属性
+					showAllInChoiceModal();
+					return; // 提前返回，由选择弹窗处理后续
+			}
+			
+			checkResearchUnlock(true);
+			showHiddenAwakenResultModal(effectName, effectDesc, bonusDetails);
+		}
+
+		// ★★★ 新增：孤注一掷属性选择弹窗 ★★★
+		function showAllInChoiceModal() {
+			const currentVal = gameState.research; // 三项相等
+			const transferVal = (currentVal - 1) * 2; // 两项变1后转移的值
+			
+			const html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">🎯</div>
+					<div style="font-size:1.1rem;font-weight:600;color:#f39c12;margin-bottom:5px;">孤注一掷</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">选择你要强化的属性，其他两项将变为1</div>
+				</div>
+				
+				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;">
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:5px;">当前属性均为 ${currentVal}</div>
+					<div style="font-size:0.85rem;">选择后：主属性 +${transferVal}，其他两项变为1</div>
+				</div>
+				
+				<div style="display:flex;flex-direction:column;gap:10px;">
+					<button class="btn btn-primary" style="width:100%;padding:12px;" onclick="applyAllIn('research')">
+						<i class="fas fa-flask"></i> 强化科研能力 → ${currentVal + transferVal}
+					</button>
+					<button class="btn btn-success" style="width:100%;padding:12px;" onclick="applyAllIn('social')">
+						<i class="fas fa-users"></i> 强化社交能力 → ${currentVal + transferVal}
+					</button>
+					<button class="btn btn-accent" style="width:100%;padding:12px;" onclick="applyAllIn('favor')">
+						<i class="fas fa-heart"></i> 强化导师好感度 → ${currentVal + transferVal}
+					</button>
+				</div>
+			`;
+			
+			window.applyAllIn = function(targetStat) {
+				const oldVal = gameState.research; // 三项相等
+				const transferVal = (oldVal - 1) * 2;
+				const newVal = Math.min(20, oldVal + transferVal);
+				
+				const bonusDetails = [];
+				
+				if (targetStat === 'research') {
+					gameState.research = newVal;
+					gameState.social = 1;
+					gameState.favor = 1;
+					bonusDetails.push(`科研能力 ${oldVal} → ${newVal}`);
+					bonusDetails.push(`社交能力 ${oldVal} → 1`);
+					bonusDetails.push(`导师好感度 ${oldVal} → 1`);
+				} else if (targetStat === 'social') {
+					gameState.research = 1;
+					gameState.social = newVal;
+					gameState.favor = 1;
+					bonusDetails.push(`科研能力 ${oldVal} → 1`);
+					bonusDetails.push(`社交能力 ${oldVal} → ${newVal}`);
+					bonusDetails.push(`导师好感度 ${oldVal} → 1`);
+				} else {
+					gameState.research = 1;
+					gameState.social = 1;
+					gameState.favor = newVal;
+					bonusDetails.push(`科研能力 ${oldVal} → 1`);
+					bonusDetails.push(`社交能力 ${oldVal} → 1`);
+					bonusDetails.push(`导师好感度 ${oldVal} → ${newVal}`);
+				}
+				
+				gameState.hiddenAwakened = true;
+				gameState.hiddenAwakenType = 'chosen';
+				
+				closeModal();
+				checkResearchUnlock(true);
+				showHiddenAwakenResultModal('🎯 孤注一掷', '将全部力量集中到一点！', bonusDetails);
+			};
+			
+			showModal('🎯 孤注一掷 - 选择强化属性', html, []);
+		}
+
+		// ★★★ 新增：显示隐藏觉醒结果弹窗 ★★★
+		function showHiddenAwakenResultModal(effectName, effectDesc, bonusDetails) {
+			const html = `
+				<div style="text-align:center;">
+					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">🔮</div>
+					<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#f39c12,#e74c3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+						隐藏觉醒触发！
+					</div>
+					<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
+						你发现了不同寻常的道路...
+					</div>
+				</div>
+				
+				<div style="background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(243,156,18,0.5);">
+					<div style="text-align:center;margin-bottom:12px;">
+						<div style="font-size:1.3rem;font-weight:700;color:#f39c12;margin-bottom:5px;">${effectName}</div>
+						<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
+					</div>
+					<div style="background:white;border-radius:8px;padding:12px;">
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">🔮 觉醒效果 🔮</div>
+						<div style="display:flex;flex-direction:column;gap:6px;">
+							${bonusDetails.map(detail => `
+								<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(243,156,18,0.15));border-radius:6px;font-size:0.85rem;font-weight:500;color:#d68910;">
+									${detail.startsWith('⚠️') || detail.startsWith('✨') ? '' : '<i class="fas fa-star"></i>'} ${detail}
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				</div>
+				
+				<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
+					<div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 开启博士修炼之路</div>
+					<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
+				</div>
+			`;
+			
+			showModal('🔮 隐藏觉醒', html, [
+				{ text: '🎯 踏上独特之路', class: 'btn-warning', action: () => {
+					addLog('隐藏觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
+					closeModal();
+					updateAllUI();
+					renderPaperSlots();
+					
+					if (gameState.pendingConference) {
+						const grade = gameState.pendingConference;
+						gameState.pendingConference = null;
+						setTimeout(() => showConferenceModal(grade), 300);
+					}
+				}}
+			]);
+		}
+
+		// ★★★ 新增：应用普通觉醒效果（原有逻辑提取） ★★★
+		function applyNormalAwaken(charData) {
+			const character = gameState.character;
+			let effectName = '';
+			let effectDesc = '';
+			let bonusDetails = [];
+			
+			switch (character) {
+				case 'genius':
+					effectName = '🧬 学术天赋觉醒';
+					effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
 					const aCount = gameState.paperA || 0;
 					if (aCount > 0) {
 						const researchGain = aCount * 2;
@@ -4354,13 +4788,12 @@
 						bonusDetails.push('暂无A类论文，继续努力！');
 					}
 					break;
-                    
+					
 				case 'social':
 					effectName = '🌐 人脉网络激活';
 					effectDesc = '社交达人的人脉全面绽放，冥冥之中影响了审稿人分布！';
 					gameState.socialAwakened = true;
 					
-					// ★★★ 根据当前社交计算并固定概率分布 ★★★
 					const socialVal = gameState.social;
 					let normalP = Math.max(0, 0.40 - socialVal * 0.01);
 					let kindP = 0.10 + socialVal * 0.005;
@@ -4369,7 +4802,6 @@
 					let gptP = Math.max(0, 0.20 - socialVal * 0.005);
 					let questionsP = Math.max(0, 0.10 - socialVal * 0.005);
 					
-					// 归一化
 					const totalP = normalP + kindP + expertP + hostileP + gptP + questionsP;
 					normalP /= totalP;
 					kindP /= totalP;
@@ -4378,7 +4810,6 @@
 					gptP /= totalP;
 					questionsP /= totalP;
 					
-					// ★★★ 保存固定的概率分布 ★★★
 					gameState.reviewerDistribution = {
 						normal: normalP,
 						kind: kindP,
@@ -4389,24 +4820,17 @@
 					};
 					
 					bonusDetails.push(`转博时社交: ${socialVal}`);
-					bonusDetails.push(`审稿人分布已永久改变：`);
-					bonusDetails.push(`普通审稿人 ${(normalP * 100).toFixed(1)}%`);
-					bonusDetails.push(`心软审稿人 ${(kindP * 100).toFixed(1)}%`);
-					bonusDetails.push(`资深大牛 ${(expertP * 100).toFixed(1)}%`);
-					bonusDetails.push(`恶意小同行 ${(hostileP * 100).toFixed(1)}%`);
-					bonusDetails.push(`GPT审稿人 ${(gptP * 100).toFixed(1)}%`);
-					bonusDetails.push(`40问题审稿人 ${(questionsP * 100).toFixed(1)}%`);
+					bonusDetails.push(`审稿人分布已永久改变`);
 					break;
-                    
-                // ★★★ 关键修改：正位富可敌国觉醒改为×3 ★★★
-                case 'rich':
-                    effectName = '💎 财富倍增术';
-                    effectDesc = '富可敌国的底蕴显现，金币储备瞬间翻三倍！';
-                    const oldGold = gameState.gold;
-                    gameState.gold = gameState.gold * 3;  // ★★★ 改为×3 ★★★
-                    bonusDetails.push(`金币 ${oldGold} → ${gameState.gold} (×3)`);
-                    break;
-                    
+					
+				case 'rich':
+					effectName = '💎 财富倍增术';
+					effectDesc = '富可敌国的底蕴显现，金币储备瞬间翻三倍！';
+					const oldGold = gameState.gold;
+					gameState.gold = gameState.gold * 3;
+					bonusDetails.push(`金币 ${oldGold} → ${gameState.gold} (×3)`);
+					break;
+					
 				case 'teacher-child':
 					effectName = '👑 血脉共鸣';
 					effectDesc = '导师子女的身份优势凸显，将人脉转化为实际资源！';
@@ -4423,101 +4847,101 @@
 						bonusDetails.push(`导师好感度未超过12，暂无转化`);
 					}
 					break;
-                    
-                case 'chosen':
-                    effectName = '✨ 查缺补漏';
-                    effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
-                    const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
-                    const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
-                    gameState.research = Math.min(20, maxStat);
-                    gameState.social = Math.min(20, maxStat);
-                    gameState.favor = Math.min(20, maxStat);
-                    if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
-                    if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
-                    if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
-                    if (bonusDetails.length === 0) bonusDetails.push('属性已达最优，无需补齐');
-                    break;
-                    
-                case 'normal':
-                default:
-                    effectName = '🔥 我命由我不由天';
-                    effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
-                    const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
-                    gameState.research = Math.min(20, gameState.research * 2);
-                    gameState.social = Math.min(20, gameState.social * 2);
-                    gameState.favor = Math.min(20, gameState.favor * 2);
-                    gameState.gold = gameState.gold * 2;
-                    bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
-                    bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
-                    bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
-                    bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
-                    break;
-            }
-            
-            checkResearchUnlock(true);
-            
-            const html = `
-                <div style="text-align:center;">
-                    <div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
-                    <div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
-                        渡劫成功！
-                    </div>
-                    <div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
-                        恭喜突破硕士境界，晋升博士修炼者！
-                    </div>
-                </div>
-                
-                <div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(102,126,234,0.3);">
-                    <div style="text-align:center;margin-bottom:12px;">
-                        <div style="font-size:1.3rem;font-weight:700;color:#667eea;margin-bottom:5px;">${effectName}</div>
-                        <div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
-                    </div>
-                    <div style="background:white;border-radius:8px;padding:12px;">
-                        <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">✨ 获得加成 ✨</div>
-                        <div style="display:flex;flex-direction:column;gap:6px;">
-                            ${bonusDetails.map(detail => `
-                                <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:6px;font-size:0.9rem;font-weight:500;color:var(--success-color);">
-                                    <i class="fas fa-arrow-up"></i> ${detail}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
-                    <div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 新的修炼目标</div>
-                    <div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
-                    <div style="color:var(--text-secondary);">修炼年限：5年</div>
-                </div>
-            `;
-            
-            if (!document.getElementById('tribulation-style')) {
-                const style = document.createElement('style');
-                style.id = 'tribulation-style';
-                style.textContent = `
-                    @keyframes pulse {
-                        0%, 100% { transform: scale(1); opacity: 1; }
-                        50% { transform: scale(1.1); opacity: 0.8; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            showModal('⚡ 转博渡劫', html, [
-                { text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
-                    addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
-                    closeModal();
-                    updateAllUI();
-                    renderPaperSlots();
-                    
-                    if (gameState.pendingConference) {
-                        const grade = gameState.pendingConference;
-                        gameState.pendingConference = null;
-                        setTimeout(() => showConferenceModal(grade), 300);
-                    }
-                }}
-            ]);
-        }
+					
+				case 'chosen':
+					effectName = '✨ 查缺补漏';
+					effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
+					const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
+					const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
+					gameState.research = Math.min(20, maxStat);
+					gameState.social = Math.min(20, maxStat);
+					gameState.favor = Math.min(20, maxStat);
+					if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
+					if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
+					if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
+					if (bonusDetails.length === 0) bonusDetails.push('属性已达最优，无需补齐');
+					break;
+					
+				case 'normal':
+				default:
+					effectName = '🔥 我命由我不由天';
+					effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
+					const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
+					gameState.research = Math.min(20, gameState.research * 2);
+					gameState.social = Math.min(20, gameState.social * 2);
+					gameState.favor = Math.min(20, gameState.favor * 2);
+					gameState.gold = gameState.gold * 2;
+					bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
+					bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
+					bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
+					bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
+					break;
+			}
+			
+			checkResearchUnlock(true);
+			
+			const html = `
+				<div style="text-align:center;">
+					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚡</div>
+					<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
+						渡劫成功！
+					</div>
+					<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
+						恭喜突破硕士境界，晋升博士修炼者！
+					</div>
+				</div>
+				
+				<div style="background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(102,126,234,0.3);">
+					<div style="text-align:center;margin-bottom:12px;">
+						<div style="font-size:1.3rem;font-weight:700;color:#667eea;margin-bottom:5px;">${effectName}</div>
+						<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
+					</div>
+					<div style="background:white;border-radius:8px;padding:12px;">
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">✨ 获得加成 ✨</div>
+						<div style="display:flex;flex-direction:column;gap:6px;">
+							${bonusDetails.map(detail => `
+								<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:6px;font-size:0.9rem;font-weight:500;color:var(--success-color);">
+									<i class="fas fa-arrow-up"></i> ${detail}
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				</div>
+				
+				<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
+					<div style="color:var(--primary-color);font-weight:600;margin-bottom:5px;">📜 新的修炼目标</div>
+					<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
+					<div style="color:var(--text-secondary);">修炼年限：5年</div>
+				</div>
+			`;
+			
+			if (!document.getElementById('tribulation-style')) {
+				const style = document.createElement('style');
+				style.id = 'tribulation-style';
+				style.textContent = `
+					@keyframes pulse {
+						0%, 100% { transform: scale(1); opacity: 1; }
+						50% { transform: scale(1.1); opacity: 0.8; }
+					}
+				`;
+				document.head.appendChild(style);
+			}
+			
+			showModal('⚡ 转博渡劫', html, [
+				{ text: '🎯 开启博士修炼之路', class: 'btn-primary', action: () => {
+					addLog('转博渡劫', `触发【${effectName}】`, bonusDetails.join('，'));
+					closeModal();
+					updateAllUI();
+					renderPaperSlots();
+					
+					if (gameState.pendingConference) {
+						const grade = gameState.pendingConference;
+						gameState.pendingConference = null;
+						setTimeout(() => showConferenceModal(grade), 300);
+					}
+				}}
+			]);
+		}
 		
         // ==================== 论文推广功能 ====================
 		function promotePaper(index, type) {
@@ -4740,46 +5164,63 @@
         }
 		
         // ==================== 操作功能 ====================
-        function readPaper() {
-            if (gameState.actionUsed) return;
-            
-            const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
-            const baseSanCost = has4K ? 1 : 2;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            
-            if (gameState.san < actualSanCost) {
-                const tipText = actualSanCost !== baseSanCost 
-                    ? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
-                    : `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-                showModal('❌ 操作失败', tipText, 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            gameState.actionUsed = true;
-            
-            gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
-            gameState.readCount++;
+		function readPaper() {
+			// ★★★ 修改：检查行动次数而非单次标志 ★★★
+			if (gameState.actionCount >= gameState.actionLimit) {
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
+			const baseSanCost = has4K ? 1 : 2;
+			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			
+			if (gameState.san < actualSanCost) {
+				const tipText = actualSanCost !== baseSanCost 
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
+				showModal('❌ 操作失败', tipText, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			// ★★★ 修改：增加行动计数 ★★★
+			gameState.actionCount++;
+			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
+			
+			gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
+			gameState.readCount++;
 
-            let result = `SAN值-${actualSanCost}`;
-            if (has4K) result += '（4K显示器生效）';
-            if (actualSanCost !== baseSanCost) {
-                result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-            }
-            result += '，获得临时buff：下次想idea分数+1';
+			let result = `SAN值-${actualSanCost}`;
+			if (has4K) result += '（4K显示器生效）';
+			if (actualSanCost !== baseSanCost) {
+				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+			}
+			result += '，获得临时buff：下次想idea分数+1';
+			
+			// ★★★ 新增：显示行动次数 ★★★
+			if (gameState.actionLimit > 1) {
+				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
+			}
 
-            if (gameState.readCount % 5 === 0) {
-                changeResearch(1);
-                result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
-            }
+			if (gameState.readCount % 5 === 0) {
+				changeResearch(1);
+				result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
+			}
 
-            addLog('看论文', '认真阅读了学术论文', result);
-            updateBuffs();
-            changeSan(-baseSanCost);
-        }
+			addLog('看论文', '认真阅读了学术论文', result);
+			updateBuffs();
+			changeSan(-baseSanCost);
+		}
 
 		function partTimeJob() {
-			if (gameState.actionUsed) return;
+			// ★★★ 修改：检查行动次数 ★★★
+			if (gameState.actionCount >= gameState.actionLimit) {
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
 			
 			const baseSanCost = 5;
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
@@ -4793,7 +5234,9 @@
 				return;
 			}
 			
-			gameState.actionUsed = true;
+			// ★★★ 修改：增加行动计数 ★★★
+			gameState.actionCount++;
+			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 			gameState.workCount = (gameState.workCount || 0) + 1;
 			
 			let result = `SAN值-${actualSanCost}`;
@@ -4802,13 +5245,23 @@
 			}
 			result += '，金钱+2';
 			
+			// ★★★ 新增：显示行动次数 ★★★
+			if (gameState.actionLimit > 1) {
+				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
+			}
+			
 			addLog('打工', '辛苦工作赚取生活费', result);
 			changeStats({ san: -baseSanCost, gold: 2 });
 		}
 
 
 		function thinkIdea() {
-			if (gameState.actionUsed) return;
+			// ★★★ 修改：检查行动次数 ★★★
+			if (gameState.actionCount >= gameState.actionLimit) {
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
 			
 			const hasExhaustion = gameState.buffs.temporary.some(b => b.type === 'idea_exhaustion');
 			const hasStolen = gameState.buffs.temporary.some(b => b.type === 'idea_stolen');
@@ -4842,7 +5295,9 @@
 			}
 			
 			showPaperSelectModal('想idea', available, (index) => {
-				gameState.actionUsed = true;
+				// ★★★ 修改：增加行动计数 ★★★
+				gameState.actionCount++;
+				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.ideaClickCount = (gameState.ideaClickCount || 0) + 1;
 				
 				const paper = gameState.papers[index];
@@ -4851,8 +5306,23 @@
 				let times = 1 + countBuff('idea_times');
 				let generatedScores = [];
 				
+				// ★★★ 新增：计算主动技能的临时科研加成 ★★★
+				let effectiveResearch = gameState.research;
+				let skillUsed = false;
+				let skillSource = '';
+				
+				if (gameState.nextIdeaResearchBonus > 0) {
+					effectiveResearch += gameState.nextIdeaResearchBonus;
+					skillUsed = true;
+					skillSource = gameState.nextIdeaBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					// 清除加成（一次性使用）
+					gameState.nextIdeaResearchBonus = 0;
+					gameState.nextIdeaBonusSource = null;
+				}
+				
 				for (let i = 0; i < times; i++) {
-					let gen = calculateScore('idea');
+					// ★★★ 修改：使用effectiveResearch计算分数 ★★★
+					let gen = calculateScoreWithResearch('idea', effectiveResearch);
 					
 					if (hasGeminiSub && geminiSub.bonusScore) {
 						gen += geminiSub.bonusScore;
@@ -4878,11 +5348,19 @@
 				if (actualSanCost !== baseSanCost) {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
+				if (skillUsed) {
+					result += `（${skillSource}生效！）`;
+				}
 				if (hasGeminiSub) result += '（Gemini: SAN-1,分+4）';
 				if (hasExhaustion) result += '（灵感枯竭÷2）';
 				if (hasStolen) result += '（被偷idea÷2）';
 				if (hasSlack) result += '（松懈÷2）';
 				if (times > 1) result += `（想${times}次）`;
+				
+				// ★★★ 新增：显示行动次数 ★★★
+				if (gameState.actionLimit > 1) {
+					result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
+				}
 				
 				if (bestGenerated > oldScore) {
 					result += `，idea分 ${oldScore} → ${newScore}`;
@@ -4919,7 +5397,12 @@
 		}
 
 		function doExperiment() {
-			if (gameState.actionUsed) return;
+			// ★★★ 修改：检查行动次数 ★★★
+			if (gameState.actionCount >= gameState.actionLimit) {
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
 			
 			const hasOverheat = gameState.buffs.temporary.some(b => b.type === 'exp_overheat');
 			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
@@ -4952,12 +5435,12 @@
 			}
 			
 			showPaperSelectModal('做实验', available, (index) => {
-				gameState.actionUsed = true;
+				// ★★★ 修改：增加行动计数 ★★★
+				gameState.actionCount++;
+				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.expClickCount = (gameState.expClickCount || 0) + 1;
 				
 				const paper = gameState.papers[index];
-				
-				// ★★★ 关键：记录操作前的分数 ★★★
 				const oldScore = paper.expScore;
 				
 				let times = 1 + countBuff('exp_times');
@@ -4981,8 +5464,6 @@
 				}
 				
 				const bestGenerated = Math.max(...generatedScores);
-				
-				// ★★★ 核心逻辑：新分数 = max(生成最高分, 旧分数+1) ★★★
 				const newScore = Math.max(bestGenerated, oldScore + 1);
 				paper.expScore = newScore;
 				
@@ -4994,6 +5475,11 @@
 				if (hasOverheat) result += '（主机发烫÷2）';
 				if (hasSlack) result += '（松懈÷2）';
 				if (times > 1) result += `（实验${times}次）`;
+				
+				// ★★★ 新增：显示行动次数 ★★★
+				if (gameState.actionLimit > 1) {
+					result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
+				}
 				
 				if (bestGenerated > oldScore) {
 					result += `，实验分 ${oldScore} → ${newScore}`;
@@ -5027,7 +5513,12 @@
 		}
 
 		function writePaper() {
-			if (gameState.actionUsed) return;
+			// ★★★ 修改：检查行动次数 ★★★
+			if (gameState.actionCount >= gameState.actionLimit) {
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
 			
 			const hasWritersBlock = gameState.buffs.temporary.some(b => b.type === 'write_block');
 			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
@@ -5062,12 +5553,12 @@
 			}
 			
 			showPaperSelectModal('写论文', available, (index) => {
-				gameState.actionUsed = true;
+				// ★★★ 修改：增加行动计数 ★★★
+				gameState.actionCount++;
+				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.writeClickCount = (gameState.writeClickCount || 0) + 1;
 				
 				const paper = gameState.papers[index];
-				
-				// ★★★ 关键：记录操作前的分数 ★★★
 				const oldScore = paper.writeScore;
 				
 				let times = 1 + countBuff('write_times');
@@ -5091,8 +5582,6 @@
 				}
 				
 				const bestGenerated = Math.max(...generatedScores);
-				
-				// ★★★ 核心逻辑：新分数 = max(生成最高分, 旧分数+1) ★★★
 				const newScore = Math.max(bestGenerated, oldScore + 1);
 				paper.writeScore = newScore;
 				
@@ -5102,6 +5591,11 @@
 				if (hasWritersBlock) result += '（无从下笔÷2）';
 				if (hasSlack) result += '（松懈÷2）';
 				if (times > 1) result += `（写${times}次）`;
+				
+				// ★★★ 新增：显示行动次数 ★★★
+				if (gameState.actionLimit > 1) {
+					result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
+				}
 				
 				if (bestGenerated > oldScore) {
 					result += `，写作分 ${oldScore} → ${newScore}`;
@@ -5132,6 +5626,27 @@
 				changeSan(-baseSanCost);
 				updateBuffs();
 			});
+		}
+
+		// ★★★ 新增：支持自定义科研值的分数计算（用于主动技能）★★★
+		function calculateScoreWithResearch(type, customResearch) {
+			const base = customResearch * (0.5 + Math.random());
+			const randomBonus = Math.floor(Math.random() * 6);
+			let score = Math.round(base + randomBonus);
+
+			let bonus = 0, multiplier = 1;
+			const buffType = type + '_bonus';
+			[...gameState.buffs.permanent, ...gameState.buffs.temporary].forEach(b => {
+				if (b.type === buffType) {
+					if (b.multiply) {
+						multiplier += (b.value - 1);
+					} else {
+						bonus += b.value;
+					}
+				}
+			});
+			multiplier = Math.max(0, multiplier);
+			return Math.max(0, Math.round(score * multiplier + bonus));
 		}
 
 		function calculateScore(type) {
@@ -5311,7 +5826,7 @@
 				cumulative += dist.gpt;
 				if (r < cumulative) return { type: 'gpt', name: 'GPT审稿人' };
 				
-				return { type: 'questions', name: '40个问题审稿人' };
+				return { type: 'questions', name: '39个问题审稿人' };
 			}
 			
 			// 默认分布
@@ -5321,7 +5836,7 @@
 			if (r < 0.60) return { type: 'expert', name: '资深大牛' };
 			if (r < 0.70) return { type: 'hostile', name: '恶意小同行' };
 			if (r < 0.90) return { type: 'gpt', name: 'GPT审稿人' };
-			return { type: 'questions', name: '40个问题审稿人' };
+			return { type: 'questions', name: '39个问题审稿人' };
 		}
 
 		function getReviewResult(reviewer, grade, score, ideaScore, expScore, writeScore) {
@@ -5446,7 +5961,7 @@
 		}
 
         function generateComment(decision, type) {
-            if (type === 'questions') return '我有40个问题。';
+            if (type === 'questions') return '我有39个问题。';
             const positive = ['创新性强，实验充分', '写作清晰，贡献明确', '方法新颖，结果有说服力', '工作扎实，有重要贡献'];
             const negative = ['缺乏创新', '写作不足，表达不清', '实验不足，缺少对比', '贡献有限，增量工作'];
             const neutral = ['有一定创新但实验可加强', '想法有趣但写作需改进', '工作还可以但缺少深入分析'];
@@ -5539,7 +6054,7 @@
 				// ★★★ 时间衰减说明 ★★★
 				html += `<div style="margin-bottom:8px;padding:8px;background:rgba(225,112,85,0.1);border-radius:6px;border-left:3px solid var(--danger-color);">
 					<div style="font-size:0.8rem;color:var(--danger-color);font-weight:500;margin-bottom:4px;">
-						⏳ 时间流逝衰减（4个月审稿期）
+						⏳ 时效性降低（4个月审稿期）
 					</div>
 					<div style="font-size:0.75rem;color:var(--text-secondary);">
 						• Idea分 -${ideaDecay}（每月-1）<br>
@@ -6350,6 +6865,40 @@
                 }}
             ]);
         }
+
+		// ★★★ 新增：年终总结事件 ★★★
+		function triggerYearEndSummaryEvent() {
+			showModal('📅 年终总结', 
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">📝</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">第${gameState.year}年年终总结</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:5px;">回顾过去一年，你主要在做什么？</div>
+				</div>
+				<p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">选择一项作为你今年的主要成长方向：</p>`,
+				[
+					{ text: '🔬 认真科研', class: 'btn-primary', action: () => {
+						addLog('年终总结', '今年主要在认真科研', '科研能力+1');
+						closeModal();
+						changeResearch(1);
+					}},
+					{ text: '🎉 和同学玩耍', class: 'btn-success', action: () => {
+						addLog('年终总结', '今年主要在和同学玩耍', '社交能力+1');
+						closeModal();
+						changeSocial(1);
+					}},
+					{ text: '👨‍🏫 帮导师干活', class: 'btn-accent', action: () => {
+						addLog('年终总结', '今年主要在帮导师干活', '导师好感度+1');
+						closeModal();
+						changeFavor(1);
+					}},
+					{ text: '💼 偷偷实习', class: 'btn-warning', action: () => {
+						addLog('年终总结', '今年偷偷在外面实习', '金钱+2');
+						closeModal();
+						changeGold(2);
+					}}
+				]
+			);
+		}
 
         function triggerOtherRandomEvent() {
             let availableEvents = [...gameState.availableRandomEvents];
@@ -7986,6 +8535,19 @@
 				lastIdeaScore: gameState.lastIdeaScore || 0,
 				lastExpScore: gameState.lastExpScore || 0,
 				lastWriteScore: gameState.lastWriteScore || 0,
+				// 在 saveData 对象中添加以下字段
+				hiddenAwakened: gameState.hiddenAwakened || false,
+				hiddenAwakenType: gameState.hiddenAwakenType || null,
+				actionLimit: gameState.actionLimit || 1,
+				actionCount: gameState.actionCount || 0,
+				noDecay: gameState.noDecay || false,
+				hasSeniorHelpSkill: gameState.hasSeniorHelpSkill || false,
+				usedSeniorHelpSkill: gameState.usedSeniorHelpSkill || false,
+				hasTeacherHelpSkill: gameState.hasTeacherHelpSkill || false,
+				usedTeacherHelpSkill: gameState.usedTeacherHelpSkill || false,
+				monthlyWageBonus: gameState.monthlyWageBonus || 0,
+				nextIdeaResearchBonus: gameState.nextIdeaResearchBonus || 0,
+				nextIdeaBonusSource: gameState.nextIdeaBonusSource || null,
                 
                 rejectedPapers: {...(gameState.rejectedPapers || {})},
                 maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -8125,6 +8687,19 @@
 							expClickCount: save.expClickCount || 0,
 							writeClickCount: save.writeClickCount || 0,
 							consecutiveAccepts: save.consecutiveAccepts || 0,
+							// 在 gameState 赋值中添加以下字段
+							hiddenAwakened: save.hiddenAwakened || false,
+							hiddenAwakenType: save.hiddenAwakenType || null,
+							actionLimit: save.actionLimit || 1,
+							actionCount: save.actionCount || 0,
+							noDecay: save.noDecay || false,
+							hasSeniorHelpSkill: save.hasSeniorHelpSkill || false,
+							usedSeniorHelpSkill: save.usedSeniorHelpSkill || false,
+							hasTeacherHelpSkill: save.hasTeacherHelpSkill || false,
+							usedTeacherHelpSkill: save.usedTeacherHelpSkill || false,
+							monthlyWageBonus: save.monthlyWageBonus || 0,
+							nextIdeaResearchBonus: save.nextIdeaResearchBonus || 0,
+							nextIdeaBonusSource: save.nextIdeaBonusSource || null,
 				
                             
                             rejectedPapers: save.rejectedPapers ? {...save.rejectedPapers} : {},
