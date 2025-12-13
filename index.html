@@ -1293,21 +1293,38 @@
 
 			<!-- 访问统计 -->
 			<div id="visitor-stats" style="text-align:center;font-size:0.75rem;color:var(--text-secondary);margin-bottom:15px;">
-				<span id="online-count-container" style="display:inline;">
-					🟢 在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
-				</span>
-				&nbsp;|&nbsp; 
-				<span id="busuanzi_container_site_pv" style="display:inline;">
-					📊 总访问 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span> 次
-				</span> 
-				&nbsp;|&nbsp; 
-				<span id="busuanzi_container_site_uv" style="display:inline;">
-					👥 访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span>
-				</span>
-				&nbsp;|&nbsp; 
-				<span id="total-games-container" style="display:inline;">
-					🎮 游玩 <span id="total-games-value" style="color:var(--primary-color);font-weight:600;">-</span> 局
-				</span>
+				<!-- 第一行：实时数据 -->
+				<div style="margin-bottom:5px;">
+					<span style="display:inline;">
+						🟢 在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span id="busuanzi_container_site_pv" style="display:inline;">
+						📊 总访问 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span> 
+					&nbsp;|&nbsp; 
+					<span id="busuanzi_container_site_uv" style="display:inline;">
+						👥 总访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span id="total-games-container" style="display:inline;">
+						🎮 总游玩 <span id="total-games-value" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span>
+				</div>
+				<!-- 第二行：今日数据 -->
+				<div>
+					<span style="display:inline;">
+						☀️ 今日访问 <span id="today-pv-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span style="display:inline;">
+						👤 今日访客 <span id="today-uv-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span style="display:inline;">
+						🎯 今日游玩 <span id="today-games-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+				</div>
 			</div>
             
             <!-- 模式切换按钮 -->
@@ -2328,20 +2345,18 @@
 			
 			try {
 				if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-					console.warn('⚠️ Supabase SDK 未加载，统计功能不可用');
+					console.warn('⚠️ Supabase SDK 未加载');
 					return;
 				}
 				
 				supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 				statsInitialized = true;
-				console.log('✅ Supabase 统计系统初始化成功');
+				console.log('✅ Supabase 初始化成功');
 				recordVisit();
-				
-				// ★★★ 新增：启动在线追踪 ★★★
-				startOnlineTracking();
+				startOnlineTracking();  // ★ 启动
 				
 			} catch (e) {
-				console.error('❌ 统计系统初始化失败:', e);
+				console.error('❌ 初始化失败:', e);
 				supabase = null;
 			}
 		}
@@ -3355,9 +3370,6 @@
 
 		async function startGame() {
 			if (!selectedCharacter) return;
-			
-			// ★★★ 新增：停止在线追踪 ★★★
-			stopOnlineTracking();
 
 			gameState = getInitialState();
 			
@@ -8859,8 +8871,8 @@
 
             renderCharacterGrid();
             loadGlobalStatsDisplay();
-			// ★★★ 新增：重新开始在线追踪 ★★★
-			startOnlineTracking();
+			// ★ 返回开始页面时重新查询统计
+			updateAllStatsDisplay();
         }
 
 		// ==================== Meta进度系统 ====================
@@ -10012,7 +10024,7 @@
             }
         }
 
-		// ==================== 在线人数系统（低开销版）====================
+		// ==================== 在线人数系统（最优版）====================
 		let onlineSessionId = null;
 		let onlineHeartbeatTimer = null;
 
@@ -10026,7 +10038,7 @@
 			return id;
 		}
 
-		// 发送心跳（仅在开始界面）
+		// 发送心跳
 		async function sendOnlineHeartbeat() {
 			if (!supabase || !onlineSessionId) return;
 			
@@ -10042,103 +10054,145 @@
 			}
 		}
 
-		// 获取在线人数（共享查询）
-		async function getOnlineCount() {
-			if (!supabase) return 0;
+		// 获取今日北京时间0点的UTC时间
+		function getTodayStartUTC() {
+			const now = new Date();
+			const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+			const year = beijingTime.getUTCFullYear();
+			const month = beijingTime.getUTCMonth();
+			const day = beijingTime.getUTCDate();
+			return new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000).toISOString();
+		}
+
+		// 获取今日北京日期字符串
+		function getTodayDateString() {
+			const now = new Date();
+			const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+			return beijingTime.toISOString().split('T')[0];
+		}
+
+		// 获取所有统计数据（共享查询）
+		async function getAllStats() {
+			if (!supabase) return null;
 			
 			try {
-				// 1. 先读取缓存
 				const { data: cached } = await supabase
 					.from('site_stats')
-					.select('online_count, updated_at')
+					.select('*')
 					.eq('id', 1)
 					.single();
 				
-				if (cached) {
-					const cacheAge = Date.now() - new Date(cached.updated_at).getTime();
-					
-					// 缓存有效（60秒内），直接返回
-					if (cacheAge < 60 * 1000) {
-						return cached.online_count;
-					}
-					
-					// 缓存过期，尝试更新（只有一个人会成功更新）
-					const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-					
-					const { count } = await supabase
-						.from('online_users')
-						.select('*', { count: 'exact', head: true })
-						.gte('last_seen', twoMinutesAgo);
-					
-					// 更新缓存
-					await supabase
-						.from('site_stats')
-						.update({ 
-							online_count: count || 0, 
-							updated_at: new Date().toISOString() 
-						})
-						.eq('id', 1);
-					
-					return count || 0;
+				const todayStr = getTodayDateString();
+				const cacheAge = cached ? Date.now() - new Date(cached.updated_at).getTime() : Infinity;
+				const isNewDay = cached?.stats_date !== todayStr;
+				
+				// 缓存有效（60秒内且是今天）
+				if (cached && !isNewDay && cacheAge < 60 * 1000) {
+					return {
+						online: cached.online_count,
+						todayPv: cached.today_pv,
+						todayUv: cached.today_uv,
+						todayGames: cached.today_games
+					};
 				}
 				
-				return 0;
+				// 重新计算
+				const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+				const todayStart = getTodayStartUTC();
+				
+				const [onlineResult, todayPvResult, todayUvResult, todayGamesResult] = await Promise.all([
+					supabase
+						.from('online_users')
+						.select('*', { count: 'exact', head: true })
+						.gte('last_seen', twoMinutesAgo),
+					supabase
+						.from('site_visits')
+						.select('*', { count: 'exact', head: true })
+						.eq('type', 'pv')
+						.gte('created_at', todayStart),
+					supabase
+						.from('site_visits')
+						.select('*', { count: 'exact', head: true })
+						.eq('type', 'uv')
+						.gte('created_at', todayStart),
+					supabase
+						.from('game_endings')
+						.select('*', { count: 'exact', head: true })
+						.gte('created_at', todayStart)
+				]);
+				
+				const stats = {
+					online: onlineResult.count || 0,
+					todayPv: todayPvResult.count || 0,
+					todayUv: todayUvResult.count || 0,
+					todayGames: todayGamesResult.count || 0
+				};
+				
+				// 更新缓存
+				await supabase
+					.from('site_stats')
+					.update({ 
+						online_count: stats.online,
+						today_pv: stats.todayPv,
+						today_uv: stats.todayUv,
+						today_games: stats.todayGames,
+						stats_date: todayStr,
+						updated_at: new Date().toISOString()
+					})
+					.eq('id', 1);
+				
+				return stats;
 			} catch (e) {
-				console.error('获取在线人数失败:', e);
-				return 0;
+				console.error('获取统计失败:', e);
+				return null;
 			}
 		}
 
-		// 更新显示
-		async function updateOnlineCountDisplay() {
-			const count = await getOnlineCount();
-			const el = document.getElementById('online-count-value');
-			if (el) {
-				el.textContent = count;
+		// 更新统计显示
+		async function updateAllStatsDisplay() {
+			const stats = await getAllStats();
+			
+			if (stats) {
+				const el = (id) => document.getElementById(id);
+				if (el('online-count-value')) el('online-count-value').textContent = stats.online;
+				if (el('today-pv-value')) el('today-pv-value').textContent = stats.todayPv;
+				if (el('today-uv-value')) el('today-uv-value').textContent = stats.todayUv;
+				if (el('today-games-value')) el('today-games-value').textContent = stats.todayGames;
 			}
 		}
 
-		// 启动在线追踪（仅开始界面）
+		// 启动在线追踪（心跳持续，统计只查一次）
 		function startOnlineTracking() {
 			if (!supabase) return;
 			
 			onlineSessionId = getOnlineSessionId();
 			
-			// 立即执行
+			// 立即心跳
 			sendOnlineHeartbeat();
-			updateOnlineCountDisplay();
 			
-			// 每60秒心跳一次
-			onlineHeartbeatTimer = setInterval(() => {
-				sendOnlineHeartbeat();
-				updateOnlineCountDisplay();
-			}, 60 * 1000);
-		}
-
-		// 停止在线追踪（进入游戏时调用）
-		function stopOnlineTracking() {
-			if (onlineHeartbeatTimer) {
-				clearInterval(onlineHeartbeatTimer);
-				onlineHeartbeatTimer = null;
+			// 只查询一次统计
+			updateAllStatsDisplay();
+			
+			// 持续心跳（游戏中也发）
+			if (!onlineHeartbeatTimer) {
+				onlineHeartbeatTimer = setInterval(sendOnlineHeartbeat, 60 * 1000);
 			}
 		}
 
-		// 清理会话（页面关闭）
-		async function cleanupOnlineSession() {
+		// 页面关闭清理
+		window.addEventListener('beforeunload', () => {
 			if (!supabase || !onlineSessionId) return;
 			
-			try {
-				await supabase
-					.from('online_users')
-					.delete()
-					.eq('session_id', onlineSessionId);
-			} catch (e) {
-				// 静默失败
-			}
-		}
-
-		// 页面关闭时清理
-		window.addEventListener('beforeunload', cleanupOnlineSession);
+			const url = `${SUPABASE_URL}/rest/v1/online_users?session_id=eq.${onlineSessionId}`;
+			fetch(url, {
+				method: 'DELETE',
+				headers: {
+					'apikey': SUPABASE_ANON_KEY,
+					'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+				},
+				keepalive: true
+			}).catch(() => {});
+		});
 
         // ==================== 启动游戏 ====================
         document.addEventListener('DOMContentLoaded', init);
