@@ -10169,19 +10169,14 @@
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// 更新缓存（包括历史最高在线）
-				await supabase
-					.from('site_stats')
-					.upsert({ 
-						id: 1,
-						online_count: stats.online,
-						max_online_count: stats.maxOnline,
-						today_pv: stats.todayPv,
-						today_uv: stats.todayUv,
-						today_games: stats.todayGames,
-						stats_date: todayStr,
-						updated_at: new Date().toISOString()
-					});
+				// ★★★ 修改：使用 RPC 确保 max_online_count 只增不减 ★★★
+				await supabase.rpc('update_site_stats', {
+					p_online_count: stats.online,
+					p_today_pv: stats.todayPv,
+					p_today_uv: stats.todayUv,
+					p_today_games: stats.todayGames,
+					p_stats_date: todayStr
+				});
 				
 				return stats;
 			} catch (e) {
