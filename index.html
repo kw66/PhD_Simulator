@@ -1296,7 +1296,7 @@
 				<!-- 第一行：实时数据 -->
 				<div style="margin-bottom:5px;">
 					<span style="display:inline;">
-						🟢 在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
+						🟢 历史在线 <span id="max-online-value" style="color:var(--accent-color);font-weight:600;">-</span>
 					</span>
 					&nbsp;|&nbsp; 
 					<span id="busuanzi_container_site_pv" style="display:inline;">
@@ -1313,6 +1313,10 @@
 				</div>
 				<!-- 第二行：今日数据 -->
 				<div>
+					<span style="display:inline;">
+						🟢 当前在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
 					<span style="display:inline;">
 						☀️ 今日访问 <span id="today-pv-value" style="color:var(--warning-color);font-weight:600;">-</span>
 					</span>
@@ -8877,7 +8881,7 @@
 
 		// ==================== Meta进度系统 ====================
 		const META_KEY = 'graduateSimulatorMeta';
-		const GAME_START_DATE = '2025-12-13T00:00:00Z';
+		const GAME_START_DATE = '2025-12-12T00:00:00Z';
 
 		function getLocalMeta() {
 			const meta = localStorage.getItem(META_KEY);
@@ -10090,6 +10094,7 @@
 				if (cached && !isNewDay && cacheAge < 60 * 1000) {
 					return {
 						online: cached.online_count,
+						maxOnline: cached.max_online_count || cached.online_count,
 						todayPv: cached.today_pv,
 						todayUv: cached.today_uv,
 						todayGames: cached.today_games
@@ -10121,25 +10126,31 @@
 						.gte('created_at', todayStart)
 				]);
 				
+				const currentOnline = onlineResult.count || 0;
+				const previousMaxOnline = cached?.max_online_count || 0;
+				const newMaxOnline = Math.max(currentOnline, previousMaxOnline);
+				
 				const stats = {
-					online: onlineResult.count || 0,
+					online: currentOnline,
+					maxOnline: newMaxOnline,
 					todayPv: todayPvResult.count || 0,
 					todayUv: todayUvResult.count || 0,
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// 更新缓存
+				// 更新缓存（包括历史最高在线）
 				await supabase
 					.from('site_stats')
-					.update({ 
+					.upsert({ 
+						id: 1,
 						online_count: stats.online,
+						max_online_count: stats.maxOnline,
 						today_pv: stats.todayPv,
 						today_uv: stats.todayUv,
 						today_games: stats.todayGames,
 						stats_date: todayStr,
 						updated_at: new Date().toISOString()
-					})
-					.eq('id', 1);
+					});
 				
 				return stats;
 			} catch (e) {
@@ -10155,6 +10166,7 @@
 			if (stats) {
 				const el = (id) => document.getElementById(id);
 				if (el('online-count-value')) el('online-count-value').textContent = stats.online;
+				if (el('max-online-value')) el('max-online-value').textContent = stats.maxOnline;
 				if (el('today-pv-value')) el('today-pv-value').textContent = stats.todayPv;
 				if (el('today-uv-value')) el('today-uv-value').textContent = stats.todayUv;
 				if (el('today-games-value')) el('today-games-value').textContent = stats.todayGames;
@@ -10199,4 +10211,3 @@
     </script>
 </body>
 </html>
-
