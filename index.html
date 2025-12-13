@@ -1288,7 +1288,7 @@
 				&nbsp;|&nbsp;
 				<a href="http://xhslink.com/o/8czcPQfNziK" target="_blank" style="color:var(--accent-color);text-decoration:none;">🎨 科研绘图</a>
 				&nbsp;|&nbsp;
-				<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank" style="color:var(--success-color);text-decoration:none;">🏢 实习招聘</a>
+				<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank" style="color:var(--success-color);text-decoration:none;">🏢 实习</a>
 			</p>
 
 			<!-- 访问统计 -->
@@ -1442,7 +1442,7 @@
                     <div class="attribute-bar">
                         <div class="attribute-label">
                             <span class="name" title="影响论文分数生成，达到6/12/18解锁新论文槽"><i class="fas fa-flask"></i> 科研能力</span>
-                            <span class="value"><span id="research-value">1</span>/20</span>
+							<span class="value"><span id="research-value">1</span>/<span id="research-max">20</span></span>
                         </div>
                         <div class="progress-bar"><div class="progress-fill research" id="research-bar"></div></div>
                     </div>
@@ -1685,10 +1685,11 @@
 				icon: '🎪',
 				awakenIcon: '🃏',
 				desc: '叛逆是我的代名词',
-				bonus: '好感初始16，好感↓翻倍，每月好感-1，好感-1→SAN+1,金+1',
+				// ★★★ 修改：初始好感度改为10，描述更新 ★★★
+				bonus: '好感初始10，好感↑变↓、↓变↑，每月好感-1，好感-1→SAN+1,金+1',
 				awakenName: '浪子回头',
 				awakenDesc: '转博时好感度倒置为20-好感度',
-				stats: { favor: 15 }
+				stats: { favor: 9 }  // ★★★ 改为9，加上基础1等于10 ★★★
 			}
 		},
 		{ 
@@ -2096,6 +2097,7 @@
 				nextIdeaResearchBonus: 0,        // 下次想idea的临时科研加成（主动技能用，不算buff）
 				nextIdeaBonusSource: null,        // 加成来源（'senior' 或 'teacher'）
 				isTrueNormal: false,  // 是否使用真-大多数角色
+				researchMax: 20,
                 
                 // ★★★ 新增：投稿统计和会议信息 ★★★
                 submissionStats: null,           // 投稿统计快照
@@ -2437,7 +2439,8 @@
 				gameState.isReversed, 
 				gameState.totalScore, 
 				gameState.totalCitations, 
-				achievementCount
+				achievementCount,
+				endingType,  // ★★★ 新增参数 ★★★
 			);
 			
 			if (!supabase) return;
@@ -2706,46 +2709,65 @@
 			
 			const totalGames = modeStats.totalGames || 0;
 			
-			// ==================== 渲染结局统计 ====================
-			let achievedEndingsHtml = '';
-			let unachievedEndingsHtml = '';
-			
-			for (const [type, name] of Object.entries(ENDING_NAMES)) {
+			// ==================== 渲染结局统计（按完成率排序）====================
+			// 构建结局数据数组
+			const endingEntries = Object.entries(ENDING_NAMES).map(([type, name]) => {
 				const count = modeStats.endings[type] || 0;
-				const percent = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : '0.0';
-				
-				// 检查玩家是否达成（兼容Set和Array）
+				const percent = totalGames > 0 ? (count / totalGames) * 100 : 0;
 				const isAchieved = playerEndingsSet instanceof Set 
 					? playerEndingsSet.has(type) 
 					: (Array.isArray(playerEndingsSet) && playerEndingsSet.includes(type));
-				
-				const tagHtml = `
+				return { type, name, count, percent, isAchieved };
+			});
+			
+			// 按百分比从高到低排序
+			endingEntries.sort((a, b) => b.percent - a.percent);
+			
+			// 分离已达成和未达成
+			const achievedEndingsSorted = endingEntries.filter(e => e.isAchieved);
+			const unachievedEndingsSorted = endingEntries.filter(e => !e.isAchieved);
+			
+			let achievedEndingsHtml = achievedEndingsSorted.map(e => {
+				// 真实结局额外显示数量
+				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion';
+				const displayText = isTrueEnding 
+					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
+					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
+				return `
 					<span class="stats-tag ending-tag" 
-						  onclick="showSingleEndingRequirement('${type}')" 
-						  style="cursor:pointer;${isAchieved ? '' : 'opacity:0.5;'}">
-						${name} <strong>${percent}%</strong>
+						  onclick="showSingleEndingRequirement('${e.type}')" 
+						  style="cursor:pointer;">
+						${displayText}
 					</span>
 				`;
-				
-				if (isAchieved) {
-					achievedEndingsHtml += tagHtml;
-				} else {
-					unachievedEndingsHtml += tagHtml;
-				}
-			}
+			}).join('');
+			
+			let unachievedEndingsHtml = unachievedEndingsSorted.map(e => {
+				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion';
+				const displayText = isTrueEnding 
+					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
+					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
+				return `
+					<span class="stats-tag ending-tag" 
+						  onclick="showSingleEndingRequirement('${e.type}')" 
+						  style="cursor:pointer;opacity:0.5;">
+						${displayText}
+					</span>
+				`;
+			}).join('');
 			
 			let endingHtml = '';
 			if (achievedEndingsHtml) {
 				endingHtml += `
 					<div style="margin-bottom:8px;">
-						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成结局（全球结局比率）</div>
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成结局（全球结局比率，按完成率排序）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedEndingsHtml}</div>
 					</div>`;
 			}
 			if (unachievedEndingsHtml) {
 				endingHtml += `
 					<div>
-						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成结局（全球结局比率）</div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成结局（全球结局比率，按完成率排序）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedEndingsHtml}</div>
 					</div>`;
 			}
@@ -2754,46 +2776,50 @@
 			}
 			endingContainer.innerHTML = endingHtml;
 			
-			// ==================== 渲染成就统计 ====================
-			let achievedAchHtml = '';
-			let unachievedAchHtml = '';
-			
-			for (const ach of ALL_ACHIEVEMENTS) {
+			// ==================== 渲染成就统计（按完成率排序）====================
+			const achievementEntries = ALL_ACHIEVEMENTS.map(ach => {
 				const count = modeStats.achievements[ach] || 0;
-				const percent = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : '0.0';
-				
-				// 检查玩家是否达成
+				const percent = totalGames > 0 ? (count / totalGames) * 100 : 0;
 				const isAchieved = playerAchievementsSet instanceof Set 
 					? playerAchievementsSet.has(ach) 
 					: (Array.isArray(playerAchievementsSet) && playerAchievementsSet.includes(ach));
-				
-				const tagHtml = `
-					<span class="stats-tag" 
-						  onclick="showSingleAchievementRequirement('${ach}')" 
-						  style="cursor:pointer;${isAchieved ? '' : 'opacity:0.5;'}">
-						${ach} <strong>${percent}%</strong>
-					</span>
-				`;
-				
-				if (isAchieved) {
-					achievedAchHtml += tagHtml;
-				} else {
-					unachievedAchHtml += tagHtml;
-				}
-			}
+				return { ach, count, percent, isAchieved };
+			});
+			
+			// 按百分比从高到低排序
+			achievementEntries.sort((a, b) => b.percent - a.percent);
+			
+			const achievedAchSorted = achievementEntries.filter(a => a.isAchieved);
+			const unachievedAchSorted = achievementEntries.filter(a => !a.isAchieved);
+			
+			let achievedAchHtml = achievedAchSorted.map(a => `
+				<span class="stats-tag" 
+					  onclick="showSingleAchievementRequirement('${a.ach}')" 
+					  style="cursor:pointer;">
+					${a.ach} <strong>${a.percent.toFixed(1)}%</strong>
+				</span>
+			`).join('');
+			
+			let unachievedAchHtml = unachievedAchSorted.map(a => `
+				<span class="stats-tag" 
+					  onclick="showSingleAchievementRequirement('${a.ach}')" 
+					  style="cursor:pointer;opacity:0.5;">
+					${a.ach} <strong>${a.percent.toFixed(1)}%</strong>
+				</span>
+			`).join('');
 			
 			let achievementHtml = '';
 			if (achievedAchHtml) {
 				achievementHtml += `
 					<div style="margin-bottom:8px;">
-						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成成就（全球玩家达成率）</div>
+						<div style="font-size:0.7rem;color:var(--success-color);margin-bottom:4px;">✓ 玩家已达成成就（全球玩家达成率，按完成率排序）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${achievedAchHtml}</div>
 					</div>`;
 			}
 			if (unachievedAchHtml) {
 				achievementHtml += `
 					<div>
-						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成成就（全球玩家达成率）</div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:4px;">○ 玩家未达成成就（全球玩家达成率，按完成率排序）</div>
 						<div style="display:flex;flex-wrap:wrap;gap:4px;">${unachievedAchHtml}</div>
 					</div>`;
 			}
@@ -3047,7 +3073,7 @@
             document.querySelectorAll('.character-card').forEach(card => card.classList.remove('selected'));
             
             if (reversed) {
-                modeDesc.innerHTML = '🔮 逆位模式，循规蹈矩？不免太过无趣！';
+                modeDesc.innerHTML = '💀 逆位模式，循规蹈矩？不免太过无趣！';
                 selectionTitle.innerHTML = '<i class="fas fa-moon"></i> 选择你的逆位角色';
                 gameIntro.innerHTML = `
                     <p>🌑 <strong>逆位模式已开启！</strong>每个角色都有独特的逆位效果，规则将被颠覆。</p>
@@ -3266,7 +3292,7 @@
 					hiddenAwakenHint = `
 						<div style="margin-top:6px;padding:4px 8px;background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(243,156,18,0.15));border-radius:6px;border:1px dashed rgba(243,156,18,0.4);">
 							<div style="font-size:0.6rem;color:#d68910;display:flex;align-items:center;gap:4px;">
-								<span>🔮</span>
+								<span>⚙️</span>
 								<span>隐藏觉醒：游戏中特定条件触发</span>
 							</div>
 						</div>
@@ -3549,26 +3575,36 @@
             return true;
         }
 
-        function changeFavor(delta) {
-            const oldFavor = gameState.favor;
-            
-            // 玩世之导师子女：好感降低不翻倍，但每降1点SAN+1金+1
-            if (gameState.isReversed && gameState.character === 'teacher-child' && delta < 0) {
-                const oldFavor = gameState.favor;
-                gameState.favor = gameState.favor + delta;
-                const decreased = Math.max(0, oldFavor - gameState.favor);
-                if (decreased > 0) {
-                    gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
-                    gameState.gold += decreased;
-                    addLog('逆位效果', '玩世不恭', `好感度-${decreased} → SAN+${decreased}, 金钱+${decreased}`);
-                }
-                updateAllUI();
-                if (gameState.favor < 0) {
-                    triggerEnding('expelled');
-                    return false;
-                }
-                return true;
-            }
+		function changeFavor(delta) {
+			const oldFavor = gameState.favor;
+			
+			// ★★★ 玩世之导师子女：好感上升变下降，下降变上升 ★★★
+			if (gameState.isReversed && gameState.character === 'teacher-child') {
+				// 反转delta的正负
+				const reversedDelta = -delta;
+				
+				if (reversedDelta < 0) {
+					// 原本要上升，现在下降，触发SAN+金+效果
+					gameState.favor = gameState.favor + reversedDelta;
+					const decreased = Math.abs(reversedDelta);
+					if (decreased > 0) {
+						gameState.san = Math.min(gameState.sanMax, gameState.san + decreased);
+						gameState.gold += decreased;
+						addLog('逆位效果', '玩世不恭', `好感度${delta > 0 ? '本应+' + delta + '变为-' + decreased : '-' + Math.abs(delta) + '变为+' + decreased} → SAN+${decreased}, 金钱+${decreased}`);
+					}
+				} else if (reversedDelta > 0) {
+					// 原本要下降，现在上升
+					gameState.favor = Math.min(20, gameState.favor + reversedDelta);
+					addLog('逆位效果', '玩世不恭', `好感度${delta < 0 ? '本应-' + Math.abs(delta) + '变为+' + reversedDelta : '+' + delta + '变为-' + Math.abs(reversedDelta)}`);
+				}
+				
+				updateAllUI();
+				if (gameState.favor < 0) {
+					triggerEnding('expelled');
+					return false;
+				}
+				return true;
+			}
             
             if (delta > 0) {
                 gameState.favor = Math.min(20, gameState.favor + delta);
@@ -3612,15 +3648,17 @@
                 return true;
             }
             
-            if (delta > 0) {
-                gameState.research = Math.min(20, gameState.research + delta);
-                checkResearchUnlock();
-            } else {
-                gameState.research = Math.max(0, gameState.research + delta);
-            }
-            updateAllUI();
-            return true;
-        }
+			if (delta > 0) {
+				// ★★★ 修改：使用动态上限 ★★★
+				const maxResearch = gameState.researchMax || 20;
+				gameState.research = Math.min(maxResearch, gameState.research + delta);
+				checkResearchUnlock();
+			} else {
+				gameState.research = Math.max(0, gameState.research + delta);
+			}
+			updateAllUI();
+			return true;
+		}
 
         function changeSocial(delta) {
             const oldSocial = gameState.social;
@@ -3785,8 +3823,14 @@
             document.getElementById('san-max').textContent = gameState.sanMax;
             document.getElementById('san-bar').style.width = `${Math.max(0, (gameState.san / gameState.sanMax) * 100)}%`;
 
-            document.getElementById('research-value').textContent = gameState.research;
-            document.getElementById('research-bar').style.width = `${(gameState.research / 20) * 100}%`;
+			const researchMax = gameState.researchMax || 20;
+			document.getElementById('research-value').textContent = gameState.research;
+			// 找到显示 "/20" 的地方，改为动态显示
+			// 可能需要修改HTML或在JS中设置
+			document.getElementById('research-bar').style.width = `${(gameState.research / researchMax) * 100}%`;
+			document.getElementById('research-max').textContent = gameState.researchMax || 20;
+
+			
 
             document.getElementById('social-value').textContent = gameState.social;
             document.getElementById('social-bar').style.width = `${(gameState.social / 20) * 100}%`;
@@ -3873,7 +3917,6 @@
 				return;
 			}
 			
-			// ★★★ 修复：删除了重复的 charData 声明 ★★★
 			const charData = characters.find(c => c.id === gameState.character);
 			if (!charData) {
 				console.error('无法找到角色数据:', gameState.character);
@@ -3884,21 +3927,44 @@
 			
 			const isReversed = gameState.isReversed;
 			const displayData = isReversed && charData.reversed ? charData.reversed : charData;
-			const isAwakened = gameState.reversedAwakened || (gameState.degree === 'phd' && !isReversed);
 			
-			const currentIcon = isAwakened
-				? (isReversed ? displayData.awakenIcon : charData.awakenIcon)
-				: displayData.icon;
+			// ★★★ 新增：判断是否触发了隐藏觉醒 ★★★
+			const hasHiddenAwaken = gameState.hiddenAwakened && !isReversed;
+			const isAwakened = gameState.reversedAwakened || (gameState.degree === 'phd' && !isReversed) || hasHiddenAwaken;
+			
+			// ★★★ 修改：根据觉醒类型显示不同图标 ★★★
+			let currentIcon;
+			if (hasHiddenAwaken) {
+				currentIcon = charData.hiddenAwakenIcon;
+			} else if (isAwakened) {
+				currentIcon = isReversed ? displayData.awakenIcon : charData.awakenIcon;
+			} else {
+				currentIcon = displayData.icon;
+			}
 			
 			const modeColor = isReversed ? '#9b59b6' : '#6c5ce7';
 			const modeText = isReversed ? '🌑 逆位模式' : '☀️ 正位模式';
+			
+			// ★★★ 新增：根据觉醒类型显示不同的觉醒信息 ★★★
+			let awakenIcon, awakenName, awakenDesc, awakenActivated;
+			if (hasHiddenAwaken) {
+				awakenIcon = charData.hiddenAwakenIcon;
+				awakenName = charData.hiddenAwakenName;
+				awakenDesc = charData.hiddenAwakenDesc;
+				awakenActivated = true;
+			} else {
+				awakenIcon = isReversed ? displayData.awakenIcon : charData.awakenIcon;
+				awakenName = isReversed ? displayData.awakenName : charData.awakenName;
+				awakenDesc = isReversed ? displayData.awakenDesc : charData.awakenDesc;
+				awakenActivated = gameState.reversedAwakened || (gameState.degree === 'phd' && !isReversed);
+			}
 			
 			let html = `
 				<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:3rem;margin-bottom:8px;">${currentIcon}</div>
 					<div style="font-size:1.2rem;font-weight:700;color:${modeColor};">${displayData.name}</div>
 					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;">${modeText}</div>
-					${isAwakened ? '<div style="margin-top:6px;"><span style="padding:3px 10px;background:linear-gradient(135deg,#f39c12,#e74c3c);color:white;border-radius:12px;font-size:0.75rem;">⚡ 已觉醒</span></div>' : ''}
+					${isAwakened ? `<div style="margin-top:6px;"><span style="padding:3px 10px;background:linear-gradient(135deg,${hasHiddenAwaken ? '#f39c12,#e67e22' : '#f39c12,#e74c3c'});color:white;border-radius:12px;font-size:0.75rem;">⚡ ${hasHiddenAwaken ? '隐藏觉醒' : '已觉醒'}</span></div>` : ''}
 				</div>
 				
 				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
@@ -3911,14 +3977,14 @@
 					<div style="font-size:0.85rem;color:var(--success-color);font-weight:500;">${displayData.bonus}</div>
 				</div>
 				
-				<div style="background:${isReversed ? 'rgba(155,89,182,0.1)' : 'rgba(102,126,234,0.1)'};border-radius:10px;padding:12px;border:1px dashed ${modeColor};">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">⚡ 转博觉醒: ${isReversed ? displayData.awakenName : charData.awakenName}</div>
+				<div style="background:${hasHiddenAwaken ? 'linear-gradient(135deg,rgba(243,156,18,0.15),rgba(230,126,34,0.15))' : (isReversed ? 'rgba(155,89,182,0.1)' : 'rgba(102,126,234,0.1)')};border-radius:10px;padding:12px;border:1px dashed ${hasHiddenAwaken ? '#f39c12' : modeColor};">
+					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">⚡ ${hasHiddenAwaken ? '隐藏觉醒' : '转博觉醒'}: ${awakenName}</div>
 					<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-						<span style="font-size:1.2rem;">${isReversed ? displayData.awakenIcon : charData.awakenIcon}</span>
-						<span style="font-size:0.9rem;font-weight:600;color:${modeColor};">${isReversed ? displayData.awakenName : charData.awakenName}</span>
+						<span style="font-size:1.2rem;">${awakenIcon}</span>
+						<span style="font-size:0.9rem;font-weight:600;color:${hasHiddenAwaken ? '#f39c12' : modeColor};">${awakenName}</span>
 					</div>
-					<div style="font-size:0.85rem;">${isReversed ? displayData.awakenDesc : charData.awakenDesc}</div>
-					${isAwakened ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--success-color);">✓ 已激活</div>' : '<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发</div>'}
+					<div style="font-size:0.85rem;">${awakenDesc}</div>
+					${awakenActivated ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--success-color);">✓ 已激活</div>' : '<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发</div>'}
 				</div>
 			`;
 			
@@ -4261,7 +4327,9 @@
             } else {
                 paperList.innerHTML = gameState.publishedPapers.map((p, index) => {
                     // ★★★ 显示会议名称 ★★★
-                    const confName = p.conferenceInfo ? `${p.conferenceInfo.name} ${p.conferenceInfo.year}` : `${p.grade}类`;
+                    const confName = p.conferenceInfo 
+						? `${p.conferenceInfo.name} ${p.conferenceInfo.year} (${p.grade}类)` 
+						: `${p.grade}类`;
                     
                     return `
                     <div class="paper-item grade-${p.grade}">
@@ -4836,12 +4904,13 @@
 			
 			const isSecondYear = gameState.year === 2;
 			const notPhDText = isSecondYear ? '继续读硕士' : '硕士毕业';
+			const requirementText = isSecondYear ? '≥2分' : '≥3分';
 			const notPhDDesc = isSecondYear 
-				? '<p style="color:var(--text-secondary);font-size:0.85rem;">选择继续读硕士，明年还有一次转博机会</p>'
+				? '<p style="color:var(--text-secondary);font-size:0.85rem;">选择继续读硕士，明年还有一次转博机会，但竞争更激烈，需要科研分≥3分</p>'
 				: '';
 			
 			showModal('🎓 转博选择',
-				`<p>恭喜！你的科研成绩优异（科研分${gameState.totalScore}），获得了转博资格！</p>
+				`<p>恭喜！你的科研成绩优异（${requirementText}），获得了转博资格！</p>
 				 <p>是否选择继续攻读博士学位？</p>
 				 <p style="color:var(--text-secondary);font-size:0.85rem;">博士毕业要求：科研分≥7，学习年限5年</p>
 				 ${notPhDDesc}
@@ -5141,7 +5210,7 @@
 						 onmouseover="this.style.borderColor='rgba(243,156,18,1)';this.style.transform='translateY(-2px)'"
 						 onmouseout="this.style.borderColor='rgba(243,156,18,0.5)';this.style.transform='translateY(0)'"
 						 onclick="selectAwaken('hidden')">
-						<div style="position:absolute;top:-8px;right:10px;background:linear-gradient(135deg,#f39c12,#e74c3c);color:white;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;">🔮 隐藏觉醒</div>
+						<div style="position:absolute;top:-8px;right:10px;background:linear-gradient(135deg,#f39c12,#e74c3c);color:white;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;">⚙️ 隐藏觉醒</div>
 						<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
 							<span style="font-size:1.5rem;">${charData.hiddenAwakenIcon}</span>
 							<span style="font-size:1.1rem;font-weight:700;color:#f39c12;">${charData.hiddenAwakenName}</span>
@@ -5297,7 +5366,7 @@
 		function showHiddenAwakenResultModal(effectName, effectDesc, bonusDetails) {
 			const html = `
 				<div style="text-align:center;">
-					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">🔮</div>
+					<div style="font-size:4rem;margin-bottom:15px;animation:pulse 1s infinite;">⚙️</div>
 					<div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#f39c12,#e74c3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;">
 						隐藏觉醒触发！
 					</div>
@@ -5312,7 +5381,7 @@
 						<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">${effectDesc}</div>
 					</div>
 					<div style="background:white;border-radius:8px;padding:12px;">
-						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">🔮 觉醒效果 🔮</div>
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;">⚙️ 觉醒效果 ⚙️</div>
 						<div style="display:flex;flex-direction:column;gap:6px;">
 							${bonusDetails.map(detail => `
 								<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(243,156,18,0.15));border-radius:6px;font-size:0.85rem;font-weight:500;color:#d68910;">
@@ -5329,7 +5398,7 @@
 				</div>
 			`;
 			
-			showModal('🔮 隐藏觉醒', html, [
+			showModal('⚙️ 隐藏觉醒', html, [
 				{ text: '🎯 踏上独特之路', class: 'btn-warning', action: () => {
 					addLog('隐藏觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
 					closeModal();
@@ -5358,10 +5427,14 @@
 					effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
 					const aCount = gameState.paperA || 0;
 					if (aCount > 0) {
-						const researchGain = aCount * 2;
-						gameState.research = Math.min(20, gameState.research + researchGain);
+						// ★★★ 修改：每篇A类论文科研+1，上限+2 ★★★
+						const researchGain = aCount * 1;
+						const maxGain = aCount * 2;
+						gameState.researchMax = (gameState.researchMax || 20) + maxGain;
+						gameState.research = Math.min(gameState.researchMax, gameState.research + researchGain);
 						bonusDetails.push(`A类论文 ${aCount} 篇`);
 						bonusDetails.push(`科研能力 +${researchGain}`);
+						bonusDetails.push(`科研能力上限 +${maxGain}（现为${gameState.researchMax}）`);
 					} else {
 						bonusDetails.push('暂无A类论文，继续努力！');
 					}
@@ -7752,34 +7825,36 @@
             ]);
         }
 
-        function showRandomEvent3() {
-            showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
-                { text: '强撑', class: 'btn-danger', action: () => {
-                    closeModal();
-                    if (Math.random() < 0.5) {
-                        const baseSanCost = -8;
-                        const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
-                        addLog('随机事件', '突然感冒了 - 强撑', `身体透支了，${sanText}`);
-                        changeSan(baseSanCost);
-                    } else {
-                        addLog('随机事件', '突然感冒了 - 强撑', '撑过去了，年轻人身体好');
-                        updateAllUI();
-                    }
-                }},
-                { text: '自己买感冒药', class: 'btn-primary', action: () => {
-                    addLog('随机事件', '突然感冒了 - 自己买感冒药', '喝999感冒灵好了，金钱-2');
-                    closeModal();
-                    changeGold(-2);
-                }},
+		function showRandomEvent3() {
+			showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
+				{ text: '强撑', class: 'btn-danger', action: () => {
+					closeModal();
+					if (Math.random() < 0.5) {
+						const baseSanCost = -8;
+						const actualSanCost = getActualSanChange(baseSanCost);
+						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						addLog('随机事件', '突然感冒了 - 强撑', `身体透支了，${sanText}`);
+						changeSan(baseSanCost);
+					} else {
+						// ★★★ 修改：年轻人身体好的结果 ★★★
+						gameState.sanMax -= 2;
+						addLog('随机事件', '突然感冒了 - 强撑', '这次没事但留下了病根，SAN上限-2');
+						updateAllUI();
+					}
+				}},
+				{ text: '自己买感冒药', class: 'btn-primary', action: () => {
+					addLog('随机事件', '突然感冒了 - 自己买感冒药', '喝999感冒灵好了，金钱-2');
+					closeModal();
+					changeGold(-2);
+				}},
 				{ text: '去医院看病', class: 'btn-info', action: () => {
 					addLog('随机事件', '突然感冒了 - 去医院看病', '医生妙手回春，你比生病前还精神，SAN值+2，金钱-4');
 					gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
 					closeModal();
 					changeGold(-4);
 				}}
-            ]);
-        }
+			]);
+		}
 
         function showRandomEvent4() {
             showModal('💼 随机事件', '<p>导师安排你做项目。</p>', [
@@ -8260,7 +8335,7 @@
 		function showRandomEvent15() {
 			showModal('🎮 随机事件', '<p>学了一天你打算玩游戏放松一下。</p>', [
 				{ text: '🌲 玩泰拉瑞亚', class: 'btn-success', action: () => {
-					const baseSanCost = 5;  // ★ 改为5
+					const baseSanCost = 4;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					const sanText = actualSanCost !== baseSanCost 
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
@@ -8271,7 +8346,7 @@
 					changeSan(-baseSanCost);
 				}},
 				{ text: '🗼 玩魔塔50层', class: 'btn-primary', action: () => {
-					const baseSanCost = 7;  // ★ 改为7
+					const baseSanCost = 6;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					const sanText = actualSanCost !== baseSanCost 
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
@@ -8287,9 +8362,14 @@
 					changeSan(2);
 				}},
 				{ text: '👑 玩王者荣耀', class: 'btn-warning', action: () => {
-					addLog('随机事件', '玩游戏放松 - 玩王者荣耀', '买了赵云，金币-6');
+					const baseSanCost = 5;
+						const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+						const sanText = actualSanCost !== baseSanCost 
+							? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+							: `SAN值-${baseSanCost}`;
+					addLog('随机事件', '玩游戏放松 - 玩王者荣耀', '成为小代，${sanText}，金币+2');
 					closeModal();
-					changeGold(-6);
+					changeGold(-baseSanCost);
 				}}
 			]);
 		}
@@ -8900,7 +8980,14 @@
 			return meta[mode]?.[characterId] || { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
 		}
 
-		function updateLocalMeta(character, isReversed, score, citations, achievementCount) {
+		function updateLocalMeta(character, isReversed, score, citations, achievementCount, endingType) {
+			// ★★★ 新增：只有好结局才统计 ★★★
+			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
+			if (!goodEndings.includes(endingType)) {
+				console.log('非毕业结局，不更新本地最高记录');
+				return null;
+			}
+			
 			const meta = getLocalMeta();
 			const mode = isReversed ? 'reversed' : 'normal';
 			
@@ -9001,6 +9088,10 @@
 				const filterValid = (row) => {
 					if (!row.character || typeof row.is_reversed !== 'boolean') return false;
 					
+					// ★★★ 新增：只统计好结局 ★★★
+					const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
+					if (!goodEndings.includes(row.ending_type)) return false;
+					
 					const paperA = row.paper_a || 0;
 					const paperB = row.paper_b || 0;
 					const paperC = row.paper_c || 0;
@@ -9011,7 +9102,7 @@
 					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
 					if (totalScore !== expectedScore) return false;
 					
-					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
+					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
 					const isPhd = phdEndings.includes(row.ending_type);
 					
 					if (isPhd) {
@@ -9408,6 +9499,7 @@
 				nextIdeaResearchBonus: gameState.nextIdeaResearchBonus || 0,
 				nextIdeaBonusSource: gameState.nextIdeaBonusSource || null,
 				isTrueNormal: gameState.isTrueNormal || false,
+				researchMax: gameState.researchMax || 20,
                 
                 rejectedPapers: {...(gameState.rejectedPapers || {})},
                 maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -9572,6 +9664,7 @@
 							nextIdeaResearchBonus: save.nextIdeaResearchBonus || 0,
 							nextIdeaBonusSource: save.nextIdeaBonusSource || null,
 							isTrueNormal: save.isTrueNormal || false,
+							researchMax: save.researchMax || 20,
 				
                             
                             rejectedPapers: save.rejectedPapers ? {...save.rejectedPapers} : {},
