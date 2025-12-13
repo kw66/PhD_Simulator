@@ -9124,125 +9124,154 @@
             const saves = localStorage.getItem(SAVE_KEY);
             return saves ? JSON.parse(saves) : [];
         }
+		
+		// 检查存档是否在有效时间范围内（北京时间2025年12月13日8点之后）
+		function isValidSaveTime(saveTime) {
+			if (!saveTime) return false;
+			
+			// 截止时间：北京时间 2025-12-13 08:00
+			const cutoffTimeStr = '2025-12-13 08:00';
+			
+			// 直接字符串比较（存档时间格式: "YYYY-MM-DD HH:mm"）
+			return saveTime >= cutoffTimeStr;
+		}
+
+		// 获取有效存档（过滤旧存档）
+		function getValidSaves() {
+			const saves = getSaves();
+			return saves.map(save => {
+				if (save && !isValidSaveTime(save.saveTime)) {
+					return null; // 旧存档视为空
+				}
+				return save;
+			});
+		}
+		
 
         function saveSaves(saves) {
             localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
         }
 
-        function openSaveModal() {
-            const saves = getSaves();
-            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择存档槽位（最多5个）：</div>';
-            
-            for (let i = 0; i < MAX_SAVES; i++) {
-                const save = saves[i];
-                if (save) {
-                    const modeIcon = save.isReversed ? '🌑' : '☀️';
-                    html += `
-                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">
-                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
-                                </div>
-                                <div style="font-size:0.7rem;color:var(--text-secondary);">
-                                    保存于: ${save.saveTime}
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
-                                <i class="fas fa-save"></i> 覆盖
-                            </button>
-                        </div>`;
-                } else {
-                    html += `
-                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;opacity:0.7;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: 空</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">暂无存档</div>
-                            </div>
-                            <button class="btn btn-success" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
-                                <i class="fas fa-plus"></i> 新建
-                            </button>
-                        </div>`;
-                }
-            }
-            
-            showModal('💾 存档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
-        }
+		function openSaveModal() {
+			const saves = getSaves();
+			let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择存档槽位（最多5个）：</div>';
+			
+			for (let i = 0; i < MAX_SAVES; i++) {
+				const save = saves[i];
+				const isOldSave = save && !isValidSaveTime(save.saveTime);
+				
+				if (save && !isOldSave) {
+					// 有效存档
+					const modeIcon = save.isReversed ? '🌑' : '☀️';
+					html += `
+						<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+							<div style="flex:1;">
+								<div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
+								<div style="font-size:0.75rem;color:var(--text-secondary);">
+									${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
+								</div>
+								<div style="font-size:0.7rem;color:var(--text-secondary);">
+									保存于: ${save.saveTime}
+								</div>
+							</div>
+							<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
+								<i class="fas fa-save"></i> 覆盖
+							</button>
+						</div>`;
+				} else {
+					// 空槽位或旧存档（显示为可新建）
+					const oldSaveHint = isOldSave ? '<div style="font-size:0.65rem;color:var(--danger-color);">旧版存档已失效</div>' : '';
+					html += `
+						<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;opacity:0.7;">
+							<div style="flex:1;">
+								<div style="font-weight:600;font-size:0.9rem;">槽位 ${i + 1}: 空</div>
+								<div style="font-size:0.75rem;color:var(--text-secondary);">暂无存档</div>
+								${oldSaveHint}
+							</div>
+							<button class="btn btn-success" style="padding:5px 12px;font-size:0.75rem;" onclick="saveGame(${i})">
+								<i class="fas fa-plus"></i> 新建
+							</button>
+						</div>`;
+				}
+			}
+			
+			showModal('💾 存档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+		}
 
-        function openLoadModal() {
-            const saves = getSaves();
-            
-            if (saves.filter(s => s).length === 0) {
-                showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
-            
-            for (let i = 0; i < MAX_SAVES; i++) {
-                const save = saves[i];
-                if (save) {
-                    const modeIcon = save.isReversed ? '🌑' : '☀️';
-                    html += `
-                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">
-                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
-                                </div>
-                                <div style="font-size:0.7rem;color:var(--text-secondary);">
-                                    A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
-                                <i class="fas fa-folder-open"></i> 读取
-                            </button>
-                            <button class="btn btn-danger" style="padding:5px 12px;font-size:0.75rem;" onclick="deleteSave(${i})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>`;
-                }
-            }
-            
-            showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
-        }
+		function openLoadModal() {
+			const saves = getValidSaves(); // 使用过滤后的存档
+			
+			if (saves.filter(s => s).length === 0) {
+				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-13 08:00前的存档已失效</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
+			
+			for (let i = 0; i < MAX_SAVES; i++) {
+				const save = saves[i];
+				if (save) {
+					const modeIcon = save.isReversed ? '🌑' : '☀️';
+					html += `
+						<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+							<div style="flex:1;">
+								<div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
+								<div style="font-size:0.75rem;color:var(--text-secondary);">
+									${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
+								</div>
+								<div style="font-size:0.7rem;color:var(--text-secondary);">
+									A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
+								</div>
+							</div>
+							<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
+								<i class="fas fa-folder-open"></i> 读取
+							</button>
+							<button class="btn btn-danger" style="padding:5px 12px;font-size:0.75rem;" onclick="deleteSave(${i})">
+								<i class="fas fa-trash"></i>
+							</button>
+						</div>`;
+				}
+			}
+			
+			showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+		}
 
-        function openLoadModalFromStart() {
-            const saves = getSaves();
-            
-            if (saves.filter(s => s).length === 0) {
-                showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无存档</p>', 
-                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-                return;
-            }
-            
-            let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
-            
-            for (let i = 0; i < MAX_SAVES; i++) {
-                const save = saves[i];
-                if (save) {
-                    const modeIcon = save.isReversed ? '🌑' : '☀️';
-                    html += `
-                        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">
-                                    ${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
-                                </div>
-                                <div style="font-size:0.7rem;color:var(--text-secondary);">
-                                    A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
-                                <i class="fas fa-folder-open"></i> 读取
-                            </button>
-                        </div>`;
-                }
-            }
-            
-            showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
-        }
+		function openLoadModalFromStart() {
+			const saves = getValidSaves(); // 使用过滤后的存档
+			
+			if (saves.filter(s => s).length === 0) {
+				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-13 08:00前的存档已失效</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档：</div>';
+			
+			for (let i = 0; i < MAX_SAVES; i++) {
+				const save = saves[i];
+				if (save) {
+					const modeIcon = save.isReversed ? '🌑' : '☀️';
+					html += `
+						<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
+							<div style="flex:1;">
+								<div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
+								<div style="font-size:0.75rem;color:var(--text-secondary);">
+									${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
+								</div>
+								<div style="font-size:0.7rem;color:var(--text-secondary);">
+									A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
+								</div>
+							</div>
+							<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
+								<i class="fas fa-folder-open"></i> 读取
+							</button>
+						</div>`;
+				}
+			}
+			
+			showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+		}
 
         function saveGame(slot) {
             const saves = getSaves();
