@@ -1293,12 +1293,16 @@
 
 			<!-- 访问统计 -->
 			<div id="visitor-stats" style="text-align:center;font-size:0.75rem;color:var(--text-secondary);margin-bottom:15px;">
+				<span id="online-count-container" style="display:inline;">
+					🟢 在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
+				</span>
+				&nbsp;|&nbsp; 
 				<span id="busuanzi_container_site_pv" style="display:inline;">
 					📊 总访问 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span> 次
 				</span> 
 				&nbsp;|&nbsp; 
 				<span id="busuanzi_container_site_uv" style="display:inline;">
-					👥 访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span> 人
+					👥 访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span>
 				</span>
 				&nbsp;|&nbsp; 
 				<span id="total-games-container" style="display:inline;">
@@ -2323,7 +2327,6 @@
 			if (statsInitialized) return;
 			
 			try {
-				// ★★★ 检查 Supabase SDK 是否已加载 ★★★
 				if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
 					console.warn('⚠️ Supabase SDK 未加载，统计功能不可用');
 					return;
@@ -2333,6 +2336,10 @@
 				statsInitialized = true;
 				console.log('✅ Supabase 统计系统初始化成功');
 				recordVisit();
+				
+				// ★★★ 新增：启动在线追踪 ★★★
+				startOnlineTracking();
+				
 			} catch (e) {
 				console.error('❌ 统计系统初始化失败:', e);
 				supabase = null;
@@ -3348,6 +3355,9 @@
 
 		async function startGame() {
 			if (!selectedCharacter) return;
+			
+			// ★★★ 新增：停止在线追踪 ★★★
+			stopOnlineTracking();
 
 			gameState = getInitialState();
 			
@@ -8849,6 +8859,8 @@
 
             renderCharacterGrid();
             loadGlobalStatsDisplay();
+			// ★★★ 新增：重新开始在线追踪 ★★★
+			startOnlineTracking();
         }
 
 		// ==================== Meta进度系统 ====================
@@ -9999,6 +10011,134 @@
                 console.error('记录投稿失败:', e);
             }
         }
+
+		// ==================== 在线人数系统（低开销版）====================
+		let onlineSessionId = null;
+		let onlineHeartbeatTimer = null;
+
+		// 生成会话ID
+		function getOnlineSessionId() {
+			let id = sessionStorage.getItem('graduate_online_session');
+			if (!id) {
+				id = Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+				sessionStorage.setItem('graduate_online_session', id);
+			}
+			return id;
+		}
+
+		// 发送心跳（仅在开始界面）
+		async function sendOnlineHeartbeat() {
+			if (!supabase || !onlineSessionId) return;
+			
+			try {
+				await supabase
+					.from('online_users')
+					.upsert({ 
+						session_id: onlineSessionId, 
+						last_seen: new Date().toISOString() 
+					});
+			} catch (e) {
+				// 静默失败
+			}
+		}
+
+		// 获取在线人数（共享查询）
+		async function getOnlineCount() {
+			if (!supabase) return 0;
+			
+			try {
+				// 1. 先读取缓存
+				const { data: cached } = await supabase
+					.from('site_stats')
+					.select('online_count, updated_at')
+					.eq('id', 1)
+					.single();
+				
+				if (cached) {
+					const cacheAge = Date.now() - new Date(cached.updated_at).getTime();
+					
+					// 缓存有效（60秒内），直接返回
+					if (cacheAge < 60 * 1000) {
+						return cached.online_count;
+					}
+					
+					// 缓存过期，尝试更新（只有一个人会成功更新）
+					const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+					
+					const { count } = await supabase
+						.from('online_users')
+						.select('*', { count: 'exact', head: true })
+						.gte('last_seen', twoMinutesAgo);
+					
+					// 更新缓存
+					await supabase
+						.from('site_stats')
+						.update({ 
+							online_count: count || 0, 
+							updated_at: new Date().toISOString() 
+						})
+						.eq('id', 1);
+					
+					return count || 0;
+				}
+				
+				return 0;
+			} catch (e) {
+				console.error('获取在线人数失败:', e);
+				return 0;
+			}
+		}
+
+		// 更新显示
+		async function updateOnlineCountDisplay() {
+			const count = await getOnlineCount();
+			const el = document.getElementById('online-count-value');
+			if (el) {
+				el.textContent = count;
+			}
+		}
+
+		// 启动在线追踪（仅开始界面）
+		function startOnlineTracking() {
+			if (!supabase) return;
+			
+			onlineSessionId = getOnlineSessionId();
+			
+			// 立即执行
+			sendOnlineHeartbeat();
+			updateOnlineCountDisplay();
+			
+			// 每60秒心跳一次
+			onlineHeartbeatTimer = setInterval(() => {
+				sendOnlineHeartbeat();
+				updateOnlineCountDisplay();
+			}, 60 * 1000);
+		}
+
+		// 停止在线追踪（进入游戏时调用）
+		function stopOnlineTracking() {
+			if (onlineHeartbeatTimer) {
+				clearInterval(onlineHeartbeatTimer);
+				onlineHeartbeatTimer = null;
+			}
+		}
+
+		// 清理会话（页面关闭）
+		async function cleanupOnlineSession() {
+			if (!supabase || !onlineSessionId) return;
+			
+			try {
+				await supabase
+					.from('online_users')
+					.delete()
+					.eq('session_id', onlineSessionId);
+			} catch (e) {
+				// 静默失败
+			}
+		}
+
+		// 页面关闭时清理
+		window.addEventListener('beforeunload', cleanupOnlineSession);
 
         // ==================== 启动游戏 ====================
         document.addEventListener('DOMContentLoaded', init);
