@@ -1839,75 +1839,75 @@
 		];
 		
         // ==================== 会议配置 ====================
-        const CONFERENCES = {
-            1: {
-                A: { name: 'ICLR', fullName: 'International Conference on Learning Representations', field: '深度学习' },
-                B: { name: 'WACV', fullName: 'Winter Conference on Applications of Computer Vision', field: '计算机视觉' },
-                C: { name: 'GCPR', fullName: 'German Conference on Pattern Recognition', field: '模式识别' }
-            },
-            2: {
-                A: { name: 'WWW', fullName: 'The Web Conference', field: '万维网' },
-                B: { name: '3DV', fullName: 'International Conference on 3D Vision', field: '三维视觉' },
-                C: { name: 'MMAsia', fullName: 'ACM Multimedia Asia', field: '多媒体' }
-            },
-            3: {
-                A: { name: 'CVPR', fullName: 'Conference on Computer Vision and Pattern Recognition', field: '计算机视觉' },
-                B: { name: 'ICRA', fullName: 'International Conference on Robotics and Automation', field: '机器人' },
-                C: { name: 'ICDAR', fullName: 'International Conference on Document Analysis and Recognition', field: '文档分析' }
-            },
-            4: {
-                A: { name: 'NAACL', fullName: 'North American Chapter of ACL', field: '自然语言处理' },
-                B: { name: 'EACL', fullName: 'European Chapter of ACL', field: '自然语言处理' },
-                C: { name: 'ICAART', fullName: 'International Conference on Agents and Artificial Intelligence', field: '智能代理' }
-            },
-            5: {
-                A: { name: 'ICML', fullName: 'International Conference on Machine Learning', field: '机器学习' },
-                B: { name: 'RSS', fullName: 'Robotics: Science and Systems', field: '机器人' },
-                C: { name: 'VISAPP', fullName: 'International Conference on Computer Vision Theory and Applications', field: '视觉应用' }
-            },
-            6: {
-                A: { name: 'IJCAI', fullName: 'International Joint Conference on Artificial Intelligence', field: '人工智能' },
-                B: { name: 'IJCNN', fullName: 'International Joint Conference on Neural Networks', field: '神经网络' },
-                C: { name: 'IUI', fullName: 'International Conference on Intelligent User Interfaces', field: '人机交互' }
-            },
-            7: {
-                A: { 
-                    name: 'ICCV/ECCV',
-                    alternates: {
-                        odd: { name: 'ICCV', fullName: 'International Conference on Computer Vision' },
-                        even: { name: 'ECCV', fullName: 'European Conference on Computer Vision' }
-                    },
-                    field: '计算机视觉'
-                },
-                B: { name: 'INTERSPEECH', fullName: 'Conference of the International Speech Communication Association', field: '语音' },
-                C: { name: 'FG', fullName: 'IEEE International Conference on Automatic Face and Gesture Recognition', field: '人脸识别' }
-            },
-            8: {
-                A: { name: 'ACM MM', fullName: 'ACM International Conference on Multimedia', field: '多媒体' },
-                B: { name: 'BMVC', fullName: 'British Machine Vision Conference', field: '计算机视觉' },
-                C: { name: 'ICIP', fullName: 'IEEE International Conference on Image Processing', field: '图像处理' }
-            },
-            9: {
-                A: { name: 'NeurIPS', fullName: 'Conference on Neural Information Processing Systems', field: '机器学习' },
-                B: { name: 'CIKM', fullName: 'Conference on Information and Knowledge Management', field: '信息管理' },
-                C: { name: 'ICMR', fullName: 'ACM International Conference on Multimedia Retrieval', field: '多媒体检索' }
-            },
-            10: {
-                A: { name: 'EMNLP', fullName: 'Conference on Empirical Methods in Natural Language Processing', field: '自然语言处理' },
-                B: { name: 'CoNLL', fullName: 'Conference on Computational Natural Language Learning', field: '自然语言' },
-                C: { name: 'ICME', fullName: 'IEEE International Conference on Multimedia and Expo', field: '多媒体' }
-            },
-            11: {
-                A: { name: 'COLING', fullName: 'International Conference on Computational Linguistics', field: '计算语言学' },
-                B: { name: 'ACCV', fullName: 'Asian Conference on Computer Vision', field: '计算机视觉' },
-                C: { name: 'ICANN', fullName: 'International Conference on Artificial Neural Networks', field: '神经网络' }
-            },
-            12: {
-                A: { name: 'AAAI', fullName: 'AAAI Conference on Artificial Intelligence', field: '人工智能' },
-                B: { name: 'ICONIP', fullName: 'International Conference on Neural Information Processing', field: '神经网络' },
-                C: { name: 'ECAI', fullName: 'European Conference on Artificial Intelligence', field: '人工智能' }
-            }
-        };
+		const CONFERENCES = {
+			1: {
+				A: { name: 'ICLR', fullName: 'International Conference on Learning Representations', field: '深度学习' },
+				B: { name: 'WACV', fullName: 'Winter Conference on Applications of Computer Vision', field: '计算机视觉' },
+				C: { name: 'GCPR', fullName: 'German Conference on Pattern Recognition', field: '模式识别' }
+			},
+			2: {
+				A: { name: 'WWW', fullName: 'The Web Conference', field: '万维网' },
+				B: { name: '3DV', fullName: 'International Conference on 3D Vision', field: '三维视觉' },
+				C: { name: 'MMAsia', fullName: 'ACM Multimedia Asia', field: '多媒体' }
+			},
+			3: {
+				A: { name: 'CVPR', fullName: 'Conference on Computer Vision and Pattern Recognition', field: '计算机视觉' },
+				B: { name: 'ICRA', fullName: 'International Conference on Robotics and Automation', field: '机器人' },
+				C: { name: 'ICDAR', fullName: 'International Conference on Document Analysis and Recognition', field: '文档分析' }
+			},
+			4: {
+				A: { name: 'NAACL', fullName: 'North American Chapter of ACL', field: '自然语言处理' },
+				B: { name: 'EACL', fullName: 'European Chapter of ACL', field: '自然语言处理' },
+				C: { name: 'LREC', fullName: 'Language Resources and Evaluation Conference', field: '语言资源' }  // ★ 替换 ICAART
+			},
+			5: {
+				A: { name: 'ICML', fullName: 'International Conference on Machine Learning', field: '机器学习' },
+				B: { name: 'RSS', fullName: 'Robotics: Science and Systems', field: '机器人' },
+				C: { name: 'ICIP', fullName: 'IEEE International Conference on Image Processing', field: '图像处理' }  // ★ 替换 VISAPP
+			},
+			6: {
+				A: { name: 'IJCAI', fullName: 'International Joint Conference on Artificial Intelligence', field: '人工智能' },
+				B: { name: 'IJCNN', fullName: 'International Joint Conference on Neural Networks', field: '神经网络' },
+				C: { name: 'IUI', fullName: 'International Conference on Intelligent User Interfaces', field: '人机交互' }
+			},
+			7: {
+				A: { 
+					name: 'ICCV/ECCV',
+					alternates: {
+						odd: { name: 'ICCV', fullName: 'International Conference on Computer Vision' },
+						even: { name: 'ECCV', fullName: 'European Conference on Computer Vision' }
+					},
+					field: '计算机视觉'
+				},
+				B: { name: 'ISCA', fullName: 'Annual Conference of ISCA', field: '语音' },  // ★ 替换 INTERSPEECH
+				C: { name: 'FG', fullName: 'IEEE Conference on Face and Gesture Recognition', field: '人脸识别' }
+			},
+			8: {
+				A: { name: 'ACM MM', fullName: 'ACM International Conference on Multimedia', field: '多媒体' },
+				B: { name: 'BMVC', fullName: 'British Machine Vision Conference', field: '计算机视觉' },
+				C: { name: 'ICPR', fullName: 'International Conference on Pattern Recognition', field: '模式识别' }  // ★ 替换原 ICIP
+			},
+			9: {
+				A: { name: 'NeurIPS', fullName: 'Conference on Neural Information Processing Systems', field: '机器学习' },
+				B: { name: 'CIKM', fullName: 'Conference on Information and Knowledge Management', field: '信息管理' },
+				C: { name: 'ICMR', fullName: 'ACM International Conference on Multimedia Retrieval', field: '多媒体检索' }
+			},
+			10: {
+				A: { name: 'EMNLP', fullName: 'Conference on Empirical Methods in Natural Language Processing', field: '自然语言处理' },
+				B: { name: 'CoNLL', fullName: 'Conference on Computational Natural Language Learning', field: '自然语言' },
+				C: { name: 'ICME', fullName: 'IEEE International Conference on Multimedia and Expo', field: '多媒体' }
+			},
+			11: {
+				A: { name: 'COLING', fullName: 'International Conference on Computational Linguistics', field: '计算语言学' },
+				B: { name: 'ACCV', fullName: 'Asian Conference on Computer Vision', field: '计算机视觉' },
+				C: { name: 'ICANN', fullName: 'International Conference on Artificial Neural Networks', field: '神经网络' }
+			},
+			12: {
+				A: { name: 'AAAI', fullName: 'AAAI Conference on Artificial Intelligence', field: '人工智能' },
+				B: { name: 'ICONIP', fullName: 'International Conference on Neural Information Processing', field: '神经网络' },
+				C: { name: 'ECAI', fullName: 'European Conference on Artificial Intelligence', field: '人工智能' }
+			}
+		};
 
         const CONFERENCE_LOCATIONS = [
             // 北美
@@ -7529,24 +7529,26 @@
         }
         
         // ==================== 随机事件系统 ====================
-        function triggerScholarshipEvent() {
-            const req = { 2: 1, 3: 3, 4: 6, 5: 9 }[gameState.year] || 9;
-            const reward = { 2: 5, 3: 5, 4: 10, 5: 10 }[gameState.year] || 10;
-            if (gameState.totalScore >= req) {
-                gameState.gold += reward;
-                showModal('🎓 奖学金', `<p>恭喜！你的科研分达到${gameState.totalScore}分，满足本年度奖学金要求（≥${req}分），获得奖学金${reward}金币！</p>`,
-                    [{ text: '太棒了！', class: 'btn-primary', action: () => {
-                        addLog('奖学金', `第${gameState.year}年奖学金`, `科研分${gameState.totalScore}≥${req}，金钱+${reward}`);
-                        closeModal(); updateAllUI();
-                    }}]);
-            } else {
-                showModal('🎓 奖学金', `<p>遗憾落选！本年度奖学金要求科研分≥${req}，你目前${gameState.totalScore}分。</p>`,
-                    [{ text: '继续努力', class: 'btn-info', action: () => {
-                        addLog('奖学金', `第${gameState.year}年奖学金`, `科研分${gameState.totalScore}<${req}，遗憾落选`);
-                        closeModal();
-                    }}]);
-            }
-        }
+		function triggerScholarshipEvent() {
+			const req = { 2: 1, 3: 3, 4: 6, 5: 9 }[gameState.year] || 9;
+			// ★★★ 修改：10元改为8元 ★★★
+			const reward = { 2: 5, 3: 5, 4: 8, 5: 8 }[gameState.year] || 8;
+			
+			if (gameState.totalScore >= req) {
+				gameState.gold += reward;
+				showModal('🎓 奖学金', `<p>恭喜！你的科研分达到${gameState.totalScore}分，满足本年度奖学金要求（≥${req}分），获得奖学金${reward}金币！</p>`,
+					[{ text: '太棒了！', class: 'btn-primary', action: () => {
+						addLog('奖学金', `第${gameState.year}年奖学金`, `科研分${gameState.totalScore}≥${req}，金钱+${reward}`);
+						closeModal(); updateAllUI();
+					}}]);
+			} else {
+				showModal('🎓 奖学金', `<p>遗憾落选！本年度奖学金要求科研分≥${req}，你目前${gameState.totalScore}分。</p>`,
+					[{ text: '继续努力', class: 'btn-info', action: () => {
+						addLog('奖学金', `第${gameState.year}年奖学金`, `科研分${gameState.totalScore}<${req}，遗憾落选`);
+						closeModal();
+					}}]);
+			}
+		}
 
         function triggerTeachersDayEvent() {
             showModal('🎁 教师节', '<p>教师节到了，你准备送导师什么礼物？</p>', [
@@ -8881,7 +8883,7 @@
 
 		// ==================== Meta进度系统 ====================
 		const META_KEY = 'graduateSimulatorMeta';
-		const GAME_START_DATE = '2025-12-12T00:00:00Z';
+		const GAME_START_DATE = '2025-12-13T00:00:00Z';
 
 		function getLocalMeta() {
 			const meta = localStorage.getItem(META_KEY);
