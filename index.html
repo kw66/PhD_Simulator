@@ -2986,8 +2986,8 @@
 				console.warn('读取博士通关记录失败:', e);
 			}
 			return {
-				normal: { genius: false, social: false, rich: false, 'teacher-child': false, chosen: false, normal: false },
-				reversed: { genius: false, social: false, rich: false, 'teacher-child': false, chosen: false, normal: false }
+				normal: {normal: false,  genius: false, social: false, rich: false, 'teacher-child': false, chosen: false, },
+				reversed: {normal: false,  genius: false, social: false, rich: false, 'teacher-child': false, chosen: false, }
 			};
 		}
 
@@ -3003,7 +3003,7 @@
 		// 检查是否解锁真·大多数（需要6个角色的正位和逆位都博士毕业）
 		function isTrueNormalUnlocked() {
 			const unlocks = getCharacterPhdUnlocks();
-			const allCharacterIds = ['genius', 'social', 'rich', 'teacher-child', 'chosen', 'normal'];
+			const allCharacterIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
 			
 			// 检查每个角色的正位和逆位是否都达到博士毕业
 			for (const charId of allCharacterIds) {
@@ -3017,7 +3017,7 @@
 		// 获取解锁进度（总共12个：6角色×2模式）
 		function getTrueNormalUnlockProgress() {
 			const unlocks = getCharacterPhdUnlocks();
-			const allCharacterIds = ['genius', 'social', 'rich', 'teacher-child', 'chosen', 'normal'];
+			const allCharacterIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
 			
 			let unlockedCount = 0;
 			const details = [];
