@@ -4385,7 +4385,7 @@
 
 			gameState = getInitialState();
 			
-			// ★★★ 修改：真·大多数使用独立的角色ID ★★★
+			// ★★★ 修复：真·大多数使用独立的角色ID ★★★
 			gameState.isTrueNormal = (selectedCharacter.id === 'normal' && !isReversedMode && isTrueNormalMode);
 			gameState.character = gameState.isTrueNormal ? 'true-normal' : selectedCharacter.id;
 			gameState.isReversed = isReversedMode;
@@ -4410,48 +4410,72 @@
 				gameState.characterName = '真·大多数';
 			}
 
-            shopItems.forEach(item => {
-                if (item.once) item.bought = false;
-                if (item.monthlyOnce) item.boughtThisMonth = false;
-            });
+			shopItems.forEach(item => {
+				if (item.once) item.bought = false;
+				if (item.monthlyOnce) item.boughtThisMonth = false;
+			});
 
-            resetRandomEventPool();
-            
-            if(gameState.publishedPapers.length === 0) {
-                gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 14);
-            }
+			resetRandomEventPool();
+			
+			if(gameState.publishedPapers.length === 0) {
+				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 14);
+			}
 
-            // ★★★ 新增：加载投稿统计数据 ★★★
-            try {
-                gameState.submissionStats = await loadSubmissionStats();
-                console.log('✅ 投稿统计已加载到游戏状态');
-            } catch (e) {
-                console.error('加载投稿统计失败，使用默认值:', e);
-                gameState.submissionStats = getDefaultSubmissionStats();
-            }
+			// ★★★ 修改：先使用默认值，立即显示游戏界面 ★★★
+			gameState.submissionStats = getDefaultSubmissionStats();
 
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('game-screen').style.display = 'block';
-            document.getElementById('mobile-quick-bar').classList.add('game-active');
+			// ★★★ 先切换界面，不要等待数据加载 ★★★
+			document.getElementById('start-screen').classList.add('hidden');
+			document.getElementById('game-screen').style.display = 'block';
+			document.getElementById('mobile-quick-bar').classList.add('game-active');
 
-            document.getElementById('log-content').innerHTML = '';
-            checkResearchUnlock(true);
-            updateAllUI();
-            renderPaperSlots();
+			document.getElementById('log-content').innerHTML = '';
+			checkResearchUnlock(true);
+			updateAllUI();
+			renderPaperSlots();
 
-            addLog('游戏开始', `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`);
-            
-            if (isReversedMode) {
-                addLog('⚠️ 逆位模式', '命运的阴暗面已开启，规则将有所不同...');
-            }
-            
-            addLog('游戏目标', '硕士毕业需要科研分≥1，博士毕业需要科研分≥7');
-            addLog('游戏提示', '论文科研分：A类=4分，B类=2分，C类=1分');
-            addLog('操作提示', '每月可执行一次持续操作（看论文/打工/想idea/做实验/写论文）');
-            addLog('属性提示', '科研能力影响论文分数，社交能力和导师好感度影响事件走向，建议优先提升至6');
+			addLog('游戏开始', `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`);
+			
+			if (isReversedMode) {
+				addLog('⚠️ 逆位模式', '命运的阴暗面已开启，规则将有所不同...');
+			}
+			
+			addLog('游戏目标', '硕士毕业需要科研分≥1，博士毕业需要科研分≥7');
+			addLog('游戏提示', '论文科研分：A类=4分，B类=2分，C类=1分');
+			addLog('操作提示', '每月可执行一次持续操作（看论文/打工/想idea/做实验/写论文）');
+			addLog('属性提示', '科研能力影响论文分数，社交能力和导师好感度影响事件走向，建议优先提升至6');
+			
 			setTimeout(() => {
 				applyCollapseStates();
 			}, 100);
+
+			// ★★★ 修改：后台异步加载投稿统计，带超时机制 ★★★
+			loadSubmissionStatsAsync();
+		}
+
+		// ★★★ 新增：异步加载投稿统计（带超时） ★★★
+		async function loadSubmissionStatsAsync() {
+			try {
+				// 设置5秒超时
+				const timeoutPromise = new Promise((_, reject) => {
+					setTimeout(() => reject(new Error('加载超时')), 5000);
+				});
+				
+				const loadPromise = loadSubmissionStats();
+				
+				const stats = await Promise.race([loadPromise, timeoutPromise]);
+				
+				if (stats) {
+					gameState.submissionStats = stats;
+					console.log('✅ 投稿统计已后台加载完成');
+					// 刷新论文槽显示（更新录用率等信息）
+					renderPaperSlots();
+					updateResearchResults();
+				}
+			} catch (e) {
+				console.warn('后台加载投稿统计失败，使用默认值:', e.message);
+				// 已经使用默认值，无需处理
+			}
 		}
 
         // ★★★ 关键修改：逆位角色初始化 ★★★
@@ -5356,62 +5380,86 @@
 			);
 		}
 
-        function updateResearchResults() {
-            document.getElementById('paper-a-count').textContent = gameState.paperA;
-            document.getElementById('paper-b-count').textContent = gameState.paperB;
-            document.getElementById('paper-c-count').textContent = gameState.paperC;
-            document.getElementById('total-score').textContent = gameState.totalScore;
-            document.getElementById('total-citations').textContent = gameState.totalCitations;
-            document.getElementById('paper-total-count').textContent = gameState.publishedPapers.length;
+		function updateResearchResults() {
+			document.getElementById('paper-a-count').textContent = gameState.paperA;
+			document.getElementById('paper-b-count').textContent = gameState.paperB;
+			document.getElementById('paper-c-count').textContent = gameState.paperC;
+			document.getElementById('total-score').textContent = gameState.totalScore;
+			document.getElementById('total-citations').textContent = gameState.totalCitations;
+			document.getElementById('paper-total-count').textContent = gameState.publishedPapers.length;
 
-            const paperList = document.getElementById('published-papers');
-            if (gameState.publishedPapers.length === 0) {
-                paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>';
-            } else {
-                paperList.innerHTML = gameState.publishedPapers.map((p, index) => {
-                    // ★★★ 显示会议名称 ★★★
-                    const confName = p.conferenceInfo 
+			const paperList = document.getElementById('published-papers');
+			if (gameState.publishedPapers.length === 0) {
+				paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>';
+			} else {
+				paperList.innerHTML = gameState.publishedPapers.map((p, index) => {
+					// ★★★ 获取会议名称 ★★★
+					const confName = p.conferenceInfo 
 						? `${p.conferenceInfo.name} ${p.conferenceInfo.year} (${p.grade}类)` 
 						: `${p.grade}类`;
-                    
-                    return `
-                    <div class="paper-item grade-${p.grade}">
-                        <div class="title">${p.title}</div>
-                        <div class="meta">
-                            <span>${confName}|${p.acceptType}</span>
-                            <span>分:${p.score} 引:${p.citations}${p.citationMultiplier > 1 ? ' (×' + p.citationMultiplier.toFixed(2) + ')' : ''}</span>
-                        </div>
-                        <div class="paper-promotions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;">
-                            <button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}" 
-                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-                                onclick="promotePaper(${index}, 'arxiv')" 
-                                ${p.promotions?.arxiv ? 'disabled' : ''}>
-                                ${p.promotions?.arxiv ? '✓arxiv' : '挂arxiv'}
-                            </button>
-                            <button class="btn ${p.promotions?.github ? '' : 'btn-success'}" 
-                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-                                onclick="promotePaper(${index}, 'github')" 
-                                ${p.promotions?.github ? 'disabled' : ''}>
-                                ${p.promotions?.github ? '✓开源' : 'github开源'}
-                            </button>
-                            <button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}" 
-                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-                                onclick="promotePaper(${index}, 'xiaohongshu')" 
-                                ${p.promotions?.xiaohongshu ? 'disabled' : ''}>
-                                ${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
-                            </button>
-                            <button class="btn ${p.promotions?.quantumbit ? '' : (p.grade === 'A' ? 'btn-warning' : '')}" 
-                                style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || p.grade !== 'A' ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-                                onclick="promotePaper(${index}, 'quantumbit')" 
-                                ${p.promotions?.quantumbit || p.grade !== 'A' ? 'disabled' : ''}
-                                title="${p.grade !== 'A' ? '仅A类论文可用' : ''}">
-                                ${p.promotions?.quantumbit ? '✓量子位' : (p.grade !== 'A' ? '量子位(仅A类)' : '量子位封面')}
-                            </button>
-                        </div>
-                    </div>
-                `}).join('');
-            }
-        }
+					
+					// ★★★ 新增：计算并显示影响因子和录用率 ★★★
+					let statsInfo = '';
+					if (p.conferenceInfo && gameState.submissionStats) {
+						const month = p.conferenceInfo.month || 1;
+						const statsKey = `${month}_${p.grade}_${gameState.isReversed}`;
+						const stats = gameState.submissionStats[statsKey];
+						
+						if (stats && stats.submissions >= 10) {
+							const impactFactor = getConferenceImpactFactor(p.conferenceInfo, p.grade);
+							const acceptRate = (stats.acceptRate * 100).toFixed(1);
+							statsInfo = `
+								<div style="font-size:0.6rem;color:var(--text-secondary);margin-top:2px;">
+									📊 IF:${impactFactor.toFixed(2)} | 录用率:${acceptRate}%
+								</div>
+							`;
+						}
+					}
+					
+					// ★★★ 新增：引用增速显示 ★★★
+					const citationMultiplierText = p.citationMultiplier > 1 
+						? ` <span style="color:var(--success-color);">(×${p.citationMultiplier.toFixed(2)})</span>` 
+						: '';
+					
+					return `
+					<div class="paper-item grade-${p.grade}">
+						<div class="title">${p.title}</div>
+						<div class="meta">
+							<span>${confName}|${p.acceptType}</span>
+							<span>分:${p.score} 引:${p.citations}${citationMultiplierText}</span>
+						</div>
+						${statsInfo}
+						<div class="paper-promotions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;">
+							<button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}" 
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+								onclick="promotePaper(${index}, 'arxiv')" 
+								${p.promotions?.arxiv ? 'disabled' : ''}>
+								${p.promotions?.arxiv ? '✓arxiv' : '挂arxiv'}
+							</button>
+							<button class="btn ${p.promotions?.github ? '' : 'btn-success'}" 
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+								onclick="promotePaper(${index}, 'github')" 
+								${p.promotions?.github ? 'disabled' : ''}>
+								${p.promotions?.github ? '✓开源' : 'github开源'}
+							</button>
+							<button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}" 
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+								onclick="promotePaper(${index}, 'xiaohongshu')" 
+								${p.promotions?.xiaohongshu ? 'disabled' : ''}>
+								${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
+							</button>
+							<button class="btn ${p.promotions?.quantumbit ? '' : (p.grade === 'A' ? 'btn-warning' : '')}" 
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || p.grade !== 'A' ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
+								onclick="promotePaper(${index}, 'quantumbit')" 
+								${p.promotions?.quantumbit || p.grade !== 'A' ? 'disabled' : ''}
+								title="${p.grade !== 'A' ? '仅A类论文可用' : ''}">
+								${p.promotions?.quantumbit ? '✓量子位' : (p.grade !== 'A' ? '量子位(仅A类)' : '量子位封面')}
+							</button>
+						</div>
+					</div>
+				`}).join('');
+			}
+		}
 
         function getActionCosts() {
             const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
@@ -6892,83 +6940,162 @@
 			}
 		}
 
+		// ==================== 获取会议统计信息（用于显示）====================
+
+		/*** 获取会议的统计摘要信息*/
+		function getConferenceStatsForDisplay(month, grade, isReversed) {
+			const stats = getMonthStats(month, grade, isReversed);
+			const confInfo = getConferenceInfo(month, grade, gameState.year);
+			
+			// 计算影响因子
+			const impactFactor = getConferenceImpactFactor({ month: month }, grade);
+			
+			// 计算中稿均分
+			let avgAcceptedScore = '-';
+			if (stats && stats.submissions >= 10) {
+				const totalAccepted = (stats.poster || 0) + (stats.oral || 0) + (stats.bestPaper || 0);
+				if (totalAccepted > 0 && stats.avgScorePoster) {
+					const weightedSum = (stats.avgScorePoster * (stats.poster || 0)) + 
+									  (stats.avgScoreOral * (stats.oral || 0)) + 
+									  (stats.avgScoreBestPaper * (stats.bestPaper || 0));
+					avgAcceptedScore = Math.round(weightedSum / totalAccepted);
+				}
+			}
+			
+			return {
+				name: confInfo.name,
+				fullName: confInfo.fullName,
+				year: confInfo.year,
+				submissions: stats?.submissions || 0,
+				acceptRate: stats?.acceptRate || 0,
+				avgAcceptedScore: avgAcceptedScore,
+				impactFactor: impactFactor,
+				hasEnoughData: stats && stats.submissions >= 10
+			};
+		}
+
+		/**
+		 * 生成会议tooltip文本
+		 */
+		function generateConferenceTooltip(month, grade, isReversed) {
+			const info = getConferenceStatsForDisplay(month, grade, isReversed);
+			
+			let tooltip = `${info.fullName} ${info.year}`;
+			
+			if (info.hasEnoughData) {
+				tooltip += `\n━━━━━━━━━━━━`;
+				tooltip += `\n📊 投稿数: ${info.submissions}`;
+				tooltip += `\n✅ 录用率: ${(info.acceptRate * 100).toFixed(1)}%`;
+				tooltip += `\n📈 影响因子: ${info.impactFactor.toFixed(2)}`;
+				tooltip += `\n🎯 中稿均分: ${info.avgAcceptedScore}`;
+			} else {
+				tooltip += `\n(数据不足，暂无统计)`;
+			}
+			
+			return tooltip;
+		}
+
         // ==================== 论文工作站 ====================
-        function renderPaperSlots() {
-            const container = document.getElementById('paper-slots');
-            let html = '';
-            
-            // 预先获取当前月份的会议信息
-            const confA = getConferenceInfo(gameState.month, 'A', gameState.year);
-            const confB = getConferenceInfo(gameState.month, 'B', gameState.year);
-            const confC = getConferenceInfo(gameState.month, 'C', gameState.year);
-            
-            for (let i = 0; i < 4; i++) {
-                const unlocked = i < gameState.paperSlots;
-                const paper = gameState.papers[i];
-                
-                if (!unlocked) {
-                    const req = [0, 6, 12, 18][i];
-                    html += `<div class="paper-slot locked">
-                        <div class="slot-header">
-                            <span class="slot-title">论文槽${i + 1}</span>
-                            <span class="reviewing-badge"><i class="fas fa-lock"></i> 科研${req}解锁</span>
-                        </div>
-                    </div>`;
-                } else if (!paper) {
-                    html += `<div class="paper-slot">
-                        <div class="slot-header">
-                            <span class="slot-title">论文槽${i + 1}</span>
-                            <span style="color:var(--text-secondary);font-size:0.75rem;">空闲</span>
-                        </div>
-                        <button class="new-paper-btn" onclick="createNewPaper(${i})">
-                            <i class="fas fa-plus"></i> 开启新论文
-                        </button>
-                        <div style="margin-top:8px;font-size:0.65rem;color:var(--text-secondary);text-align:center;">
-                            本月会议：A-${confA.name} | B-${confB.name} | C-${confC.name}
-                        </div>
-                    </div>`;
-                } else {
-                    const total = paper.ideaScore + paper.expScore + paper.writeScore;
-                    const canSubmit = paper.ideaScore > 0 && paper.expScore > 0 && paper.writeScore > 0 && !paper.reviewing;
-                    const reviewingBadgeClass = paper.reviewing ? `reviewing-badge grade-${paper.submittedGrade}` : '';
-                    
-                    let reviewingInfo = '';
-                    if (paper.reviewing) {
-                        const confName = paper.conferenceInfo ? paper.conferenceInfo.name : paper.submittedGrade + '类';
-                        reviewingInfo = `<span class="${reviewingBadgeClass}"><i class="fas fa-hourglass-half"></i> ${confName} 剩余${Math.max(0, paper.reviewMonths)}月</span>`;
-                    }
-                    
-                    html += `<div class="paper-slot active">
-                        <div class="slot-header">
-                            <span class="slot-title">论文槽${i + 1}</span>
-                            ${reviewingInfo}
-                        </div>
-                        <div class="paper-title">${paper.title}</div>
-                        <div class="paper-scores">
-                            <div class="score-box"><div class="label">Idea</div><div class="value">${paper.ideaScore}</div></div>
-                            <div class="score-box"><div class="label">实验</div><div class="value">${paper.expScore}</div></div>
-                            <div class="score-box"><div class="label">写作</div><div class="value">${paper.writeScore}</div></div>
-                        </div>
-                        <div class="paper-total">总分: ${total}</div>
+		
+		
+		
+		function renderPaperSlots() {
+			const container = document.getElementById('paper-slots');
+			let html = '';
+			
+			// 预先获取当前月份的会议信息
+			const confA = getConferenceInfo(gameState.month, 'A', gameState.year);
+			const confB = getConferenceInfo(gameState.month, 'B', gameState.year);
+			const confC = getConferenceInfo(gameState.month, 'C', gameState.year);
+			
+			// ★★★ 新增：获取tooltip信息 ★★★
+			const tooltipA = generateConferenceTooltip(gameState.month, 'A', gameState.isReversed);
+			const tooltipB = generateConferenceTooltip(gameState.month, 'B', gameState.isReversed);
+			const tooltipC = generateConferenceTooltip(gameState.month, 'C', gameState.isReversed);
+			
+			// ★★★ 新增：获取简要统计用于按钮显示 ★★★
+			const statsA = getConferenceStatsForDisplay(gameState.month, 'A', gameState.isReversed);
+			const statsB = getConferenceStatsForDisplay(gameState.month, 'B', gameState.isReversed);
+			const statsC = getConferenceStatsForDisplay(gameState.month, 'C', gameState.isReversed);
+			
+			for (let i = 0; i < 4; i++) {
+				const unlocked = i < gameState.paperSlots;
+				const paper = gameState.papers[i];
+				
+				if (!unlocked) {
+					const req = [0, 6, 12, 18][i];
+					html += `<div class="paper-slot locked">
+						<div class="slot-header">
+							<span class="slot-title">论文槽${i + 1}</span>
+							<span class="reviewing-badge"><i class="fas fa-lock"></i> 科研${req}解锁</span>
+						</div>
+					</div>`;
+				} else if (!paper) {
+					// ★★★ 修改：显示会议统计信息 ★★★
+					html += `<div class="paper-slot">
+						<div class="slot-header">
+							<span class="slot-title">论文槽${i + 1}</span>
+							<span style="color:var(--text-secondary);font-size:0.75rem;">空闲</span>
+						</div>
+						<button class="new-paper-btn" onclick="createNewPaper(${i})">
+							<i class="fas fa-plus"></i> 开启新论文
+						</button>
+						<div style="margin-top:8px;font-size:0.6rem;color:var(--text-secondary);text-align:center;">
+							本月会议：A-${confA.name} | B-${confB.name} | C-${confC.name}
+						</div>
+						<div style="margin-top:4px;font-size:0.55rem;color:var(--text-secondary);text-align:center;">
+							${statsA.hasEnoughData ? `录用率: A-${(statsA.acceptRate*100).toFixed(0)}% B-${(statsB.acceptRate*100).toFixed(0)}% C-${(statsC.acceptRate*100).toFixed(0)}%` : '(统计数据加载中...)'}
+						</div>
+					</div>`;
+				} else {
+					const total = paper.ideaScore + paper.expScore + paper.writeScore;
+					const canSubmit = paper.ideaScore > 0 && paper.expScore > 0 && paper.writeScore > 0 && !paper.reviewing;
+					const reviewingBadgeClass = paper.reviewing ? `reviewing-badge grade-${paper.submittedGrade}` : '';
+					
+					let reviewingInfo = '';
+					if (paper.reviewing) {
+						const confName = paper.conferenceInfo ? paper.conferenceInfo.name : paper.submittedGrade + '类';
+						reviewingInfo = `<span class="${reviewingBadgeClass}"><i class="fas fa-hourglass-half"></i> ${confName} 剩余${Math.max(0, paper.reviewMonths)}月</span>`;
+					}
+					
+					// ★★★ 修改：增强投稿按钮的tooltip ★★★
+					html += `<div class="paper-slot active">
+						<div class="slot-header">
+							<span class="slot-title">论文槽${i + 1}</span>
+							${reviewingInfo}
+						</div>
+						<div class="paper-title">${paper.title}</div>
+						<div class="paper-scores">
+							<div class="score-box"><div class="label">Idea</div><div class="value">${paper.ideaScore}</div></div>
+							<div class="score-box"><div class="label">实验</div><div class="value">${paper.expScore}</div></div>
+							<div class="score-box"><div class="label">写作</div><div class="value">${paper.writeScore}</div></div>
+						</div>
+						<div class="paper-total">总分: ${total}</div>
 						<div class="paper-actions">
-							<button class="btn btn-danger" onclick="submitPaper(${i},'A')" ${!canSubmit?'disabled':''} title="${confA.fullName} ${confA.year}">
-								<i class="fas fa-star"></i> A类-${confA.name}
+							<button class="btn btn-danger" onclick="submitPaper(${i},'A')" ${!canSubmit?'disabled':''} 
+									title="${tooltipA.replace(/"/g, '&quot;')}">
+								<i class="fas fa-star"></i> A-${confA.name}
+								${statsA.hasEnoughData ? `<span style="font-size:0.6rem;opacity:0.8;">(${(statsA.acceptRate*100).toFixed(0)}%)</span>` : ''}
 							</button>
-							<button class="btn btn-warning" onclick="submitPaper(${i},'B')" ${!canSubmit?'disabled':''} title="${confB.fullName} ${confB.year}">
-								<i class="fas fa-certificate"></i> B类-${confB.name}
+							<button class="btn btn-warning" onclick="submitPaper(${i},'B')" ${!canSubmit?'disabled':''} 
+									title="${tooltipB.replace(/"/g, '&quot;')}">
+								<i class="fas fa-certificate"></i> B-${confB.name}
+								${statsB.hasEnoughData ? `<span style="font-size:0.6rem;opacity:0.8;">(${(statsB.acceptRate*100).toFixed(0)}%)</span>` : ''}
 							</button>
-							<button class="btn btn-success" onclick="submitPaper(${i},'C')" ${!canSubmit?'disabled':''} title="${confC.fullName} ${confC.year}">
-								<i class="fas fa-check"></i> C类-${confC.name}
+							<button class="btn btn-success" onclick="submitPaper(${i},'C')" ${!canSubmit?'disabled':''} 
+									title="${tooltipC.replace(/"/g, '&quot;')}">
+								<i class="fas fa-check"></i> C-${confC.name}
+								${statsC.hasEnoughData ? `<span style="font-size:0.6rem;opacity:0.8;">(${(statsC.acceptRate*100).toFixed(0)}%)</span>` : ''}
 							</button>
 							<button class="btn btn-info" onclick="abandonPaper(${i})" ${paper.reviewing?'disabled':''}>
 								<i class="fas fa-trash"></i> 放弃
 							</button>
 						</div>
-                    </div>`;
-                }
-            }
-            container.innerHTML = html;
-        }
+					</div>`;
+				}
+			}
+			container.innerHTML = html;
+		}
 
         function generatePaperTitle() {
             const w = paperTitleWords;
@@ -7783,20 +7910,27 @@
                 gameState.isReversed
             );
             
-            gameState.publishedPapers.push({
-                title: paper.title,
-                grade,
-                acceptType,
-                score: finalScore,
-                citations: 0,
-                monthsSincePublish: 0,
-                promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
-                citationMultiplier: citationBuff,
-                pendingCitationFraction: 0,
-                // ★★★ 保存会议信息 ★★★
-                conferenceInfo: paper.conferenceInfo,
-                conferenceLocation: paper.conferenceLocation
-            });
+			gameState.publishedPapers.push({
+				title: paper.title,
+				grade,
+				acceptType,
+				score: finalScore,
+				citations: 0,
+				monthsSincePublish: 0,
+				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+				citationMultiplier: citationBuff,
+				pendingCitationFraction: 0,
+				// ★★★ 确保保存完整的会议信息，包括month ★★★
+				conferenceInfo: paper.conferenceInfo ? {
+					...paper.conferenceInfo,
+					month: paper.submittedMonth || gameState.month  // 确保有month
+				} : {
+					name: grade + '类会议',
+					year: getRealYear(gameState.year, gameState.month),
+					month: paper.submittedMonth || gameState.month
+				},
+				conferenceLocation: paper.conferenceLocation
+			});
 
             if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
                 gameState.availableRandomEvents.push(14);
@@ -10718,8 +10852,8 @@
 			try {
 				console.log('从数据库加载投稿统计...');
 				
-				// ★★★ 修改：使用分页加载函数 ★★★
-				const data = await fetchAllSubmissions(10000);  // 最多加载10000条
+				// ★★★ 修改：使用分页加载，限制最大数量和时间 ★★★
+				const data = await fetchSubmissionsWithLimit(10000);
 				
 				if (!data || data.length === 0) {
 					console.log('数据库无记录，使用默认统计');
@@ -10743,38 +10877,43 @@
 			}
 		}
 
-		// ★★★ 新增：分页获取投稿数据 ★★★
-		async function fetchAllSubmissions(maxRows = 10000) {
+		// ★★★ 新增：带限制的分页获取 ★★★
+		async function fetchSubmissionsWithLimit(maxRows = 10000) {
 			if (!supabase) return [];
 			
 			let allData = [];
 			let from = 0;
-			const pageSize = 1000; // Supabase 单次最大返回量
+			const pageSize = 1000;
+			const maxPages = Math.ceil(maxRows / pageSize);  // 最多请求10页
+			let pageCount = 0;
 			
-			while (allData.length < maxRows) {
-				const remaining = maxRows - allData.length;
-				const limit = Math.min(pageSize, remaining);
+			while (allData.length < maxRows && pageCount < maxPages) {
+				pageCount++;
 				
-				const { data, error } = await supabase
-					.from('paper_submissions')
-					.select('game_month, grade, is_reversed, submitted_score, result')
-					.order('created_at', { ascending: false })
-					.range(from, from + limit - 1);
-				
-				if (error) {
-					console.error('获取投稿数据失败:', error);
-					throw error;
+				try {
+					const { data, error } = await supabase
+						.from('paper_submissions')
+						.select('game_month, grade, is_reversed, submitted_score, result')
+						.order('created_at', { ascending: false })
+						.range(from, from + pageSize - 1);
+					
+					if (error) {
+						console.error('获取投稿数据失败:', error);
+						break;  // 出错时返回已获取的数据
+					}
+					
+					if (!data || data.length === 0) break;
+					
+					allData = allData.concat(data);
+					console.log(`投稿统计: 已获取 ${allData.length} 条记录 (第${pageCount}页)`);
+					
+					if (data.length < pageSize) break;
+					
+					from += pageSize;
+				} catch (e) {
+					console.error('分页请求失败:', e);
+					break;
 				}
-				
-				if (!data || data.length === 0) break;
-				
-				allData = allData.concat(data);
-				console.log(`投稿统计: 已获取 ${allData.length} 条记录`);
-				
-				// 如果返回数量小于请求数量，说明已经没有更多数据
-				if (data.length < limit) break;
-				
-				from += limit;
 			}
 			
 			return allData;
