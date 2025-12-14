@@ -10692,61 +10692,93 @@
         const SUBMISSION_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
 
         // 加载投稿统计数据
-        async function loadSubmissionStats() {
-            // 检查内存缓存
-            if (submissionStatsCache && (Date.now() - submissionStatsCacheTime < SUBMISSION_CACHE_DURATION)) {
-                console.log('使用内存缓存的投稿统计');
-                return submissionStatsCache;
-            }
-            
-            // 检查localStorage缓存
-            const localCacheKey = 'graduateSimulator_submissionStats';
-            const cached = getLocalCache(localCacheKey);
-            if (cached) {
-                console.log('使用本地缓存的投稿统计');
-                submissionStatsCache = cached;
-                submissionStatsCacheTime = Date.now();
-                return cached;
-            }
-            
-            // 从数据库加载
-            if (!supabase) {
-                console.log('Supabase未初始化，使用默认统计');
-                return getDefaultSubmissionStats();
-            }
-            
-            try {
-                console.log('从数据库加载投稿统计...');
-                
-                const { data, error } = await supabase
-                    .from('paper_submissions')
-                    .select('game_month, grade, is_reversed, submitted_score, result')
-                    .order('created_at', { ascending: false })
-                    .limit(10000);
-                
-                if (error) throw error;
-                
-                if (!data || data.length === 0) {
-                    console.log('数据库无记录，使用默认统计');
-                    return getDefaultSubmissionStats();
-                }
-                
-                // 计算统计数据
-                const stats = calculateSubmissionStats(data);
-                
-                // 缓存
-                submissionStatsCache = stats;
-                submissionStatsCacheTime = Date.now();
-                setLocalCache(localCacheKey, stats);
-                
-                console.log('✅ 投稿统计加载完成，共', data.length, '条记录');
-                return stats;
-                
-            } catch (e) {
-                console.error('加载投稿统计失败:', e);
-                return getDefaultSubmissionStats();
-            }
-        }
+		async function loadSubmissionStats() {
+			// 检查内存缓存
+			if (submissionStatsCache && (Date.now() - submissionStatsCacheTime < SUBMISSION_CACHE_DURATION)) {
+				console.log('使用内存缓存的投稿统计');
+				return submissionStatsCache;
+			}
+			
+			// 检查localStorage缓存
+			const localCacheKey = 'graduateSimulator_submissionStats';
+			const cached = getLocalCache(localCacheKey);
+			if (cached) {
+				console.log('使用本地缓存的投稿统计');
+				submissionStatsCache = cached;
+				submissionStatsCacheTime = Date.now();
+				return cached;
+			}
+			
+			// 从数据库加载
+			if (!supabase) {
+				console.log('Supabase未初始化，使用默认统计');
+				return getDefaultSubmissionStats();
+			}
+			
+			try {
+				console.log('从数据库加载投稿统计...');
+				
+				// ★★★ 修改：使用分页加载函数 ★★★
+				const data = await fetchAllSubmissions(10000);  // 最多加载10000条
+				
+				if (!data || data.length === 0) {
+					console.log('数据库无记录，使用默认统计');
+					return getDefaultSubmissionStats();
+				}
+				
+				// 计算统计数据
+				const stats = calculateSubmissionStats(data);
+				
+				// 缓存
+				submissionStatsCache = stats;
+				submissionStatsCacheTime = Date.now();
+				setLocalCache(localCacheKey, stats);
+				
+				console.log('✅ 投稿统计加载完成，共', data.length, '条记录');
+				return stats;
+				
+			} catch (e) {
+				console.error('加载投稿统计失败:', e);
+				return getDefaultSubmissionStats();
+			}
+		}
+
+		// ★★★ 新增：分页获取投稿数据 ★★★
+		async function fetchAllSubmissions(maxRows = 10000) {
+			if (!supabase) return [];
+			
+			let allData = [];
+			let from = 0;
+			const pageSize = 1000; // Supabase 单次最大返回量
+			
+			while (allData.length < maxRows) {
+				const remaining = maxRows - allData.length;
+				const limit = Math.min(pageSize, remaining);
+				
+				const { data, error } = await supabase
+					.from('paper_submissions')
+					.select('game_month, grade, is_reversed, submitted_score, result')
+					.order('created_at', { ascending: false })
+					.range(from, from + limit - 1);
+				
+				if (error) {
+					console.error('获取投稿数据失败:', error);
+					throw error;
+				}
+				
+				if (!data || data.length === 0) break;
+				
+				allData = allData.concat(data);
+				console.log(`投稿统计: 已获取 ${allData.length} 条记录`);
+				
+				// 如果返回数量小于请求数量，说明已经没有更多数据
+				if (data.length < limit) break;
+				
+				from += limit;
+			}
+			
+			return allData;
+		}
 
         // 计算统计数据
         function calculateSubmissionStats(data) {
@@ -10945,7 +10977,7 @@
 		};
 
 		// 启用调整的最小投稿量阈值
-		const MIN_SUBMISSIONS_FOR_ADJUSTMENT = 1000;
+		const MIN_SUBMISSIONS_FOR_ADJUSTMENT = 100;
 
 		// ==================== 会议热度计算 ====================
 
@@ -11003,7 +11035,7 @@
 		function getAdjustedTargetRate(grade, monthStats, submissionStats, isReversed) {
 			const baseTarget = TARGET_ACCEPTANCE_RATES[grade];
 			
-			if (!monthStats || monthStats.submissions < 30) {
+			if (!monthStats || monthStats.submissions < 50) {
 				return {
 					...baseTarget,
 					popularity: null,
@@ -11605,7 +11637,7 @@
 
 		/*** 渲染增强版全球统计*/
 		function renderGlobalStatsEnhanced(confInfo, monthStats, grade) {
-			if (!monthStats || monthStats.submissions < 10) {
+			if (!monthStats || monthStats.submissions < 20) {
 				return `
 				<div style="padding:12px;background:linear-gradient(135deg,rgba(116,185,255,0.1),rgba(162,155,254,0.1));border-radius:8px;margin-bottom:12px;font-size:0.8rem;border:1px solid rgba(116,185,255,0.3);">
 					<div style="font-weight:600;color:var(--info-color);margin-bottom:8px;">
