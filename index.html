@@ -2542,7 +2542,7 @@
 			'👊 越战越勇', '🧠 人间清醒', '🔥 火力全开',
 			'🍚 食之无味', '🤖 机械飞升', '🛋️ 全套家具',
 			'🧒 天才少年',
-			'💎 无法埋没', '🔔 不鸣则已', '📊 严重偏科', '💼 打工狂人', '📖 爱看论文'
+			'💎 无法埋没', '🔔 不鸣则已', '📊 严重偏科', '💼 打工狂人', '📖 爱看论文', '🏹 一箭双雕',
 		];
 
         // 结局名称映射
@@ -2626,7 +2626,8 @@
 			'🔔 不鸣则已': '顺利毕业且第一篇论文引用超过200',
 			'📊 严重偏科': '顺利毕业且毕业时科研能力、导师好感度、社交能力最高和最低的差距超过12',
 			'💼 打工狂人': '顺利毕业且毕业时至少打工10次',
-			'📖 爱看论文': '顺利毕业且毕业时至少看20次论文'
+			'📖 爱看论文': '顺利毕业且毕业时至少看20次论文',
+			'🏹 一箭双雕': '顺利毕业且曾在一个会议同时中稿≥2篇论文',
 		};
 
         // 商店物品
@@ -5565,38 +5566,50 @@
 				const maxMonths = gameState.maxYears * 12;
 				if (checkTotalMonths > maxMonths) continue;
 				
-				let eventName = null;
-				let eventIcon = '';
+				let monthEvents = [];  // 一个月可能有多个事件
 				
-				if (checkMonth === 5) {
-					eventName = '寒假';
-					eventIcon = '❄️';
-				} else if (checkMonth === 11) {
-					eventName = '暑假';
-					eventIcon = '☀️';
-				} else if (checkMonth === 1 && checkYear >= 2) {
-					eventName = '奖学金';
-					eventIcon = '🎓';
-				} else if (checkMonth === 2) {
-					eventName = '教师节';
-					eventIcon = '🎁';
-				} else if (checkMonth === 12) {
-					// ★★★ 新增：12月学年总结预告 ★★★
-					eventName = '学年总结';
-					eventIcon = '📅';
-				} else if (checkMonth % 2 === 0) {
-					eventName = '随机事件';
-					eventIcon = '🎲';
-				}
-				
-				if (eventName) {
-					events.push({
-						month: i,
-						name: eventName,
-						icon: eventIcon,
-						label: i === 1 ? '下月' : '2月后'
+				// ★★★ 新增：检查审稿结果 ★★★
+				let reviewCount = 0;
+				gameState.papers.forEach((paper, idx) => {
+					if (paper && paper.reviewing) {
+						const remainingMonths = paper.reviewMonths - i;
+						if (remainingMonths <= 0) {
+							reviewCount++;
+						}
+					}
+				});
+				if (reviewCount > 0) {
+					monthEvents.push({
+						name: reviewCount > 1 ? `${reviewCount}篇审稿结果` : '审稿结果',
+						icon: '📬'
 					});
 				}
+				
+				// 原有事件检测
+				if (checkMonth === 5) {
+					monthEvents.push({ name: '寒假', icon: '❄️' });
+				} else if (checkMonth === 11) {
+					monthEvents.push({ name: '暑假', icon: '☀️' });
+				} else if (checkMonth === 1 && checkYear >= 2) {
+					monthEvents.push({ name: '奖学金', icon: '🎓' });
+				} else if (checkMonth === 2) {
+					monthEvents.push({ name: '教师节', icon: '🎁' });
+				} else if (checkMonth === 12) {
+					monthEvents.push({ name: '学年总结', icon: '📅' });
+				} else if (checkMonth % 2 === 0 && monthEvents.length === 0) {
+					// 只有没有其他事件时才显示随机事件
+					monthEvents.push({ name: '随机事件', icon: '🎲' });
+				}
+				
+				// 添加到事件列表
+				monthEvents.forEach(evt => {
+					events.push({
+						month: i,
+						name: evt.name,
+						icon: evt.icon,
+						label: i === 1 ? '下月' : '2月后'
+					});
+				});
 			}
 			
 			return events;
@@ -5688,11 +5701,9 @@
 				}
 			}
 			
-			// ★★★ 修改：取消每年自动加成 ★★★
 			if (gameState.month > 12) {
 				gameState.month = 1;
 				gameState.year++;
-				// 移除了原来的社交+1和好感+1
 			}
 
 			// ★★★ 修改：工资计算（加入月度工资加成）★★★
@@ -5809,16 +5820,13 @@
 			});
 
 			// 审稿进度
+			let pendingReviewSlots = [];
 			gameState.papers.forEach((paper, idx) => {
 				if (paper && paper.reviewing) {
 					paper.reviewMonths--;
-					if (paper.reviewMonths < 1) {
+					if (paper.reviewMonths <= 0) {
 						paper.reviewMonths = 0;
-						setTimeout(() => {
-							if (gameState.papers[idx] && gameState.papers[idx].reviewing) {
-								processPaperResult(idx);
-							}
-						}, 100 * idx);
+						pendingReviewSlots.push(idx);  // 按槽位顺序收集
 					}
 				}
 			});
@@ -5830,9 +5838,6 @@
 			shopItems.forEach(item => {
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
-
-			// ★★★ 修改：移除新年奖励日志 ★★★
-			// 不再显示"新的一年"的社交+1好感+1奖励
 
 			let logResult = `工资+${salary}`;
 			// ★★★ 新增：显示工资加成来源 ★★★
@@ -5868,24 +5873,62 @@
 				addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
 			}
 
-			// ★★★ 关键修复：12月时先检查转博，再触发学年总结 ★★★
+			// ★★★ 关键修改：审稿事件优先处理 ★★★
+			// 如果有待处理的审稿结果，先处理审稿，完成后再触发月末事件
+			if (pendingReviewSlots.length > 0) {
+				// 定义月末事件回调
+				const triggerMonthlyEvents = () => {
+					// 12月特殊处理：转博或学年总结
+					if (gameState.month === 12) {
+						const canPhD = gameState.degree === 'master' && (
+							(gameState.year === 2 && gameState.totalScore >= 2) ||
+							(gameState.year === 3 && gameState.totalScore >= 3)
+						);
+						
+						if (canPhD) {
+							checkGraduation();
+						} else {
+							triggerYearEndSummaryEvent();
+						}
+					} else if (gameState.month === 5) {
+						triggerWinterVacationEvent();
+					} else if (gameState.month === 11) {
+						triggerSummerVacationEvent();
+					} else if (gameState.month === 1 && gameState.year >= 2) {
+						triggerScholarshipEvent();
+					} else if (gameState.month === 2) {
+						triggerTeachersDayEvent();
+					} else if (gameState.month % 2 === 0) {
+						triggerOtherRandomEvent();
+					}
+					
+					// 检查毕业
+					checkGraduation();
+					updateAllUI();
+					renderPaperSlots();
+				};
+				
+				// 开始审稿事件处理流程，完成后触发月末事件
+				startReviewProcessing(pendingReviewSlots, triggerMonthlyEvents);
+				
+				updateAllUI();
+				renderPaperSlots();
+				return;  // ★★★ 提前返回，等待审稿流程完成 ★★★
+			}
+
+			// 没有审稿结果时，正常触发月末事件
 			if (gameState.month === 12) {
-				// 先检查是否满足转博条件
 				const canPhD = gameState.degree === 'master' && (
 					(gameState.year === 2 && gameState.totalScore >= 2) ||
 					(gameState.year === 3 && gameState.totalScore >= 3)
 				);
 				
 				if (canPhD) {
-					// 满足转博条件，先触发转博选择
 					checkGraduation();
-					// checkGraduation 会设置 pendingPhDChoice 并显示弹窗
-					// 学年总结会在转博选择完成后触发（或跳过）
 					updateAllUI();
 					renderPaperSlots();
-					return; // ★★★ 重要：提前返回，不触发学年总结 ★★★
+					return;
 				} else {
-					// 不满足转博条件，正常触发学年总结
 					triggerYearEndSummaryEvent();
 				}
 			} else if (gameState.month === 5) {
@@ -5900,9 +5943,7 @@
 				triggerOtherRandomEvent();
 			}
 
-			// 检查毕业（非12月情况，或12月不满足转博条件时）
 			checkGraduation();
-
 			updateAllUI();
 			renderPaperSlots();
 		}
@@ -7810,7 +7851,368 @@
             gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== type);
         }
 		
-        // ==================== 论文投稿与审稿 ====================
+        
+		// ==================== 新增：统一审稿事件队列系统 ====================
+
+		/**
+		 * 开始处理本月的审稿结果
+		 * @param {Array} slots - 待处理的审稿槽位索引数组（已按顺序）
+		 * @param {Function} onComplete - 所有审稿和开会处理完成后的回调
+		 */
+		function startReviewProcessing(slots, onComplete) {
+			if (!slots || slots.length === 0) {
+				if (onComplete) onComplete();
+				return;
+			}
+			
+			// 初始化处理状态
+			gameState._reviewProcessing = {
+				pendingSlots: [...slots],        // 待处理的审稿槽位（按顺序）
+				acceptedByConference: {},        // 按会议分组的中稿论文 { confKey: { confInfo, confLocation, papers: [] } }
+				pendingConferences: [],          // 待处理的开会事件
+				onComplete: onComplete           // 完成回调
+			};
+			
+			// 开始处理第一个审稿结果
+			processNextReviewInQueue();
+		}
+
+		/**
+		 * 处理队列中的下一个审稿结果
+		 */
+		function processNextReviewInQueue() {
+			const state = gameState._reviewProcessing;
+			if (!state) return;
+			
+			if (state.pendingSlots.length === 0) {
+				// 所有审稿结果已处理，开始处理开会事件
+				prepareConferencesInQueue();
+				return;
+			}
+			
+			const slotIdx = state.pendingSlots.shift();
+			const paper = gameState.papers[slotIdx];
+			
+			if (paper && paper.reviewing) {
+				processPaperResult(slotIdx);
+			} else {
+				// 槽位已不在审稿状态，跳过处理下一个
+				processNextReviewInQueue();
+			}
+		}
+
+		/**
+		 * 记录中稿论文的会议信息（在handlePaperAccepted中调用）
+		 */
+		function recordAcceptedPaperConference(paper, grade, acceptType) {
+			const state = gameState._reviewProcessing;
+			if (!state) return;
+			
+			const confInfo = paper.conferenceInfo || getConferenceInfo(paper.submittedMonth || gameState.month, grade, gameState.year);
+			const confLocation = paper.conferenceLocation || getConferenceLocation(paper.title);
+			
+			// 生成会议唯一标识
+			const confKey = `${confInfo.name}_${confInfo.year}`;
+			
+			if (!state.acceptedByConference[confKey]) {
+				state.acceptedByConference[confKey] = {
+					confInfo: confInfo,
+					confLocation: confLocation,
+					grade: grade,
+					papers: []
+				};
+			}
+			
+			state.acceptedByConference[confKey].papers.push({
+				title: paper.title,
+				grade: grade,
+				acceptType: acceptType
+			});
+		}
+
+		/**
+		 * 准备开会事件队列
+		 */
+		function prepareConferencesInQueue() {
+			const state = gameState._reviewProcessing;
+			if (!state) return;
+			
+			const conferences = Object.values(state.acceptedByConference);
+			
+			// 检查一箭双雕成就
+			conferences.forEach(conf => {
+				if (conf.papers.length >= 2) {
+					if (!gameState.achievementConditions) {
+						gameState.achievementConditions = {};
+					}
+					gameState.achievementConditions.twoInOneConference = true;
+				}
+			});
+			
+			// 存储待处理的会议
+			state.pendingConferences = conferences;
+			
+			// 开始处理开会事件
+			processNextConferenceInQueue();
+		}
+
+		/**
+		 * 处理队列中的下一个开会事件
+		 */
+		function processNextConferenceInQueue() {
+			const state = gameState._reviewProcessing;
+			if (!state) return;
+			
+			if (!state.pendingConferences || state.pendingConferences.length === 0) {
+				// 所有开会事件已处理，完成审稿流程
+				finishReviewProcessing();
+				return;
+			}
+			
+			const conf = state.pendingConferences.shift();
+			// 显示合并后的开会选择弹窗
+			showConferenceModalMerged(conf);
+		}
+
+		/**
+		 * 完成审稿处理流程
+		 */
+		function finishReviewProcessing() {
+			const state = gameState._reviewProcessing;
+			const onComplete = state ? state.onComplete : null;
+			
+			// 清理处理状态
+			delete gameState._reviewProcessing;
+			
+			// 执行完成回调（触发月末事件）
+			if (onComplete) {
+				setTimeout(onComplete, 100);
+			}
+		}
+
+		/**
+		 * 显示合并后的开会选择弹窗（支持同一会议多篇论文）
+		 */
+		function showConferenceModalMerged(confData) {
+			const { confInfo, confLocation, papers, grade } = confData;
+			const paperCount = papers.length;
+			const isMultiple = paperCount >= 2;
+			
+			const favorCost = gameState.favor >= 6 ? 1 : 2;
+			const proxyCost = gameState.social >= 6 ? 0 : 1;
+
+			const favorText = gameState.favor >= 6 
+				? '👨‍🏫 导师报销（好感度-1）' 
+				: '👨‍🏫 导师报销（好感度-2）';
+			const proxyText = gameState.social >= 6 
+				? '👥 请同学代参加（免费）' 
+				: '👥 请人代参加（金钱-1）';
+
+			// 构建论文列表显示
+			let papersListHtml = '';
+			if (isMultiple) {
+				papersListHtml = `
+				<div style="margin:12px 0;padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(0,184,148,0.2));border-radius:8px;border:1px solid rgba(253,203,110,0.4);">
+					<div style="font-size:0.85rem;font-weight:600;color:#d68910;margin-bottom:8px;">
+						🏹 一箭双雕！同一会议中了${paperCount}篇论文
+					</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);">
+						${papers.map((p, i) => `${i + 1}. ${p.title.substring(0, 25)}... (${p.grade}类-${p.acceptType})`).join('<br>')}
+					</div>
+				</div>`;
+			}
+
+			showModal('🎓 开会选择', 
+				`<p>恭喜！${isMultiple ? `${paperCount}篇` : ''}论文被接收！需要参加学术会议进行展示。</p>
+				 <div style="margin:15px 0;padding:12px;background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.1));border-radius:10px;border:1px solid rgba(108,92,231,0.2);">
+					 <div style="font-size:0.9rem;font-weight:600;color:var(--primary-color);margin-bottom:5px;">📍 会议信息</div>
+					 <div style="font-size:1rem;font-weight:700;">${confInfo.name} ${confInfo.year}</div>
+					 <div style="font-size:0.85rem;color:var(--text-secondary);">${confInfo.fullName}</div>
+					 <div style="font-size:0.85rem;margin-top:5px;">📌 ${confLocation.city}, ${confLocation.country}</div>
+				 </div>
+				 ${papersListHtml}
+				 <p>请选择参会方式：</p>`, 
+				[
+				{ text: '💰 自己出钱（金钱-4）', class: 'btn-warning', action: () => {
+					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-4${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+					closeModal();
+					if (changeGold(-4)) {
+						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
+					} else {
+						// 金钱不足导致游戏结束
+						processNextConferenceInQueue();
+					}
+				}},
+				{ text: favorText, class: 'btn-info', action: () => {
+					const result = gameState.favor >= 6 
+						? '导师爽快报销，好感度-1' 
+						: '导师好感度-2';
+					addLog('开会', `导师报销参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `${result}${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+					closeModal();
+					if (changeFavor(-favorCost)) {
+						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
+					} else {
+						// 好感度不足导致游戏结束
+						processNextConferenceInQueue();
+					}
+				}},
+				{ text: proxyText, class: 'btn-primary', action: () => {
+					if (gameState.social >= 6) {
+						addLog('开会', `请同学代为参加 ${confInfo.name} ${confInfo.year}`, '同学义气帮忙，免费');
+					} else {
+						addLog('开会', `请人代为参加 ${confInfo.name} ${confInfo.year}`, '金钱-1');
+						changeGold(-proxyCost);
+					}
+					closeModal();
+					// 代参加不触发开会事件，直接处理下一个
+					processNextConferenceInQueue();
+				}}
+			]);
+		}
+
+		/**
+		 * 显示合并后的开会事件弹窗
+		 */
+		function showConferenceEventModalMerged(confInfo, confLocation, papers) {
+			const isMultiple = papers.length >= 2;
+			const confString = `${confInfo.name} ${confInfo.year} @ ${confLocation.city}, ${confLocation.country}`;
+			
+			// 原有的开会选项逻辑保持不变
+			let options = [
+				{ text: '🏖️ 顺便旅游', fn: () => { 
+					gameState.tourCount++;
+					addLog('开会事件', `在${confLocation.city}顺便旅游`, 'SAN值+6');
+					return changeSan(6);
+				}},
+				{ text: '☕ 茶歇+晚宴', fn: () => { 
+					gameState.teaBreakCount++;
+					addLog('开会事件', '茶歇+晚宴', 'SAN值+1，社交能力+1');
+					return changeStats({ san: 1, social: 1 });
+				}},
+				{ text: '🔬 同行交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false }); 
+					addLog('开会事件', '同行交流', '临时buff-下次做实验多做3次');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '💡 广泛交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false }); 
+					addLog('开会事件', '广泛交流', '临时buff-下次想idea多想3次');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '🌟 找大牛交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+					gameState.metBigBull = true;
+					addLog('开会事件', '找大牛交流', '临时buff-下次想idea分数×1.25');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '🏢 找企业交流', fn: () => { 
+					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					updateBuffs();
+					
+					if (gameState.enterpriseCount === 3 && !gameState.ailabInternship) {
+						setTimeout(() => showAILabInternshipModal(), 300);
+					}
+					return true;
+				}},
+				{ text: '🤝 找同学合作', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
+					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
+					updateBuffs();
+					return true;
+				}}
+			];
+
+			// 社交>=6解锁更多选项
+			if (gameState.social >= 6) {
+				options.push(
+					{ text: '🎓 找大牛合作', fn: () => { 
+						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
+						gameState.metBigBull = true;
+						addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+						updateBuffs();
+						return changeSocial(1);
+					}},
+					{ text: '💕 和活泼的异性学者交流', fn: () => { 
+						gameState.metBeautiful = true;
+						gameState.beautifulCount++;
+						addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
+						return changeStats({ san: 5, social: 1 });
+					}},
+					{ text: '🧠 和聪慧的异性学者交流', fn: () => { 
+						gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
+						gameState.metSmart = true;
+						gameState.smartCount++;
+						addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+						updateBuffs();
+						return changeStats({ san: 1, social: 1 });
+					}}
+				);
+			}
+
+			// 继续交流选项（保持原有逻辑）
+			if (gameState.metBigBull && !gameState.bigBullCooperation) {
+				options.push({ text: '🌟 和上次那个大牛深入合作', fn: () => {
+					gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+					gameState.bigBullDeepCount++;
+					addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
+					updateBuffs();
+					if (gameState.research >= 12 && gameState.bigBullDeepCount >= 2) {
+						setTimeout(showBigBullCoopModal, 300);
+					}
+					return true;
+				}});
+			}
+
+			if (gameState.metBeautiful && !gameState.hasLover) {
+				options.push({ text: '💕 和上次那个活泼的异性学者交流', fn: () => {
+					gameState.beautifulCount++;
+					addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
+					gameState.sanMax += 3;
+					changeSan(8);
+					if (gameState.social >= 12 && gameState.beautifulCount >= 2) {
+						setTimeout(() => showLoverModal('beautiful'), 300);
+					}
+					return true;
+				}});
+			}
+
+			if (gameState.metSmart && !gameState.hasLover) {
+				options.push({ text: '🧠 和上次那个聪慧的异性学者交流', fn: () => {
+					gameState.smartCount++;
+					addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
+					changeSan(1);
+					changeResearch(1);
+					if (gameState.social >= 12 && gameState.smartCount >= 2) {
+						setTimeout(() => showLoverModal('smart'), 300);
+					}
+					return true;
+				}});
+			}
+
+			const selected = shuffle(options).slice(0, 3);
+			
+			// 显示弹窗，选择后处理下一个开会事件
+			showModal(`🎉 ${confString}`, 
+				`<div style="margin-bottom:15px;">
+					<p>你来到了<strong>${confLocation.city}</strong>参加<strong>${confInfo.name}</strong>${isMultiple ? `，展示了${papers.length}篇论文` : ''}，在学术会议上，你可以选择：</p>
+				</div>`, 
+				selected.map(opt => ({
+					text: opt.text, class: 'btn-primary', action: () => {
+						closeModal();
+						opt.fn();
+						// 处理下一个开会事件
+						setTimeout(() => processNextConferenceInQueue(), 100);
+					}
+				}))
+			);
+		}		
+		
+		// ==================== 论文投稿与审稿 ====================
 		function submitPaper(slot, grade) {
 			const paper = gameState.papers[slot];
 			if (!paper || paper.reviewing) return;
@@ -7854,11 +8256,7 @@
                 }}
             ]);
         }
-
-
-
-
-
+		
 		function generateReviewer() {
 			// ★★★ 社交达人觉醒后使用固定的概率分布 ★★★
 			if (gameState.socialAwakened && gameState.reviewerDistribution) {
@@ -7896,8 +8294,8 @@
 		}
 
 
-        function handlePaperAccepted(paper, grade, acceptType, slot, extraInfo) {
-		    // ★★★ 新增：检查并应用引用倍增buff ★★★
+		function handlePaperAccepted(paper, grade, acceptType, slot, extraInfo) {
+			// ★★★ 新增：检查并应用引用倍增buff ★★★
 			let citationBuff = 1;
 			const citationMultiplyBuff = gameState.buffs.temporary.find(b => b.type === 'citation_multiply');
 			if (citationMultiplyBuff) {
@@ -7905,102 +8303,102 @@
 				gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'citation_multiply');
 				addLog('Buff生效', '同门合作', `本篇论文引用速度+${(citationBuff-1)*100}%（与推广加成叠加）`);
 			}
-            const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
-            const sanGain = { 
-                'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 
-                'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 
-                'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } 
-            };
-            const favorGain = { 
-                'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 
-                'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 
-                'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } 
-            };
+			
+			const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
+			const sanGain = { 
+				'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 
+				'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 
+				'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } 
+			};
+			const favorGain = { 
+				'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 
+				'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 
+				'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } 
+			};
 
-            const paperRankMap = {
-                'A-Best Paper': 9,
-                'A-Oral': 8,
-                'A-Poster': 7,
-                'B-Best Paper': 6,
-                'B-Oral': 5,
-                'B-Poster': 4,
-                'C-Best Paper': 3,
-                'C-Oral': 2,
-                'C-Poster': 1
-            };
-            
-            const currentRank = paperRankMap[`${grade}-${acceptType}`];
-            
-            const higherOrEqualCount = gameState.publishedPapers.filter(p => {
-                const pRank = paperRankMap[`${p.grade}-${p.acceptType}`];
-                return pRank >= currentRank;
-            }).length;
-            
-            const baseSan = sanGain[grade][acceptType];
-            const baseFavor = favorGain[grade][acceptType];
-            
-            const actualSanGain = Math.max(1, baseSan - higherOrEqualCount);
-            const favorReduction = Math.floor(higherOrEqualCount / 2);
-            const actualFavorGain = baseFavor > 0 ? Math.max(0, baseFavor - favorReduction) : 0;
-            
-            const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
-            
-            gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
-            gameState.favor = Math.min(20, gameState.favor + actualFavorGain);
-            gameState.totalScore += scoreMap[grade];
+			const paperRankMap = {
+				'A-Best Paper': 9,
+				'A-Oral': 8,
+				'A-Poster': 7,
+				'B-Best Paper': 6,
+				'B-Oral': 5,
+				'B-Poster': 4,
+				'C-Best Paper': 3,
+				'C-Oral': 2,
+				'C-Poster': 1
+			};
+			
+			const currentRank = paperRankMap[`${grade}-${acceptType}`];
+			
+			const higherOrEqualCount = gameState.publishedPapers.filter(p => {
+				const pRank = paperRankMap[`${p.grade}-${p.acceptType}`];
+				return pRank >= currentRank;
+			}).length;
+			
+			const baseSan = sanGain[grade][acceptType];
+			const baseFavor = favorGain[grade][acceptType];
+			
+			const actualSanGain = Math.max(1, baseSan - higherOrEqualCount);
+			const favorReduction = Math.floor(higherOrEqualCount / 2);
+			const actualFavorGain = baseFavor > 0 ? Math.max(0, baseFavor - favorReduction) : 0;
+			
+			const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
+			
+			gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
+			gameState.favor = Math.min(20, gameState.favor + actualFavorGain);
+			gameState.totalScore += scoreMap[grade];
 
-            if (grade === 'A') gameState.paperA++;
-            else if (grade === 'B') gameState.paperB++;
-            else gameState.paperC++;
+			if (grade === 'A') gameState.paperA++;
+			else if (grade === 'B') gameState.paperB++;
+			else gameState.paperC++;
 
-            let bonusResearch = 0;
-            if (!gameState.firstPaperAccepted) {
-                gameState.firstPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
-            }
-            if (grade === 'A' && !gameState.firstAPaperAccepted) {
-                gameState.firstAPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
-            }
-            if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
-                gameState.firstBestPaperAccepted = true;
-                bonusResearch++;
-                addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
-            }
-            if (bonusResearch > 0) {
-                changeResearch(bonusResearch);
-            }
+			let bonusResearch = 0;
+			if (!gameState.firstPaperAccepted) {
+				gameState.firstPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
+			}
+			if (grade === 'A' && !gameState.firstAPaperAccepted) {
+				gameState.firstAPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
+			}
+			if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
+				gameState.firstBestPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
+			}
+			if (bonusResearch > 0) {
+				changeResearch(bonusResearch);
+			}
 
-            gameState.consecutiveAccepts = (gameState.consecutiveAccepts || 0) + 1;
-            
-            if (gameState.consecutiveAccepts >= 3) {
-                gameState.buffs.temporary.push({ 
-                    type: 'slack_debuff', 
-                    name: '松懈：下月所有操作总分÷2', 
-                    value: 0.5, 
-                    multiply: true, 
-                    permanent: false,
-                    expiresOnRest: true
-                });
-                addLog('⚠️ 志得意满', '连续中稿3篇', '获得松懈debuff，下月想idea/做实验/写论文总分÷2（休息一个月可消除）');
-                gameState.consecutiveAccepts = 0;
-            }
+			gameState.consecutiveAccepts = (gameState.consecutiveAccepts || 0) + 1;
+			
+			if (gameState.consecutiveAccepts >= 3) {
+				gameState.buffs.temporary.push({ 
+					type: 'slack_debuff', 
+					name: '松懈：下月所有操作总分÷2', 
+					value: 0.5, 
+					multiply: true, 
+					permanent: false,
+					expiresOnRest: true
+				});
+				addLog('⚠️ 志得意满', '连续中稿3篇', '获得松懈debuff，下月想idea/做实验/写论文总分÷2（休息一个月可消除）');
+				gameState.consecutiveAccepts = 0;
+			}
 
-            const finalScore = paper.submittedScore || (paper.ideaScore + paper.expScore + paper.writeScore);
+			const finalScore = paper.submittedScore || (paper.ideaScore + paper.expScore + paper.writeScore);
 
-            
-            // ★★★ 记录录取数据 ★★★
-            const resultStr = acceptType.toLowerCase().replace(/\s+/g, '_');
-            recordSubmission(
-                extraInfo?.submittedMonth || gameState.month,
-                grade,
-                paper.submittedScore,
-                resultStr,
-                gameState.isReversed
-            );
-            
+			// ★★★ 记录录取数据 ★★★
+			const resultStr = acceptType.toLowerCase().replace(/\s+/g, '_');
+			recordSubmission(
+				extraInfo?.submittedMonth || gameState.month,
+				grade,
+				paper.submittedScore,
+				resultStr,
+				gameState.isReversed
+			);
+			
 			gameState.publishedPapers.push({
 				title: paper.title,
 				grade,
@@ -8011,10 +8409,9 @@
 				promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
 				citationMultiplier: citationBuff,
 				pendingCitationFraction: 0,
-				// ★★★ 确保保存完整的会议信息，包括month ★★★
 				conferenceInfo: paper.conferenceInfo ? {
 					...paper.conferenceInfo,
-					month: paper.submittedMonth || gameState.month  // 确保有month
+					month: paper.submittedMonth || gameState.month
 				} : {
 					name: grade + '类会议',
 					year: getRealYear(gameState.year, gameState.month),
@@ -8023,52 +8420,70 @@
 				conferenceLocation: paper.conferenceLocation
 			});
 
-            if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
-                gameState.availableRandomEvents.push(14);
-                addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
-            }
+			if (gameState.publishedPapers.length === 1 && !gameState.availableRandomEvents.includes(14)) {
+				gameState.availableRandomEvents.push(14);
+				addLog('系统', '新事件解锁', '指导师弟师妹事件已解锁');
+			}
 
-            // ★★★ 保存会议信息用于开会事件 ★★★
-            gameState.pendingConferenceInfo = {
-                info: paper.conferenceInfo,
-                location: paper.conferenceLocation,
-                grade: grade
-            };
+			gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
+			gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
 
-            gameState.papers[slot] = null;
+			// ★★★ 修改日志，显示会议名称 ★★★
+			const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+			let result = `SAN+${actualSanGain}，好感+${actualFavorGain}，科研分+${scoreMap[grade]}`;
+			if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
+			
+			if (hasDecay) {
+				result += `（已发${higherOrEqualCount}篇同级或更高，边际效益递减）`;
+			}
+			
+			if (gameState.consecutiveAccepts > 0) {
+				result += `（连续中稿${gameState.consecutiveAccepts}/3）`;
+			}
+			
+			addLog('🎉 论文中稿', `${confInfo.name} ${confInfo.year} 接收为${acceptType}`, result);
 
-            // ★★★ 修改日志，显示会议名称 ★★★
-            const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
-            let result = `SAN+${actualSanGain}，好感+${actualFavorGain}，科研分+${scoreMap[grade]}`;
-            if (bonusResearch > 0) result += `，科研能力+${bonusResearch}`;
-            
-            if (hasDecay) {
-                result += `（已发${higherOrEqualCount}篇同级或更高，边际效益递减）`;
-            }
-            
-            if (gameState.consecutiveAccepts > 0) {
-                result += `（连续中稿${gameState.consecutiveAccepts}/3）`;
-            }
-            
-            addLog('🎉 论文中稿', `${confInfo.name} ${confInfo.year} 接收为${acceptType}`, result);
+			// ★★★ 关键修改：根据是否在队列模式下决定后续处理 ★★★
+			if (gameState._reviewProcessing) {
+				// 在队列模式下，记录会议信息，稍后统一处理开会事件
+				recordAcceptedPaperConference(paper, grade, acceptType);
+				
+				// 清空论文槽
+				gameState.papers[slot] = null;
+				
+				// 继续处理下一个审稿结果
+				setTimeout(() => processNextReviewInQueue(), 100);
+				
+				updateBuffs();
+				renderPaperSlots();
+				updateAllUI();
+				return;  // 不触发开会弹窗，稍后统一处理
+			}
+			
+			// ★★★ 非队列模式（兼容旧逻辑，如读档后触发）★★★
+			gameState.pendingConferenceInfo = {
+				info: paper.conferenceInfo,
+				location: paper.conferenceLocation,
+				grade: grade
+			};
 
-            gameState.paperTypeCollection = gameState.paperTypeCollection || new Set();
-            gameState.paperTypeCollection.add(`${grade}-${acceptType}`);
+			gameState.papers[slot] = null;
 
-            const canPhD = gameState.degree === 'master' && (
-                (gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
-                (gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
-            );
+			// 检查转博条件
+			const canPhD = gameState.degree === 'master' && (
+				(gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
+				(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)
+			);
 
-            if (canPhD) {
-                gameState.pendingConference = grade;
-                setTimeout(() => showPhDOptionModal(), 300);
-            } else {
-                setTimeout(() => showConferenceModal(grade), 300);
-            }
-            
-            updateBuffs();
-        }
+			if (canPhD) {
+				gameState.pendingConference = grade;
+				setTimeout(() => showPhDOptionModal(), 300);
+			} else {
+				setTimeout(() => showConferenceModal(grade), 300);
+			}
+			
+			updateBuffs();
+		}
 		
         // ==================== 开会系统 ====================
         function showConferenceModal(grade) {
@@ -9517,28 +9932,19 @@
 			if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
 			if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
 			if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
-			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) {
-				a.push('☕ 咖啡爱好者');
-			}
-			if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) {
-				a.push('✨ Buff之神');
-			}
-			
+			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) a.push('☕ 咖啡爱好者');
+			if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) a.push('✨ Buff之神');
 			if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
 			if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
 			if (gameState.achievementConditions && gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
 			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
 			if (gameState.san === 0 && gameState.gold === 0) a.push('💪 全力以赴');
-			
 			const requiredTypes = [
 				'A-Poster', 'A-Oral', 'A-Best Paper',
 				'B-Poster', 'B-Oral', 'B-Best Paper',
 				'C-Poster', 'C-Oral', 'C-Best Paper'
 			];
-			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) {
-				a.push('🏆 全收集');
-			}
-			
+			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) a.push('🏆 全收集');
 			if (gameState.rejectedCount >= 5) a.push('👊 越战越勇');
 			if (gameState.achievementConditions && gameState.achievementConditions.rejectedPhdTwice) a.push('🧠 人间清醒');
 			if (gameState.maxConcurrentReviews >= 4) a.push('🔥 火力全开');
@@ -9547,26 +9953,16 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
 			if (gameState.achievementConditions && gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
 			
-			// 新成就：无法埋没 - 单篇C类论文引用超过100
 			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
 			if (hasCPaperOver100) a.push('💎 无法埋没');
-			
-			// 新成就：不鸣则已 - 第一篇论文引用超过200
-			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) {
-				a.push('🔔 不鸣则已');
-			}
-			
-			// 新成就：严重偏科 - 毕业时科研能力、导师好感度、社交能力最高和最低的差距超过12
+			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) a.push('🔔 不鸣则已');
 			const stats = [gameState.research, gameState.favor, gameState.social];
 			const maxStat = Math.max(...stats);
 			const minStat = Math.min(...stats);
 			if (maxStat - minStat > 12) a.push('📊 严重偏科');
-			
-			// 新成就：打工狂人 - 毕业时至少打工10次
 			if ((gameState.workCount || 0) >= 10) a.push('💼 打工狂人');
-			
-			// 新成就：爱看论文 - 毕业时至少看20次论文
 			if ((gameState.readCount || 0) >= 20) a.push('📖 爱看论文');
+			if (gameState.achievementConditions && gameState.achievementConditions.twoInOneConference) a.push('🏹 一箭双雕');
 			
 			return a;
 		}
@@ -10015,7 +10411,7 @@
 
 		// ==================== Meta进度系统 ====================
 		const META_KEY = 'graduateSimulatorMeta';
-		const GAME_START_DATE = '2025-12-13T00:00:00Z';
+		const GAME_START_DATE = '2025-12-15T00:00:00Z';
 
 		function getLocalMeta() {
 			const meta = localStorage.getItem(META_KEY);
@@ -10275,7 +10671,7 @@
 			if (!saveTime) return false;
 			
 			// 截止时间：北京时间 2025-12-13 08:00
-			const cutoffTimeStr = '2025-12-13 08:00';
+			const cutoffTimeStr = '2025-12-15 08:00';
 			
 			// 直接字符串比较（存档时间格式: "YYYY-MM-DD HH:mm"）
 			return saveTime >= cutoffTimeStr;
@@ -10347,7 +10743,7 @@
 			const saves = getValidSaves(); // 使用过滤后的存档
 			
 			if (saves.filter(s => s).length === 0) {
-				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-13 08:00前的存档已失效</p>', 
+				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-15 08:00前的存档已失效</p>', 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -10386,7 +10782,7 @@
 			const saves = getValidSaves(); // 使用过滤后的存档
 			
 			if (saves.filter(s => s).length === 0) {
-				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-13 08:00前的存档已失效</p>', 
+				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-15 08:00前的存档已失效</p>', 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -12132,9 +12528,9 @@
 						// 恶意审稿人惩罚
 						if (extraInfo.badReviewerCount > 0) {
 							const sanLoss = extraInfo.badReviewerCount;
-							if (!changeSan(-sanLoss)) {  // ✅ 检查返回值
+							if (!changeSan(-sanLoss)) {
 								currentReviewData = null;
-								return;  // 游戏结束，提前返回
+								return;
 							}
 							addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
 						}
@@ -12180,6 +12576,11 @@
 							paper.submittedMonth = null;
 							paper.conferenceInfo = null;
 							paper.conferenceLocation = null;
+							
+							// ★★★ 关键修改：拒稿时也要继续处理队列 ★★★
+							if (gameState._reviewProcessing) {
+								setTimeout(() => processNextReviewInQueue(), 100);
+							}
 						}
 						
 						currentReviewData = null;
