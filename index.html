@@ -5850,8 +5850,27 @@
 				addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
 			}
 
-			// ★★★ 修改：事件触发逻辑，12月改为学年总结 ★★★
-			if (gameState.month === 5) {
+			// ★★★ 关键修复：12月时先检查转博，再触发学年总结 ★★★
+			if (gameState.month === 12) {
+				// 先检查是否满足转博条件
+				const canPhD = gameState.degree === 'master' && (
+					(gameState.year === 2 && gameState.totalScore >= 2) ||
+					(gameState.year === 3 && gameState.totalScore >= 3)
+				);
+				
+				if (canPhD) {
+					// 满足转博条件，先触发转博选择
+					checkGraduation();
+					// checkGraduation 会设置 pendingPhDChoice 并显示弹窗
+					// 学年总结会在转博选择完成后触发（或跳过）
+					updateAllUI();
+					renderPaperSlots();
+					return; // ★★★ 重要：提前返回，不触发学年总结 ★★★
+				} else {
+					// 不满足转博条件，正常触发学年总结
+					triggerYearEndSummaryEvent();
+				}
+			} else if (gameState.month === 5) {
 				triggerWinterVacationEvent();
 			} else if (gameState.month === 11) {
 				triggerSummerVacationEvent();
@@ -5859,14 +5878,11 @@
 				triggerScholarshipEvent();
 			} else if (gameState.month === 2) {
 				triggerTeachersDayEvent();
-			} else if (gameState.month === 12) {
-				// ★★★ 新增：12月固定触发学年总结 ★★★
-				triggerYearEndSummaryEvent();
 			} else if (gameState.month % 2 === 0) {
 				triggerOtherRandomEvent();
 			}
-			
-			// 检查毕业
+
+			// 检查毕业（非12月情况，或12月不满足转博条件时）
 			checkGraduation();
 
 			updateAllUI();
@@ -6207,13 +6223,27 @@
 							addLog('转博选择', '选择继续读硕士', '明年还有一次转博机会');
 							updateAllUI();
 							
+							// ★★★ 补上12月的学年总结事件 ★★★
+							if (gameState.month === 12) {
+								setTimeout(() => triggerYearEndSummaryEvent(), 300);
+							}
+							
 							if (gameState.pendingConference) {
 								const grade = gameState.pendingConference;
 								gameState.pendingConference = null;
 								setTimeout(() => showConferenceModal(grade), 300);
 							}
 						} else {
-							triggerEnding('master');
+							// ★★★ 第3年选择硕士毕业时，也补上学年总结 ★★★
+							addLog('转博选择', '选择硕士毕业', '准备毕业');
+							if (gameState.month === 12) {
+								setTimeout(() => {
+									triggerYearEndSummaryEvent();
+									// 学年总结完成后再触发毕业
+									// 但为了简化，直接毕业
+								}, 100);
+							}
+							setTimeout(() => triggerEnding('master'), 500);
 						}
 					}},
 					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
@@ -12487,17 +12517,21 @@
 			if (!supabase) return null;
 			
 			try {
+				const todayStr = getTodayDateString();
+				const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+				const todayStart = getTodayStartUTC();
+				
+				// 先获取缓存的统计数据
 				const { data: cached } = await supabase
 					.from('site_stats')
 					.select('*')
 					.eq('id', 1)
 					.single();
 				
-				const todayStr = getTodayDateString();
 				const cacheAge = cached ? Date.now() - new Date(cached.updated_at).getTime() : Infinity;
 				const isNewDay = cached?.stats_date !== todayStr;
 				
-				// 缓存有效（60秒内且是今天）
+				// 缓存有效（60秒内且是今天）- 直接返回
 				if (cached && !isNewDay && cacheAge < 60 * 1000) {
 					return {
 						online: cached.online_count,
@@ -12508,10 +12542,7 @@
 					};
 				}
 				
-				// 重新计算
-				const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-				const todayStart = getTodayStartUTC();
-				
+				// 重新计算各项统计
 				const [onlineResult, todayPvResult, todayUvResult, todayGamesResult] = await Promise.all([
 					supabase
 						.from('online_users')
@@ -12534,7 +12565,19 @@
 				]);
 				
 				const currentOnline = onlineResult.count || 0;
-				const previousMaxOnline = cached?.max_online_count || 0;
+				
+				// ★★★ 关键修复：正确处理跨天和最大值 ★★★
+				let previousMaxOnline = 0;
+				if (cached) {
+					if (isNewDay) {
+						// 新的一天，max_online 从当前在线数开始
+						previousMaxOnline = 0;
+					} else {
+						// 同一天，保留历史最大值
+						previousMaxOnline = cached.max_online_count || 0;
+					}
+				}
+				
 				const newMaxOnline = Math.max(currentOnline, previousMaxOnline);
 				
 				const stats = {
@@ -12545,14 +12588,42 @@
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// ★★★ 修改：使用 RPC 确保 max_online_count 只增不减 ★★★
-				await supabase.rpc('update_site_stats', {
-					p_online_count: stats.online,
-					p_today_pv: stats.todayPv,
-					p_today_uv: stats.todayUv,
-					p_today_games: stats.todayGames,
-					p_stats_date: todayStr
-				});
+				// ★★★ 修复：使用条件更新，确保 max_online_count 只增不减 ★★★
+				if (isNewDay) {
+					// 新的一天，重置今日统计
+					await supabase
+						.from('site_stats')
+						.upsert({
+							id: 1,
+							online_count: stats.online,
+							max_online_count: stats.online, // 新的一天从当前值开始
+							today_pv: stats.todayPv,
+							today_uv: stats.todayUv,
+							today_games: stats.todayGames,
+							stats_date: todayStr,
+							updated_at: new Date().toISOString()
+						});
+				} else {
+					// 同一天，只更新在线数，max只在更大时更新
+					const updateData = {
+						id: 1,
+						online_count: stats.online,
+						today_pv: stats.todayPv,
+						today_uv: stats.todayUv,
+						today_games: stats.todayGames,
+						stats_date: todayStr,
+						updated_at: new Date().toISOString()
+					};
+					
+					// ★★★ 只有当新值更大时才更新 max_online_count ★★★
+					if (currentOnline > previousMaxOnline) {
+						updateData.max_online_count = currentOnline;
+					}
+					
+					await supabase
+						.from('site_stats')
+						.upsert(updateData);
+				}
 				
 				return stats;
 			} catch (e) {
