@@ -10028,7 +10028,7 @@
 
 		function updateLocalMeta(character, isReversed, score, citations, achievementCount, endingType) {
 			// ★★★ 新增：只有好结局才统计 ★★★
-			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
+			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 			if (!goodEndings.includes(endingType)) {
 				console.log('非毕业结局，不更新本地最高记录');
 				return null;
@@ -10135,7 +10135,7 @@
 					if (!row.character || typeof row.is_reversed !== 'boolean') return false;
 					
 					// ★★★ 新增：只统计好结局 ★★★
-					const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
+					const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 					if (!goodEndings.includes(row.ending_type)) return false;
 					// ★★★ 新增：过滤超过20000引用的异常数据 ★★★
 					if ((row.total_citations || 0) > 20000) return false;
@@ -12491,12 +12491,12 @@
 			return id;
 		}
 
-		// 发送心跳
+		// 发送心跳 - 修复版
 		async function sendOnlineHeartbeat() {
 			if (!supabase || !onlineSessionId) return;
 			
 			try {
-				// 发送心跳
+				// ★★★ 修复：先发送心跳，确保自己被记录 ★★★
 				await supabase
 					.from('online_users')
 					.upsert({ 
@@ -12504,15 +12504,18 @@
 						last_seen: new Date().toISOString() 
 					});
 				
-				// ★★★ 新增：清理超过5分钟未活跃的记录 ★★★
-				const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-				await supabase
-					.from('online_users')
-					.delete()
-					.lt('last_seen', fiveMinutesAgo);
-					
+				// ★★★ 修复：清理逻辑移到单独的定时器中，避免每次心跳都删除 ★★★
+				// 只有10%的概率执行清理，减少并发冲突
+				if (Math.random() < 0.1) {
+					const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+					await supabase
+						.from('online_users')
+						.delete()
+						.lt('last_seen', fiveMinutesAgo);
+				}
 			} catch (e) {
-				// 静默失败
+				// 静默失败，避免影响用户体验
+				console.warn('心跳发送失败:', e);
 			}
 		}
 
@@ -12533,13 +12536,12 @@
 			return beijingTime.toISOString().split('T')[0];
 		}
 
-		// 获取所有统计数据（共享查询）
+		// 获取所有统计数据（共享查询）- 修复版
 		async function getAllStats() {
 			if (!supabase) return null;
 			
 			try {
 				const todayStr = getTodayDateString();
-				// ★★★ 修改：3分钟而不是2分钟 ★★★
 				const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 				const todayStart = getTodayStartUTC();
 				
@@ -12569,7 +12571,7 @@
 					supabase
 						.from('online_users')
 						.select('*', { count: 'exact', head: true })
-						.gte('last_seen', threeMinutesAgo),  // ★★★ 使用3分钟 ★★★
+						.gte('last_seen', threeMinutesAgo),
 					supabase
 						.from('site_visits')
 						.select('*', { count: 'exact', head: true })
@@ -12588,13 +12590,18 @@
 				
 				const currentOnline = onlineResult.count || 0;
 				
-				// 正确处理跨天和最大值
+				// ★★★ 修复：重新从数据库读取最新的max值，避免竞态条件 ★★★
+				const { data: latestCached } = await supabase
+					.from('site_stats')
+					.select('max_online_count, stats_date')
+					.eq('id', 1)
+					.single();
+				
 				let previousMaxOnline = 0;
-				if (cached) {
-					if (isNewDay) {
-						previousMaxOnline = 0;
-					} else {
-						previousMaxOnline = cached.max_online_count || 0;
+				if (latestCached) {
+					// 如果是新的一天，重置最大值；否则使用数据库中的最新值
+					if (latestCached.stats_date === todayStr) {
+						previousMaxOnline = latestCached.max_online_count || 0;
 					}
 				}
 				
@@ -12608,21 +12615,43 @@
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// ★★★ 关键修复：始终包含 max_online_count 字段 ★★★
-				const updateData = {
-					id: 1,
-					online_count: stats.online,
-					max_online_count: newMaxOnline,  // ★★★ 始终包含此字段 ★★★
-					today_pv: stats.todayPv,
-					today_uv: stats.todayUv,
-					today_games: stats.todayGames,
-					stats_date: todayStr,
-					updated_at: new Date().toISOString()
-				};
-				
-				await supabase
-					.from('site_stats')
-					.upsert(updateData);
+				// ★★★ 修复：使用条件更新，只有当新值更大时才更新max_online_count ★★★
+				// 先尝试更新（只有当 max_online_count < newMaxOnline 或者是新的一天时才更新）
+				if (isNewDay) {
+					// 新的一天，直接更新所有字段
+					await supabase
+						.from('site_stats')
+						.upsert({
+							id: 1,
+							online_count: stats.online,
+							max_online_count: newMaxOnline,
+							today_pv: stats.todayPv,
+							today_uv: stats.todayUv,
+							today_games: stats.todayGames,
+							stats_date: todayStr,
+							updated_at: new Date().toISOString()
+						});
+				} else {
+					// 同一天，分两步更新：
+					// 1. 更新在线人数和其他今日统计
+					await supabase
+						.from('site_stats')
+						.update({
+							online_count: stats.online,
+							today_pv: stats.todayPv,
+							today_uv: stats.todayUv,
+							today_games: stats.todayGames,
+							updated_at: new Date().toISOString()
+						})
+						.eq('id', 1);
+					
+					// 2. 只有当新值更大时才更新最大在线人数（使用SQL条件）
+					await supabase
+						.from('site_stats')
+						.update({ max_online_count: newMaxOnline })
+						.eq('id', 1)
+						.or(`max_online_count.is.null,max_online_count.lt.${newMaxOnline}`);
+				}
 				
 				return stats;
 			} catch (e) {
