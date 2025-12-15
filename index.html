@@ -2563,12 +2563,12 @@
 			'future_academician': '👑 未来院士',
 			// 真实结局
 			'true_phd': '🌟 真·博士毕业',  
-			'true_devotion': '💫 真·献身科研',  
+			'true_devotion': '💫 真·投身学术', 
+			'true_life': '🌈 真·感受生活',
 		};
 
         // 困难结局（博士毕业及以上）
-        const HARD_ENDINGS = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
-
+		const HARD_ENDINGS = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 
         // 结局达成要求数据
 		const ENDING_REQUIREMENTS = {
@@ -2578,6 +2578,7 @@
 			'expelled': '导师好感度降为负数',
 			'poor': '金币降为负数',
 			'delay': '毕业时间到但科研分不足（硕士<1或博士<7）',
+			'isolated': '社交能力降为负数',
 			'master': '硕士3年内科研分≥1',
 			'excellent_master': '硕士3年内科研分≥4',
 			'phd': '博士5年内科研分≥7',
@@ -2588,7 +2589,8 @@
 			'future_academician': '博士毕业且A类≥5、引用>2000、大牛联合培养',
 			// 真实结局
 			'true_phd': '使用真·大多数角色，博士毕业且发表≥3篇论文',
-			'true_devotion': '使用真·大多数角色，博士毕业且总引用>2000'
+			'true_devotion': '使用真·大多数角色，博士毕业且总引用≥1000',
+			'true_life': '使用真·大多数角色，顺利毕业（硕士或博士）且达成≥10个成就且总引用<1000'
 		};
 
         // 成就达成要求数据
@@ -3384,7 +3386,7 @@
 				// ★★★ 使用分页获取最近10000条结局数据 ★★★
 				const endingsData = await fetchRecentRows(
 					'game_endings',
-					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c',
+					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations',
 					10000
 				);
 				
@@ -3395,7 +3397,8 @@
 					if (!e.ending_type || !e.character || typeof e.is_reversed !== 'boolean') {
 						return false;
 					}
-					
+					// ★★★ 新增：过滤超过20000引用的异常数据 ★★★
+					if ((e.total_citations || 0) > 20000) return false;
 					const paperA = e.paper_a || 0;
 					const paperB = e.paper_b || 0;
 					const paperC = e.paper_c || 0;
@@ -5980,52 +5983,70 @@
 			});
 			currentAvgAcceptedScore = currentTotalAccepted > 0 ? currentAvgAcceptedScore / currentTotalAccepted : 0;
 			
-			// ★★★ 计算所有同等级会议的平均中稿均分和平均投稿数量 ★★★
-			let totalAvgScore = 0;
-			let totalSubmissions = 0;
-			let validConferenceCount = 0;
+			// ★★★ 计算同级别所有会议的平均投稿数量 ★★★
+			let sameLevelTotalSubmissions = 0;
+			let sameLevelConferenceCount = 0;
 			
 			for (let month = 1; month <= 12; month++) {
 				const key = `${month}_${grade}_${isReversed}`;
 				const stats = gameState.submissionStats[key];
 				
 				if (stats && stats.submissions >= 10) {
-					// 计算该会议的中稿均分
-					const acceptedScores = [];
-					if (stats.avgScorePoster > 0) acceptedScores.push({ score: stats.avgScorePoster, count: stats.poster || 0 });
-					if (stats.avgScoreOral > 0) acceptedScores.push({ score: stats.avgScoreOral, count: stats.oral || 0 });
-					if (stats.avgScoreBestPaper > 0) acceptedScores.push({ score: stats.avgScoreBestPaper, count: stats.bestPaper || 0 });
+					sameLevelTotalSubmissions += stats.submissions;
+					sameLevelConferenceCount++;
+				}
+			}
+			
+			// 同级别平均投稿数
+			const sameLevelAvgSubmissions = sameLevelConferenceCount > 0 
+				? sameLevelTotalSubmissions / sameLevelConferenceCount 
+				: currentStats.submissions;
+			
+			// ★★★ 计算全体论文（所有等级A/B/C）的平均中稿均分 ★★★
+			let allGradesTotalScore = 0;
+			let allGradesCount = 0;
+			
+			for (const g of ['A', 'B', 'C']) {
+				for (let month = 1; month <= 12; month++) {
+					const key = `${month}_${g}_${isReversed}`;
+					const stats = gameState.submissionStats[key];
 					
-					let avgScore = 0;
-					let totalAccepted = 0;
-					acceptedScores.forEach(item => {
-						avgScore += item.score * item.count;
-						totalAccepted += item.count;
-					});
-					avgScore = totalAccepted > 0 ? avgScore / totalAccepted : 0;
-					
-					if (avgScore > 0) {
-						totalAvgScore += avgScore;
-						totalSubmissions += stats.submissions;
-						validConferenceCount++;
+					if (stats && stats.submissions >= 10) {
+						// 计算该会议的中稿均分
+						const acceptedScores = [];
+						if (stats.avgScorePoster > 0) acceptedScores.push({ score: stats.avgScorePoster, count: stats.poster || 0 });
+						if (stats.avgScoreOral > 0) acceptedScores.push({ score: stats.avgScoreOral, count: stats.oral || 0 });
+						if (stats.avgScoreBestPaper > 0) acceptedScores.push({ score: stats.avgScoreBestPaper, count: stats.bestPaper || 0 });
+						
+						let avgScore = 0;
+						let totalAccepted = 0;
+						acceptedScores.forEach(item => {
+							avgScore += item.score * item.count;
+							totalAccepted += item.count;
+						});
+						avgScore = totalAccepted > 0 ? avgScore / totalAccepted : 0;
+						
+						if (avgScore > 0) {
+							allGradesTotalScore += avgScore;
+							allGradesCount++;
+						}
 					}
 				}
 			}
 			
-			// 如果没有足够的数据，返回基础因子
-			if (validConferenceCount === 0 || currentAvgAcceptedScore === 0) {
+			// 全体论文平均分
+			const allGradesAvgScore = allGradesCount > 0 ? allGradesTotalScore / allGradesCount : currentAvgAcceptedScore;
+			
+			// 如果没有有效数据，返回基础因子
+			if (sameLevelAvgSubmissions === 0 || allGradesAvgScore === 0 || currentAvgAcceptedScore === 0) {
 				return 1.0;
 			}
 			
-			// 计算所有会议的平均值
-			const allAvgAcceptedScore = totalAvgScore / validConferenceCount;
-			const allAvgSubmissions = totalSubmissions / validConferenceCount;
+			// ★★★ 新公式：影响因子 = (论文投稿数/同级别论文平均投稿数) * (论文平均分/全体论文平均分) ★★★
+			const submissionRatio = currentStats.submissions / sameLevelAvgSubmissions;
+			const scoreRatio = currentAvgAcceptedScore / allGradesAvgScore;
 			
-			// ★★★ 新公式：影响因子 = (该会议中稿均分/平均中稿均分) * (该会议投稿数量/平均投稿数量) ★★★
-			const scoreRatio = currentAvgAcceptedScore / allAvgAcceptedScore;
-			const submissionRatio = currentStats.submissions / allAvgSubmissions;
-			
-			let impactFactor = scoreRatio * submissionRatio;
+			let impactFactor = submissionRatio * scoreRatio;
 			
 			// 限制范围，避免极端值（0.2 ~ 4.0）
 			impactFactor = Math.max(0.2, Math.min(4.0, impactFactor));
@@ -9306,18 +9327,31 @@
                 case 'poor': title = '穷困潦倒'; desc = '你连饭都吃不起了，只能含恨离开...'; emoji = '💸'; break;
                 case 'delay': title = '延毕'; desc = '你没能在规定时间内完成毕业要求，只能延期毕业...'; emoji = '⏰'; break;
                 case 'quit': title = '主动退学'; desc = '你决定放弃学业，开启人生新篇章...也许这也是一种勇气。'; emoji = '🚪'; break;
-                case 'master':
-                    if (gameState.totalScore >= 4) { 
-                        title = '优秀硕士毕业'; 
-                        desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
-                        emoji = '🌟'; 
-                        endingType = 'excellent_master';
-                    } else { 
-                        title = '硕士毕业'; 
-                        desc = '恭喜！你顺利完成了硕士学业！'; 
-                        emoji = '🎓'; 
-                    }
-                    break;
+				case 'master':
+					// ★★★ 新增：真·大多数硕士毕业时检查真·感受生活 ★★★
+					if (gameState.isTrueNormal) {
+						const tempAchievements = collectAchievements('master');
+						const achievementCount = tempAchievements.length;
+						if (achievementCount >= 10 && gameState.totalCitations < 1000) {
+							title = '真·感受生活';
+							desc = '科研不是全部，你体验了丰富多彩的研究生生活。';
+							emoji = '🌈';
+							endingType = 'true_life';
+							break;
+						}
+					}
+					
+					if (gameState.totalScore >= 4) { 
+						title = '优秀硕士毕业'; 
+						desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
+						emoji = '🌟'; 
+						endingType = 'excellent_master';
+					} else { 
+						title = '硕士毕业'; 
+						desc = '恭喜！你顺利完成了硕士学业！'; 
+						emoji = '🎓'; 
+					}
+					break;
                 case 'phd':
                     const e = getPhDEndingType();
                     title = e.title; desc = e.desc; emoji = e.emoji;
@@ -9343,12 +9377,25 @@
 			
 			// ★★★ 真实结局判定（优先级最高）★★★
 			if (isTrueNormal) {
-				if (totalCitations > 2000) {
-					return { type: 'true_devotion', title: '真·献身科研', desc: '你用最朴素的方式，达到了科研的巅峰。', emoji: '💫' };
+				// 计算当前成就数量（用于真·感受生活判定）
+				const tempAchievements = collectAchievements('phd');
+				const achievementCount = tempAchievements.length;
+				
+				// 优先级1：真·投身科研（引用≥1000）
+				if (totalCitations >= 1000) {
+					return { type: 'true_devotion', title: '真·投身科研', desc: '你用最朴素的方式，达到了科研的巅峰。', emoji: '💫' };
 				}
+				
+				// 优先级2：真·感受生活（10个成就 + 引用<1000）
+				if (achievementCount >= 10 && totalCitations < 1000) {
+					return { type: 'true_life', title: '真·感受生活', desc: '科研不是全部，你体验了丰富多彩的研究生生活。', emoji: '🌈' };
+				}
+				
+				// 优先级3：真·博士毕业（发表≥3篇论文）
 				if (totalPapers >= 3) {
 					return { type: 'true_phd', title: '真·博士毕业', desc: '没有任何外挂，你凭借自己的努力完成了博士学业。', emoji: '🌟' };
 				}
+				
 				// 真·大多数但未达成真实结局条件，返回普通博士结局
 				return { type: 'phd', title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
 			}
@@ -9371,7 +9418,7 @@
 			const a = [];
 			
 			// 定义顺利毕业的结局类型
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 			const isGraduated = graduationEndings.includes(endingType);
 			
 			// 所有成就都需要顺利毕业才能取得
@@ -10017,6 +10064,8 @@
 					// ★★★ 新增：只统计好结局 ★★★
 					const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
 					if (!goodEndings.includes(row.ending_type)) return false;
+					// ★★★ 新增：过滤超过20000引用的异常数据 ★★★
+					if ((row.total_citations || 0) > 20000) return false;
 					
 					const paperA = row.paper_a || 0;
 					const paperB = row.paper_b || 0;
@@ -10949,6 +10998,8 @@
             data.forEach(record => {
                 const key = `${record.game_month}_${record.grade}_${record.is_reversed}`;
                 if (!stats[key]) return;
+				// ★★★ 新增：过滤超过180分数的异常数据 ★★★
+				if ((record.submitted_score || 0) > 180) return;
                 
                 stats[key].submissions++;
                 
