@@ -12496,12 +12496,21 @@
 			if (!supabase || !onlineSessionId) return;
 			
 			try {
+				// 发送心跳
 				await supabase
 					.from('online_users')
 					.upsert({ 
 						session_id: onlineSessionId, 
 						last_seen: new Date().toISOString() 
 					});
+				
+				// ★★★ 新增：清理超过5分钟未活跃的记录 ★★★
+				const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+				await supabase
+					.from('online_users')
+					.delete()
+					.lt('last_seen', fiveMinutesAgo);
+					
 			} catch (e) {
 				// 静默失败
 			}
@@ -12530,7 +12539,8 @@
 			
 			try {
 				const todayStr = getTodayDateString();
-				const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+				// ★★★ 修改：3分钟而不是2分钟 ★★★
+				const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 				const todayStart = getTodayStartUTC();
 				
 				// 先获取缓存的统计数据
@@ -12559,7 +12569,7 @@
 					supabase
 						.from('online_users')
 						.select('*', { count: 'exact', head: true })
-						.gte('last_seen', twoMinutesAgo),
+						.gte('last_seen', threeMinutesAgo),  // ★★★ 使用3分钟 ★★★
 					supabase
 						.from('site_visits')
 						.select('*', { count: 'exact', head: true })
@@ -12578,14 +12588,12 @@
 				
 				const currentOnline = onlineResult.count || 0;
 				
-				// ★★★ 关键修复：正确处理跨天和最大值 ★★★
+				// 正确处理跨天和最大值
 				let previousMaxOnline = 0;
 				if (cached) {
 					if (isNewDay) {
-						// 新的一天，max_online 从当前在线数开始
 						previousMaxOnline = 0;
 					} else {
-						// 同一天，保留历史最大值
 						previousMaxOnline = cached.max_online_count || 0;
 					}
 				}
@@ -12600,42 +12608,21 @@
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// ★★★ 修复：使用条件更新，确保 max_online_count 只增不减 ★★★
-				if (isNewDay) {
-					// 新的一天，重置今日统计
-					await supabase
-						.from('site_stats')
-						.upsert({
-							id: 1,
-							online_count: stats.online,
-							max_online_count: stats.online, // 新的一天从当前值开始
-							today_pv: stats.todayPv,
-							today_uv: stats.todayUv,
-							today_games: stats.todayGames,
-							stats_date: todayStr,
-							updated_at: new Date().toISOString()
-						});
-				} else {
-					// 同一天，只更新在线数，max只在更大时更新
-					const updateData = {
-						id: 1,
-						online_count: stats.online,
-						today_pv: stats.todayPv,
-						today_uv: stats.todayUv,
-						today_games: stats.todayGames,
-						stats_date: todayStr,
-						updated_at: new Date().toISOString()
-					};
-					
-					// ★★★ 只有当新值更大时才更新 max_online_count ★★★
-					if (currentOnline > previousMaxOnline) {
-						updateData.max_online_count = currentOnline;
-					}
-					
-					await supabase
-						.from('site_stats')
-						.upsert(updateData);
-				}
+				// ★★★ 关键修复：始终包含 max_online_count 字段 ★★★
+				const updateData = {
+					id: 1,
+					online_count: stats.online,
+					max_online_count: newMaxOnline,  // ★★★ 始终包含此字段 ★★★
+					today_pv: stats.todayPv,
+					today_uv: stats.todayUv,
+					today_games: stats.todayGames,
+					stats_date: todayStr,
+					updated_at: new Date().toISOString()
+				};
+				
+				await supabase
+					.from('site_stats')
+					.upsert(updateData);
 				
 				return stats;
 			} catch (e) {
@@ -12941,20 +12928,6 @@
 			}
 		}
 
-		// 页面关闭清理
-		window.addEventListener('beforeunload', () => {
-			if (!supabase || !onlineSessionId) return;
-			
-			const url = `${SUPABASE_URL}/rest/v1/online_users?session_id=eq.${onlineSessionId}`;
-			fetch(url, {
-				method: 'DELETE',
-				headers: {
-					'apikey': SUPABASE_ANON_KEY,
-					'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-				},
-				keepalive: true
-			}).catch(() => {});
-		});
 
 		// ==================== 游戏说明系统 ====================
 
