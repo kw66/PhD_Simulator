@@ -4052,7 +4052,7 @@
 										</div>
 									</div>
 									<div style="text-align:right;">
-										<div style="font-size:1.2rem;font-weight:700;color:#3f51b5;">${unlockProgress.unlocked}<span style="font-size:0.85rem;color:#9fa8da;">/${unlockProgress.total}</span></div>
+										//<div style="font-size:1.2rem;font-weight:700;color:#3f51b5;">${unlockProgress.unlocked}<span style="font-size:0.85rem;color:#9fa8da;">/${unlockProgress.total}</span></div>
 										<div style="font-size:0.65rem;color:#9fa8da;">全球 ${trueNormalUnlockedCount} 人</div>
 									</div>
 								</div>
@@ -12898,7 +12898,7 @@
 			return id;
 		}
 
-		// 发送心跳（仅维持在线状态）
+		// 发送心跳
 		async function sendOnlineHeartbeat() {
 			if (!supabase || !onlineSessionId) return;
 			
@@ -12917,11 +12917,11 @@
 					.delete()
 					.lt('last_seen', fiveMinutesAgo);
 			} catch (e) {
-				// 静默失败
+				console.error('心跳失败:', e);
 			}
 		}
 
-		// ★★★ 核心：获取当前在线人数 ★★★
+		// 获取当前在线人数
 		async function getCurrentOnlineCount() {
 			if (!supabase) return 0;
 			
@@ -12932,56 +12932,73 @@
 					.select('*', { count: 'exact', head: true })
 					.gte('last_seen', threeMinutesAgo);
 				
-				if (error) throw error;
+				if (error) {
+					console.error('查询当前在线失败:', error);
+					return 0;
+				}
 				return count || 0;
 			} catch (e) {
-				console.error('获取当前在线失败:', e);
+				console.error('获取当前在线异常:', e);
 				return 0;
 			}
 		}
 
-		// ★★★ 核心：获取历史最大在线（从所有记录中取最大值）★★★
+		// ★★★ 获取历史最大在线 ★★★
 		async function getHistoryMaxOnline() {
 			if (!supabase) return 0;
 			
 			try {
 				const { data, error } = await supabase
-					.from('online_peak_records')
-					.select('online_count')
-					.order('online_count', { ascending: false })
-					.limit(1)
-					.single();
+					.from('site_stats')
+					.select('max_online_count')
+					.eq('id', 1)
+					.maybeSingle();  // 使用 maybeSingle 避免没数据时报错
 				
-				if (error && error.code !== 'PGRST116') { // PGRST116 = 没有记录
-					throw error;
+				if (error) {
+					console.error('查询历史最大失败:', error);
+					return 0;
 				}
 				
-				return data?.online_count || 0;
+				console.log('历史最大在线数据:', data);
+				return data?.max_online_count || 0;
 			} catch (e) {
-				console.error('获取历史最大在线失败:', e);
+				console.error('获取历史最大异常:', e);
 				return 0;
 			}
 		}
 
-		// ★★★ 核心：检测并写入新峰值记录（不覆盖，插入新记录）★★★
-		async function checkAndRecordPeakOnline() {
-			if (!supabase) return null;
+		// ★★★ 检测并更新峰值（页面加载时调用）★★★
+		async function checkAndUpdatePeakOnline() {
+			if (!supabase) {
+				console.warn('Supabase未初始化');
+				return null;
+			}
 			
 			try {
 				// 1. 获取当前在线人数
 				const currentOnline = await getCurrentOnlineCount();
+				console.log('当前在线:', currentOnline);
 				
 				// 2. 获取历史最大在线
 				const historyMax = await getHistoryMaxOnline();
+				console.log('历史最大:', historyMax);
 				
-				// 3. 如果当前在线 > 所有历史记录的最大值，插入新记录
+				// 3. 如果当前在线 > 历史最大，更新数据库
 				if (currentOnline > historyMax) {
-					const { error } = await supabase
-						.from('online_peak_records')
-						.insert({ online_count: currentOnline });
+					console.log(`🆕 新峰值! ${currentOnline} > ${historyMax}，准备写入...`);
 					
-					if (!error) {
-						console.log(`✅ 新峰值记录已写入: ${currentOnline} (历史最大: ${historyMax})`);
+					const { error } = await supabase
+						.from('site_stats')
+						.upsert({
+							id: 1,
+							max_online_count: currentOnline,
+							updated_at: new Date().toISOString()
+						});
+					
+					if (error) {
+						console.error('写入峰值失败:', error);
+					} else {
+						console.log(`✅ 新峰值已写入: ${currentOnline}`);
 					}
 					
 					return { currentOnline, maxOnline: currentOnline };
@@ -12989,32 +13006,36 @@
 				
 				return { currentOnline, maxOnline: historyMax };
 			} catch (e) {
-				console.error('检测峰值失败:', e);
+				console.error('检测峰值异常:', e);
 				return null;
 			}
 		}
 
-		// ★★★ 启动在线追踪（新用户或刷新页面时触发）★★★
+		// ★★★ 启动在线追踪 ★★★
 		function startOnlineTracking() {
+			console.log('🚀 启动在线追踪...');
 			onlineSessionId = getOnlineSessionId();
 			
-			// 首次发送心跳，确保用户被记录
+			// 首次发送心跳
 			sendOnlineHeartbeat().then(() => {
-				// ★★★ 每次页面加载（新用户或刷新）都检测并可能写入峰值 ★★★
-				checkAndRecordPeakOnline().then(stats => {
+				console.log('✅ 首次心跳已发送');
+				
+				// 稍等一下确保心跳写入后再统计
+				setTimeout(async () => {
+					const stats = await checkAndUpdatePeakOnline();
 					if (stats) {
 						updateOnlineDisplay(stats.currentOnline, stats.maxOnline);
-						console.log(`👤 在线统计: 当前 ${stats.currentOnline}, 历史最大 ${stats.maxOnline}`);
+						console.log(`📊 统计完成: 当前${stats.currentOnline}, 历史最大${stats.maxOnline}`);
 					}
-				});
+				}, 500);
 			});
 			
-			// 每30秒发送心跳（仅维持在线状态，不检测峰值）
+			// 每30秒发送心跳
 			onlineHeartbeatTimer = setInterval(() => {
 				sendOnlineHeartbeat();
 			}, 30 * 1000);
 			
-			// 每60秒更新当前在线显示（不写入峰值）
+			// 每60秒更新当前在线显示
 			setInterval(async () => {
 				const currentOnline = await getCurrentOnlineCount();
 				const onlineEl = document.getElementById('online-count-value');
@@ -13025,17 +13046,6 @@
 			window.addEventListener('beforeunload', () => {
 				if (onlineHeartbeatTimer) {
 					clearInterval(onlineHeartbeatTimer);
-				}
-				if (supabase && onlineSessionId) {
-					const deleteUrl = `${SUPABASE_URL}/rest/v1/online_users?session_id=eq.${onlineSessionId}`;
-					fetch(deleteUrl, {
-						method: 'DELETE',
-						headers: {
-							'apikey': SUPABASE_ANON_KEY,
-							'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-						},
-						keepalive: true
-					}).catch(() => {});
 				}
 			});
 		}
@@ -13072,7 +13082,6 @@
 			try {
 				const todayStart = getTodayStartUTC();
 				
-				// 并行获取各项统计
 				const [currentOnline, historyMax, todayPvResult, todayUvResult, todayGamesResult] = await Promise.all([
 					getCurrentOnlineCount(),
 					getHistoryMaxOnline(),
