@@ -3501,7 +3501,7 @@
 			
 			let achievedEndingsHtml = achievedEndingsSorted.map(e => {
 				// 真实结局额外显示数量
-				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion';
+				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion' || e.type === 'true_life';
 				const displayText = isTrueEnding 
 					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
 					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
@@ -3515,7 +3515,7 @@
 			}).join('');
 			
 			let unachievedEndingsHtml = unachievedEndingsSorted.map(e => {
-				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion';
+				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion' || e.type === 'true_life';
 				const displayText = isTrueEnding 
 					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
 					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
