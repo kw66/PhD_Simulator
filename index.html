@@ -3494,8 +3494,14 @@
 			const totalGames = modeStats.totalGames || 0;
 			
 			// ==================== 渲染结局统计（按完成率排序）====================
+			// ★★★ 新增：逆位模式下过滤掉真·大多数相关结局（逆位无法选择真·大多数）★★★
+			const trueNormalEndings = ['true_phd', 'true_devotion', 'true_life'];
+			const endingsToShow = mode === 'reversed' 
+				? Object.entries(ENDING_NAMES).filter(([type]) => !trueNormalEndings.includes(type))
+				: Object.entries(ENDING_NAMES);
+			
 			// 构建结局数据数组
-			const endingEntries = Object.entries(ENDING_NAMES).map(([type, name]) => {
+			const endingEntries = endingsToShow.map(([type, name]) => {
 				const count = modeStats.endings[type] || 0;
 				const percent = totalGames > 0 ? (count / totalGames) * 100 : 0;
 				const isAchieved = playerEndingsSet instanceof Set 
