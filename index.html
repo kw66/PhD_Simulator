@@ -4456,28 +4456,47 @@
 			loadSubmissionStatsAsync();
 		}
 
-		// ★★★ 新增：异步加载投稿统计（带超时） ★★★
-		async function loadSubmissionStatsAsync() {
+		// ★★★ 新增：异步加载投稿统计（带超时和重试） ★★★
+		async function loadSubmissionStatsAsync(retryCount = 0) {
+			const maxRetries = 3;
+			const timeout = 8000 + retryCount * 2000; // 每次重试增加超时时间
+			
 			try {
-				// 设置5秒超时
+				// 设置超时
 				const timeoutPromise = new Promise((_, reject) => {
-					setTimeout(() => reject(new Error('加载超时')), 5000);
+					setTimeout(() => reject(new Error('加载超时')), timeout);
 				});
 				
 				const loadPromise = loadSubmissionStats();
 				
 				const stats = await Promise.race([loadPromise, timeoutPromise]);
 				
-				if (stats) {
+				if (stats && Object.keys(stats).length > 0) {
 					gameState.submissionStats = stats;
 					console.log('✅ 投稿统计已后台加载完成');
 					// 刷新论文槽显示（更新录用率等信息）
 					renderPaperSlots();
 					updateResearchResults();
+				} else {
+					throw new Error('返回数据为空');
 				}
 			} catch (e) {
-				console.warn('后台加载投稿统计失败，使用默认值:', e.message);
-				// 已经使用默认值，无需处理
+				console.warn(`后台加载投稿统计失败(第${retryCount + 1}次):`, e.message);
+				
+				// ★★★ 重试机制 ★★★
+				if (retryCount < maxRetries) {
+					console.log(`将在3秒后重试...`);
+					setTimeout(() => {
+						loadSubmissionStatsAsync(retryCount + 1);
+					}, 3000);
+				} else {
+					console.warn('投稿统计加载失败，使用默认值');
+					// 确保使用有效的默认值
+					if (!gameState.submissionStats) {
+						gameState.submissionStats = getDefaultSubmissionStats();
+					}
+					renderPaperSlots();
+				}
 			}
 		}
 
@@ -7066,7 +7085,9 @@
 							本月会议：A-${confA.name} | B-${confB.name} | C-${confC.name}
 						</div>
 						<div style="margin-top:4px;font-size:0.55rem;color:var(--text-secondary);text-align:center;">
-							${statsA.hasEnoughData ? `录用率: A-${(statsA.acceptRate*100).toFixed(0)}% B-${(statsB.acceptRate*100).toFixed(0)}% C-${(statsC.acceptRate*100).toFixed(0)}%` : '(统计数据加载中...)'}
+							${statsA.hasEnoughData 
+								? `录用率: A-${(statsA.acceptRate*100).toFixed(0)}% B-${(statsB.acceptRate*100).toFixed(0)}% C-${(statsC.acceptRate*100).toFixed(0)}%${statsA.submissions === 100 ? ' (默认值)' : ''}` 
+								: '(统计数据加载中...)'}
 						</div>
 					</div>`;
 				} else {
@@ -10905,7 +10926,11 @@
 			// 从数据库加载
 			if (!supabase) {
 				console.log('Supabase未初始化，使用默认统计');
-				return getDefaultSubmissionStats();
+				const defaultStats = getDefaultSubmissionStats();
+				// ★★★ 新增：即使是默认值也缓存，避免重复调用 ★★★
+				submissionStatsCache = defaultStats;
+				submissionStatsCacheTime = Date.now();
+				return defaultStats;
 			}
 			
 			try {
@@ -11069,36 +11094,36 @@
             return arr.reduce((a, b) => a + b, 0) / arr.length;
         }
 
-        // 获取默认统计数据
-        function getDefaultSubmissionStats() {
-            const stats = {};
-            
-            for (let month = 1; month <= 12; month++) {
-                for (const grade of ['A', 'B', 'C']) {
-                    for (const reversed of [true, false]) {
-                        const key = `${month}_${grade}_${reversed}`;
-                        const target = TARGET_ACCEPTANCE_RATES[grade];
-                        
-                        stats[key] = {
-                            submissions: 0,
-                            accepted: 0,
-                            poster: 0,
-                            oral: 0,
-                            bestPaper: 0,
-                            acceptRate: target.target,
-                            avgScoreRejected: grade === 'A' ? 40 : grade === 'B' ? 25 : 15,
-                            avgScorePoster: grade === 'A' ? 70 : grade === 'B' ? 45 : 30,
-                            avgScoreOral: grade === 'A' ? 90 : grade === 'B' ? 60 : 40,
-                            avgScoreBestPaper: grade === 'A' ? 105 : grade === 'B' ? 75 : 50,
-                            p90AcceptedScore: grade === 'A' ? 85 : grade === 'B' ? 55 : 35,
-                            p99AcceptedScore: grade === 'A' ? 100 : grade === 'B' ? 70 : 45
-                        };
-                    }
-                }
-            }
-            
-            return stats;
-        }
+		// 获取默认统计数据
+		function getDefaultSubmissionStats() {
+			const stats = {};
+			
+			for (let month = 1; month <= 12; month++) {
+				for (const grade of ['A', 'B', 'C']) {
+					for (const reversed of [true, false]) {
+						const key = `${month}_${grade}_${reversed}`;
+						const target = TARGET_ACCEPTANCE_RATES[grade];
+						
+						stats[key] = {
+							submissions: 100,  // ★★★ 关键修改：设为100使hasEnoughData为true ★★★
+							accepted: Math.round(100 * target.target),  // ★★★ 新增：计算对应的录用数 ★★★
+							poster: Math.round(100 * target.target * 0.7),
+							oral: Math.round(100 * target.target * 0.25),
+							bestPaper: Math.round(100 * target.target * 0.05),
+							acceptRate: target.target,
+							avgScoreRejected: grade === 'A' ? 40 : grade === 'B' ? 25 : 15,
+							avgScorePoster: grade === 'A' ? 70 : grade === 'B' ? 45 : 30,
+							avgScoreOral: grade === 'A' ? 90 : grade === 'B' ? 60 : 40,
+							avgScoreBestPaper: grade === 'A' ? 105 : grade === 'B' ? 75 : 50,
+							p90AcceptedScore: grade === 'A' ? 85 : grade === 'B' ? 55 : 35,
+							p99AcceptedScore: grade === 'A' ? 100 : grade === 'B' ? 70 : 45
+						};
+					}
+				}
+			}
+			
+			return stats;
+		}
 
         // 获取当前月份的统计
         function getMonthStats(gameMonth, grade, isReversed) {
