@@ -12551,15 +12551,30 @@
 				const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 				const todayStart = getTodayStartUTC();
 				
-				// 先获取缓存的统计数据
+				// ★★★ 关键修复：正确处理查询结果和错误 ★★★
 				const { data: cached, error: cacheError } = await supabase
 					.from('site_stats')
 					.select('*')
 					.eq('id', 1)
 					.single();
 				
-				// ★★★ 记录是否成功读取到有效的历史最高值 ★★★
-				const hasValidHistory = cached && 
+				// ★★★ 判断查询状态 ★★★
+				let queryStatus = 'unknown';
+				if (cacheError) {
+					// 检查是否是"未找到记录"的错误（真正的首次初始化）
+					if (cacheError.code === 'PGRST116' && cacheError.details?.includes('0 rows')) {
+						queryStatus = 'no_record';  // 表中确实没有记录
+						console.log('📊 site_stats 表中无记录，将进行首次初始化');
+					} else {
+						queryStatus = 'error';  // 查询出错
+						console.warn('⚠️ 查询 site_stats 失败:', cacheError.message);
+					}
+				} else if (cached) {
+					queryStatus = 'success';  // 成功读取
+				}
+				
+				// ★★★ 安全读取历史最高值 ★★★
+				const hasValidHistory = queryStatus === 'success' && 
 					typeof cached.max_online_count === 'number' && 
 					cached.max_online_count > 0;
 				
@@ -12567,13 +12582,13 @@
 				const isNewDay = cached?.stats_date !== todayStr;
 				
 				// 缓存有效（60秒内且是今天）- 直接返回
-				if (cached && !isNewDay && cacheAge < 60 * 1000) {
+				if (queryStatus === 'success' && !isNewDay && cacheAge < 60 * 1000) {
 					return {
-						online: cached.online_count,
-						maxOnline: cached.max_online_count || cached.online_count,
-						todayPv: cached.today_pv,
-						todayUv: cached.today_uv,
-						todayGames: cached.today_games
+						online: cached.online_count || 0,
+						maxOnline: hasValidHistory ? cached.max_online_count : (cached.online_count || 0),
+						todayPv: cached.today_pv || 0,
+						todayUv: cached.today_uv || 0,
+						todayGames: cached.today_games || 0
 					};
 				}
 				
@@ -12602,7 +12617,6 @@
 				const currentOnline = onlineResult.count || 0;
 				
 				// ★★★ 安全计算显示用的最大在线数 ★★★
-				// 优先使用历史记录，避免因读取问题显示错误值
 				let displayMaxOnline = currentOnline;
 				if (hasValidHistory) {
 					displayMaxOnline = Math.max(currentOnline, cached.max_online_count);
@@ -12616,7 +12630,7 @@
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// ★★★ 安全的更新逻辑：永远不降低 max_online_count ★★★
+				// ★★★ 核心修复：根据查询状态决定是否更新 max_online_count ★★★
 				const updateData = {
 					id: 1,
 					online_count: stats.online,
@@ -12627,21 +12641,31 @@
 					updated_at: new Date().toISOString()
 				};
 				
-				// ★★★ 关键修复：只有满足条件时才更新 max_online_count ★★★
-				if (hasValidHistory) {
-					// 有有效历史记录：只有当前值更大时才更新
+				if (queryStatus === 'success' && hasValidHistory) {
+					// ✅ 情况1：成功读取且有有效历史，只有更大时才更新
 					if (currentOnline > cached.max_online_count) {
 						updateData.max_online_count = currentOnline;
 						console.log(`✅ 更新历史最高在线: ${cached.max_online_count} → ${currentOnline}`);
 					}
-					// 否则不写入 max_online_count 字段，数据库保持原值不变
-				} else if (!cached) {
-					// 首次初始化（数据库中无记录）
+					// 否则不写入 max_online_count，保持数据库原值
+					
+				} else if (queryStatus === 'no_record') {
+					// ✅ 情况2：表中确实无记录，进行首次初始化
 					updateData.max_online_count = currentOnline;
 					console.log(`✅ 首次初始化历史最高在线: ${currentOnline}`);
-				} else {
-					// ⚠️ cached 存在但 max_online_count 无效，不更新以防覆盖
-					console.warn('⚠️ 历史最高在线数无效，跳过更新以防止数据丢失');
+					
+				} else if (queryStatus === 'error') {
+					// ❌ 情况3：查询失败，绝对不更新 max_online_count
+					console.warn('⚠️ 查询失败，跳过 max_online_count 更新以防止数据丢失');
+					// 不添加 max_online_count 到 updateData
+					
+				} else if (queryStatus === 'success' && !hasValidHistory) {
+					// ⚠️ 情况4：查询成功但历史值无效（可能是0或null）
+					// 只有当前值大于0时才考虑更新
+					if (currentOnline > 0 && (!cached.max_online_count || cached.max_online_count === 0)) {
+						updateData.max_online_count = currentOnline;
+						console.log(`✅ 修复无效的历史最高在线: ${currentOnline}`);
+					}
 				}
 				
 				await supabase
