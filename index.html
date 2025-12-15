@@ -12552,11 +12552,16 @@
 				const todayStart = getTodayStartUTC();
 				
 				// 先获取缓存的统计数据
-				const { data: cached } = await supabase
+				const { data: cached, error: cacheError } = await supabase
 					.from('site_stats')
 					.select('*')
 					.eq('id', 1)
 					.single();
+				
+				// ★★★ 记录是否成功读取到有效的历史最高值 ★★★
+				const hasValidHistory = cached && 
+					typeof cached.max_online_count === 'number' && 
+					cached.max_online_count > 0;
 				
 				const cacheAge = cached ? Date.now() - new Date(cached.updated_at).getTime() : Infinity;
 				const isNewDay = cached?.stats_date !== todayStr;
@@ -12596,68 +12601,52 @@
 				
 				const currentOnline = onlineResult.count || 0;
 				
-				// ★★★ 修复：重新从数据库读取最新的max值，避免竞态条件 ★★★
-				const { data: latestCached } = await supabase
-					.from('site_stats')
-					.select('max_online_count, stats_date')
-					.eq('id', 1)
-					.single();
-				
-				let previousMaxOnline = 0;
-				if (latestCached) {
-					// 如果是新的一天，重置最大值；否则使用数据库中的最新值
-					if (latestCached.stats_date === todayStr) {
-						previousMaxOnline = latestCached.max_online_count || 0;
-					}
+				// ★★★ 安全计算显示用的最大在线数 ★★★
+				// 优先使用历史记录，避免因读取问题显示错误值
+				let displayMaxOnline = currentOnline;
+				if (hasValidHistory) {
+					displayMaxOnline = Math.max(currentOnline, cached.max_online_count);
 				}
-				
-				const newMaxOnline = Math.max(currentOnline, previousMaxOnline);
 				
 				const stats = {
 					online: currentOnline,
-					maxOnline: newMaxOnline,
+					maxOnline: displayMaxOnline,
 					todayPv: todayPvResult.count || 0,
 					todayUv: todayUvResult.count || 0,
 					todayGames: todayGamesResult.count || 0
 				};
 				
-				// ★★★ 修复：使用条件更新，只有当新值更大时才更新max_online_count ★★★
-				// 先尝试更新（只有当 max_online_count < newMaxOnline 或者是新的一天时才更新）
-				if (isNewDay) {
-					// 新的一天，直接更新所有字段
-					await supabase
-						.from('site_stats')
-						.upsert({
-							id: 1,
-							online_count: stats.online,
-							max_online_count: newMaxOnline,
-							today_pv: stats.todayPv,
-							today_uv: stats.todayUv,
-							today_games: stats.todayGames,
-							stats_date: todayStr,
-							updated_at: new Date().toISOString()
-						});
+				// ★★★ 安全的更新逻辑：永远不降低 max_online_count ★★★
+				const updateData = {
+					id: 1,
+					online_count: stats.online,
+					today_pv: stats.todayPv,
+					today_uv: stats.todayUv,
+					today_games: stats.todayGames,
+					stats_date: todayStr,
+					updated_at: new Date().toISOString()
+				};
+				
+				// ★★★ 关键修复：只有满足条件时才更新 max_online_count ★★★
+				if (hasValidHistory) {
+					// 有有效历史记录：只有当前值更大时才更新
+					if (currentOnline > cached.max_online_count) {
+						updateData.max_online_count = currentOnline;
+						console.log(`✅ 更新历史最高在线: ${cached.max_online_count} → ${currentOnline}`);
+					}
+					// 否则不写入 max_online_count 字段，数据库保持原值不变
+				} else if (!cached) {
+					// 首次初始化（数据库中无记录）
+					updateData.max_online_count = currentOnline;
+					console.log(`✅ 首次初始化历史最高在线: ${currentOnline}`);
 				} else {
-					// 同一天，分两步更新：
-					// 1. 更新在线人数和其他今日统计
-					await supabase
-						.from('site_stats')
-						.update({
-							online_count: stats.online,
-							today_pv: stats.todayPv,
-							today_uv: stats.todayUv,
-							today_games: stats.todayGames,
-							updated_at: new Date().toISOString()
-						})
-						.eq('id', 1);
-					
-					// 2. 只有当新值更大时才更新最大在线人数（使用SQL条件）
-					await supabase
-						.from('site_stats')
-						.update({ max_online_count: newMaxOnline })
-						.eq('id', 1)
-						.or(`max_online_count.is.null,max_online_count.lt.${newMaxOnline}`);
+					// ⚠️ cached 存在但 max_online_count 无效，不更新以防覆盖
+					console.warn('⚠️ 历史最高在线数无效，跳过更新以防止数据丢失');
 				}
+				
+				await supabase
+					.from('site_stats')
+					.upsert(updateData);
 				
 				return stats;
 			} catch (e) {
