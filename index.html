@@ -3138,20 +3138,32 @@
 			}
 		}
 
-        async function recordVisit() {
-            if (!supabase) return;
-            try {
-                await supabase.from('site_visits').insert({ type: 'pv' });
-                
-                const visitorKey = 'graduate_simulator_visitor';
-                if (!localStorage.getItem(visitorKey)) {
-                    await supabase.from('site_visits').insert({ type: 'uv' });
-                    localStorage.setItem(visitorKey, 'true');
-                }
-            } catch (e) {
-                console.error('记录访问失败:', e);
-            }
-        }
+		async function recordVisit() {
+			if (!supabase) return;
+			try {
+				// 记录 PV（每次访问都记录）
+				await supabase.from('site_visits').insert({ type: 'pv' });
+				
+				// ★★★ 修复：每天每个用户只记录一次 UV ★★★
+				const todayStr = getTodayDateString();
+				const visitorKey = 'graduate_simulator_visitor';
+				const lastUvDateKey = 'graduate_simulator_last_uv_date';
+				
+				const isNewVisitor = !localStorage.getItem(visitorKey);
+				const lastUvDate = localStorage.getItem(lastUvDateKey);
+				const isNewDay = lastUvDate !== todayStr;
+				
+				// 新访客 或 新的一天（老访客今天第一次访问）都记录 UV
+				if (isNewVisitor || isNewDay) {
+					await supabase.from('site_visits').insert({ type: 'uv' });
+					localStorage.setItem(visitorKey, 'true');
+					localStorage.setItem(lastUvDateKey, todayStr);
+					console.log(isNewVisitor ? '✅ 新访客已记录' : '✅ 今日访客已记录');
+				}
+			} catch (e) {
+				console.error('记录访问失败:', e);
+			}
+		}
 
 		async function getVisitStats() {
 			// 先检查本地缓存
