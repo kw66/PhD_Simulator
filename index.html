@@ -5604,6 +5604,11 @@
 			gameState.month++;
 			gameState.totalMonths++;
 			
+			// ★★★ 空想之天选之人：月初最先执行属性交换 ★★★
+			if (gameState.isReversed && gameState.character === 'chosen') {
+				processChosenSwap();
+			}
+			
 			// ★★★ 检查并处理松懈debuff ★★★
 			const hadSlackBuff = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
 			if (hadSlackBuff) {
@@ -5741,10 +5746,6 @@
 				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
 			}
 			
-			// 空想之天选之人：每月随机交换属性
-			if (gameState.isReversed && gameState.character === 'chosen') {
-				processChosenSwap();
-			}
 
 			// ★★★ 修改：论文分数衰减（支持预见未来热点）★★★
 			let decayLogs = [];
@@ -8768,13 +8769,22 @@
 					if (Math.random() < 0.5) {
 						const baseSanCost = -8;
 						const actualSanCost = getActualSanChange(baseSanCost);
-						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						const sanText = actualSanCost !== baseSanCost 
+							? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+							: `SAN值${actualSanCost}`;
 						addLog('随机事件', '突然感冒了 - 强撑', `身体透支了，${sanText}`);
 						changeSan(baseSanCost);
 					} else {
 						// ★★★ 修改：年轻人身体好的结果 ★★★
 						gameState.sanMax -= 2;
-						addLog('随机事件', '突然感冒了 - 强撑', '这次没事但留下了病根，SAN上限-2');
+						// ★★★ 新增：如果当前SAN高于新上限，则同步降低 ★★★
+						if (gameState.san > gameState.sanMax) {
+							const sanReduced = gameState.san - gameState.sanMax;
+							gameState.san = gameState.sanMax;
+							addLog('随机事件', '突然感冒了 - 强撑', `这次没事但留下了病根，SAN上限-2，SAN值-${sanReduced}`);
+						} else {
+							addLog('随机事件', '突然感冒了 - 强撑', '这次没事但留下了病根，SAN上限-2');
+						}
 						updateAllUI();
 					}
 				}},
