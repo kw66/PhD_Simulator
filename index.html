@@ -2833,6 +2833,7 @@
 				enterpriseCount: 0,
 				ailabInternship: false,
 				firstBestPaperAccepted: false,
+				firstABestPaperAccepted: false,
 				badmintonMonth: -1,
 				
 				lastResetMonth: 0,
@@ -8548,6 +8549,11 @@
 				bonusResearch++;
 				addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
 			}
+			if (grade === 'A' && acceptType === 'Best Paper' && !gameState.firstABestPaperAccepted) {
+				gameState.firstABestPaperAccepted = true;
+				bonusResearch++;
+				addLog('首次发表A类Best Paper', '科研能力+1', '首次发表A类Best Paper奖励');
+			}
 			if (bonusResearch > 0) {
 				changeResearch(bonusResearch);
 			}
@@ -11534,6 +11540,7 @@
                 enterpriseCount: gameState.enterpriseCount || 0,
                 ailabInternship: gameState.ailabInternship || false,
                 firstBestPaperAccepted: gameState.firstBestPaperAccepted || false,
+				firstABestPaperAccepted: gameState.firstABestPaperAccepted || false,
                 
                 // ★★★ 新增：逆位富可敌国的保存字段 ★★★
                 lastResetMonth: gameState.lastResetMonth || 0,
@@ -11695,6 +11702,7 @@
                             enterpriseCount: save.enterpriseCount || 0,
                             ailabInternship: save.ailabInternship || false,
                             firstBestPaperAccepted: save.firstBestPaperAccepted || false,
+							firstABestPaperAccepted: save.firstABestPaperAccepted || false,
                             goldSpentTotal: save.goldSpentTotal || 0,
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
