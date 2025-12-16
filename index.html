@@ -10316,7 +10316,7 @@
                     } else {
                         changeSocial(-1);
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
-                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `服务器数据忘了备份了，临时debuff-下次实验分数×0，社交能力-1，${sanText}`);
+                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `服务器数据忘了备份了，临时debuff-下次实验分数×0.5，社交能力-1，${sanText}`);
                         updateBuffs();
                     }
                     changeSan(baseSanCost);
