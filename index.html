@@ -2408,7 +2408,7 @@
 			desc: '天生就是做科研的料', 
 			bonus: '科研能力初始+5', 
 			awakenName: '学术天赋觉醒',
-			awakenDesc: '转博时每有1篇A类论文，科研+2',
+			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+2',
 			// 隐藏觉醒
 			hiddenAwakenName: '预见未来热点',
 			hiddenAwakenIcon: '🔮',
@@ -6968,8 +6968,8 @@
 					effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
 					const aCount = gameState.paperA || 0;
 					if (aCount > 0) {
-						// ★★★ 修改：每篇A类论文科研+1，上限+2 ★★★
-						const researchGain = aCount * 1;
+						// ★★★ 修改：每篇A类论文科研+2，上限+2 ★★★
+						const researchGain = aCount * 2;  // 原来是 aCount * 1，改为 aCount * 2
 						const maxGain = aCount * 2;
 						gameState.researchMax = (gameState.researchMax || 20) + maxGain;
 						gameState.research = Math.min(gameState.researchMax, gameState.research + researchGain);
