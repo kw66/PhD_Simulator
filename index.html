@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #6c5ce7;
@@ -1017,30 +1018,41 @@
         .log-entry .result { color: var(--success-color); font-weight: 500; font-size: 0.75rem; }
         .log-entry.negative .result { color: var(--danger-color); }
 
-        /* 操作栏 */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
+		/* 操作栏 */
+		.action-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 8px;
+		}
 
-        .action-btn {
-            padding: 8px 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            font-size: 0.8rem;
-        }
+		.action-btn {
+			padding: 12px 10px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 6px;
+			font-size: 1rem;
+		}
 
-        .action-btn i { font-size: 1.1rem; }
-        .action-btn span { line-height: 1.2; }
+		.action-btn .action-top {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
 
-        .action-cost {
-            font-size: 0.6rem;
-            opacity: 0.9;
-            margin-top: 1px;
-        }
+		.action-btn .action-top i { 
+			font-size: 1.3rem; 
+		}
+
+		.action-btn .action-top span { 
+			font-weight: 500;
+			line-height: 1.2; 
+		}
+
+		.action-cost {
+			font-size: 0.8rem;
+			opacity: 0.9;
+		}
 
         /* 论文工作站 */
         .paper-slots { display: flex; flex-direction: column; gap: 10px; }
@@ -1722,7 +1734,797 @@
 				margin-bottom: 2px;
 			}
 		}
+		/* ==================== 真·大多数解锁栏 ==================== */
+		.zodiac-unlock-panel {
+			margin-top: 15px;
+			position: relative;
+			border-radius: 16px;
+			padding: 0;
+			overflow: hidden;
+			transition: all 0.3s ease;
+		}
 
+		/* ====== 正位模式 - 浅灰色石碑风格 ====== */
+		body:not(.reversed-theme) .zodiac-unlock-panel {
+			background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 50%, #e8e8e8 100%);
+			border: 2px solid #d0d0d0;
+			box-shadow: 
+				0 4px 15px rgba(0, 0, 0, 0.08),
+				inset 0 0 30px rgba(255, 255, 255, 0.5);
+		}
+
+		/* ====== 逆位模式 - 深紫色神秘风格 ====== */
+		body.reversed-theme .zodiac-unlock-panel {
+			background: linear-gradient(135deg, #1a1a2a 0%, #2a2a3a 50%, #1a1a2a 100%);
+			border: 2px solid #3a3a4a;
+			box-shadow: 
+				0 4px 20px rgba(0, 0, 0, 0.4),
+				inset 0 0 40px rgba(0, 0, 0, 0.3);
+		}
+
+		/* ==================== 标题区域 ==================== */
+		.zodiac-header {
+			position: relative;
+			z-index: 2;
+			text-align: center;
+			padding: 18px 15px 12px;
+		}
+
+		/* 正位标题 */
+		body:not(.reversed-theme) .zodiac-header {
+			background: linear-gradient(180deg, rgba(108,92,231,0.08) 0%, transparent 100%);
+			border-bottom: 1px solid rgba(108, 92, 231, 0.15);
+		}
+
+		body:not(.reversed-theme) .zodiac-title {
+			color: #6c5ce7;
+			text-shadow: 0 1px 2px rgba(108, 92, 231, 0.2);
+		}
+
+		body:not(.reversed-theme) .zodiac-subtitle {
+			color: #888;
+		}
+
+		/* 逆位标题 */
+		body.reversed-theme .zodiac-header {
+			background: linear-gradient(180deg, rgba(255,215,0,0.1) 0%, transparent 100%);
+			border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+		}
+
+		body.reversed-theme .zodiac-title {
+			color: #ffd700;
+			text-shadow: 
+				0 0 10px rgba(255, 215, 0, 0.6),
+				0 0 20px rgba(255, 215, 0, 0.3);
+		}
+
+		body.reversed-theme .zodiac-subtitle {
+			color: rgba(255, 255, 255, 0.5);
+		}
+
+		.zodiac-title {
+			font-size: 1.2rem;
+			font-weight: 700;
+			letter-spacing: 2px;
+			margin-bottom: 4px;
+		}
+
+		.zodiac-subtitle {
+			font-size: 0.75rem;
+			letter-spacing: 1px;
+		}
+
+		/* ==================== 进度条 ==================== */
+		.zodiac-progress {
+			margin: 10px 20px 0;
+			height: 6px;
+			border-radius: 3px;
+			overflow: hidden;
+		}
+
+		body:not(.reversed-theme) .zodiac-progress {
+			background: rgba(108, 92, 231, 0.15);
+		}
+
+		body.reversed-theme .zodiac-progress {
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+		.zodiac-progress-fill {
+			height: 100%;
+			background: linear-gradient(90deg, #6c5ce7, #ffd700, #9b59b6);
+			background-size: 200% 100%;
+			animation: progressShine 3s linear infinite;
+			border-radius: 3px;
+			transition: width 0.5s ease;
+		}
+
+		@keyframes progressShine {
+			0% { background-position: 200% 0; }
+			100% { background-position: -200% 0; }
+		}
+
+		.zodiac-progress-text {
+			font-size: 0.75rem;
+			margin-top: 6px;
+		}
+
+		body:not(.reversed-theme) .zodiac-progress-text {
+			color: #888;
+		}
+
+		body.reversed-theme .zodiac-progress-text {
+			color: rgba(255, 255, 255, 0.6);
+		}
+
+		/* ==================== 主体区域 ==================== */
+		.zodiac-body {
+			position: relative;
+			z-index: 2;
+			display: flex;
+			min-height: 260px;
+		}
+
+		/* 中央分隔线 */
+		.zodiac-divider {
+			position: absolute;
+			left: 50%;
+			top: 0;
+			bottom: 0;
+			width: 2px;
+			transform: translateX(-50%);
+			z-index: 5;
+		}
+
+		body:not(.reversed-theme) .zodiac-divider {
+			background: linear-gradient(
+				180deg,
+				transparent 0%,
+				rgba(108, 92, 231, 0.2) 20%,
+				rgba(108, 92, 231, 0.4) 50%,
+				rgba(108, 92, 231, 0.2) 80%,
+				transparent 100%
+			);
+		}
+
+		body.reversed-theme .zodiac-divider {
+			background: linear-gradient(
+				180deg,
+				transparent 0%,
+				rgba(255, 215, 0, 0.2) 20%,
+				rgba(255, 215, 0, 0.5) 50%,
+				rgba(255, 215, 0, 0.2) 80%,
+				transparent 100%
+			);
+		}
+
+		/* ==================== 中央核心图标 ==================== */
+		.zodiac-center {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 10;
+		}
+
+		.zodiac-core {
+			width: 60px;
+			height: 60px;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.8rem;
+			transition: all 0.3s ease;
+		}
+
+		/* 正位核心 */
+		body:not(.reversed-theme) .zodiac-core.locked {
+			background: linear-gradient(135deg, #d0d0d0 0%, #c0c0c0 100%);
+			border: 3px solid #b0b0b0;
+			box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+		}
+
+		body:not(.reversed-theme) .zodiac-core.unlocked {
+			background: radial-gradient(circle, #6c5ce7 0%, #5b4cdb 60%, #4a3cc9 100%);
+			border: 3px solid #6c5ce7;
+			box-shadow: 
+				0 0 15px rgba(108, 92, 231, 0.5),
+				0 0 30px rgba(108, 92, 231, 0.3),
+				inset 0 0 10px rgba(255, 255, 255, 0.3);
+			animation: corePulseNormal 2s ease-in-out infinite;
+		}
+
+		@keyframes corePulseNormal {
+			0%, 100% { 
+				box-shadow: 
+					0 0 15px rgba(108, 92, 231, 0.5),
+					0 0 30px rgba(108, 92, 231, 0.3);
+			}
+			50% { 
+				box-shadow: 
+					0 0 25px rgba(108, 92, 231, 0.7),
+					0 0 50px rgba(108, 92, 231, 0.5);
+			}
+		}
+
+		/* 逆位核心 */
+		body.reversed-theme .zodiac-core.locked {
+			background: linear-gradient(135deg, #3a3a4a 0%, #2a2a3a 100%);
+			border: 3px solid #4a4a5a;
+			box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+		}
+
+		body.reversed-theme .zodiac-core.unlocked {
+			background: radial-gradient(circle, #ffd700 0%, #ff8c00 60%, #cc6600 100%);
+			border: 3px solid #ffd700;
+			box-shadow: 
+				0 0 20px rgba(255, 215, 0, 0.7),
+				0 0 40px rgba(255, 140, 0, 0.4),
+				inset 0 0 15px rgba(255, 255, 255, 0.3);
+			animation: corePulseReversed 2s ease-in-out infinite;
+		}
+
+		@keyframes corePulseReversed {
+			0%, 100% { 
+				box-shadow: 
+					0 0 20px rgba(255, 215, 0, 0.7),
+					0 0 40px rgba(255, 140, 0, 0.4);
+			}
+			50% { 
+				box-shadow: 
+					0 0 30px rgba(255, 215, 0, 0.9),
+					0 0 60px rgba(255, 140, 0, 0.6);
+			}
+		}
+
+		/* ==================== 左右半区通用 ==================== */
+		.zodiac-half {
+			flex: 1;
+			padding: 15px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.zodiac-half-title {
+			font-size: 1rem;
+			font-weight: 600;
+			margin-bottom: 12px;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			transition: all 0.3s ease;
+			position: relative;
+			z-index: 2;
+		}
+
+		.zodiac-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 10px;
+			width: 100%;
+			max-width: 160px;
+			position: relative;
+			z-index: 2;
+		}
+
+		.zodiac-click-hint {
+			position: absolute;
+			bottom: 10px;
+			font-size: 0.65rem;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			pointer-events: none;
+			z-index: 2;
+		}
+
+		.zodiac-half:hover .zodiac-click-hint {
+			opacity: 1;
+		}
+
+		body:not(.reversed-theme) .zodiac-click-hint {
+			color: rgba(108, 92, 231, 0.6);
+		}
+
+		body.reversed-theme .zodiac-click-hint {
+			color: rgba(255, 255, 255, 0.35);
+		}
+
+		/* ==================== 正位模式 - 左侧正位半区（浅灰石碑）==================== */
+		body:not(.reversed-theme) .zodiac-half.normal-half {
+			background: linear-gradient(135deg, #f0f0f0 0%, #e5e5e5 50%, #f0f0f0 100%);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: 
+				radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.5) 0%, transparent 50%),
+				radial-gradient(ellipse at 80% 70%, rgba(200, 200, 200, 0.3) 0%, transparent 50%);
+			pointer-events: none;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half.active {
+			background: linear-gradient(135deg, #f5f5f5 0%, #ebebeb 50%, #f5f5f5 100%);
+			box-shadow: inset 0 0 20px rgba(108, 92, 231, 0.05);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-half-title {
+			color: #666;
+			text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half.active .zodiac-half-title {
+			color: #6c5ce7;
+		}
+
+		/* 正位模式 - 正位符文（浅灰石头质感）*/
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune {
+			background: linear-gradient(145deg, #e8e8e8 0%, #d8d8d8 50%, #c8c8c8 100%);
+			border: 2px solid #c0c0c0;
+			box-shadow: 
+				inset 2px 2px 4px rgba(255, 255, 255, 0.6),
+				inset -2px -2px 4px rgba(0, 0, 0, 0.08),
+				0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.locked {
+			background: linear-gradient(145deg, #d8d8d8 0%, #c8c8c8 50%, #b8b8b8 100%);
+			border-color: #b0b0b0;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.locked .rune-icon {
+			filter: grayscale(100%) brightness(0.7);
+			opacity: 0.5;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.locked .rune-name {
+			color: rgba(0, 0, 0, 0.3);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.unlocked {
+			background: linear-gradient(145deg, #f0f0f0 0%, #e0e0e0 50%, #d0d0d0 100%);
+			border-color: #6c5ce7;
+			box-shadow: 
+				inset 2px 2px 4px rgba(255, 255, 255, 0.7),
+				inset -2px -2px 4px rgba(0, 0, 0, 0.05),
+				0 0 8px rgba(108, 92, 231, 0.3);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.unlocked .rune-icon {
+			filter: none;
+			opacity: 1;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.normal-half .zodiac-rune.unlocked .rune-name {
+			color: #333;
+		}
+
+		/* ==================== 正位模式 - 右侧逆位半区（浅紫色）==================== */
+		body:not(.reversed-theme) .zodiac-half.reversed-half {
+			background: linear-gradient(135deg, #f5f0fa 0%, #ebe5f5 50%, #f5f0fa 100%);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: 
+				radial-gradient(ellipse at 30% 20%, rgba(155, 89, 182, 0.08) 0%, transparent 50%),
+				radial-gradient(ellipse at 70% 80%, rgba(108, 92, 231, 0.08) 0%, transparent 50%);
+			pointer-events: none;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half.active {
+			background: linear-gradient(135deg, #f8f3fc 0%, #f0eaf8 50%, #f8f3fc 100%);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-half-title {
+			color: #9b59b6;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half.active .zodiac-half-title {
+			color: #8e44ad;
+			text-shadow: 0 0 5px rgba(155, 89, 182, 0.3);
+		}
+
+		/* 正位模式 - 逆位符文（浅紫色）*/
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune {
+			background: linear-gradient(135deg, #f0e8f5 0%, #e5daf0 100%);
+			border: 2px solid #d0c0e0;
+			box-shadow: inset 0 0 8px rgba(155, 89, 182, 0.05);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.locked {
+			background: linear-gradient(135deg, #e8e0f0 0%, #ddd5e8 100%);
+			border-color: #c8b8d8;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.locked .rune-icon {
+			filter: grayscale(80%) brightness(0.8);
+			opacity: 0.4;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.locked .rune-name {
+			color: rgba(155, 89, 182, 0.35);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.unlocked {
+			background: linear-gradient(135deg, rgba(155, 89, 182, 0.15) 0%, rgba(108, 92, 231, 0.1) 100%);
+			border-color: #9b59b6;
+			box-shadow: 0 0 10px rgba(155, 89, 182, 0.25);
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.unlocked .rune-icon {
+			filter: none;
+		}
+
+		body:not(.reversed-theme) .zodiac-half.reversed-half .zodiac-rune.unlocked .rune-name {
+			color: #8e44ad;
+		}
+
+		/* ==================== 逆位模式 - 左侧正位半区（深灰石头）==================== */
+		body.reversed-theme .zodiac-half.normal-half {
+			background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: 
+				radial-gradient(ellipse at 20% 30%, rgba(80, 80, 80, 0.3) 0%, transparent 50%),
+				radial-gradient(ellipse at 80% 70%, rgba(60, 60, 60, 0.3) 0%, transparent 50%);
+			pointer-events: none;
+		}
+
+		body.reversed-theme .zodiac-half.normal-half.active {
+			background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 50%, #3a3a3a 100%);
+			box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.05);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-half-title {
+			color: #a0a0a0;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half.active .zodiac-half-title {
+			color: #d0d0d0;
+		}
+
+		/* 逆位模式 - 正位符文（深灰石头质感）*/
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune {
+			background: linear-gradient(145deg, #4a4a4a 0%, #3a3a3a 50%, #2a2a2a 100%);
+			border: 2px solid #5a5a5a;
+			box-shadow: 
+				inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+				inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+				0 3px 6px rgba(0, 0, 0, 0.3);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.locked {
+			background: linear-gradient(145deg, #3a3a3a 0%, #2a2a2a 50%, #1a1a1a 100%);
+			border-color: #3a3a3a;
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.locked .rune-icon {
+			filter: grayscale(100%) brightness(0.5);
+			opacity: 0.4;
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.locked .rune-name {
+			color: rgba(255, 255, 255, 0.25);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.unlocked {
+			background: linear-gradient(145deg, #5a5a5a 0%, #4a4a4a 50%, #3a3a3a 100%);
+			border-color: #7a7a7a;
+			box-shadow: 
+				inset 2px 2px 4px rgba(255, 255, 255, 0.15),
+				inset -2px -2px 4px rgba(0, 0, 0, 0.2),
+				0 0 10px rgba(200, 200, 200, 0.2);
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.unlocked .rune-icon {
+			filter: none;
+			opacity: 1;
+		}
+
+		body.reversed-theme .zodiac-half.normal-half .zodiac-rune.unlocked .rune-name {
+			color: rgba(255, 255, 255, 0.8);
+		}
+
+		/* ==================== 逆位模式 - 右侧逆位半区（深紫神秘）==================== */
+		body.reversed-theme .zodiac-half.reversed-half {
+			background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 50%, #1a1a2e 100%);
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: 
+				radial-gradient(ellipse at 30% 20%, rgba(155, 89, 182, 0.15) 0%, transparent 50%),
+				radial-gradient(ellipse at 70% 80%, rgba(108, 92, 231, 0.15) 0%, transparent 50%);
+			pointer-events: none;
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half.active {
+			background: linear-gradient(135deg, #2a2a4a 0%, #3a3a5a 50%, #2a2a4a 100%);
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-half-title {
+			color: #a29bfe;
+			text-shadow: 0 0 10px rgba(162, 155, 254, 0.5);
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half.active .zodiac-half-title {
+			color: #d4b5ff;
+			text-shadow: 0 0 15px rgba(212, 181, 255, 0.7);
+		}
+
+		/* 逆位模式 - 逆位符文（紫色发光）*/
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune {
+			background: linear-gradient(135deg, #2a2a4a 0%, #3a3a5a 100%);
+			border: 2px solid #4a4a6a;
+			box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.locked {
+			background: linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%);
+			border-color: #3a3a4a;
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.locked .rune-icon {
+			filter: grayscale(100%) brightness(0.4);
+			opacity: 0.3;
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.locked .rune-name {
+			color: rgba(162, 155, 254, 0.3);
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.unlocked {
+			background: radial-gradient(circle, rgba(155, 89, 182, 0.4) 0%, rgba(108, 92, 231, 0.3) 100%);
+			border-color: #9b59b6;
+			box-shadow: 
+				0 0 15px rgba(155, 89, 182, 0.5),
+				0 0 30px rgba(155, 89, 182, 0.2),
+				inset 0 0 10px rgba(255, 255, 255, 0.1);
+			animation: runeGlowReversed 2s ease-in-out infinite;
+		}
+
+		@keyframes runeGlowReversed {
+			0%, 100% { 
+				box-shadow: 
+					0 0 15px rgba(155, 89, 182, 0.5),
+					0 0 30px rgba(155, 89, 182, 0.2);
+			}
+			50% { 
+				box-shadow: 
+					0 0 20px rgba(155, 89, 182, 0.7),
+					0 0 40px rgba(155, 89, 182, 0.4);
+			}
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.unlocked .rune-icon {
+			filter: drop-shadow(0 0 5px rgba(155, 89, 182, 0.8));
+		}
+
+		body.reversed-theme .zodiac-half.reversed-half .zodiac-rune.unlocked .rune-name {
+			color: #e0d0ff;
+			text-shadow: 0 0 5px rgba(155, 89, 182, 0.5);
+		}
+
+		/* ==================== 通用符文样式 ==================== */
+		.zodiac-rune {
+			position: relative;
+			width: 65px;
+			height: 65px;
+			margin: 0 auto;
+			border-radius: 50%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.3s ease;
+			cursor: pointer;
+		}
+
+		.zodiac-rune:hover {
+			transform: scale(1.08);
+		}
+
+		.zodiac-rune .rune-icon {
+			font-size: 1.6rem;
+			transition: all 0.3s ease;
+		}
+
+		.zodiac-rune .rune-name {
+			font-size: 0.6rem;
+			margin-top: 2px;
+			transition: all 0.3s ease;
+		}
+
+		.zodiac-rune.locked::after {
+			content: '🔒';
+			position: absolute;
+			font-size: 0.7rem;
+			top: -3px;
+			right: -3px;
+			opacity: 0.7;
+		}
+
+		/* ==================== 底部区域 ==================== */
+		.zodiac-footer {
+			position: relative;
+			z-index: 2;
+			padding: 15px 20px;
+			text-align: center;
+		}
+
+		body:not(.reversed-theme) .zodiac-footer {
+			background: linear-gradient(0deg, rgba(108,92,231,0.05) 0%, transparent 100%);
+			border-top: 1px solid rgba(108, 92, 231, 0.1);
+		}
+
+		body.reversed-theme .zodiac-footer {
+			background: linear-gradient(0deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+			border-top: 1px solid rgba(255, 215, 0, 0.1);
+		}
+
+		.zodiac-unlock-btn {
+			padding: 10px 35px;
+			font-size: 0.95rem;
+			font-weight: 600;
+			border: none;
+			border-radius: 20px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			font-family: inherit;
+		}
+
+		.zodiac-unlock-btn.available {
+			background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+			color: white;
+			box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+		}
+
+		body.reversed-theme .zodiac-unlock-btn.available {
+			background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+			color: #1a1a2e;
+			box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+		}
+
+		.zodiac-unlock-btn.available:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 0 25px rgba(108, 92, 231, 0.6);
+		}
+
+		body.reversed-theme .zodiac-unlock-btn.available:hover {
+			box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+		}
+
+		.zodiac-unlock-btn.active {
+			background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+			color: white;
+			box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+		}
+
+		.zodiac-unlock-btn.disabled {
+			background: #c0c0c0;
+			color: #888;
+			cursor: not-allowed;
+		}
+
+		body.reversed-theme .zodiac-unlock-btn.disabled {
+			background: #3a3a4a;
+			color: rgba(255, 255, 255, 0.4);
+		}
+
+		.zodiac-status-text {
+			font-size: 0.75rem;
+			margin-top: 8px;
+		}
+
+		body:not(.reversed-theme) .zodiac-status-text {
+			color: #888;
+		}
+
+		body:not(.reversed-theme) .zodiac-status-text.success {
+			color: #6c5ce7;
+		}
+
+		body.reversed-theme .zodiac-status-text {
+			color: rgba(255, 255, 255, 0.5);
+		}
+
+		body.reversed-theme .zodiac-status-text.success {
+			color: #ffd700;
+		}
+
+		/* ==================== 响应式 ==================== */
+		@media (max-width: 500px) {
+			.zodiac-grid {
+				grid-template-columns: repeat(3, 1fr);
+				max-width: 100%;
+			}
+			.zodiac-rune {
+				width: 50px;
+				height: 50px;
+			}
+			.zodiac-rune .rune-icon {
+				font-size: 1.3rem;
+			}
+			.zodiac-core {
+				width: 45px;
+				height: 45px;
+				font-size: 1.4rem;
+			}
+			.zodiac-body {
+				min-height: 200px;
+			}
+		}
+		/* 符文可点击提示 */
+		.zodiac-rune {
+			cursor: pointer;
+		}
+
+		.zodiac-rune::before {
+			content: '点击选择';
+			position: absolute;
+			bottom: -20px;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 0.55rem;
+			white-space: nowrap;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			pointer-events: none;
+			padding: 2px 6px;
+			border-radius: 4px;
+			z-index: 10;
+		}
+
+		body:not(.reversed-theme) .zodiac-rune::before {
+			color: #6c5ce7;
+			background: rgba(108, 92, 231, 0.1);
+		}
+
+		body.reversed-theme .zodiac-rune::before {
+			color: rgba(255, 255, 255, 0.7);
+			background: rgba(0, 0, 0, 0.3);
+		}
+
+		.zodiac-rune:hover::before {
+			opacity: 1;
+		}
+
+		/* 符文悬停效果增强 */
+		.zodiac-rune:hover {
+			transform: scale(1.15);
+		}
+
+		.zodiac-rune:active {
+			transform: scale(1.05);
+		}
     </style>
 </head>
 
@@ -1785,7 +2587,7 @@
 			</div>
             
             <!-- 模式切换按钮 -->
-            <div class="mode-toggle-container">
+            <div class="mode-toggle-container" style="display:none;">
                 <button class="mode-toggle-btn active" id="normal-mode-btn" onclick="switchMode(false)">
                     ☀️ 正位
                 </button>
@@ -2892,10 +3694,12 @@
 
 
         // ==================== Supabase 统计系统 ====================
-        const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yemVqem15enVneHR5cnpmY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDYyMTUsImV4cCI6MjA4MDg4MjIxNX0.lx9W0v9KpRPmQR0kdxCSWVks_az5rLCr7D3JI2efeM4';
+		const SUPABASE_URL = 'https://ypefmpeekfucmarbbdov.supabase.co';
+		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwZWZtcGVla2Z1Y21hcmJiZG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NTA2NTYsImV4cCI6MjA4MTUyNjY1Nn0.XTOQNFuuwfu9nwDTnO9-NEqlzZnzdCVnEmYEJh0rXf8';
+        //const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
+        //const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yemVqem15enVneHR5cnpmY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDYyMTUsImV4cCI6MjA4MDg4MjIxNX0.lx9W0v9KpRPmQR0kdxCSWVks_az5rLCr7D3JI2efeM4';
 
-        let supabase = null;
+        //let supabase = null;
         let statsInitialized = false;
         let statsCache = null;
         let statsCacheTime = 0;
@@ -3286,40 +4090,6 @@
         }
 
 
-		async function fetchAllRows(tableName, selectColumns) {
-			if (!supabase) return [];
-			
-			let allData = [];
-			let from = 0;
-			const pageSize = 1000;
-			
-			while (true) {
-				const { data, error } = await supabase
-					.from(tableName)
-					.select(selectColumns)
-					.range(from, from + pageSize - 1);
-				
-				if (error) {
-					console.error(`获取 ${tableName} 数据失败:`, error);
-					throw error;
-				}
-				
-				if (!data || data.length === 0) break;
-				
-				allData = allData.concat(data);
-				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
-				
-				// 如果返回数量小于 pageSize，说明已经是最后一页
-				if (data.length < pageSize) break;
-				
-				from += pageSize;
-			}
-			
-			return allData;
-		}
-
-
-
 		// ★★★ 新增：快速获取游戏总数（用 count 查询）★★★
 		async function getTotalGamesCount() {
 			// 先检查本地缓存
@@ -3351,43 +4121,7 @@
 			}
 		}
 
-		// ★★★ 分页获取数据（最多获取指定数量）★★★
-		async function fetchRecentRows(tableName, selectColumns, maxRows = 10000) {
-			if (!supabase) return [];
-			
-			let allData = [];
-			let from = 0;
-			const pageSize = 1000; // Supabase 单次最大返回量
-			
-			while (allData.length < maxRows) {
-				const remaining = maxRows - allData.length;
-				const limit = Math.min(pageSize, remaining);
-				
-				const { data, error } = await supabase
-					.from(tableName)
-					.select(selectColumns)
-					.order('created_at', { ascending: false })
-					.range(from, from + limit - 1);
-				
-				if (error) {
-					console.error(`获取 ${tableName} 数据失败:`, error);
-					throw error;
-				}
-				
-				if (!data || data.length === 0) break;
-				
-				allData = allData.concat(data);
-				console.log(`${tableName}: 已获取 ${allData.length} 条记录`);
-				
-				// 如果返回数量小于请求数量，说明已经没有更多数据
-				if (data.length < limit) break;
-				
-				from += limit;
-			}
-			
-			return allData;
-		}
-
+		// ==================== 优化后：从缓存表获取全球统计 ====================
 		async function getGlobalStats() {
 			// 先检查本地缓存
 			const cached = getLocalCache(CACHE_KEYS.STATS);
@@ -3404,94 +4138,64 @@
 			}
 			
 			try {
-				const stats = {
-					normal: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} },
-					reversed: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} }
-				};
-
-				// ★★★ 使用分页获取最近10000条结局数据 ★★★
-				const endingsData = await fetchRecentRows(
-					'game_endings',
-					'ending_type, is_reversed, character, total_score, total_months, paper_a, paper_b, paper_c, total_citations',
-					10000
-				);
+				// 尝试从缓存表读取（优化后的方式）
+				const [endingsRes, achievementsRes, difficultyRes] = await Promise.all([
+					supabase.from('stats_endings_cache').select('*'),
+					supabase.from('stats_achievements_cache').select('*'),
+					supabase.from('stats_character_difficulty_cache').select('*')
+				]);
 				
-				console.log(`📊 获取结局数据总数: ${endingsData.length}`);
+				// 检查缓存表是否存在且有数据
+				const hasCache = !endingsRes.error && endingsRes.data && endingsRes.data.length > 0;
 				
-				// 在10000条内过滤有效数据
-				const validEndings = endingsData.filter(e => {
-					if (!e.ending_type || !e.character || typeof e.is_reversed !== 'boolean') {
-						return false;
-					}
-					// ★★★ 新增：过滤超过20000引用的异常数据 ★★★
-					if ((e.total_citations || 0) > 20000) return false;
-					const paperA = e.paper_a || 0;
-					const paperB = e.paper_b || 0;
-					const paperC = e.paper_c || 0;
-					const totalScore = e.total_score || 0;
-					const totalMonths = e.total_months || 0;
-					const totalPapers = paperA + paperB + paperC;
+				if (hasCache) {
+					// 使用缓存表数据
+					const stats = {
+						normal: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} },
+						reversed: { endings: {}, achievements: {}, totalGames: 0, characterEndings: {} }
+					};
 					
-					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
-					if (totalScore !== expectedScore) return false;
+					// 处理结局数据
+					endingsRes.data.forEach(function(row) {
+						stats[row.mode].endings[row.ending_type] = row.count;
+						stats[row.mode].totalGames += row.count;
+					});
 					
-					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
-					const isPhd = phdEndings.includes(e.ending_type);
-					
-					if (isPhd) {
-						if (totalMonths > 61 || totalPapers >= 26) return false;
-					} else {
-						if (totalMonths > 36 || totalPapers >= 12) return false;
+					// 处理成就数据
+					if (achievementsRes.data) {
+						achievementsRes.data.forEach(function(row) {
+							stats[row.mode].achievements[row.achievement_name] = row.count;
+						});
 					}
 					
-					return true;
-				});
-				
-				console.log(`📊 有效结局数据: ${validEndings.length}/${endingsData.length}`);
-				
-				// 统计结局
-				validEndings.forEach(e => {
-					const mode = e.is_reversed ? 'reversed' : 'normal';
-					const type = e.ending_type;
-					const character = e.character;
-					
-					stats[mode].endings[type] = (stats[mode].endings[type] || 0) + 1;
-					stats[mode].totalGames++;
-					
-					if (!stats[mode].characterEndings[character]) {
-						stats[mode].characterEndings[character] = { total: 0, hard: 0 };
+					// 处理角色难度数据
+					if (difficultyRes.data) {
+						difficultyRes.data.forEach(function(row) {
+							var mode = row.is_reversed ? 'reversed' : 'normal';
+							stats[mode].characterEndings[row.character_id] = {
+								total: row.total_games,
+								hard: row.hard_games
+							};
+						});
 					}
-					stats[mode].characterEndings[character].total++;
-					if (HARD_ENDINGS.includes(type)) {
-						stats[mode].characterEndings[character].hard++;
-					}
-				});
-
-				// ★★★ 使用分页获取最近10000条成就数据 ★★★
-				const achievementsData = await fetchRecentRows(
-					'game_achievements',
-					'achievement_name, is_reversed',
-					10000
-				);
-				
-				console.log(`📊 获取成就数据总数: ${achievementsData.length}`);
-				
-				achievementsData.forEach(a => {
-					if (!a.achievement_name || typeof a.is_reversed !== 'boolean') return;
 					
-					const mode = a.is_reversed ? 'reversed' : 'normal';
-					stats[mode].achievements[a.achievement_name] = (stats[mode].achievements[a.achievement_name] || 0) + 1;
-				});
-
-				// 成功后才缓存
-				statsCache = stats;
-				statsCacheTime = Date.now();
-				setLocalCache(CACHE_KEYS.STATS, stats);
+					// 缓存结果
+					statsCache = stats;
+					statsCacheTime = Date.now();
+					setLocalCache(CACHE_KEYS.STATS, stats);
+					
+					console.log('✅ 从缓存表加载统计完成');
+					return stats;
+				}
 				
-				return stats;
+				// 缓存表不存在或为空，fallback 到原有逻辑
+				console.log('缓存表为空，使用原有逻辑加载数据');
+				return await getGlobalStatsFallback();
+				
 			} catch (e) {
 				console.error('获取统计失败:', e);
-				return statsCache || null;
+				// 出错时尝试 fallback
+				return await getGlobalStatsFallback();
 			}
 		}
 
@@ -3633,15 +4337,15 @@
 			achievementContainer.innerHTML = achievementHtml;
 		}
 
-		// ==================== 1. 修改难度计算函数 ====================
-
+		// ==================== 简化后：直接使用预计算的难度数据 ====================
 		function calculateCharacterDifficulty(stats) {
 			const difficultyData = {};
 			const allCharacterRates = [];
-
-			// ★★★ 真·大多数不参与排序 ★★★
-			const allCharIds = characters.map(c => c.id);
-
+			
+			// 所有角色ID（包括真·大多数）
+			const allCharIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
+			
+			// 收集所有角色的博士通关率
 			allCharIds.forEach(charId => {
 				// 正位数据
 				const normalData = stats.normal.characterEndings[charId] || { total: 0, hard: 0 };
@@ -3653,7 +4357,7 @@
 					total: normalData.total,
 					hard: normalData.hard
 				});
-
+				
 				// 逆位数据
 				const reversedData = stats.reversed.characterEndings[charId] || { total: 0, hard: 0 };
 				const reversedRate = reversedData.total >= 5 ? reversedData.hard / reversedData.total : null;
@@ -3665,10 +4369,12 @@
 					hard: reversedData.hard
 				});
 			});
-
+			
+			// 过滤有效数据并排序
 			const validRates = allCharacterRates.filter(c => c.rate !== null);
-			validRates.sort((a, b) => b.rate - a.rate);
-
+			validRates.sort((a, b) => b.rate - a.rate); // 博士率高的排前面（更简单）
+			
+			// 计算难度星级
 			validRates.forEach((char, index) => {
 				const rank = index + 1;
 				const difficulty = Math.ceil(rank * 12 / validRates.length);
@@ -3682,7 +4388,8 @@
 					totalRanked: validRates.length
 				};
 			});
-
+			
+			// 处理数据不足的角色
 			allCharacterRates.forEach(char => {
 				const key = `${char.id}_${char.isReversed ? 'reversed' : 'normal'}`;
 				if (!difficultyData[key]) {
@@ -3696,20 +4403,19 @@
 					};
 				}
 			});
-
-			// ★★★ 真·大多数固定为最高难度（12星） ★★★
+			
+			// 真·大多数固定12星
 			const trueNormalData = stats.normal.characterEndings['true-normal'] || { total: 0, hard: 0 };
-			const trueNormalRate = trueNormalData.total >= 5 ? trueNormalData.hard / trueNormalData.total : null;
 			difficultyData['true-normal_normal'] = {
-				stars: 12,  // 固定12星最高难度
-				rate: trueNormalRate,
+				stars: 12,
+				rate: trueNormalData.total >= 5 ? trueNormalData.hard / trueNormalData.total : null,
 				total: trueNormalData.total,
 				hard: trueNormalData.hard,
-				rank: 0,  // 特殊排名
+				rank: 0,
 				totalRanked: validRates.length,
-				isFixed: true  // 标记为固定难度
+				isFixed: true
 			};
-
+			
 			return difficultyData;
 		}
 
@@ -3936,6 +4642,14 @@
 			initStats();
 			loadGlobalStatsDisplay();
 			
+			// ★★★ 新增：加载今日统计和在线人数 ★★★
+			updateAllStatsDisplay();
+			
+			// ★★★ 新增：每30秒刷新一次在线人数和今日统计 ★★★
+			setInterval(() => {
+				updateAllStatsDisplay();
+			}, 30 * 1000);
+			
 			setTimeout(() => {
 				const messageSection = document.getElementById('message-section');
 				if (messageSection) {
@@ -3953,7 +4667,54 @@
 
 
 		// ==================== 3. 修改renderCharacterGrid添加折叠功能 ====================
+		// 点击解锁栏符文，跳转并选中对应角色
+		function selectCharacterFromRune(charId, isReversedSide) {
+			// 如果需要切换模式
+			if (isReversedSide !== isReversedMode) {
+				switchMode(isReversedSide);
+				// 等待渲染完成后再选择角色
+				setTimeout(() => {
+					selectAndScrollToCharacter(charId);
+				}, 100);
+			} else {
+				selectAndScrollToCharacter(charId);
+			}
+		}
 
+		// 选中角色并滚动到卡片位置
+		function selectAndScrollToCharacter(charId) {
+			// 选中角色
+			selectCharacter(charId);
+			
+			// 找到对应的角色卡片并滚动
+			const card = document.querySelector(`.character-card[data-id="${charId}"]`);
+			if (card) {
+				// 如果卡片是折叠状态，先展开
+				if (card.classList.contains('card-collapsed')) {
+					const body = card.querySelector('.card-body');
+					const icon = card.querySelector('.card-header .collapse-icon');
+					card.classList.remove('card-collapsed');
+					if (body) body.classList.remove('collapsed');
+					if (icon) icon.classList.remove('rotated');
+					
+					// 更新折叠状态存储
+					const states = getCharacterCardCollapseStates();
+					const cardKey = `${charId}_${isReversedMode ? 'reversed' : 'normal'}`;
+					states[cardKey] = false;
+					saveCharacterCardCollapseStates(states);
+				}
+				
+				// 滚动到卡片位置
+				card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				
+				// 添加高亮动画效果
+				card.style.transition = 'all 0.3s ease';
+				card.style.boxShadow = '0 0 20px rgba(108, 92, 231, 0.6)';
+				setTimeout(() => {
+					card.style.boxShadow = '';
+				}, 1000);
+			}
+		}
 		function renderCharacterGrid() {
 			const grid = document.getElementById('character-grid');
 			const globalRecords = globalCharacterRecords;
@@ -3983,136 +4744,182 @@
 			// ★★★ 获取角色卡片折叠状态 ★★★
 			const cardCollapseStates = getCharacterCardCollapseStates();
 
-			// 解锁进度栏
-			const progressContainer = document.getElementById('true-normal-progress');
-			if (progressContainer) {
-				if (!isReversedMode) {
+		// 解锁进度栏 - 石碑风格
+		const progressContainer = document.getElementById('true-normal-progress');
+		if (progressContainer) {
+			const trueNormalUnlocked = isTrueNormalUnlocked();
+			const unlockProgress = getTrueNormalUnlockProgress();
+			
+			// 计算进度
+			const normalUnlocked = unlockProgress.details.filter(d => d.normalUnlocked).length;
+			const reversedUnlocked = unlockProgress.details.filter(d => d.reversedUnlocked).length;
+			const totalUnlocked = normalUnlocked + reversedUnlocked;
+			const progressPercent = (totalUnlocked / 12 * 100).toFixed(0);
+			
+			// 正位角色图标
+			const normalIcons = {
+				'normal': '👤',
+				'genius': '🔬',
+				'social': '🤝',
+				'rich': '💰',
+				'teacher-child': '👨‍👧',
+				'chosen': '⭐'
+			};
+			
+			// 逆位角色图标
+			const reversedIcons = {
+				'normal': '😴',
+				'genius': '🤡',
+				'social': '🐍',
+				'rich': '🏴‍☠️',
+				'teacher-child': '🎪',
+				'chosen': '🌀'
+			};
+			
+			// 生成角色符文HTML
+			const generateRuneHtml = (details, isReversedSide) => {
+				const icons = isReversedSide ? reversedIcons : normalIcons;
+				
+				// 正位名称缩写
+				const normalNameMap = {
+					'normal': '大多数',
+					'genius': '院士',
+					'social': '社交',
+					'rich': '富豪',
+					'teacher-child': '子女',
+					'chosen': '天选'
+				};
+				
+				// 逆位名称缩写（使用逆位角色名前两个字）
+				const reversedNameMap = {
+					'normal': '怠惰',
+					'genius': '愚钝',
+					'social': '嫉妒',
+					'rich': '贪求',
+					'teacher-child': '玩世',
+					'chosen': '空想'
+				};
+				
+				const nameMap = isReversedSide ? reversedNameMap : normalNameMap;
+				
+				return details.map(d => {
+					const isUnlocked = isReversedSide ? d.reversedUnlocked : d.normalUnlocked;
+					const icon = icons[d.id] || '❓';
+					const shortName = nameMap[d.id] || d.name.substring(0, 2);
 					
-					if (trueNormalUnlocked) {
-						progressContainer.innerHTML = `
-							<div style="margin-top:15px;padding:20px;background:linear-gradient(135deg,#fffef5 0%,#fff9e6 50%,#fff4d6 100%);border-radius:16px;border:2px solid #f0c14b;box-shadow:0 4px 20px rgba(240,193,75,0.2);position:relative;overflow:hidden;">
-								
-								<div style="position:absolute;top:0;right:0;width:150px;height:150px;background:radial-gradient(circle,rgba(255,200,50,0.15) 0%,transparent 70%);pointer-events:none;"></div>
-								<div style="position:absolute;bottom:0;left:0;width:100px;height:100px;background:radial-gradient(circle,rgba(255,180,50,0.1) 0%,transparent 70%);pointer-events:none;"></div>
-								
-								<div style="text-align:center;margin-bottom:15px;position:relative;">
-									<div style="font-size:1.2rem;font-weight:700;color:#b8860b;">
-										✨ 真·大多数 已解锁 ✨
-									</div>
-									<div style="font-size:0.75rem;color:#996515;margin-top:4px;">
-										全部12项挑战已完成 · 全球 <strong style="color:#d4851c;">${trueNormalUnlockedCount}</strong> 人已解锁
-									</div>
-								</div>
-								
-								<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:15px;">
-									${unlockProgress.details.map(d => `
-										<div style="display:flex;align-items:center;gap:4px;padding:5px 12px;background:white;border-radius:20px;border:1px solid #e8d5a3;box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-											<span style="font-size:0.75rem;color:#5d4e37;font-weight:500;">${d.name}</span>
-											<span style="color:#22c55e;font-size:0.7rem;font-weight:600;">✓✓</span>
-										</div>
-									`).join('')}
-								</div>
-								
-								<div style="height:1px;background:linear-gradient(90deg,transparent,#e8d5a3,transparent);margin:15px 0;"></div>
-								
-								<div style="text-align:center;">
-									<button class="btn" 
-											style="padding:12px 35px;font-size:0.95rem;font-weight:600;
-												   background:${isTrueNormalMode 
-													   ? 'linear-gradient(135deg,#ef4444,#dc2626)' 
-													   : 'linear-gradient(135deg,#f59e0b,#d97706)'};
-												   color:white;
-												   border:none;border-radius:25px;
-												   box-shadow:0 4px 15px ${isTrueNormalMode 
-													   ? 'rgba(239,68,68,0.35)' 
-													   : 'rgba(245,158,11,0.35)'};
-												   transition:all 0.3s ease;cursor:pointer;"
-											onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px ${isTrueNormalMode ? 'rgba(239,68,68,0.45)' : 'rgba(245,158,11,0.45)'}'"
-											onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px ${isTrueNormalMode ? 'rgba(239,68,68,0.35)' : 'rgba(245,158,11,0.35)'}'"
-											onclick="toggleTrueNormalMode()">
-										${isTrueNormalMode 
-											? '🔙 切换回普通大多数' 
-											: '🌟 选择真·大多数挑战'}
-									</button>
-									${isTrueNormalMode ? `
-										<div style="margin-top:12px;padding:10px 15px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:10px;border:1px solid #fecaca;">
-											<span style="color:#dc2626;font-size:0.8rem;font-weight:500;">
-												🔥 已选择真·大多数
-											</span>
-										</div>
-									` : `
-										<div style="margin-top:10px;font-size:0.75rem;color:#92785a;">
-											⚔️ 无特殊能力 · 无转博觉醒 · 一切靠自己
-										</div>
-									`}
-								</div>
-							</div>
-						`;
-					} else {
-						const progressPercent = (unlockProgress.unlocked / unlockProgress.total * 100).toFixed(0);
-						
-						progressContainer.innerHTML = `
-							<div style="margin-top:15px;padding:15px 18px;background:linear-gradient(135deg,#f8f9ff,#f0f4ff);border-radius:12px;border:1px dashed #c5cae9;">
-								
-								<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-									<div style="display:flex;align-items:center;gap:10px;">
-										<div style="width:40px;height:40px;background:linear-gradient(135deg,#e8eaf6,#c5cae9);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-											<span style="font-size:1.2rem;">🔒</span>
-										</div>
-										<div>
-											<div style="font-size:0.95rem;font-weight:600;color:#3f51b5;">真·大多数</div>
-											<div style="font-size:0.7rem;color:#7986cb;">解锁终极挑战模式</div>
-										</div>
-									</div>
-									<div style="text-align:right;">
-										<div style="font-size:0.65rem;color:#9fa8da;">全球 ${trueNormalUnlockedCount} 人</div>
-									</div>
-								</div>
-								
-								<div style="height:8px;background:#e8eaf6;border-radius:4px;margin-bottom:14px;overflow:hidden;">
-									<div style="width:${progressPercent}%;height:100%;background:linear-gradient(90deg,#7c4dff,#536dfe);border-radius:4px;transition:width 0.5s ease;"></div>
-								</div>
-								
-								<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-									${unlockProgress.details.map(d => {
-										const normalCount = globalPhdStats[`${d.id}_normal`] || 0;
-										const reversedCount = globalPhdStats[`${d.id}_reversed`] || 0;
-										const bothDone = d.normalUnlocked && d.reversedUnlocked;
-										
-										return `
-										<div style="padding:8px 10px;background:${bothDone ? 'linear-gradient(135deg,#e8f5e9,#c8e6c9)' : 'white'};border-radius:8px;border:1px solid ${bothDone ? '#a5d6a7' : '#e8eaf6'};">
-											<div style="font-size:0.75rem;font-weight:600;color:${bothDone ? '#2e7d32' : '#5c6bc0'};margin-bottom:5px;display:flex;align-items:center;gap:4px;">
-												${bothDone ? '✓' : ''} ${d.name}
-											</div>
-											<div style="display:flex;gap:4px;">
-												<span style="flex:1;text-align:center;padding:3px 0;border-radius:4px;font-size:0.6rem;
-													${d.normalUnlocked 
-														? 'background:#e8f5e9;color:#2e7d32;' 
-														: 'background:#f5f5f5;color:#bdbdbd;'}">
-													☀️ ${d.normalUnlocked ? '✓' : '-'}
-												</span>
-												<span style="flex:1;text-align:center;padding:3px 0;border-radius:4px;font-size:0.6rem;
-													${d.reversedUnlocked 
-														? 'background:#f3e5f5;color:#7b1fa2;' 
-														: 'background:#f5f5f5;color:#bdbdbd;'}">
-													🌑 ${d.reversedUnlocked ? '✓' : '-'}
-												</span>
-											</div>
-										</div>
-									`}).join('')}
-								</div>
-								
-								<div style="margin-top:12px;text-align:center;font-size:0.7rem;color:#9fa8da;">
-									💡 每个角色需正位+逆位都博士毕业才能解锁
-								</div>
-							</div>
-						`;
-					}
-					progressContainer.style.display = 'block';
+					// 完整名称用于tooltip
+					const fullName = isReversedSide 
+						? {
+							'normal': '怠惰之《大多数》',
+							'genius': '愚钝之《院士转世》',
+							'social': '嫉妒之《社交达人》',
+							'rich': '贪求之《富可敌国》',
+							'teacher-child': '玩世之《导师子女》',
+							'chosen': '空想之《天选之人》'
+						}[d.id] || d.name
+						: d.name;
+					
+					// ★★★ 添加点击事件，阻止冒泡避免触发半区的switchMode ★★★
+					return `
+						<div class="zodiac-rune ${isUnlocked ? 'unlocked' : 'locked'}" 
+							 title="${fullName} - 点击选择此角色"
+							 onclick="event.stopPropagation(); selectCharacterFromRune('${d.id}', ${isReversedSide})">
+							<span class="rune-icon">${icon}</span>
+							<span class="rune-name">${shortName}</span>
+						</div>
+					`;
+				}).join('');
+			};
+			
+			// 底部内容
+			let footerContent = '';
+			if (trueNormalUnlocked) {
+				if (isReversedMode) {
+					footerContent = `
+						<div class="zodiac-status-text">
+							⚠️ 真·大多数仅在正位模式下可用
+						</div>
+						<div class="zodiac-status-text success" style="margin-top:5px;">
+							✨ 已完全解锁
+						</div>
+					`;
 				} else {
-					progressContainer.style.display = 'none';
+					footerContent = `
+						<button class="zodiac-unlock-btn ${isTrueNormalMode ? 'active' : 'available'}" onclick="toggleTrueNormalMode()">
+							${isTrueNormalMode ? '🔙 取消选择' : '🌟 开启真·大多数'}
+						</button>
+						<div class="zodiac-status-text ${isTrueNormalMode ? '' : 'success'}">
+							${isTrueNormalMode ? '🔥 已选择 - 无特殊能力' : '✨ 已完全解锁'}
+						</div>
+					`;
 				}
+			} else {
+				footerContent = `
+					<button class="zodiac-unlock-btn disabled" disabled>
+						🔒 ${totalUnlocked}/12
+					</button>
+					<div class="zodiac-status-text">
+						每个角色需正位+逆位博士毕业
+					</div>
+				`;
 			}
+			
+			progressContainer.innerHTML = `
+				<div class="zodiac-unlock-panel">
+					<!-- 分隔线 -->
+					<div class="zodiac-divider"></div>
+					
+					<!-- 标题 -->
+					<div class="zodiac-header">
+						<div class="zodiac-title">✦ 真·大多数 ✦</div>
+						<div class="zodiac-subtitle">完成所有挑战解锁终极模式</div>
+						<div class="zodiac-progress">
+							<div class="zodiac-progress-fill" style="width:${progressPercent}%;"></div>
+						</div>
+						<div class="zodiac-progress-text">${totalUnlocked} / 12</div>
+					</div>
+					
+					<!-- 主体 -->
+					<div class="zodiac-body">
+						<!-- 中央核心 -->
+						<div class="zodiac-center">
+							<div class="zodiac-core ${trueNormalUnlocked ? 'unlocked' : 'locked'}">
+								${trueNormalUnlocked ? '🌍' : '🔒'}
+							</div>
+						</div>
+						
+						<!-- 左侧 - 正位 -->
+						<div class="zodiac-half normal-half ${!isReversedMode ? 'active' : ''}" onclick="switchMode(false)">
+							<div class="zodiac-half-title">
+								☀️ 正位 <span style="font-size:0.8em;opacity:0.7;">(${normalUnlocked}/6)</span>
+							</div>
+							<div class="zodiac-grid">
+								${generateRuneHtml(unlockProgress.details, false)}
+							</div>
+							<div class="zodiac-click-hint">点击切换正位</div>
+						</div>
+						
+						<!-- 右侧 - 逆位 -->
+						<div class="zodiac-half reversed-half ${isReversedMode ? 'active' : ''}" onclick="switchMode(true)">
+							<div class="zodiac-half-title">
+								🌑 逆位 <span style="font-size:0.8em;opacity:0.7;">(${reversedUnlocked}/6)</span>
+							</div>
+							<div class="zodiac-grid">
+								${generateRuneHtml(unlockProgress.details, true)}
+							</div>
+							<div class="zodiac-click-hint">点击切换逆位</div>
+						</div>
+					</div>
+					
+					<!-- 底部 -->
+					<div class="zodiac-footer">
+						${footerContent}
+					</div>
+				</div>
+			`;
+			
+			progressContainer.style.display = 'block';
+		}
 			
 			// 渲染角色卡片
 			grid.innerHTML = characters.map(char => {
@@ -4494,42 +5301,34 @@
 			loadSubmissionStatsAsync();
 		}
 
-		// ★★★ 新增：异步加载投稿统计（带超时和重试） ★★★
+		// ==================== 简化后的异步加载 ====================
 		async function loadSubmissionStatsAsync(retryCount = 0) {
-			const maxRetries = 3;
-			const timeout = 8000 + retryCount * 2000; // 每次重试增加超时时间
+			const maxRetries = 2;
+			const timeout = 5000;
 			
 			try {
-				// 设置超时
 				const timeoutPromise = new Promise((_, reject) => {
 					setTimeout(() => reject(new Error('加载超时')), timeout);
 				});
 				
 				const loadPromise = loadSubmissionStats();
-				
 				const stats = await Promise.race([loadPromise, timeoutPromise]);
 				
 				if (stats && Object.keys(stats).length > 0) {
 					gameState.submissionStats = stats;
-					console.log('✅ 投稿统计已后台加载完成');
-					// 刷新论文槽显示（更新录用率等信息）
+					console.log('✅ 投稿统计已加载');
 					renderPaperSlots();
 					updateResearchResults();
 				} else {
 					throw new Error('返回数据为空');
 				}
 			} catch (e) {
-				console.warn(`后台加载投稿统计失败(第${retryCount + 1}次):`, e.message);
+				console.warn(`加载投稿统计失败(第${retryCount + 1}次):`, e.message);
 				
-				// ★★★ 重试机制 ★★★
 				if (retryCount < maxRetries) {
-					console.log(`将在3秒后重试...`);
-					setTimeout(() => {
-						loadSubmissionStatsAsync(retryCount + 1);
-					}, 3000);
+					setTimeout(() => loadSubmissionStatsAsync(retryCount + 1), 2000);
 				} else {
-					console.warn('投稿统计加载失败，使用默认值');
-					// 确保使用有效的默认值
+					console.warn('使用默认投稿统计');
 					if (!gameState.submissionStats) {
 						gameState.submissionStats = getDefaultSubmissionStats();
 					}
@@ -5549,7 +6348,7 @@
 		function updateActionButtons() {
 			const btns = ['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'];
 			
-			// ★★★ 修改：基于行动次数判断 ★★★
+			// 基于行动次数判断
 			const actionsRemaining = gameState.actionLimit - gameState.actionCount;
 			const allUsed = actionsRemaining <= 0;
 			
@@ -5561,16 +6360,27 @@
 			
 			const costs = getActionCosts();
 			
-			// ★★★ 新增：显示剩余行动次数 ★★★
+			// 显示剩余行动次数
 			const actionCountDisplay = gameState.actionLimit > 1 
-				? `<span style="font-size:0.6rem;color:var(--warning-color);">(${actionsRemaining}/${gameState.actionLimit})</span>` 
+				? ` (${actionsRemaining}/${gameState.actionLimit})` 
 				: '';
 			
-			document.getElementById('btn-read').innerHTML = `<i class="fas fa-book-open"></i><span>看论文${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.read)}</span>`;
-			document.getElementById('btn-work').innerHTML = `<i class="fas fa-briefcase"></i><span>打工${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.work)}</span>`;
-			document.getElementById('btn-idea').innerHTML = `<i class="fas fa-lightbulb"></i><span>想idea${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.idea)}</span>`;
-			document.getElementById('btn-experiment').innerHTML = `<i class="fas fa-vial"></i><span>做实验${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.experiment)}</span>`;
-			document.getElementById('btn-write').innerHTML = `<i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span><span class="action-cost">${formatCost(costs.write)}</span>`;
+			// 改为2行布局：第一行图标+文字，第二行效果
+			document.getElementById('btn-read').innerHTML = `
+				<div class="action-top"><i class="fas fa-book-open"></i><span>看论文${actionCountDisplay}</span></div>
+				<span class="action-cost">${formatCost(costs.read)}</span>`;
+			document.getElementById('btn-work').innerHTML = `
+				<div class="action-top"><i class="fas fa-briefcase"></i><span>打工${actionCountDisplay}</span></div>
+				<span class="action-cost">${formatCost(costs.work)}</span>`;
+			document.getElementById('btn-idea').innerHTML = `
+				<div class="action-top"><i class="fas fa-lightbulb"></i><span>想idea${actionCountDisplay}</span></div>
+				<span class="action-cost">${formatCost(costs.idea)}</span>`;
+			document.getElementById('btn-experiment').innerHTML = `
+				<div class="action-top"><i class="fas fa-vial"></i><span>做实验${actionCountDisplay}</span></div>
+				<span class="action-cost">${formatCost(costs.experiment)}</span>`;
+			document.getElementById('btn-write').innerHTML = `
+				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
+				<span class="action-cost">${formatCost(costs.write)}</span>`;
 		}
 
         // ==================== 事件预告系统 ====================
@@ -11071,6 +11881,7 @@
 		let globalCharacterRecords = null;
 		let globalCharacterRecordsTime = 0;
 
+		// ==================== 优化后：从缓存表获取角色记录 ====================
 		async function getGlobalCharacterRecords() {
 			// 先检查本地缓存
 			const cached = getLocalCache(CACHE_KEYS.CHARACTER_RECORDS);
@@ -11084,20 +11895,25 @@
 			if (!supabase) return null;
 			
 			try {
-				const records = {
-					normal: {},
-					reversed: {}
-				};
+				console.log('📊 从缓存表加载角色记录...');
 				
-				// ★★★ 修改：添加 true-normal 的统计 ★★★
-				const allCharIds = [...characters.map(c => c.id), 'true-normal'];
+				const { data, error } = await supabase
+					.from('stats_character_records_cache')
+					.select('*');
 				
+				if (error) throw error;
+				
+				// 初始化数据结构
+				const records = { normal: {}, reversed: {} };
+				
+				// 初始化所有角色
+				const allCharIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen', 'true-normal'];
 				allCharIds.forEach(charId => {
 					records.normal[charId] = {
 						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
 						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
 					};
-					// 真·大多数只有正位模式
+					// 真·大多数只有正位
 					if (charId !== 'true-normal') {
 						records.reversed[charId] = {
 							today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
@@ -11106,170 +11922,36 @@
 					}
 				});
 				
-				characters.forEach(char => {
-					records.normal[char.id] = {
-						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
-					};
-					records.reversed[char.id] = {
-						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
-					};
-				});
-				
-				// 计算今日起始时间（北京时间0点）
-				const now = new Date();
-				const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-				const year = beijingTime.getUTCFullYear();
-				const month = beijingTime.getUTCMonth();
-				const day = beijingTime.getUTCDate();
-				const todayBeijingMidnightUTC = new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000);
-				let todayStr = todayBeijingMidnightUTC.toISOString();
-				
-				if (todayStr < GAME_START_DATE) {
-					todayStr = GAME_START_DATE;
-				}
-				
-				// ★★★ 使用分页获取最近10000条历史数据 ★★★
-				const historyData = await fetchRecentRowsWithFilter(
-					'game_endings',
-					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
-					{ column: 'created_at', operator: 'gte', value: GAME_START_DATE },
-					10000
-				);
-				
-				// ★★★ 使用分页获取今日数据 ★★★
-				const todayData = await fetchRecentRowsWithFilter(
-					'game_endings',
-					'character, is_reversed, total_score, total_citations, achievements_count, total_months, paper_a, paper_b, paper_c, ending_type',
-					{ column: 'created_at', operator: 'gte', value: todayStr },
-					10000
-				);
-				
-				// 过滤函数
-				const filterValid = (row) => {
-					if (!row.character || typeof row.is_reversed !== 'boolean') return false;
+				// 填充缓存数据
+				(data || []).forEach(row => {
+					const mode = row.is_reversed ? 'reversed' : 'normal';
+					const charId = row.character_id;
+					const recordType = row.record_type; // 'today' or 'history'
 					
-					// ★★★ 新增：只统计好结局 ★★★
-					const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
-					if (!goodEndings.includes(row.ending_type)) return false;
-					// ★★★ 新增：过滤超过20000引用的异常数据 ★★★
-					if ((row.total_citations || 0) > 20000) return false;
-					
-					const paperA = row.paper_a || 0;
-					const paperB = row.paper_b || 0;
-					const paperC = row.paper_c || 0;
-					const totalScore = row.total_score || 0;
-					const totalMonths = row.total_months || 0;
-					const totalPapers = paperA + paperB + paperC;
-					
-					const expectedScore = paperA * 4 + paperB * 2 + paperC * 1;
-					if (totalScore !== expectedScore) return false;
-					
-					const phdEndings = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion'];
-					const isPhd = phdEndings.includes(row.ending_type);
-					
-					if (isPhd) {
-						if (totalMonths > 61 || totalPapers >= 22) return false;
-					} else {
-						if (totalMonths > 36 || totalPapers >= 12) return false;
+					if (records[mode] && records[mode][charId] && records[mode][charId][recordType]) {
+						records[mode][charId][recordType] = {
+							maxScore: row.max_score || 0,
+							maxCitations: row.max_citations || 0,
+							maxAchievements: row.max_achievements || 0
+						};
 					}
-					
-					return true;
-				};
-				
-				const validHistoryData = historyData.filter(filterValid);
-				const validTodayData = todayData.filter(filterValid);
-				
-				console.log(`📊 历史有效数据: ${validHistoryData.length}/${historyData.length}`);
-				console.log(`📊 今日有效数据: ${validTodayData.length}/${todayData.length}`);
-				
-				// 处理历史数据
-				validHistoryData.forEach(row => {
-					const mode = row.is_reversed ? 'reversed' : 'normal';
-					const charId = row.character;
-					
-					if (!records[mode][charId]) return;
-					
-					const record = records[mode][charId].history;
-					if ((row.total_score || 0) > record.maxScore) record.maxScore = row.total_score || 0;
-					if ((row.total_citations || 0) > record.maxCitations) record.maxCitations = row.total_citations || 0;
-					if ((row.achievements_count || 0) > record.maxAchievements) record.maxAchievements = row.achievements_count || 0;
 				});
 				
-				// 处理今日数据
-				validTodayData.forEach(row => {
-					const mode = row.is_reversed ? 'reversed' : 'normal';
-					const charId = row.character;
-					
-					if (!records[mode][charId]) return;
-					
-					const record = records[mode][charId].today;
-					if ((row.total_score || 0) > record.maxScore) record.maxScore = row.total_score || 0;
-					if ((row.total_citations || 0) > record.maxCitations) record.maxCitations = row.total_citations || 0;
-					if ((row.achievements_count || 0) > record.maxAchievements) record.maxAchievements = row.achievements_count || 0;
-				});
-				
-				// 成功后才缓存
+				// 更新缓存
 				globalCharacterRecords = records;
 				globalCharacterRecordsTime = Date.now();
 				setLocalCache(CACHE_KEYS.CHARACTER_RECORDS, records);
 				
-				console.log('✅ 全球角色记录加载完成');
-				
+				console.log('✅ 角色记录加载完成');
 				return records;
+				
 			} catch (e) {
-				console.error('获取全球角色记录失败:', e);
+				console.error('获取角色记录失败:', e);
 				return globalCharacterRecords || null;
 			}
 		}
 
-		// ★★★ 带筛选条件的分页获取 ★★★
-		async function fetchRecentRowsWithFilter(tableName, selectColumns, filter, maxRows = 10000) {
-			if (!supabase) return [];
-			
-			let allData = [];
-			let from = 0;
-			const pageSize = 1000;
-			
-			while (allData.length < maxRows) {
-				const remaining = maxRows - allData.length;
-				const limit = Math.min(pageSize, remaining);
-				
-				let query = supabase
-					.from(tableName)
-					.select(selectColumns)
-					.order('created_at', { ascending: false });
-				
-				// 应用筛选条件
-				if (filter) {
-					if (filter.operator === 'gte') {
-						query = query.gte(filter.column, filter.value);
-					} else if (filter.operator === 'lte') {
-						query = query.lte(filter.column, filter.value);
-					} else if (filter.operator === 'eq') {
-						query = query.eq(filter.column, filter.value);
-					}
-				}
-				
-				const { data, error } = await query.range(from, from + limit - 1);
-				
-				if (error) {
-					console.error(`获取 ${tableName} 数据失败:`, error);
-					throw error;
-				}
-				
-				if (!data || data.length === 0) break;
-				
-				allData = allData.concat(data);
-				
-				if (data.length < limit) break;
-				
-				from += limit;
-			}
-			
-			return allData;
-		}
+
 
         // ==================== 存档系统 ====================
         const SAVE_KEY = 'graduateSimulatorSaves';
@@ -11973,13 +12655,13 @@
             return `${confInfo.name} ${confInfo.year} @ ${location.city}, ${location.country}`;
         }
 
-        // ==================== 投稿统计系统 ====================
-        
-        let submissionStatsCache = null;
-        let submissionStatsCacheTime = 0;
-        const SUBMISSION_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
+		// ==================== 投稿统计系统 ====================
 
-        // 加载投稿统计数据
+		let submissionStatsCache = null;
+		let submissionStatsCacheTime = 0;
+		const SUBMISSION_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
+
+		// 加载投稿统计数据（从缓存表读取）
 		async function loadSubmissionStats() {
 			// 检查内存缓存
 			if (submissionStatsCache && (Date.now() - submissionStatsCacheTime < SUBMISSION_CACHE_DURATION)) {
@@ -11997,31 +12679,63 @@
 				return cached;
 			}
 			
-			// 从数据库加载
 			if (!supabase) {
 				console.log('Supabase未初始化，使用默认统计');
 				const defaultStats = getDefaultSubmissionStats();
-				// ★★★ 新增：即使是默认值也缓存，避免重复调用 ★★★
 				submissionStatsCache = defaultStats;
 				submissionStatsCacheTime = Date.now();
 				return defaultStats;
 			}
 			
 			try {
-				console.log('从数据库加载投稿统计...');
+				console.log('📊 从缓存表加载投稿统计...');
 				
-				// ★★★ 修改：使用分页加载，限制最大数量和时间 ★★★
-				const data = await fetchSubmissionsWithLimit(20000);
+				const { data, error } = await supabase
+					.from('stats_submissions_cache')
+					.select('*');
+				
+				if (error) throw error;
 				
 				if (!data || data.length === 0) {
-					console.log('数据库无记录，使用默认统计');
+					console.log('缓存表为空，使用默认统计');
 					return getDefaultSubmissionStats();
 				}
 				
-				// 计算统计数据
-				const stats = calculateSubmissionStats(data);
+				// 组装统计数据
+				const stats = {};
 				
-				// 缓存
+				data.forEach(row => {
+					const key = `${row.game_month}_${row.grade}_${row.is_reversed}`;
+					stats[key] = {
+						submissions: row.submissions || 0,
+						accepted: row.accepted || 0,
+						poster: row.poster || 0,
+						oral: row.oral || 0,
+						bestPaper: row.best_paper || 0,
+						acceptRate: row.submissions > 0 ? row.accepted / row.submissions : 0,
+						avgScoreRejected: parseFloat(row.avg_score_rejected) || 0,
+						avgScorePoster: parseFloat(row.avg_score_poster) || 0,
+						avgScoreOral: parseFloat(row.avg_score_oral) || 0,
+						avgScoreBestPaper: parseFloat(row.avg_score_best_paper) || 0,
+						p90AcceptedScore: row.p90_accepted_score || 0,
+						p99AcceptedScore: row.p99_accepted_score || 0
+					};
+				});
+				
+				// 填充缺失的月份/等级组合（使用默认值）
+				const defaultStats = getDefaultSubmissionStats();
+				for (let month = 1; month <= 12; month++) {
+					for (const grade of ['A', 'B', 'C']) {
+						for (const reversed of [true, false]) {
+							const key = `${month}_${grade}_${reversed}`;
+							if (!stats[key]) {
+								stats[key] = defaultStats[key];
+							}
+						}
+					}
+				}
+				
+				// 更新缓存
 				submissionStatsCache = stats;
 				submissionStatsCacheTime = Date.now();
 				setLocalCache(localCacheKey, stats);
@@ -12035,138 +12749,15 @@
 			}
 		}
 
-		// ★★★ 新增：带限制的分页获取 ★★★
-		async function fetchSubmissionsWithLimit(maxRows = 20000) {
-			if (!supabase) return [];
-			
-			let allData = [];
-			let from = 0;
-			const pageSize = 1000;
-			const maxPages = Math.ceil(maxRows / pageSize);  // 最多请求10页
-			let pageCount = 0;
-			
-			while (allData.length < maxRows && pageCount < maxPages) {
-				pageCount++;
-				
-				try {
-					const { data, error } = await supabase
-						.from('paper_submissions')
-						.select('game_month, grade, is_reversed, submitted_score, result')
-						.order('created_at', { ascending: false })
-						.range(from, from + pageSize - 1);
-					
-					if (error) {
-						console.error('获取投稿数据失败:', error);
-						break;  // 出错时返回已获取的数据
-					}
-					
-					if (!data || data.length === 0) break;
-					
-					allData = allData.concat(data);
-					console.log(`投稿统计: 已获取 ${allData.length} 条记录 (第${pageCount}页)`);
-					
-					if (data.length < pageSize) break;
-					
-					from += pageSize;
-				} catch (e) {
-					console.error('分页请求失败:', e);
-					break;
-				}
-			}
-			
-			return allData;
+		// ⚠️ 删除这里原来的游离代码（从 "// 统计数据" 到 "return stats; }"）
+		// 那段代码是旧版 calculateSubmissionStats 函数的残留，不再需要了
+
+		function calcAvg(arr) {
+			if (!arr || arr.length === 0) return 0;
+			return arr.reduce((a, b) => a + b, 0) / arr.length;
 		}
 
-        // 计算统计数据
-        function calculateSubmissionStats(data) {
-            const stats = {};
-            
-            // 初始化所有月份和等级的统计
-            for (let month = 1; month <= 12; month++) {
-                for (const grade of ['A', 'B', 'C']) {
-                    for (const reversed of [true, false]) {
-                        const key = `${month}_${grade}_${reversed}`;
-                        stats[key] = {
-                            submissions: 0,
-                            accepted: 0,
-                            poster: 0,
-                            oral: 0,
-                            bestPaper: 0,
-                            scores: {
-                                rejected: [],
-                                poster: [],
-                                oral: [],
-                                bestPaper: []
-                            }
-                        };
-                    }
-                }
-            }
-            
-            // 统计数据
-            data.forEach(record => {
-                const key = `${record.game_month}_${record.grade}_${record.is_reversed}`;
-                if (!stats[key]) return;
-				// ★★★ 新增：过滤超过180分数的异常数据 ★★★
-				if ((record.submitted_score || 0) > 180) return;
-                
-                stats[key].submissions++;
-                
-                if (record.result !== 'rejected') {
-                    stats[key].accepted++;
-                    stats[key].scores[record.result]?.push(record.submitted_score);
-                    
-                    if (record.result === 'poster') stats[key].poster++;
-                    else if (record.result === 'oral') stats[key].oral++;
-                    else if (record.result === 'best_paper') stats[key].bestPaper++;
-                } else {
-                    stats[key].scores.rejected.push(record.submitted_score);
-                }
-            });
-            
-            // 计算派生统计
-            for (const key in stats) {
-                const s = stats[key];
-                
-                // 录取率
-                s.acceptRate = s.submissions > 0 ? s.accepted / s.submissions : 0;
-                
-                // 计算各档平均分
-                s.avgScoreRejected = calcAvg(s.scores.rejected);
-                s.avgScorePoster = calcAvg(s.scores.poster);
-                s.avgScoreOral = calcAvg(s.scores.oral);
-                s.avgScoreBestPaper = calcAvg(s.scores.bestPaper);
-                
-                // 计算录取论文的分位数
-                const acceptedScores = [
-                    ...s.scores.poster,
-                    ...s.scores.oral,
-                    ...s.scores.bestPaper
-                ].sort((a, b) => a - b);
-                
-                if (acceptedScores.length > 0) {
-                    const p90Index = Math.floor(acceptedScores.length * 0.9);
-                    const p99Index = Math.floor(acceptedScores.length * 0.99);
-                    s.p90AcceptedScore = acceptedScores[p90Index] || acceptedScores[acceptedScores.length - 1];
-                    s.p99AcceptedScore = acceptedScores[p99Index] || acceptedScores[acceptedScores.length - 1];
-                } else {
-                    // 默认值
-                    const grade = key.split('_')[1];
-                    s.p90AcceptedScore = grade === 'A' ? 85 : grade === 'B' ? 55 : 35;
-                    s.p99AcceptedScore = grade === 'A' ? 100 : grade === 'B' ? 70 : 45;
-                }
-                
-                // 清理原始分数数组（节省内存）
-                delete s.scores;
-            }
-            
-            return stats;
-        }
 
-        function calcAvg(arr) {
-            if (!arr || arr.length === 0) return 0;
-            return arr.reduce((a, b) => a + b, 0) / arr.length;
-        }
 
 		// 获取默认统计数据
 		function getDefaultSubmissionStats() {
@@ -13632,7 +14223,7 @@
 					console.error(`检查在线记录失败 (尝试 ${attempt}/${maxRetries}):`, e);
 					if (attempt < maxRetries) {
 						await new Promise(r => setTimeout(r, 500 * attempt));
-					}
+					<!-- } -->
 				}
 			}
 			
@@ -13666,12 +14257,28 @@
 
 		// 获取今日北京时间0点的UTC时间
 		function getTodayStartUTC() {
-			const now = new Date();
-			const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-			const year = beijingTime.getUTCFullYear();
-			const month = beijingTime.getUTCMonth();
-			const day = beijingTime.getUTCDate();
-			return new Date(Date.UTC(year, month, day) - 8 * 60 * 60 * 1000).toISOString();
+			// 当前UTC时间 + 8小时 = 北京时间
+			const beijingNow = new Date(Date.now() + 8 * 60 * 60 * 1000);
+			
+			// 取北京时间的年月日
+			const yyyy = beijingNow.getUTCFullYear();
+			const mm = String(beijingNow.getUTCMonth() + 1).padStart(2, '0');
+			const dd = String(beijingNow.getUTCDate()).padStart(2, '0');
+			
+			// 北京时间今日0点的ISO格式
+			const beijingMidnight = `${yyyy}-${mm}-${dd}T00:00:00+08:00`;
+			
+			// 转为UTC ISO字符串返回
+			return new Date(beijingMidnight).toISOString();
+		}
+
+		// 获取今日北京日期字符串 (YYYY-MM-DD)
+		function getTodayDateString() {
+			const beijingNow = new Date(Date.now() + 8 * 60 * 60 * 1000);
+			const yyyy = beijingNow.getUTCFullYear();
+			const mm = String(beijingNow.getUTCMonth() + 1).padStart(2, '0');
+			const dd = String(beijingNow.getUTCDate()).padStart(2, '0');
+			return `${yyyy}-${mm}-${dd}`;
 		}
 
 		// 获取今日北京日期字符串
@@ -13764,7 +14371,11 @@
 
 		// 更新统计显示
 		async function updateAllStatsDisplay() {
+			console.log('正在更新统计显示...');  // 添加调试日志
+			
 			const stats = await getAllStats();
+			
+			console.log('获取到的统计:', stats);  // 添加调试日志
 			
 			if (stats) {
 				const el = (id) => document.getElementById(id);
@@ -13773,6 +14384,9 @@
 				if (el('today-pv-value')) el('today-pv-value').textContent = stats.todayPv;
 				if (el('today-uv-value')) el('today-uv-value').textContent = stats.todayUv;
 				if (el('today-games-value')) el('today-games-value').textContent = stats.todayGames;
+				console.log('✅ 统计显示已更新');
+			} else {
+				console.error('❌ getAllStats 返回 null');
 			}
 		}
 
@@ -14956,5 +15570,3 @@
     </script>
 </body>
 </html>
-
-
