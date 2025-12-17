@@ -4120,7 +4120,45 @@
 				return 0;
 			}
 		}
+		// ==================== 统计 Fallback 函数 (修复报错) ====================
+		async function getGlobalStatsFallback() {
+			console.log('⚠️ 统计加载进入 Fallback 模式 (使用默认空数据)');
+			
+			// 1. 定义一个基础的空统计结构
+			const createEmptyStats = () => {
+				const stats = {
+					endings: {},
+					achievements: {},
+					totalGames: 0,
+					characterEndings: {}
+				};
+				
+				// 初始化所有结局计数为 0
+				if (typeof ENDING_NAMES !== 'undefined') {
+					Object.keys(ENDING_NAMES).forEach(key => stats.endings[key] = 0);
+				}
+				
+				// 初始化所有成就计数为 0
+				if (typeof ALL_ACHIEVEMENTS !== 'undefined') {
+					ALL_ACHIEVEMENTS.forEach(key => stats.achievements[key] = 0);
+				}
+				
+				// 初始化角色难度数据
+				const allCharIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen', 'true-normal'];
+				allCharIds.forEach(id => {
+					stats.characterEndings[id] = { total: 0, hard: 0 };
+				});
+				
+				return stats;
+			};
 
+			// 2. 返回完整的正位和逆位结构
+			// 即使无法连接数据库，返回这个结构也能保证游戏UI正常渲染“暂无数据”而不是白屏
+			return {
+				normal: createEmptyStats(),
+				reversed: createEmptyStats()
+			};
+		}
 		// ==================== 优化后：从缓存表获取全球统计 ====================
 		async function getGlobalStats() {
 			// 先检查本地缓存
@@ -12749,9 +12787,6 @@
 			}
 		}
 
-		// ⚠️ 删除这里原来的游离代码（从 "// 统计数据" 到 "return stats; }"）
-		// 那段代码是旧版 calculateSubmissionStats 函数的残留，不再需要了
-
 		function calcAvg(arr) {
 			if (!arr || arr.length === 0) return 0;
 			return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -14223,9 +14258,9 @@
 					console.error(`检查在线记录失败 (尝试 ${attempt}/${maxRetries}):`, e);
 					if (attempt < maxRetries) {
 						await new Promise(r => setTimeout(r, 500 * attempt));
-					<!-- } -->
-				}
-			}
+					} // 关闭 if
+				} // 关闭 catch
+			} // <--- 在这里添加一个大括号，关闭 for 循环
 			
 			return null;
 		}
@@ -14279,13 +14314,6 @@
 			const mm = String(beijingNow.getUTCMonth() + 1).padStart(2, '0');
 			const dd = String(beijingNow.getUTCDate()).padStart(2, '0');
 			return `${yyyy}-${mm}-${dd}`;
-		}
-
-		// 获取今日北京日期字符串
-		function getTodayDateString() {
-			const now = new Date();
-			const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-			return beijingTime.toISOString().split('T')[0];
 		}
 
 		// ★★★ 修改后的获取所有统计数据函数 ★★★
