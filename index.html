@@ -2004,10 +2004,12 @@
 
 		.zodiac-grid {
 			display: grid;
-			grid-template-columns: repeat(2, 1fr);
+			/* 电脑端改为3列（即2行角色），修复“反了”的问题 */
+			grid-template-columns: repeat(3, 1fr);
 			gap: 10px;
 			width: 100%;
-			max-width: 160px;
+			/* 稍微放宽最大宽度，以便容纳3列 */
+			max-width: 240px; 
 			position: relative;
 			z-index: 2;
 		}
@@ -2463,7 +2465,8 @@
 		/* ==================== 响应式 ==================== */
 		@media (max-width: 500px) {
 			.zodiac-grid {
-				grid-template-columns: repeat(3, 1fr);
+				/* 手机端改为2列（即3行角色） */
+				grid-template-columns: repeat(2, 1fr);
 				max-width: 100%;
 			}
 			.zodiac-rune {
@@ -2691,7 +2694,7 @@
 			<div class="collapsible-section" id="stats-section" style="margin-top:20px;display:none;">
 				<div class="collapsible-header" onclick="toggleStartSection('stats')">
 					<h3 style="margin:0;font-size:0.95rem;color:var(--primary-color);display:flex;align-items:center;gap:6px;">
-						<i class="fas fa-chart-pie"></i> 全球统计（最近10000局）
+						<i class="fas fa-chart-pie"></i> 全球统计
 					</h3>
 					<i class="fas fa-chevron-down collapse-toggle" id="stats-collapse-icon"></i>
 				</div>
@@ -6493,17 +6496,24 @@
 			
 			const events = getUpcomingEvents();
 			
-			// 日历按钮始终显示
-			const calendarBtn = `<span style="cursor:pointer;padding:2px 6px;background:var(--light-bg);border-radius:10px;font-size:0.6rem;margin-left:6px;" onclick="event.stopPropagation();showFullCalendar()" title="查看完整事件日历">📅 日历</span>`;
+			// ★★★ 修改1：日历按钮样式调整 ★★★
+			// 使用 btn btn-info 类，增加图标，调整padding和字体，使其更明显
+			const calendarBtn = `<button class="btn btn-info" style="padding:3px 8px;font-size:0.7rem;margin-left:10px;vertical-align:middle;" onclick="event.stopPropagation();showFullCalendar()" title="查看完整事件日历"><i class="fas fa-calendar-alt"></i> 日历</button>`;
 			
 			if (events.length === 0) {
 				previewEl.innerHTML = calendarBtn;
 				return;
 			}
 			
+			// ★★★ 修改2：预报文字字体调大 ★★★
+			// font-size 从 0.6rem 改为 0.8rem，padding 稍微增加
 			const previewHtml = events.map(e => 
-				`<span style="margin-left:6px;padding:2px 6px;background:${getEventColor(e.name)};border-radius:10px;font-size:0.6rem;white-space:nowrap;">${e.icon} ${e.label}:${e.name}</span>`
+				`<span style="margin-left:6px;padding:3px 8px;background:${getEventColor(e.name)};border-radius:10px;font-size:0.8rem;font-weight:500;white-space:nowrap;vertical-align:middle;">${e.icon} ${e.label}:${e.name}</span>`
 			).join('');
+			
+			// 使用 flex 布局让它们垂直居中对齐
+			previewEl.style.display = 'inline-flex';
+			previewEl.style.alignItems = 'center';
 			
 			previewEl.innerHTML = `${previewHtml}${calendarBtn}`;
 		}
@@ -6906,19 +6916,29 @@
 			if (pendingReviewSlots.length > 0) {
 				// 定义月末事件回调
 				const triggerMonthlyEvents = () => {
-					// 12月特殊处理：转博或学年总结
+					// ★★★ 12月特殊处理：审稿完成后重新检查转博条件 ★★★
 					if (gameState.month === 12) {
+						// 重新计算转博条件（此时totalScore已经是审稿后的最新值）
 						const canPhD = gameState.degree === 'master' && (
 							(gameState.year === 2 && gameState.totalScore >= 2) ||
 							(gameState.year === 3 && gameState.totalScore >= 3)
 						);
 						
 						if (canPhD) {
+							// 满足转博条件，显示转博选择弹窗（转博流程内部会触发学年总结）
 							checkGraduation();
 						} else {
+							// 不满足转博条件，直接显示学年总结
 							triggerYearEndSummaryEvent();
 						}
-					} else if (gameState.month === 5) {
+						// ★★★ 12月的毕业检查由学年总结回调处理，这里直接返回 ★★★
+						updateAllUI();
+						renderPaperSlots();
+						return;
+					}
+					
+					// 其他月份事件
+					if (gameState.month === 5) {
 						triggerWinterVacationEvent();
 					} else if (gameState.month === 11) {
 						triggerSummerVacationEvent();
@@ -6930,7 +6950,7 @@
 						triggerOtherRandomEvent();
 					}
 					
-					// 检查毕业
+					// 非12月时检查毕业
 					checkGraduation();
 					updateAllUI();
 					renderPaperSlots();
@@ -7310,27 +7330,13 @@
 							addLog('转博选择', '选择继续读硕士', '明年还有一次转博机会');
 							updateAllUI();
 							
-							// ★★★ 补上12月的学年总结事件 ★★★
-							if (gameState.month === 12) {
-								setTimeout(() => triggerYearEndSummaryEvent(), 300);
-							}
-							
-							if (gameState.pendingConference) {
-								const grade = gameState.pendingConference;
-								gameState.pendingConference = null;
-								setTimeout(() => showConferenceModal(grade), 300);
-							}
+							// ★★★ 继续读硕士后触发学年总结 ★★★
+							setTimeout(() => triggerYearEndSummaryEvent(), 300);
 						} else {
-							// ★★★ 第3年选择硕士毕业时，也补上学年总结 ★★★
+							// ★★★ 第3年选择硕士毕业：先学年总结，再毕业 ★★★
 							addLog('转博选择', '选择硕士毕业', '准备毕业');
-							if (gameState.month === 12) {
-								setTimeout(() => {
-									triggerYearEndSummaryEvent();
-									// 学年总结完成后再触发毕业
-									// 但为了简化，直接毕业
-								}, 100);
-							}
-							setTimeout(() => triggerEnding('master'), 500);
+							// 触发学年总结，学年总结回调中的 checkGraduation() 会触发毕业
+							setTimeout(() => triggerYearEndSummaryEvent(), 300);
 						}
 					}},
 					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
@@ -7338,6 +7344,7 @@
 						gameState.degree = 'phd';
 						gameState.maxYears = 5;
 						closeModal();
+						// ★★★ 转博渡劫弹窗，渡劫完成后会触发学年总结 ★★★
 						setTimeout(() => showPhDTribulationModal(), 200);
 					}}
 				]
@@ -7392,11 +7399,8 @@
 						updateAllUI();
 						renderPaperSlots();
 						
-						if (gameState.pendingConference) {
-							const grade = gameState.pendingConference;
-							gameState.pendingConference = null;
-							setTimeout(() => showConferenceModal(grade), 300);
-						}
+						// ★★★ 转博后触发学年总结 ★★★
+						setTimeout(() => triggerYearEndSummaryEvent(), 300);
 					}}
 				]);
 				
@@ -7543,11 +7547,8 @@
 						updateAllUI();
 						renderPaperSlots();
 						
-						if (gameState.pendingConference) {
-							const grade = gameState.pendingConference;
-							gameState.pendingConference = null;
-							setTimeout(() => showConferenceModal(grade), 300);
-						}
+						// ★★★ 逆位觉醒后触发学年总结 ★★★
+						setTimeout(() => triggerYearEndSummaryEvent(), 300);
 					}}
 				]);
 				
@@ -7794,11 +7795,8 @@
 					updateAllUI();
 					renderPaperSlots();
 					
-					if (gameState.pendingConference) {
-						const grade = gameState.pendingConference;
-						gameState.pendingConference = null;
-						setTimeout(() => showConferenceModal(grade), 300);
-					}
+					// ★★★ 隐藏觉醒后触发学年总结 ★★★
+					setTimeout(() => triggerYearEndSummaryEvent(), 300);
 				}}
 			]);
 		}
@@ -7974,11 +7972,8 @@
 					updateAllUI();
 					renderPaperSlots();
 					
-					if (gameState.pendingConference) {
-						const grade = gameState.pendingConference;
-						gameState.pendingConference = null;
-						setTimeout(() => showConferenceModal(grade), 300);
-					}
+					// ★★★ 正位觉醒后触发学年总结 ★★★
+					setTimeout(() => triggerYearEndSummaryEvent(), 300);
 				}}
 			]);
 		}
@@ -10535,6 +10530,13 @@
 
 		// ★★★ 新增：学年总结事件 ★★★
 		function triggerYearEndSummaryEvent() {
+			// ★★★ 定义学年总结完成后的回调函数 ★★★
+			const afterYearEndSummary = () => {
+				// 学年总结完成后，检查是否需要触发毕业
+				checkGraduation();
+				updateAllUI();
+			};
+			
 			showModal('📅 学年总结', 
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">📝</div>
@@ -10547,21 +10549,25 @@
 						addLog('学年总结', '今年除了科研都在睡大觉', 'SAN+5');
 						closeModal();
 						changeSan(5);
+						afterYearEndSummary();
 					}},
 					{ text: '🎉 和同学玩耍', class: 'btn-success', action: () => {
 						addLog('学年总结', '今年主要在和同学玩耍', '社交能力+1');
 						closeModal();
 						changeSocial(1);
+						afterYearEndSummary();
 					}},
 					{ text: '👨‍🏫 帮导师干活', class: 'btn-accent', action: () => {
 						addLog('学年总结', '今年主要在帮导师干活', '导师好感度+1');
 						closeModal();
 						changeFavor(1);
+						afterYearEndSummary();
 					}},
 					{ text: '💼 偷偷实习', class: 'btn-warning', action: () => {
 						addLog('学年总结', '今年偷偷在外面实习', '金钱+2');
 						closeModal();
 						changeGold(2);
+						afterYearEndSummary();
 					}}
 				]
 			);
@@ -13522,10 +13528,10 @@
 				gameState.achievementConditions.highScorePaper = true;
 			}
 			
-			// 全部改进
-			if (results.every(r => r.improvement > 0)) {
-				gameState.achievementConditions.unanimousImprovement = true;
-			}
+			// ★★★ 修改：幸运儿 - 三位大牛审稿人（expert）的一致改进 ★★★
+			const allExpertWithImprovement = results.every(r => 
+				r.reviewer.type === 'expert' && r.improvement > 0
+			);
 			
 			// 全部坏审稿人
 			if (results.every(r => r.reviewer.type === 'hostile' || r.reviewer.type === 'questions')) {
@@ -15389,7 +15395,8 @@
 						• 一切靠自己<br><br>
 						<strong>🏆 专属真实结局</strong>：<br>
 						• 真·博士毕业：博士毕业且发表≥3篇论文<br>
-						• 真·献身科研：博士毕业且总引用>2000
+						• 真·献身科研：博士毕业且总引用>1000<br>
+						• 真·感受生活：博士毕业且总引用<=1000且达成>=10成就
 					</div>
 				</div>
 			</div>
