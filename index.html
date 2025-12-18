@@ -3212,7 +3212,7 @@
 			desc: '天生就是做科研的料', 
 			bonus: '科研能力初始+5', 
 			awakenName: '学术天赋觉醒',
-			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+2',
+			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+3',
 			// 隐藏觉醒
 			hiddenAwakenName: '预见未来热点',
 			hiddenAwakenIcon: '🔮',
@@ -3349,16 +3349,19 @@
         ];
 
 		const ALL_ACHIEVEMENTS = [
-			'💕 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', '🏆 诺奖选手', 
-			'🌸 交际花', '🤝 铁杆师生', '⚡ 精力满满', '🎯 百发百中', 
-			'☕ 我爱茶歇', '🏖️ 公费旅游', '🤖 论文机器',
-			'📚 千引大佬', '☕ 咖啡爱好者', '✨ Buff之神',
-			'📜 高分论文', '🍀 幸运儿', '😭 倒霉蛋',
-			'🎻 曲高和寡', '💪 全力以赴', '🏆 全收集',
-			'👊 越战越勇', '🧠 人间清醒', '🔥 火力全开',
-			'🍚 食之无味', '🤖 机械飞升', '🛋️ 全套家具',
-			'🧒 天才少年',
-			'💎 无法埋没', '🔔 不鸣则已', '📊 严重偏科', '💼 打工狂人', '📖 爱看论文', '🏹 一箭双雕',
+			'❤️ 喜结良缘', '💰 家财万贯', '⬡ 六边形战士', 
+			'🏆 诺奖选手', '🌸 交际花', '🤝 铁杆师生', 
+			'⚡ 精力满满', '🎯 百发百中', '☕ 我爱茶歇', 
+			'🏖️ 公费旅游', '🤖 论文机器', '📚 千引大佬',
+			'☕ 绝世咖啡', '✨ Buff之神', '📜 高分论文',
+			'🍀 幸运儿', '😭 倒霉蛋', '🎻 曲高和寡', 
+			'💪 全力以赴', '🏆 全收集', '👊 越战越勇', 
+			'🧠 人间清醒', '🔥 火力全开', '🍚 食之无味',
+			'🤖 机械飞升', '🛋️ 全套家具', '🧒 天才少年',
+			'💎 无法埋没', '🔔 不鸣则已',  '📊 严重偏科',
+			'💼 打工狂人', '📖 爱看论文',  '🏹 一箭双雕',
+			'🎣 力挽狂澜', '💔 不入爱河', '💕 我在等你',
+			'🏠 偏安一隅',
 		];
 
         // 结局名称映射
@@ -3411,7 +3414,7 @@
 
         // 成就达成要求数据
 		const ACHIEVEMENT_REQUIREMENTS = {
-			'💕 喜结良缘': '顺利毕业且与异性学者发展为恋人关系（社交≥12后在开会时多次交流同一人）',
+			'❤️ 喜结良缘': '顺利毕业且与异性学者发展为恋人关系（社交≥12后在开会时多次交流同一人）',
 			'💰 家财万贯': '顺利毕业且结局时金币≥30',
 			'⬡ 六边形战士': '顺利毕业且结局时科研、社交、好感、金币均>15',
 			'🏆 诺奖选手': '顺利毕业且科研能力达到20',
@@ -3423,7 +3426,7 @@
 			'🏖️ 公费旅游': '顺利毕业且在开会事件中选择顺便旅游≥3次',
 			'🤖 论文机器': '顺利毕业且发表论文总数≥10',
 			'📚 千引大佬': '顺利毕业且总引用数≥1000',
-			'☕ 咖啡爱好者': '顺利毕业且每月都购买冰美式',
+			'☕ 绝世咖啡': '顺利毕业且冰美式效果达到SAN+6（需购买45杯以上）',
 			'✨ Buff之神': '顺利毕业且触发过所有类型的Buff效果',
 			'📜 高分论文': '顺利毕业且论文中稿后(可能的改进后)分数达到125',
 			'🍀 幸运儿': '顺利毕业且论文收到三位大牛审稿人的一致改进',
@@ -3444,6 +3447,10 @@
 			'💼 打工狂人': '顺利毕业且毕业时至少打工10次',
 			'📖 爱看论文': '顺利毕业且毕业时至少看20次论文',
 			'🏹 一箭双雕': '顺利毕业且曾在一个会议同时中稿≥2篇论文',
+			'🎣 力挽狂澜': '顺利毕业且曾在审稿总分为-1时被PC捞起录用',
+			'💔 不入爱河': '顺利毕业且两次拒绝聪慧恋人或活泼恋人，且最后没有恋爱',
+			'💕 我在等你': '顺利毕业且两次拒绝聪慧恋人或活泼恋人，且最后恋爱了',
+			'🏠 偏安一隅': '顺利毕业且两次拒绝大牛联培和企业实习',
 		};
 
         // 商店物品
@@ -3566,13 +3573,13 @@
 			{ city: '上海', country: '中国' },
 			{ city: '悉尼', country: '澳大利亚' },
 			{ city: '墨尔本', country: '澳大利亚' },
-			{ city: '台北', country: '中国台湾' },
+			{ city: '台北', country: '中国' },
 			{ city: '曼谷', country: '泰国' },
 			{ city: '京都', country: '日本' },
 			{ city: '深圳', country: '中国' }
 		];
 	
-		
+		const CCIG_LOCATIONS = ['合肥', '成都', '苏州', '西安', '重庆'];
         // ==================== 游戏状态 ====================
         let gameState = {};
         let selectedCharacter = null;
@@ -3666,7 +3673,8 @@
 					bought5GPUs: false,
 					fullFurnitureSet: false,
 					phdRequirementMetEarly: false,
-					rejectedPhdTwice: false
+					rejectedPhdTwice: false,
+					savedByPC: false,
 				},
 				paperTypeCollection: new Set(),
 				
@@ -3676,10 +3684,14 @@
 				actionLimit: 1,                  // 每月行动次数限制（勤能补拙为2）
 				actionCount: 0,                  // 本月已使用行动次数
 				noDecay: false,                  // 是否禁止论文分数衰减（预见未来热点）
+				// 替换原有的技能状态字段
 				hasSeniorHelpSkill: false,       // 是否有师兄师姐救我技能
-				usedSeniorHelpSkill: false,      // 是否已使用师兄师姐救我
+				seniorHelpUses: 0,               // ★★★ 新增：师兄师姐救我剩余使用次数 ★★★
 				hasTeacherHelpSkill: false,      // 是否有导师救我技能
-				usedTeacherHelpSkill: false,     // 是否已使用导师救我
+				teacherHelpUses: 0,              // ★★★ 新增：导师救我剩余使用次数 ★★★
+				nextActionBonus: 0,              // ★★★ 新增：下次操作的临时加成值 ★★★
+				nextActionBonusSource: null,     // ★★★ 新增：加成来源 'senior' 或 'teacher' ★★★
+				nextActionBonusType: null,       // ★★★ 新增：加成类型 'idea', 'exp', 'write' ★★★
 				monthlyWageBonus: 0,             // 每月工资加成（不求暴富但求稳定）
 				nextIdeaResearchBonus: 0,        // 下次想idea的临时科研加成（主动技能用，不算buff）
 				nextIdeaBonusSource: null,        // 加成来源（'senior' 或 'teacher'）
@@ -3687,7 +3699,20 @@
 				researchMax: 20,
 				socialMax: 20,  
 				favorMax: 20, 
-                
+				// ★★★ 新增：高级选项触发记录 ★★★
+				metBigBullCoop: false,           // 是否触发过"找大牛合作"
+
+				// ★★★ 新增：拒绝次数统计（分开计算）★★★
+				rejectedBeautifulLoverCount: 0,  // 拒绝活泼恋人次数
+				rejectedSmartLoverCount: 0,      // 拒绝聪慧恋人次数
+				rejectedInternshipCount: 0,      // 拒绝实习次数
+				rejectedBigBullCoopCount: 0,     // 拒绝大牛联培次数
+
+				// ★★★ 新增：永久阻止标志 ★★★
+				permanentlyBlockedBeautifulLover: false,  // 永久阻止活泼恋人相关
+				permanentlyBlockedSmartLover: false,      // 永久阻止聪慧恋人相关
+				permanentlyBlockedInternship: false,      // 永久阻止实习事件
+				permanentlyBlockedBigBullCoop: false,     // 永久阻止大牛联培事件                
                 // ★★★ 新增：投稿统计和会议信息 ★★★
                 submissionStats: null,           // 投稿统计快照
                 pendingConferenceInfo: null,      // 待开会议信息
@@ -6192,29 +6217,35 @@
 			}).join('');
 			const buffListEl = document.getElementById('buff-list');
 			
-			// 师兄师姐救我技能
-			if (gameState.hasSeniorHelpSkill && !gameState.usedSeniorHelpSkill) {
+			// 师兄师姐救我技能（修改显示逻辑）
+			if (gameState.hasSeniorHelpSkill && gameState.seniorHelpUses > 0) {
+				const pendingText = gameState.nextActionBonusSource === 'senior' && gameState.nextActionBonusType
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					: '';
 				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(243,156,18,0.3),rgba(230,126,34,0.3));border-color:#f39c12;" onclick="useSeniorHelpSkill()">
 					<i class="fas fa-hands-helping"></i>
-					🆘 师兄师姐救我（点击使用）
+					🆘 师兄师姐救我 (${gameState.seniorHelpUses}/3) ${pendingText}
 				</span>`;
 				buffListEl.innerHTML += skillHtml;
 			}
-			
-			// 导师救我技能
-			if (gameState.hasTeacherHelpSkill && !gameState.usedTeacherHelpSkill) {
+
+			// 导师救我技能（修改显示逻辑）
+			if (gameState.hasTeacherHelpSkill && gameState.teacherHelpUses > 0) {
+				const pendingText = gameState.nextActionBonusSource === 'teacher' && gameState.nextActionBonusType
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					: '';
 				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(253,121,168,0.3),rgba(232,67,147,0.3));border-color:#fd79a8;" onclick="useTeacherHelpSkill()">
 					<i class="fas fa-user-shield"></i>
-					🛡️ 导师救我（点击使用）
+					🛡️ 导师救我 (${gameState.teacherHelpUses}/3) ${pendingText}
 				</span>`;
 				buffListEl.innerHTML += skillHtml;
 			}
 		}			
 
-		// ★★★ 新增：师兄师姐救我技能 ★★★
+		// ★★★ 完全重写：师兄师姐救我技能 ★★★
 		function useSeniorHelpSkill() {
-			if (!gameState.hasSeniorHelpSkill || gameState.usedSeniorHelpSkill) {
-				showModal('❌ 无法使用', '<p>技能不可用或已使用过。</p>', 
+			if (!gameState.hasSeniorHelpSkill || gameState.seniorHelpUses <= 0) {
+				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -6225,33 +6256,33 @@
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">🆘</div>
 					<div style="font-size:1.1rem;font-weight:600;color:#f39c12;">师兄师姐救我</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">剩余使用次数：${gameState.seniorHelpUses}/3</div>
 				</div>
-				<p>使用此技能后，<strong>下次想idea时</strong>，你的科研能力将视为：</p>
+				<p>选择要加成的操作类型，下次执行该操作时科研能力将视为：</p>
 				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 社交(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>
-				<p style="color:var(--danger-color);font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> 注意：此技能仅可使用一次！</p>`,
+				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '✨ 使用技能', class: 'btn-warning', action: () => {
-						gameState.usedSeniorHelpSkill = true;
-						gameState.nextIdeaResearchBonus = gameState.social;
-						gameState.nextIdeaBonusSource = 'senior';
-						addLog('主动技能', '师兄师姐救我', `下次想idea时科研能力+${gameState.social}（社交值）`);
-						closeModal();
-						updateBuffs();
-						updateAllUI();
+					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+						applySkillBonus('senior', 'idea', bonusValue);
+					}},
+					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+						applySkillBonus('senior', 'exp', bonusValue);
+					}},
+					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
+						applySkillBonus('senior', 'write', bonusValue);
 					}}
 				]
 			);
 		}
 
-		// ★★★ 新增：导师救我技能 ★★★
+		// ★★★ 完全重写：导师救我技能 ★★★
 		function useTeacherHelpSkill() {
-			if (!gameState.hasTeacherHelpSkill || gameState.usedTeacherHelpSkill) {
-				showModal('❌ 无法使用', '<p>技能不可用或已使用过。</p>', 
+			if (!gameState.hasTeacherHelpSkill || gameState.teacherHelpUses <= 0) {
+				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -6262,27 +6293,49 @@
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">🛡️</div>
 					<div style="font-size:1.1rem;font-weight:600;color:#fd79a8;">导师救我</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">剩余使用次数：${gameState.teacherHelpUses}/3</div>
 				</div>
-				<p>使用此技能后，<strong>下次想idea时</strong>，你的科研能力将视为：</p>
+				<p>选择要加成的操作类型，下次执行该操作时科研能力将视为：</p>
 				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 好感度(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>
-				<p style="color:var(--danger-color);font-size:0.85rem;"><i class="fas fa-exclamation-triangle"></i> 注意：此技能仅可使用一次！</p>`,
+				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '✨ 使用技能', class: 'btn-accent', action: () => {
-						gameState.usedTeacherHelpSkill = true;
-						gameState.nextIdeaResearchBonus = gameState.favor;
-						gameState.nextIdeaBonusSource = 'teacher';
-						addLog('主动技能', '导师救我', `下次想idea时科研能力+${gameState.favor}（好感度值）`);
-						closeModal();
-						updateBuffs();
-						updateAllUI();
+					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+						applySkillBonus('teacher', 'idea', bonusValue);
+					}},
+					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+						applySkillBonus('teacher', 'exp', bonusValue);
+					}},
+					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
+						applySkillBonus('teacher', 'write', bonusValue);
 					}}
 				]
 			);
+		}
+
+		// ★★★ 新增：应用技能加成的通用函数 ★★★
+		function applySkillBonus(source, actionType, bonusValue) {
+			if (source === 'senior') {
+				gameState.seniorHelpUses--;
+			} else {
+				gameState.teacherHelpUses--;
+			}
+			
+			gameState.nextActionBonus = bonusValue;
+			gameState.nextActionBonusSource = source;
+			gameState.nextActionBonusType = actionType;
+			
+			const sourceName = source === 'senior' ? '师兄师姐救我' : '导师救我';
+			const actionName = actionType === 'idea' ? '想idea' : actionType === 'exp' ? '做实验' : '写论文';
+			const remainingUses = source === 'senior' ? gameState.seniorHelpUses : gameState.teacherHelpUses;
+			
+			addLog('主动技能', sourceName, `下次${actionName}时科研能力+${bonusValue}（剩余${remainingUses}次）`);
+			closeModal();
+			updateBuffs();
+			updateAllUI();
 		}
 
 		function updateResearchResults() {
@@ -6463,6 +6516,8 @@
 				// 原有事件检测
 				if (checkMonth === 5) {
 					monthEvents.push({ name: '寒假', icon: '❄️' });
+				} else if (checkMonth === 9) {
+					monthEvents.push({ name: '国内会议', icon: '🏛️' });  // ★★★ 新增 ★★★
 				} else if (checkMonth === 11) {
 					monthEvents.push({ name: '暑假', icon: '☀️' });
 				} else if (checkMonth === 1 && checkYear >= 2) {
@@ -6525,7 +6580,8 @@
 				'奖学金': 'rgba(108,92,231,0.25)',
 				'教师节': 'rgba(253,121,168,0.25)',
 				'随机事件': 'rgba(0,184,148,0.2)',
-				'学年总结': 'rgba(162,155,254,0.25)'  // ★★★ 新增 ★★★
+				'学年总结': 'rgba(162,155,254,0.25)',
+				'CCIG': 'rgba(231,76,60,0.25)'  // ★★★ 新增：红色系代表中国 ★★★
 			};
 			return colors[eventName] || 'rgba(99,110,114,0.15)';
 		}
@@ -6544,6 +6600,12 @@
 				
 				if (month === 5) {
 					events.push({ icon: '❄️', name: '寒假', desc: '回家过年，压岁钱+1，SAN+2', color: 'rgba(116,185,255,0.25)' });
+				}
+				if (month === 9) {
+					// ★★★ 新增：CCIG事件 ★★★
+					const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
+					const ccigLocation = ccigLocations[(year - 1) % 5];
+					events.push({ icon: '🏛️', name: '国内会议', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
 				}
 				if (month === 11) {
 					events.push({ icon: '☀️', name: '暑假', desc: '暑假休息，SAN+3', color: 'rgba(253,203,110,0.25)' });
@@ -6665,6 +6727,7 @@
 				<div style="display:flex;flex-wrap:wrap;gap:8px;">
 					<span style="padding:2px 6px;background:rgba(116,185,255,0.25);border-radius:4px;">❄️ 寒假</span>
 					<span style="padding:2px 6px;background:rgba(253,203,110,0.25);border-radius:4px;">☀️ 暑假</span>
+					<span style="padding:2px 6px;background:rgba(231,76,60,0.25);border-radius:4px;">🏛️ 国内会议</span>
 					<span style="padding:2px 6px;background:rgba(108,92,231,0.25);border-radius:4px;">🎓 奖学金</span>
 					<span style="padding:2px 6px;background:rgba(253,121,168,0.25);border-radius:4px;">🎁 教师节</span>
 					<span style="padding:2px 6px;background:rgba(162,155,254,0.25);border-radius:4px;">📅 学年总结</span>
@@ -6935,11 +6998,10 @@
 						updateAllUI();
 						renderPaperSlots();
 						return;
-					}
-					
-					// 其他月份事件
-					if (gameState.month === 5) {
+					} else if (gameState.month === 5) {
 						triggerWinterVacationEvent();
+					} else if (gameState.month === 9) {
+						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 					} else if (gameState.month === 11) {
 						triggerSummerVacationEvent();
 					} else if (gameState.month === 1 && gameState.year >= 2) {
@@ -6981,6 +7043,8 @@
 				}
 			} else if (gameState.month === 5) {
 				triggerWinterVacationEvent();
+			} else if (gameState.month === 9) {
+				triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 			} else if (gameState.month === 11) {
 				triggerSummerVacationEvent();
 			} else if (gameState.month === 1 && gameState.year >= 2) {
@@ -7436,11 +7500,9 @@
 						gameState.research = Math.min(20, gameState.research * 2);
 						gameState.social = Math.min(20, gameState.social * 2);
 						gameState.favor = Math.min(20, gameState.favor * 2);
-						gameState.gold = gameState.gold * 2;
 						bonusDetails.push(`科研 ${oldR1} → ${gameState.research}`);
 						bonusDetails.push(`社交 ${oldS1} → ${gameState.social}`);
 						bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
-						bonusDetails.push(`金币 ${oldG1} → ${gameState.gold}`);
 						bonusDetails.push('⚠️ SAN减少变为3倍');
 						bonusDetails.push('✨ 每月SAN回复变为5');
 						
@@ -7653,9 +7715,10 @@
 					
 				case 'social': // 师兄师姐救我
 					gameState.hasSeniorHelpSkill = true;
+					gameState.seniorHelpUses = 3;  // ★★★ 修改：3次使用次数 ★★★
 					bonusDetails.push('获得主动技能【师兄师姐救我】');
-					bonusDetails.push('使用后：下次想idea时科研能力视为 科研+社交');
-					bonusDetails.push('⚠️ 此技能仅可使用1次');
+					bonusDetails.push('使用后：下次想idea/做实验/写论文时科研能力视为 科研+社交');
+					bonusDetails.push('⚠️ 此技能可使用3次');  // ★★★ 修改描述 ★★★
 					break;
 					
 				case 'rich': // 不求暴富但求稳定
@@ -7666,9 +7729,10 @@
 					
 				case 'teacher-child': // 导师救我
 					gameState.hasTeacherHelpSkill = true;
+					gameState.teacherHelpUses = 3;  // ★★★ 修改：3次使用次数 ★★★
 					bonusDetails.push('获得主动技能【导师救我】');
-					bonusDetails.push('使用后：下次想idea时科研能力视为 科研+好感度');
-					bonusDetails.push('⚠️ 此技能仅可使用1次');
+					bonusDetails.push('使用后：下次想idea/做实验/写论文时科研能力视为 科研+好感度');
+					bonusDetails.push('⚠️ 此技能可使用3次');  // ★★★ 修改描述 ★★★
 					break;
 					
 				case 'chosen': // 孤注一掷
@@ -7814,9 +7878,9 @@
 					effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
 					const aCount = gameState.paperA || 0;
 					if (aCount > 0) {
-						// ★★★ 修改：每篇A类论文科研+2，上限+2 ★★★
-						const researchGain = aCount * 2;  // 原来是 aCount * 1，改为 aCount * 2
-						const maxGain = aCount * 2;
+						// ★★★ 修改：每篇A类论文科研+2，上限+3 ★★★
+						const researchGain = aCount * 2;
+						const maxGain = aCount * 3;
 						gameState.researchMax = (gameState.researchMax || 20) + maxGain;
 						gameState.research = Math.min(gameState.researchMax, gameState.research + researchGain);
 						bonusDetails.push(`A类论文 ${aCount} 篇`);
@@ -7908,11 +7972,9 @@
 					gameState.research = Math.min(20, gameState.research * 2);
 					gameState.social = Math.min(20, gameState.social * 2);
 					gameState.favor = Math.min(20, gameState.favor * 2);
-					gameState.gold = gameState.gold * 2;
 					bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
 					bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
 					bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
-					bonusDetails.push(`金币 ${oldG} → ${gameState.gold} (×2)`);
 					break;
 			}
 			
@@ -8451,13 +8513,16 @@
 				let effectiveResearch = gameState.research;
 				let skillUsed = false;
 				let skillSource = '';
-				
-				if (gameState.nextIdeaResearchBonus > 0) {
-					effectiveResearch += gameState.nextIdeaResearchBonus;
+
+				// ★★★ 修改：检查是否有针对idea的技能加成 ★★★
+				if (gameState.nextActionBonus > 0 && gameState.nextActionBonusType === 'idea') {
+					effectiveResearch += gameState.nextActionBonus;
 					skillUsed = true;
-					skillSource = gameState.nextIdeaBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
-					gameState.nextIdeaResearchBonus = 0;
-					gameState.nextIdeaBonusSource = null;
+					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					// 清除已使用的加成
+					gameState.nextActionBonus = 0;
+					gameState.nextActionBonusSource = null;
+					gameState.nextActionBonusType = null;
 				}
 				
 				// ★★★ 核心修改：新的循环逻辑 ★★★
@@ -8600,14 +8665,27 @@
 				
 				let times = 1 + countBuff('exp_times');
 				
-				// ★★★ 核心修改：新的循环逻辑 ★★★
+				// ★★★ 新增：技能加成 ★★★
+				let effectiveResearch = gameState.research;
+				let skillUsed = false;
+				let skillSource = '';
+				
+				if (gameState.nextActionBonus > 0 && gameState.nextActionBonusType === 'exp') {
+					effectiveResearch += gameState.nextActionBonus;
+					skillUsed = true;
+					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					gameState.nextActionBonus = 0;
+					gameState.nextActionBonusSource = null;
+					gameState.nextActionBonusType = null;
+				}
+				
+				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];
 				
 				for (let i = 0; i < times; i++) {
-					// ★★★ 第一次使用所有buff，后续只使用永久buff ★★★
 					const permanentOnly = (i > 0);
-					let gen = calculateScore('exp', permanentOnly);
+					let gen = calculateScoreWithResearch('exp', effectiveResearch, permanentOnly);  // ★ 使用新函数
 					
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasGptSub && gptSub.bonusScore) {
@@ -8656,6 +8734,9 @@
 				let result = `SAN值-${actualSanCost}`;
 				if (actualSanCost !== baseSanCost) {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (skillUsed) {
+					result += `（${skillSource}生效！）`;
 				}
 				if (hasGptSub) result += '（GPT: 每次+4）';
 				if (hasOverheat) result += '（首次主机发烫÷2）';
@@ -8730,14 +8811,27 @@
 				
 				let times = 1 + countBuff('write_times');
 				
-				// ★★★ 核心修改：新的循环逻辑 ★★★
+				// ★★★ 新增：技能加成 ★★★
+				let effectiveResearch = gameState.research;
+				let skillUsed = false;
+				let skillSource = '';
+				
+				if (gameState.nextActionBonus > 0 && gameState.nextActionBonusType === 'write') {
+					effectiveResearch += gameState.nextActionBonus;
+					skillUsed = true;
+					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					gameState.nextActionBonus = 0;
+					gameState.nextActionBonusSource = null;
+					gameState.nextActionBonusType = null;
+				}
+				
+				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];
 				
 				for (let i = 0; i < times; i++) {
-					// ★★★ 第一次使用所有buff，后续只使用永久buff ★★★
 					const permanentOnly = (i > 0);
-					let gen = calculateScore('write', permanentOnly);
+					let gen = calculateScoreWithResearch('write', effectiveResearch, permanentOnly);  // ★ 使用新函数
 					
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasClaudeSub && claudeSub.bonusScore) {
@@ -8784,6 +8878,12 @@
 				
 				// 构建日志
 				let result = `SAN值-${actualSanCost}`;
+				if (actualSanCost !== baseSanCost) {
+					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
+				}
+				if (skillUsed) {
+					result += `（${skillSource}生效！）`;
+				}
 				if (hasKeyboard) result += '（机械键盘生效）';
 				if (hasClaudeSub) result += '（Claude: 每次+4）';
 				if (hasWritersBlock) result += '（首次无从下笔÷2）';
@@ -9094,14 +9194,24 @@
 		}
 
 		/**
-		 * 显示合并后的开会事件弹窗
+		 * 显示合并后的开会事件弹窗（支持同一会议多篇论文）
 		 */
 		function showConferenceEventModalMerged(confInfo, confLocation, papers) {
 			const isMultiple = papers.length >= 2;
 			const confString = `${confInfo.name} ${confInfo.year} @ ${confLocation.city}, ${confLocation.country}`;
 			
-			// 原有的开会选项逻辑保持不变
-			let options = [
+			// 获取论文最高等级
+			const gradeOrder = { 'A': 3, 'B': 2, 'C': 1 };
+			let highestGrade = 'C';
+			papers.forEach(p => {
+				if (gradeOrder[p.grade] > gradeOrder[highestGrade]) {
+					highestGrade = p.grade;
+				}
+			});
+			const grade = highestGrade;
+			
+			// ==================== 定义基础选项（C类可用，不需要任何条件）====================
+			const baseOptions = [
 				{ text: '🏖️ 顺便旅游', fn: () => { 
 					gameState.tourCount++;
 					addLog('开会事件', `在${confLocation.city}顺便旅游`, 'SAN值+6');
@@ -9124,6 +9234,12 @@
 					updateBuffs();
 					return true;
 				}},
+				{ text: '🤝 找同学合作', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
+					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
+					updateBuffs();
+					return true;
+				}},
 				{ text: '🌟 找大牛交流', fn: () => { 
 					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
 					gameState.metBigBull = true;
@@ -9131,104 +9247,195 @@
 					updateBuffs();
 					return true;
 				}},
+				// 找企业交流是基础选项
 				{ text: '🏢 找企业交流', fn: () => { 
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
 					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
 					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
 					updateBuffs();
 					
-					if (gameState.enterpriseCount === 3 && !gameState.ailabInternship) {
+					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship) {
 						setTimeout(() => showAILabInternshipModal(), 300);
 					}
-					return true;
-				}},
-				{ text: '🤝 找同学合作', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
-					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
-					updateBuffs();
 					return true;
 				}}
 			];
 
-			// 社交>=6解锁更多选项
-			if (gameState.social >= 6) {
-				options.push(
-					{ text: '🎓 找大牛合作', fn: () => { 
-						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
-						gameState.metBigBull = true;
-						addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
-						updateBuffs();
-						return changeSocial(1);
-					}},
-					{ text: '💕 和活泼的异性学者交流', fn: () => { 
-						gameState.metBeautiful = true;
-						gameState.beautifulCount++;
-						addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
-						return changeStats({ san: 5, social: 1 });
-					}},
-					{ text: '🧠 和聪慧的异性学者交流', fn: () => { 
-						gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
-						gameState.metSmart = true;
-						gameState.smartCount++;
-						addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
-						updateBuffs();
-						return changeStats({ san: 1, social: 1 });
-					}}
-				);
-			}
-
-			// 继续交流选项（保持原有逻辑）
-			if (gameState.metBigBull && !gameState.bigBullCooperation) {
-				options.push({ text: '🌟 和上次那个大牛深入合作', fn: () => {
-					gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
-					gameState.bigBullDeepCount++;
-					addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
-					updateBuffs();
-					if (gameState.research >= 12 && gameState.bigBullDeepCount >= 2) {
-						setTimeout(showBigBullCoopModal, 300);
-					}
-					return true;
-				}});
-			}
-
-			if (gameState.metBeautiful && !gameState.hasLover) {
-				options.push({ text: '💕 和上次那个活泼的异性学者交流', fn: () => {
-					gameState.beautifulCount++;
-					addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
-					gameState.sanMax += 3;
-					changeSan(8);
-					if (gameState.social >= 12 && gameState.beautifulCount >= 2) {
-						setTimeout(() => showLoverModal('beautiful'), 300);
-					}
-					return true;
-				}});
-			}
-
-			if (gameState.metSmart && !gameState.hasLover) {
-				options.push({ text: '🧠 和上次那个聪慧的异性学者交流', fn: () => {
-					gameState.smartCount++;
-					addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
-					changeSan(1);
-					changeResearch(1);
-					if (gameState.social >= 12 && gameState.smartCount >= 2) {
-						setTimeout(() => showLoverModal('smart'), 300);
-					}
-					return true;
-				}});
-			}
-
-			const selected = shuffle(options).slice(0, 3);
+			// ==================== 定义高级选项（需要社交≥6）====================
+			const advancedOptions = [];
 			
-			// 显示弹窗，选择后处理下一个开会事件
+			if (gameState.social >= 6) {
+				// 找大牛合作
+				if (!gameState.metBigBullCoop) {
+					advancedOptions.push({ 
+						text: '🎓 找大牛合作', 
+						fn: () => { 
+							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
+							gameState.metBigBull = true;
+							gameState.metBigBullCoop = true;
+							addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+							updateBuffs();
+							return changeSocial(1);
+						},
+						category: 'advanced'
+					});
+				}
+				
+				// 和活泼的异性学者交流
+				if (!gameState.metBeautiful && !gameState.permanentlyBlockedBeautifulLover && !gameState.hasLover) {
+					advancedOptions.push({ 
+						text: '💕 和活泼的异性学者交流', 
+						fn: () => { 
+							gameState.metBeautiful = true;
+							gameState.beautifulCount = 1;
+							addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
+							return changeStats({ san: 5, social: 1 });
+						},
+						category: 'advanced'
+					});
+				}
+				
+				// 和聪慧的异性学者交流
+				if (!gameState.metSmart && !gameState.permanentlyBlockedSmartLover && !gameState.hasLover) {
+					advancedOptions.push({ 
+						text: '🧠 和聪慧的异性学者交流', 
+						fn: () => { 
+							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
+							gameState.metSmart = true;
+							gameState.smartCount = 1;
+							addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+							updateBuffs();
+							return changeStats({ san: 1, social: 1 });
+						},
+						category: 'advanced'
+					});
+				}
+			}
+
+			// ==================== 定义后续选项（需要触发过对应高级选项 + 满足能力要求）====================
+			const followUpOptions = [];
+			
+			// 和上次那个大牛深入合作（需要科研≥12）
+			if (gameState.research >= 12 && gameState.metBigBullCoop && !gameState.bigBullCooperation && !gameState.permanentlyBlockedBigBullCoop) {
+				followUpOptions.push({ 
+					text: '🌟 和上次那个大牛深入合作', 
+					fn: () => {
+						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
+						addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
+						updateBuffs();
+						if (gameState.bigBullDeepCount >= 2 && !gameState.permanentlyBlockedBigBullCoop) {
+							setTimeout(showBigBullCoopModal, 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
+
+			// 和上次那个活泼的异性学者交流（需要社交≥12）
+			if (gameState.social >= 12 && gameState.metBeautiful && !gameState.hasLover && !gameState.permanentlyBlockedBeautifulLover) {
+				followUpOptions.push({ 
+					text: '💕 和上次那个活泼的异性学者交流', 
+					fn: () => {
+						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
+						addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
+						gameState.sanMax += 3;
+						changeSan(8);
+						if (gameState.beautifulCount >= 2 && !gameState.permanentlyBlockedBeautifulLover) {
+							setTimeout(() => showLoverModal('beautiful'), 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
+
+			// 和上次那个聪慧的异性学者交流（需要社交≥12）
+			if (gameState.social >= 12 && gameState.metSmart && !gameState.hasLover && !gameState.permanentlyBlockedSmartLover) {
+				followUpOptions.push({ 
+					text: '🧠 和上次那个聪慧的异性学者交流', 
+					fn: () => {
+						gameState.smartCount = (gameState.smartCount || 0) + 1;
+						addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
+						changeSan(1);
+						changeResearch(1);
+						if (gameState.smartCount >= 2 && !gameState.permanentlyBlockedSmartLover) {
+							setTimeout(() => showLoverModal('smart'), 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
+
+			// ==================== 根据会议等级选择选项 ====================
+			let selected = [];
+			
+			if (grade === 'C') {
+				selected = shuffle(baseOptions).slice(0, 3);
+			} else if (grade === 'B') {
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				selected = shuffle(allOptions).slice(0, 3);
+			} else if (grade === 'A') {
+				const highPriorityOptions = [...advancedOptions, ...followUpOptions];
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				
+				const shuffledHighPriority = shuffle(highPriorityOptions);
+				const shuffledAll = shuffle(allOptions);
+				
+				const usedTexts = new Set();
+				
+				for (let i = 0; i < Math.min(2, shuffledHighPriority.length); i++) {
+					selected.push(shuffledHighPriority[i]);
+					usedTexts.add(shuffledHighPriority[i].text);
+				}
+				
+				if (selected.length < 2) {
+					for (const opt of shuffledAll) {
+						if (!usedTexts.has(opt.text)) {
+							selected.push(opt);
+							usedTexts.add(opt.text);
+							if (selected.length >= 2) break;
+						}
+					}
+				}
+				
+				for (const opt of shuffledAll) {
+					if (!usedTexts.has(opt.text)) {
+						selected.push(opt);
+						break;
+					}
+				}
+			}
+			
+			if (selected.length === 0) {
+				selected = shuffle(baseOptions).slice(0, 3);
+			}
+			
+			while (selected.length < 3) {
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				const usedTexts = new Set(selected.map(s => s.text));
+				let found = false;
+				for (const opt of shuffle(allOptions)) {
+					if (!usedTexts.has(opt.text)) {
+						selected.push(opt);
+						found = true;
+						break;
+					}
+				}
+				if (!found) break;
+			}
+			
+			// 显示弹窗
 			showModal(`🎉 ${confString}`, 
 				`<div style="margin-bottom:15px;">
-					<p>你来到了<strong>${confLocation.city}</strong>参加<strong>${confInfo.name}</strong>${isMultiple ? `，展示了${papers.length}篇论文` : ''}，在学术会议上，你可以选择：</p>
+					<p>你来到了<strong>${confLocation.city}</strong>参加<strong>${confInfo.name}</strong>（${grade}类）${isMultiple ? `，展示了${papers.length}篇论文` : ''}，在学术会议上，你可以选择：</p>
 				</div>`, 
 				selected.map(opt => ({
 					text: opt.text, class: 'btn-primary', action: () => {
 						closeModal();
 						opt.fn();
-						// 处理下一个开会事件
 						setTimeout(() => processNextConferenceInQueue(), 100);
 					}
 				}))
@@ -9662,7 +9869,7 @@
                     addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, '金钱-4');
                     closeModal();
                     if (changeGold(-4)) {
-                        setTimeout(() => showConferenceEventModal(confInfo, confLocation), 200);
+                        setTimeout(() => showConferenceEventModal(confInfo, confLocation, grade), 200);
                     }
                 }},
                 { text: favorText, class: 'btn-info', action: () => {
@@ -9672,7 +9879,7 @@
                     addLog('开会', `导师报销参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, result);
                     closeModal();
                     if (changeFavor(-favorCost)) {
-                        setTimeout(() => showConferenceEventModal(confInfo, confLocation), 200);
+                        setTimeout(() => showConferenceEventModal(confInfo, confLocation, grade), 200);
                     }
                 }},
                 { text: proxyText, class: 'btn-primary', action: () => {
@@ -9692,253 +9899,477 @@
             ]);
         }
 
-        function showConferenceEventModal(confInfo, confLocation) {
-            // 清除会议信息
-            gameState.pendingConferenceInfo = null;
-            
-            // 如果没有传入会议信息，使用默认值
-            if (!confInfo) {
-                confInfo = { name: '学术会议', year: getRealYear(gameState.year, gameState.month), fullName: 'Academic Conference' };
-            }
-            if (!confLocation) {
-                confLocation = CONFERENCE_LOCATIONS[Math.floor(Math.random() * CONFERENCE_LOCATIONS.length)];
-            }
-            
-            const confString = `${confInfo.name} ${confInfo.year} @ ${confLocation.city}, ${confLocation.country}`;
-            
-            let options = [
-                { text: '🏖️ 顺便旅游', fn: () => { 
-                    gameState.tourCount++;
-                    addLog('开会事件', `在${confLocation.city}顺便旅游`, 'SAN值+6');
-                    return changeSan(6);
-                }},
-                { text: '☕ 茶歇+晚宴', fn: () => { 
-                    gameState.teaBreakCount++;
-                    addLog('开会事件', '茶歇+晚宴', 'SAN值+1，社交能力+1');
-                    return changeStats({ san: 1, social: 1 });
-                }},
-                { text: '🔬 同行交流', fn: () => { 
-                    gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false }); 
-                    addLog('开会事件', '同行交流', '临时buff-下次做实验多做3次');
-                    updateBuffs();
-                    return true;
-                }},
-                { text: '💡 广泛交流', fn: () => { 
-                    gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false }); 
-                    addLog('开会事件', '广泛交流', '临时buff-下次想idea多想3次');
-                    updateBuffs();
-                    return true;
-                }},
-                { text: '🌟 找大牛交流', fn: () => { 
-                    gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
-                    gameState.metBigBull = true;
-                    addLog('开会事件', '找大牛交流', '临时buff-下次想idea分数×1.25');
-                    updateBuffs();
-                    return true;
-                }},
-                { text: '🏢 找企业交流', fn: () => { 
-                    gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
-                    gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
-                    addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
-                    updateBuffs();
-                    
-                    if (gameState.enterpriseCount === 3 && !gameState.ailabInternship) {
-                        setTimeout(() => showAILabInternshipModal(), 300);
-                    }
-                    return true;
-                }},
-                { text: '🤝 找同学合作', fn: () => { 
-                    gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
-                    addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
-                    updateBuffs();
-                    return true;
-                }}
-            ];
+		function showConferenceEventModal(confInfo, confLocation, grade) {
+			// 清除会议信息
+			gameState.pendingConferenceInfo = null;
+			
+			// 如果没有传入会议信息，使用默认值
+			if (!confInfo) {
+				confInfo = { name: '学术会议', year: getRealYear(gameState.year, gameState.month), fullName: 'Academic Conference' };
+			}
+			if (!confLocation) {
+				confLocation = CONFERENCE_LOCATIONS[Math.floor(Math.random() * CONFERENCE_LOCATIONS.length)];
+			}
+			// 如果没有传入grade，默认为C
+			if (!grade) {
+				grade = 'C';
+			}
+			
+			const confString = `${confInfo.name} ${confInfo.year} @ ${confLocation.city}, ${confLocation.country}`;
+			
+			// ==================== 定义基础选项（C类可用，不需要任何条件）====================
+			const baseOptions = [
+				{ text: '🏖️ 顺便旅游', fn: () => { 
+					gameState.tourCount++;
+					addLog('开会事件', `在${confLocation.city}顺便旅游`, 'SAN值+6');
+					return changeSan(6);
+				}},
+				{ text: '☕ 茶歇+晚宴', fn: () => { 
+					gameState.teaBreakCount++;
+					addLog('开会事件', '茶歇+晚宴', 'SAN值+1，社交能力+1');
+					return changeStats({ san: 1, social: 1 });
+				}},
+				{ text: '🔬 同行交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false }); 
+					addLog('开会事件', '同行交流', '临时buff-下次做实验多做3次');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '💡 广泛交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false }); 
+					addLog('开会事件', '广泛交流', '临时buff-下次想idea多想3次');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '🤝 找同学合作', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
+					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
+					updateBuffs();
+					return true;
+				}},
+				{ text: '🌟 找大牛交流', fn: () => { 
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+					gameState.metBigBull = true;
+					addLog('开会事件', '找大牛交流', '临时buff-下次想idea分数×1.25');
+					updateBuffs();
+					return true;
+				}},
+				// 找企业交流是基础选项，不需要社交≥6
+				{ text: '🏢 找企业交流', fn: () => { 
+					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					updateBuffs();
+					
+					// 第3次及以后触发实习邀请（需要未实习且未永久阻止）
+					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship) {
+						setTimeout(() => showAILabInternshipModal(), 300);
+					}
+					return true;
+				}}
+			];
 
-            if (gameState.social >= 6) {
-                options.push(
-                    { text: '🎓 找大牛合作', fn: () => { 
-                        gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
-                        gameState.metBigBull = true;
-                        addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
-                        updateBuffs();
-                        return changeSocial(1);
-                    }},
-                    { text: '💕 和活泼的异性学者交流', fn: () => { 
-                        gameState.metBeautiful = true;
-                        gameState.beautifulCount++;
-                        addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
-                        return changeStats({ san: 5, social: 1 });
-                    }},
-                    { text: '🧠 和聪慧的异性学者交流', fn: () => { 
-                        gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
-                        gameState.metSmart = true;
-                        gameState.smartCount++;
-                        addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
-                        updateBuffs();
-                        return changeStats({ san: 1, social: 1 });
-                    }}
-                );
-            }
+			// ==================== 定义高级选项（需要社交≥6）====================
+			const advancedOptions = [];
+			
+			if (gameState.social >= 6) {
+				// 找大牛合作 - 如果已触发过则不再出现（用后续选项替代）
+				if (!gameState.metBigBullCoop) {
+					advancedOptions.push({ 
+						text: '🎓 找大牛合作', 
+						fn: () => { 
+							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
+							gameState.metBigBull = true;
+							gameState.metBigBullCoop = true;  // 标记已触发
+							addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+							updateBuffs();
+							return changeSocial(1);
+						},
+						category: 'advanced'
+					});
+				}
+				
+				// 和活泼的异性学者交流 - 如果已触发过则不再出现（用后续选项替代）
+				if (!gameState.metBeautiful && !gameState.permanentlyBlockedBeautifulLover && !gameState.hasLover) {
+					advancedOptions.push({ 
+						text: '💕 和活泼的异性学者交流', 
+						fn: () => { 
+							gameState.metBeautiful = true;
+							gameState.beautifulCount = 1;
+							addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
+							return changeStats({ san: 5, social: 1 });
+						},
+						category: 'advanced'
+					});
+				}
+				
+				// 和聪慧的异性学者交流 - 如果已触发过则不再出现（用后续选项替代）
+				if (!gameState.metSmart && !gameState.permanentlyBlockedSmartLover && !gameState.hasLover) {
+					advancedOptions.push({ 
+						text: '🧠 和聪慧的异性学者交流', 
+						fn: () => { 
+							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
+							gameState.metSmart = true;
+							gameState.smartCount = 1;
+							addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+							updateBuffs();
+							return changeStats({ san: 1, social: 1 });
+						},
+						category: 'advanced'
+					});
+				}
+			}
 
-            if (gameState.metBigBull && !gameState.bigBullCooperation) {
-                options.push({ text: '🌟 和上次那个大牛深入合作', fn: () => {
-                    gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
-                    gameState.bigBullDeepCount++;
-                    addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
-                    updateBuffs();
-                    if (gameState.research >= 12 && gameState.bigBullDeepCount >= 2) {
-                        setTimeout(showBigBullCoopModal, 300);
-                    }
-                    return true;
-                }});
-            }
+			// ==================== 定义后续选项（需要触发过对应高级选项 + 满足能力要求）====================
+			const followUpOptions = [];
+			
+			// 和上次那个大牛深入合作（需要科研≥12 + 触发过找大牛合作 + 未联培 + 未永久阻止）
+			if (gameState.research >= 12 && gameState.metBigBullCoop && !gameState.bigBullCooperation && !gameState.permanentlyBlockedBigBullCoop) {
+				followUpOptions.push({ 
+					text: '🌟 和上次那个大牛深入合作', 
+					fn: () => {
+						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
+						addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
+						updateBuffs();
+						// 第2次及以后触发联培选择
+						if (gameState.bigBullDeepCount >= 2 && !gameState.permanentlyBlockedBigBullCoop) {
+							setTimeout(showBigBullCoopModal, 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
 
-            if (gameState.metBeautiful && !gameState.hasLover) {
-                options.push({ text: '💕 和上次那个活泼的异性学者交流', fn: () => {
-                    gameState.beautifulCount++;
-                    addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
-                    gameState.sanMax += 3;
-                    changeSan(8);
-                    if (gameState.social >= 12 && gameState.beautifulCount >= 2) {
-                        setTimeout(() => showLoverModal('beautiful'), 300);
-                    }
-                    return true;
-                }});
-            }
+			// 和上次那个活泼的异性学者交流（需要社交≥12 + 触发过 + 没有恋人 + 未永久阻止）
+			if (gameState.social >= 12 && gameState.metBeautiful && !gameState.hasLover && !gameState.permanentlyBlockedBeautifulLover) {
+				followUpOptions.push({ 
+					text: '💕 和上次那个活泼的异性学者交流', 
+					fn: () => {
+						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
+						addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
+						gameState.sanMax += 3;
+						changeSan(8);
+						// 第2次及以后触发恋人选择
+						if (gameState.beautifulCount >= 2 && !gameState.permanentlyBlockedBeautifulLover) {
+							setTimeout(() => showLoverModal('beautiful'), 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
 
-            if (gameState.metSmart && !gameState.hasLover) {
-                options.push({ text: '🧠 和上次那个聪慧的异性学者交流', fn: () => {
-                    gameState.smartCount++;
-                    addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
-                    changeSan(1);
-                    changeResearch(1);
-                    if (gameState.social >= 12 && gameState.smartCount >= 2) {
-                        setTimeout(() => showLoverModal('smart'), 300);
-                    }
-                    return true;
-                }});
-            }
+			// 和上次那个聪慧的异性学者交流（需要社交≥12 + 触发过 + 没有恋人 + 未永久阻止）
+			if (gameState.social >= 12 && gameState.metSmart && !gameState.hasLover && !gameState.permanentlyBlockedSmartLover) {
+				followUpOptions.push({ 
+					text: '🧠 和上次那个聪慧的异性学者交流', 
+					fn: () => {
+						gameState.smartCount = (gameState.smartCount || 0) + 1;
+						addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
+						changeSan(1);
+						changeResearch(1);
+						// 第2次及以后触发恋人选择
+						if (gameState.smartCount >= 2 && !gameState.permanentlyBlockedSmartLover) {
+							setTimeout(() => showLoverModal('smart'), 300);
+						}
+						return true;
+					},
+					category: 'followUp'
+				});
+			}
 
-            const selected = shuffle(options).slice(0, 3);
-            
-            // ★★★ 修改弹窗标题，显示会议名称和地点 ★★★
-            showModal(`🎉 ${confString}`, 
-                `<div style="margin-bottom:15px;">
-                    <p>你来到了<strong>${confLocation.city}</strong>参加<strong>${confInfo.name}</strong>，在学术会议上，你可以选择：</p>
-                </div>`, 
-                selected.map(opt => ({
-                    text: opt.text, class: 'btn-primary', action: () => {
-                        closeModal();
-                        opt.fn();
-                    }
-                }))
-            );
-        }
+			// ==================== 根据会议等级选择选项 ====================
+			let selected = [];
+			
+			if (grade === 'C') {
+				// C类会议：只从基础选项中选择3个
+				selected = shuffle(baseOptions).slice(0, 3);
+				
+			} else if (grade === 'B') {
+				// B类会议：从所有可用选项中随机选择3个
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				selected = shuffle(allOptions).slice(0, 3);
+				
+			} else if (grade === 'A') {
+				// A类会议：前2个优先从高级选项或后续选项中选，第3个从全部选
+				const highPriorityOptions = [...advancedOptions, ...followUpOptions];
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				
+				// 打乱高优先级选项和所有选项
+				const shuffledHighPriority = shuffle(highPriorityOptions);
+				const shuffledAll = shuffle(allOptions);
+				
+				// 选择前两个（优先从高优先级中选）
+				const usedTexts = new Set();
+				
+				for (let i = 0; i < Math.min(2, shuffledHighPriority.length); i++) {
+					selected.push(shuffledHighPriority[i]);
+					usedTexts.add(shuffledHighPriority[i].text);
+				}
+				
+				// 如果高优先级选项不足2个，从所有选项中补充
+				if (selected.length < 2) {
+					for (const opt of shuffledAll) {
+						if (!usedTexts.has(opt.text)) {
+							selected.push(opt);
+							usedTexts.add(opt.text);
+							if (selected.length >= 2) break;
+						}
+					}
+				}
+				
+				// 第3个从所有选项中选（排除已选的）
+				for (const opt of shuffledAll) {
+					if (!usedTexts.has(opt.text)) {
+						selected.push(opt);
+						break;
+					}
+				}
+			}
+			
+			// 确保至少有选项可选
+			if (selected.length === 0) {
+				selected = shuffle(baseOptions).slice(0, 3);
+			}
+			
+			// 确保有3个选项（如果可用选项不足3个则尽量多选）
+			while (selected.length < 3) {
+				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+				const usedTexts = new Set(selected.map(s => s.text));
+				let found = false;
+				for (const opt of shuffle(allOptions)) {
+					if (!usedTexts.has(opt.text)) {
+						selected.push(opt);
+						found = true;
+						break;
+					}
+				}
+				if (!found) break;
+			}
+			
+			// 显示弹窗
+			showModal(`🎉 ${confString}`, 
+				`<div style="margin-bottom:15px;">
+					<p>你来到了<strong>${confLocation.city}</strong>参加<strong>${confInfo.name}</strong>（${grade}类），在学术会议上，你可以选择：</p>
+				</div>`, 
+				selected.map(opt => ({
+					text: opt.text, class: 'btn-primary', action: () => {
+						closeModal();
+						opt.fn();
+					}
+				}))
+			);
+		}
 
-        function showLoverModal(type) {
-            const desc = type === 'beautiful' 
-                ? '你和那个活泼的异性学者越来越熟悉了' 
-                : '你和那个聪慧的异性学者越来越默契了';
-            
-            const bonusDesc = type === 'beautiful'
-                ? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
-                : '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
-            
-            showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>${bonusDesc}`, [
-                { text: '还是算了', class: 'btn-info', action: closeModal },
-                { text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
-                    gameState.hasLover = true;
-                    gameState.loverType = type;
-                    if (type === 'beautiful') {
-                        gameState.san = gameState.sanMax;
-                        gameState.sanMax += 4;
-                        addLog('💕 恋爱', '和活泼的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
-                    } else {
-                        changeResearch(1);
-                        gameState.buffs.permanent.push(
-                            { type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
-                            { type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
-                            { type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
-                        );
-                        addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
-                        changeSan(1);
-                    }
-                    closeModal();
-                    updateAllUI();
-                    updateBuffs();
-                }}
-            ]);
-        }
+		function showLoverModal(type) {
+			// 检查是否被永久阻止（分类型检查）
+			if (type === 'beautiful' && gameState.permanentlyBlockedBeautifulLover) {
+				return;
+			}
+			if (type === 'smart' && gameState.permanentlyBlockedSmartLover) {
+				return;
+			}
+			// 已有恋人不能再谈
+			if (gameState.hasLover) {
+				return;
+			}
+			
+			const desc = type === 'beautiful' 
+				? '你和那个活泼的异性学者越来越熟悉了' 
+				: '你和那个聪慧的异性学者越来越默契了';
+			
+			const bonusDesc = type === 'beautiful'
+				? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
+				: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
+			
+			// 获取对应类型的拒绝次数
+			const rejectCount = type === 'beautiful' 
+				? (gameState.rejectedBeautifulLoverCount || 0) 
+				: (gameState.rejectedSmartLoverCount || 0);
+			
+			const loverTypeName = type === 'beautiful' ? '活泼' : '聪慧';
+			
+			// 显示拒绝次数警告
+			let warningText = '';
+			if (rejectCount === 0) {
+				warningText = `<div style="margin-top:10px;padding:8px;background:rgba(253,203,110,0.2);border-radius:8px;font-size:0.75rem;color:#d68910;"><i class="fas fa-exclamation-triangle"></i> 提示：如果拒绝${loverTypeName}恋人2次，将永久无法再与${loverTypeName}异性学者发展恋情</div>`;
+			} else if (rejectCount === 1) {
+				warningText = `<div style="margin-top:10px;padding:8px;background:rgba(231,76,60,0.2);border-radius:8px;font-size:0.75rem;color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>这是与${loverTypeName}异性学者的最后一次机会！</div>`;
+			}
+			
+			showModal('💕 发展关系', `<p>${desc}，是否成为恋人？</p>${bonusDesc}${warningText}`, [
+				{ text: '还是算了', class: 'btn-info', action: () => {
+					// 分类型增加拒绝次数
+					if (type === 'beautiful') {
+						gameState.rejectedBeautifulLoverCount = (gameState.rejectedBeautifulLoverCount || 0) + 1;
+						if (gameState.rejectedBeautifulLoverCount >= 2) {
+							gameState.permanentlyBlockedBeautifulLover = true;
+							addLog('关系选择', '再次拒绝了活泼异性学者', '与活泼异性学者的缘分已尽');
+						} else {
+							addLog('关系选择', '暂时拒绝了活泼异性学者', '下次还有机会');
+						}
+					} else {
+						gameState.rejectedSmartLoverCount = (gameState.rejectedSmartLoverCount || 0) + 1;
+						if (gameState.rejectedSmartLoverCount >= 2) {
+							gameState.permanentlyBlockedSmartLover = true;
+							addLog('关系选择', '再次拒绝了聪慧异性学者', '与聪慧异性学者的缘分已尽');
+						} else {
+							addLog('关系选择', '暂时拒绝了聪慧异性学者', '下次还有机会');
+						}
+					}
+					closeModal();
+				}},
+				{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
+					gameState.hasLover = true;
+					gameState.loverType = type;
+					if (type === 'beautiful') {
+						gameState.san = gameState.sanMax;
+						gameState.sanMax += 4;
+						addLog('💕 恋爱', '和活泼的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
+					} else {
+						changeResearch(1);
+						gameState.buffs.permanent.push(
+							{ type: 'idea_times', name: '每次想idea多想1次', value: 1, permanent: true },
+							{ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
+							{ type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
+						);
+						addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
+						changeSan(1);
+					}
+					closeModal();
+					updateAllUI();
+					updateBuffs();
+				}}
+			]);
+		}
 
-        function showAILabInternshipModal() {
-            const sanCost = gameState.isReversed && gameState.character === 'normal' 
-                ? (gameState.reversedAwakened ? 9 : 6) 
-                : 3;
-            
-            showModal('🏢 实习邀请', 
-                `<div style="text-align:center;margin-bottom:15px;">
-                    <div style="font-size:2.5rem;margin-bottom:10px;">🤖</div>
-                    <div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">上海AI Lab 远程实习邀请</div>
-                </div>
-                <p>你在企业交流中表现出色，AI Lab 的L研究员对你印象深刻，向你发出了远程实习邀请！</p>
-                
-                <div style="background:var(--light-bg);border-radius:10px;padding:12px;margin:15px 0;">
-                    <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">📋 实习待遇：</div>
-                    <div style="display:flex;flex-direction:column;gap:6px;font-size:0.85rem;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="color:var(--success-color);">✓</span>
-                            <span>永久buff：做实验分数 ×1.25</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="color:var(--success-color);">✓</span>
-                            <span>每月金钱 +2（实习工资）</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="color:var(--danger-color);">✗</span>
-                            <span>每月SAN -${sanCost}（工作压力）${sanCost !== 3 ? '（怠惰效果）' : ''}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <p style="font-size:0.8rem;color:var(--text-secondary);text-align:center;">
-                    远程实习可以兼顾学业，但需要承担额外的工作压力
-                </p>`,
-                [
-                    { text: '婉拒邀请', class: 'btn-info', action: () => {
-                        addLog('实习邀请', '婉拒了AI Lab的实习邀请', '专心完成学业');
-                        closeModal();
-                    }},
-                    { text: '🚀 接受实习', class: 'btn-primary', action: () => {
-                        gameState.ailabInternship = true;
-                        gameState.buffs.permanent.push({ 
-                            type: 'exp_bonus', 
-                            name: '实习加成：做实验分数×1.25', 
-                            value: 1.25, 
-                            multiply: true, 
-                            permanent: true 
-                        });
-                        addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-3');
-                        closeModal();
-                        updateBuffs();
-                        updateAllUI();
-                    }}
-                ]
-            );
-        }
+		function showAILabInternshipModal() {
+			// 检查是否被永久阻止
+			if (gameState.permanentlyBlockedInternship || gameState.ailabInternship) {
+				return;
+			}
+			
+			const sanCost = gameState.isReversed && gameState.character === 'normal' 
+				? (gameState.reversedAwakened ? 9 : 6) 
+				: 3;
+			
+			// 显示拒绝次数警告
+			const rejectCount = gameState.rejectedInternshipCount || 0;
+			let warningText = '';
+			if (rejectCount === 0) {
+				warningText = '<p style="font-size:0.75rem;color:#d68910;margin-top:10px;"><i class="fas fa-info-circle"></i> 提示：如果拒绝2次，将永久无法再获得实习机会（但找企业交流选项仍然存在）</p>';
+			} else if (rejectCount === 1) {
+				warningText = '<p style="font-size:0.8rem;color:#e74c3c;margin-top:10px;"><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>这是最后一次实习机会！再次拒绝将永久错过</p>';
+			}
+			
+			showModal('🏢 实习邀请', 
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">🤖</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">上海AI Lab 远程实习邀请</div>
+				</div>
+				<p>你在企业交流中表现出色，AI Lab 的L研究员对你印象深刻，向你发出了远程实习邀请！</p>
+				
+				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin:15px 0;">
+					<div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">📋 实习待遇：</div>
+					<div style="display:flex;flex-direction:column;gap:6px;font-size:0.85rem;">
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--success-color);">✓</span>
+							<span>永久buff：做实验分数 ×1.25</span>
+						</div>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--success-color);">✓</span>
+							<span>每月金钱 +2（实习工资）</span>
+						</div>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="color:var(--danger-color);">✗</span>
+							<span>每月SAN -${sanCost}（工作压力）${sanCost !== 3 ? '（怠惰效果）' : ''}</span>
+						</div>
+					</div>
+				</div>
+				
+				<p style="font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+					远程实习可以兼顾学业，但需要承担额外的工作压力
+				</p>
+				${warningText}`,
+				[
+					{ text: '婉拒邀请', class: 'btn-info', action: () => {
+						gameState.rejectedInternshipCount = (gameState.rejectedInternshipCount || 0) + 1;
+						
+						if (gameState.rejectedInternshipCount >= 2) {
+							gameState.permanentlyBlockedInternship = true;
+							addLog('实习邀请', '再次婉拒了AI Lab的实习邀请', '实习机会已永久关闭');
+						} else {
+							addLog('实习邀请', '暂时婉拒了AI Lab的实习邀请', '下次企业交流还有机会');
+						}
+						
+						closeModal();
+					}},
+					{ text: '🚀 接受实习', class: 'btn-primary', action: () => {
+						gameState.ailabInternship = true;
+						gameState.buffs.permanent.push({ 
+							type: 'exp_bonus', 
+							name: '实习加成：做实验分数×1.25', 
+							value: 1.25, 
+							multiply: true, 
+							permanent: true 
+						});
+						addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-3');
+						closeModal();
+						updateBuffs();
+						updateAllUI();
+					}}
+				]
+			);
+		}
 
-        function showBigBullCoopModal() {
-            showModal('🌟 联合培养', '<p>大牛对你的科研能力印象深刻，提议与你的导师联合培养你，是否接受？</p>', [
-                { text: '婉拒', class: 'btn-info', action: closeModal },
-                { text: '✨ 接受联合培养', class: 'btn-primary', action: () => {
-                    gameState.bigBullCooperation = true;
-                    gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+8', value: 8, permanent: true });
-                    addLog('联合培养', '导师与大牛联合培养', '永久buff-每次写论文分数+8');
-                    closeModal();
-                    updateBuffs();
-                }}
-            ]);
-        }
+		function showBigBullCoopModal() {
+			// 检查是否被永久阻止或已联培
+			if (gameState.permanentlyBlockedBigBullCoop || gameState.bigBullCooperation) {
+				return;
+			}
+			
+			// 显示拒绝次数警告
+			const rejectCount = gameState.rejectedBigBullCoopCount || 0;
+			let warningText = '';
+			if (rejectCount === 0) {
+				warningText = '<p style="font-size:0.75rem;color:#d68910;margin-top:10px;"><i class="fas fa-info-circle"></i> 提示：如果拒绝2次，将永久无法再获得联合培养机会</p>';
+			} else if (rejectCount === 1) {
+				warningText = '<p style="font-size:0.8rem;color:#e74c3c;margin-top:10px;"><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>这是最后一次联培机会！再次拒绝将永久错过</p>';
+			}
+			
+			showModal('🌟 联合培养', 
+				`<p>大牛对你的科研能力印象深刻，提议与你的导师联合培养你，是否接受？</p>
+				<div style="margin-top:10px;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
+					<strong>联合培养效果：</strong><br>
+					✨ 永久buff：每次写论文分数+8<br>
+					✨ 解锁"学术之星"等高级结局条件
+				</div>
+				${warningText}`, 
+				[
+					{ text: '婉拒', class: 'btn-info', action: () => {
+						gameState.rejectedBigBullCoopCount = (gameState.rejectedBigBullCoopCount || 0) + 1;
+						
+						if (gameState.rejectedBigBullCoopCount >= 2) {
+							gameState.permanentlyBlockedBigBullCoop = true;
+							addLog('联合培养', '再次婉拒了联合培养', '联培机会已永久关闭');
+						} else {
+							addLog('联合培养', '暂时婉拒了联合培养', '继续深入合作还有机会');
+						}
+						
+						closeModal();
+					}},
+					{ text: '✨ 接受联合培养', class: 'btn-primary', action: () => {
+						gameState.bigBullCooperation = true;
+						gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+8', value: 8, permanent: true });
+						addLog('联合培养', '导师与大牛联合培养', '永久buff-每次写论文分数+8');
+						closeModal();
+						updateBuffs();
+					}}
+				]
+			);
+		}
 		// ==================== 成就商店系统 ====================
 		const achievementShopItems = [
 			{ 
@@ -9947,7 +10378,7 @@
 				desc: '清除所有携带的非永久buff和debuff', 
 				basePrice: 7, 
 				pricePerYear: 0,  // 价格不随年份变化
-				once: true, 
+				once: false, 
 				bought: false 
 			},
 			{ 
@@ -9956,7 +10387,7 @@
 				desc: '清除所有携带的非永久debuff', 
 				basePrice: 10, 
 				pricePerYear: 0, 
-				once: true, 
+				once: false, 
 				bought: false 
 			},
 			{ 
@@ -10160,7 +10591,8 @@
 				return;
 			}
 			
-			if (item.bought) {
+			// ★★★ 修改：香皂类物品不检查bought状态 ★★★
+			if (item.once && item.bought) {
 				showModal('❌ 购买失败', `<p>该物品已购买过！</p>`, 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
@@ -10168,7 +10600,11 @@
 			
 			// 扣除成就币
 			gameState.achievementCoins -= currentPrice;
-			item.bought = true;
+			
+			// ★★★ 修改：只有once为true的物品才设置bought ★★★
+			if (item.once) {
+				item.bought = true;
+			}
 			
 			let result = `成就币-${currentPrice}`;
 			
@@ -10261,6 +10697,49 @@
         // ==================== 商店系统 ====================
 		function openShop() {
 			let html = '<div>';
+			// ★★★ 新增：可出售物品列表 ★★★
+			const sellableItems = [
+				{ id: 'chair', name: '人体工学椅', sellPrice: 5 },
+				{ id: 'monitor', name: '4K显示器', sellPrice: 4 },
+				{ id: 'keyboard', name: '机械键盘', sellPrice: 4 },
+				{ id: 'gpu_buy', name: 'GPU服务器', sellPrice: 6 }
+			];
+			// 检查是否有可出售的物品
+			const ownedSellable = sellableItems.filter(si => {
+				if (si.id === 'gpu_buy') {
+					return (gameState.gpuServersBought || 0) > 0;
+				}
+				return gameState.furnitureBought && gameState.furnitureBought[si.id.replace('_buy', '')];
+			});			
+			// 显示出售区域
+			if (ownedSellable.length > 0) {
+				html += `<div style="margin-bottom:15px;padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:8px;border:1px solid rgba(243,156,18,0.4);">
+					<div style="font-weight:600;color:#d68910;margin-bottom:8px;"><i class="fas fa-store"></i> 出售物品（半价回收）</div>`;
+				
+				ownedSellable.forEach(si => {
+					let ownedCount = 1;
+					if (si.id === 'gpu_buy') {
+						ownedCount = gameState.gpuServersBought || 0;
+					}
+					
+					html += `<div class="shop-item" style="background:var(--card-bg);">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${si.name} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
+							<div class="shop-item-desc">出售获得 ${si.sellPrice} 金币</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price" style="color:var(--success-color);">+💰${si.sellPrice}</span>
+							<button class="btn btn-warning" onclick="sellItem('${si.id}')" style="padding:4px 10px;font-size:0.75rem;">出售</button>
+						</div>
+					</div>`;
+				});
+				
+				html += '</div>';
+			}
+			
+			// 原有购买区域
+			html += '<div style="font-weight:600;margin-bottom:8px;"><i class="fas fa-shopping-cart"></i> 购买物品</div>';
+			
 			shopItems.forEach(item => {
 				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
 				const reason = gameState.gold < item.price ? '金币不足' : (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : '';
@@ -10291,7 +10770,107 @@
 			html += '</div>';
 			showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
 		}
-
+		// ★★★ 新增：出售物品函数 ★★★
+		function sellItem(id) {
+			const sellPrices = {
+				'chair': 5,
+				'monitor': 4,
+				'keyboard': 4,
+				'gpu_buy': 6
+			};
+			
+			const sellPrice = sellPrices[id];
+			if (!sellPrice) return;
+			
+			let canSell = false;
+			let itemName = '';
+			
+			switch (id) {
+				case 'chair':
+					canSell = gameState.furnitureBought && gameState.furnitureBought.chair;
+					itemName = '人体工学椅';
+					break;
+				case 'monitor':
+					canSell = gameState.furnitureBought && gameState.furnitureBought.monitor;
+					itemName = '4K显示器';
+					break;
+				case 'keyboard':
+					canSell = gameState.furnitureBought && gameState.furnitureBought.keyboard;
+					itemName = '机械键盘';
+					break;
+				case 'gpu_buy':
+					canSell = (gameState.gpuServersBought || 0) > 0;
+					itemName = 'GPU服务器';
+					break;
+			}
+			
+			if (!canSell) {
+				showModal('❌ 出售失败', '<p>你没有这个物品！</p>', 
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
+			showModal('⚠️ 确认出售', 
+				`<p>确定要出售 <strong>${itemName}</strong> 吗？</p>
+				 <p>将获得 <strong style="color:var(--success-color);">+${sellPrice} 金币</strong></p>
+				 <p style="color:var(--danger-color);font-size:0.85rem;">⚠️ 对应的永久buff将被移除！</p>`,
+				[
+					{ text: '取消', class: 'btn-info', action: closeModal },
+					{ text: '确认出售', class: 'btn-warning', action: () => {
+						// 移除对应buff并更新状态
+						switch (id) {
+							case 'chair':
+								gameState.furnitureBought.chair = false;
+								gameState.buffs.permanent = gameState.buffs.permanent.filter(b => b.type !== 'monthly_san');
+								// 恢复商店状态
+								const chairItem = shopItems.find(i => i.id === 'chair');
+								if (chairItem) chairItem.bought = false;
+								break;
+							case 'monitor':
+								gameState.furnitureBought.monitor = false;
+								gameState.buffs.permanent = gameState.buffs.permanent.filter(b => b.type !== 'read_san_reduce');
+								const monitorItem = shopItems.find(i => i.id === 'monitor');
+								if (monitorItem) monitorItem.bought = false;
+								break;
+							case 'keyboard':
+								gameState.furnitureBought.keyboard = false;
+								gameState.buffs.permanent = gameState.buffs.permanent.filter(b => b.type !== 'write_san_reduce');
+								const keyboardItem = shopItems.find(i => i.id === 'keyboard');
+								if (keyboardItem) keyboardItem.bought = false;
+								break;
+							case 'gpu_buy':
+								gameState.gpuServersBought--;
+								// 移除一个GPU buff
+								const gpuBuffIndex = gameState.buffs.permanent.findIndex(b => 
+									b.type === 'exp_times' && b.name === '每次做实验多做1次'
+								);
+								if (gpuBuffIndex !== -1) {
+									gameState.buffs.permanent.splice(gpuBuffIndex, 1);
+								}
+								break;
+						}
+						
+						// 检查全套家具成就条件
+						if (gameState.furnitureBought) {
+							const hasAll = gameState.furnitureBought.chair && 
+										   gameState.furnitureBought.monitor && 
+										   gameState.furnitureBought.keyboard;
+							if (!hasAll && gameState.achievementConditions) {
+								gameState.achievementConditions.fullFurnitureSet = false;
+							}
+						}
+						
+						gameState.gold += sellPrice;
+						addLog('出售', `出售了${itemName}`, `金币+${sellPrice}`);
+						
+						closeModal();
+						openShop();  // 刷新商店界面
+						updateAllUI();
+						updateBuffs();
+					}}
+				]
+			);
+		}
         function buyItem(id) {
             const item = shopItems.find(i => i.id === id);
             if (!item) return;
@@ -10527,7 +11106,86 @@
                 }}
             ]);
         }
+		// ==================== CCIG国内学术会议事件 ====================
+		function triggerCCIGEvent() {
+			const year = gameState.year;
+			const location = CCIG_LOCATIONS[(year - 1) % 5]; // 1-5年对应索引0-4
+			const realYear = getRealYear(year, 9);
+			
+			showModal('🏛️ CCIG中国图象图形学学会年会',
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:10px;">🇨🇳</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">CCIG ${realYear}</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">中国图象图形学学会年会</div>
+					<div style="font-size:0.9rem;margin-top:8px;">📍 ${location}，中国</div>
+				</div>
+				<p>一年一度的CCIG国内学术会议即将在<strong>${location}</strong>举办，是否参加？</p>`,
+				[
+					{ text: '❌ 不去参加', class: 'btn-info', action: () => {
+						addLog('CCIG', `不参加CCIG ${realYear} @ ${location}`, '无事发生');
+						closeModal();
+						updateAllUI();
+					}},
+					{ text: '👨‍🏫 导师报销', class: 'btn-primary', action: () => {
+						closeModal();
+						if (gameState.favor >= 6) {
+							addLog('CCIG', `导师报销参加CCIG @ ${location}`, '导师爽快答应');
+							setTimeout(() => showCCIGActivityModal(location, realYear), 200);
+						} else {
+							addLog('CCIG', `导师报销参加CCIG @ ${location}`, '导师略有不满，好感度-1');
+							if (changeFavor(-1)) {
+								setTimeout(() => showCCIGActivityModal(location, realYear), 200);
+							}
+						}
+					}},
+					{ text: '💰 自费前往（金币-2）', class: 'btn-warning', action: () => {
+						addLog('CCIG', `自费参加CCIG @ ${location}`, '金币-2');
+						closeModal();
+						if (changeGold(-2)) {
+							setTimeout(() => showCCIGActivityModal(location, realYear), 200);
+						}
+					}}
+				]
+			);
+		}
 
+		function showCCIGActivityModal(location, realYear) {
+			showModal('🏛️ CCIG参会活动',
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:1.5rem;margin-bottom:8px;">📍 ${location}</div>
+					<div style="font-size:0.9rem;color:var(--text-secondary);">CCIG ${realYear}</div>
+				</div>
+				<p>你来到了<strong>${location}</strong>参加CCIG，在会议期间你打算：</p>`,
+				[
+					{ text: '📚 认真听报告', class: 'btn-primary', action: () => {
+						gameState.buffs.temporary.push({ 
+							type: 'idea_bonus', 
+							name: '下次想idea分数+5', 
+							value: 5, 
+							permanent: false 
+						});
+						addLog('CCIG活动', '认真听报告', '临时buff-下次想idea分数+5');
+						closeModal();
+						updateBuffs();
+						updateAllUI();
+					}},
+					{ text: '🏖️ 趁机旅游', class: 'btn-success', action: () => {
+						addLog('CCIG活动', `在${location}趁机旅游`, 'SAN值+3');
+						closeModal();
+						changeSan(3);
+					}},
+					{ text: '🍜 请同学品尝美食（金币-3）', class: 'btn-warning', action: () => {
+						closeModal();
+						if (changeGold(-2)) {
+							gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+							changeSocial(1);
+							addLog('CCIG活动', `请同学品尝${location}美食`, '金币-3，SAN值+2，社交能力+1');
+							updateAllUI();
+						}
+					}}
+				]
+			);
+		}
 		// ★★★ 新增：学年总结事件 ★★★
 		function triggerYearEndSummaryEvent() {
 			// ★★★ 定义学年总结完成后的回调函数 ★★★
@@ -11388,7 +12046,7 @@
 				return a;
 			}
 			
-			if (gameState.hasLover) a.push('💕 喜结良缘');
+			if (gameState.hasLover) a.push('❤️ 喜结良缘');
 			if (gameState.gold >= 30) a.push('💰 家财万贯');
 			if (gameState.research > 15 && gameState.social > 15 && gameState.favor > 15 && gameState.gold > 15) a.push('⬡ 六边形战士');
 			if (gameState.research >= 20) a.push('🏆 诺奖选手');
@@ -11400,7 +12058,8 @@
 			if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
 			if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
 			if (gameState.totalCitations >= 1000) a.push('📚 千引大佬');
-			if (gameState.coffeeBoughtCount >= gameState.totalMonths && gameState.totalMonths > 0) a.push('☕ 咖啡爱好者');
+			const coffeeBonus = 3 + Math.floor((gameState.coffeeBoughtCount || 0) / 15);
+			if (coffeeBonus >= 6) a.push('☕ 绝世咖啡');
 			if (gameState.triggeredBuffTypes && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) a.push('✨ Buff之神');
 			if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
 			if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
@@ -11431,7 +12090,13 @@
 			if ((gameState.workCount || 0) >= 10) a.push('💼 打工狂人');
 			if ((gameState.readCount || 0) >= 20) a.push('📖 爱看论文');
 			if (gameState.achievementConditions && gameState.achievementConditions.twoInOneConference) a.push('🏹 一箭双雕');
-			
+			if (gameState.achievementConditions && gameState.achievementConditions.savedByPC) a.push('🎣 力挽狂澜');
+			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
+			if (rejectedLoverTwice && !gameState.hasLover) { a.push('💔 不入爱河');}
+			if (rejectedLoverTwice && gameState.hasLover) { a.push('💕 我在等你');}
+			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
+			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
+			if (rejectedBigBullTwice && rejectedInternshipTwice) { a.push('🏠 偏安一隅');}    
 			return a;
 		}
 
@@ -12309,6 +12974,23 @@
                 furnitureBought: {...(gameState.furnitureBought || {})},
                 achievementConditions: {...(gameState.achievementConditions || {})},
                 paperTypeCollection: gameState.paperTypeCollection ? [...gameState.paperTypeCollection] : [],
+				// ★★★ 新增：高级选项触发记录 ★★★
+				metBigBullCoop: gameState.metBigBullCoop || false,
+
+				// ★★★ 新增：拒绝次数和永久阻止状态 ★★★
+				rejectedBeautifulLoverCount: gameState.rejectedBeautifulLoverCount || 0,
+				rejectedSmartLoverCount: gameState.rejectedSmartLoverCount || 0,
+				rejectedInternshipCount: gameState.rejectedInternshipCount || 0,
+				rejectedBigBullCoopCount: gameState.rejectedBigBullCoopCount || 0,
+				permanentlyBlockedBeautifulLover: gameState.permanentlyBlockedBeautifulLover || false,
+				permanentlyBlockedSmartLover: gameState.permanentlyBlockedSmartLover || false,
+				permanentlyBlockedInternship: gameState.permanentlyBlockedInternship || false,
+				permanentlyBlockedBigBullCoop: gameState.permanentlyBlockedBigBullCoop || false,
+				seniorHelpUses: gameState.seniorHelpUses || 0,
+				teacherHelpUses: gameState.teacherHelpUses || 0,
+				nextActionBonus: gameState.nextActionBonus || 0,
+				nextActionBonusSource: gameState.nextActionBonusSource || null,
+				nextActionBonusType: gameState.nextActionBonusType || null,
                 
                 // ★★★ 新增：投稿统计相关 ★★★
                 submissionStats: gameState.submissionStats,
@@ -12469,7 +13151,24 @@
 							researchMax: save.researchMax || 20,
 							socialMax: save.socialMax || 20,
 							favorMax: save.favorMax || 20,
-                            
+							// ★★★ 新增：高级选项触发记录 ★★★
+							metBigBullCoop: save.metBigBullCoop || false,
+
+							// ★★★ 新增：拒绝次数和永久阻止状态 ★★★
+							rejectedBeautifulLoverCount: save.rejectedBeautifulLoverCount || 0,
+							rejectedSmartLoverCount: save.rejectedSmartLoverCount || 0,
+							rejectedInternshipCount: save.rejectedInternshipCount || 0,
+							rejectedBigBullCoopCount: save.rejectedBigBullCoopCount || 0,
+							permanentlyBlockedBeautifulLover: save.permanentlyBlockedBeautifulLover || false,
+							permanentlyBlockedSmartLover: save.permanentlyBlockedSmartLover || false,
+							permanentlyBlockedInternship: save.permanentlyBlockedInternship || false,
+							permanentlyBlockedBigBullCoop: save.permanentlyBlockedBigBullCoop || false,
+							seniorHelpUses: save.seniorHelpUses || 0,
+							teacherHelpUses: save.teacherHelpUses || 0,
+							nextActionBonus: save.nextActionBonus || 0,
+							nextActionBonusSource: save.nextActionBonusSource || null,
+							nextActionBonusType: save.nextActionBonusType || null,            
+							
                             rejectedPapers: save.rejectedPapers ? {...save.rejectedPapers} : {},
                             furnitureBought: save.furnitureBought ? {...save.furnitureBought} : {
                                 chair: false,
@@ -12851,9 +13550,9 @@
 
 		// 目标录取率
 		const TARGET_ACCEPTANCE_RATES = {
-			A: { min: 0.20, max: 0.30, target: 0.25 },
-			B: { min: 0.30, max: 0.45, target: 0.375 },
-			C: { min: 0.40, max: 0.60, target: 0.50 }
+			A: { min: 0.25, max: 0.35, target: 0.30 },
+			B: { min: 0.35, max: 0.45, target: 0.40 },
+			C: { min: 0.45, max: 0.65, target: 0.55 }
 		};
 
 		// 基础阈值配置
@@ -13456,7 +14155,7 @@
 				// 偏负面但非完全拒绝：小概率录取
 				borderlineChance = calculateFinalBorderlineRate(
 					submittedScore, grade, totalReviewScore, adjustment
-				);
+				) * 0.5;
 				accepted = Math.random() < borderlineChance;
 			} else {
 				// 完全拒绝
@@ -13798,6 +14497,11 @@
 						}
 						
 						if (accepted) {
+							if (totalReviewScore === -1) {
+								gameState.achievementConditions = gameState.achievementConditions || {};
+								gameState.achievementConditions.savedByPC = true;
+								addLog('🎣 力挽狂澜', '审稿意见负面但被PC捞起', '达成隐藏成就条件！');
+							}
 							handlePaperAccepted(paper, grade, acceptType, slot, extraInfo);
 						} else {
 							// 记录拒稿数据
@@ -15494,7 +16198,7 @@
 				<div style="font-size:0.8rem;">
 					<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
-							<strong>💕 喜结良缘</strong><br>
+							<strong>❤️ 喜结良缘</strong><br>
 							<span style="font-size:0.75rem;">社交≥12后多次与同一异性交流</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
