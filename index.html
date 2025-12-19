@@ -6533,7 +6533,7 @@
 				if (checkMonth === 5) {
 					monthEvents.push({ name: '寒假', icon: '❄️' });
 				} else if (checkMonth === 9) {
-					monthEvents.push({ name: '国内会议', icon: '🏛️' });  // ★★★ 新增 ★★★
+					monthEvents.push({ name: '领域年会', icon: '🏛️' });  // ★★★ 新增 ★★★
 				} else if (checkMonth === 11) {
 					monthEvents.push({ name: '暑假', icon: '☀️' });
 				} else if (checkMonth === 1 && checkYear >= 2) {
@@ -6621,7 +6621,7 @@
 					// ★★★ 新增：CCIG事件 ★★★
 					const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
 					const ccigLocation = ccigLocations[(year - 1) % 5];
-					events.push({ icon: '🏛️', name: '国内会议', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
+					events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
 				}
 				if (month === 11) {
 					events.push({ icon: '☀️', name: '暑假', desc: '暑假休息，SAN+3', color: 'rgba(253,203,110,0.25)' });
@@ -6743,7 +6743,7 @@
 				<div style="display:flex;flex-wrap:wrap;gap:8px;">
 					<span style="padding:2px 6px;background:rgba(116,185,255,0.25);border-radius:4px;">❄️ 寒假</span>
 					<span style="padding:2px 6px;background:rgba(253,203,110,0.25);border-radius:4px;">☀️ 暑假</span>
-					<span style="padding:2px 6px;background:rgba(231,76,60,0.25);border-radius:4px;">🏛️ 国内会议</span>
+					<span style="padding:2px 6px;background:rgba(231,76,60,0.25);border-radius:4px;">🏛️ 领域年会</span>
 					<span style="padding:2px 6px;background:rgba(108,92,231,0.25);border-radius:4px;">🎓 奖学金</span>
 					<span style="padding:2px 6px;background:rgba(253,121,168,0.25);border-radius:4px;">🎁 教师节</span>
 					<span style="padding:2px 6px;background:rgba(162,155,254,0.25);border-radius:4px;">📅 学年总结</span>
@@ -6922,14 +6922,19 @@
 						// 不衰减，什么都不做
 					} else {
 						let decayInfo = [];
+						
+						// ★★★ 修改：基于当前分数的10%衰减，最少1 ★★★
 						if (paper.ideaScore > 1) {
-							paper.ideaScore--;
-							decayInfo.push(`idea-1`);
+							const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
+							paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
+							decayInfo.push(`idea-${ideaDecay}`);
 						}
 						if (paper.expScore > 1) {
-							paper.expScore--;
-							decayInfo.push(`实验-1`);
+							const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
+							paper.expScore = Math.max(1, paper.expScore - expDecay);
+							decayInfo.push(`实验-${expDecay}`);
 						}
+						
 						if (decayInfo.length > 0) {
 							decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
 						}
@@ -6942,6 +6947,20 @@
 			gameState.papers.forEach((paper, idx) => {
 				if (paper && paper.reviewing) {
 					paper.reviewMonths--;
+					
+					// ★★★ 新增：每月时效性衰减 ★★★
+					if (!gameState.noDecay) {
+						// 基于当前分数的10%衰减，最少1
+						const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
+						const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
+						
+						paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
+						paper.expScore = Math.max(1, paper.expScore - expDecay);
+						
+						// 记录累计衰减（用于显示）
+						paper.totalIdeaDecay = (paper.totalIdeaDecay || 0) + ideaDecay;
+						paper.totalExpDecay = (paper.totalExpDecay || 0) + expDecay;
+					}
 					if (paper.reviewMonths <= 0) {
 						paper.reviewMonths = 0;
 						pendingReviewSlots.push(idx);  // 按槽位顺序收集
@@ -9295,7 +9314,7 @@
 							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
 							gameState.metBigBull = true;
 							gameState.metBigBullCoop = true;
-							addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+							addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
 							updateBuffs();
 							return changeSocial(1);
 						},
@@ -9310,7 +9329,7 @@
 						fn: () => { 
 							gameState.metBeautiful = true;
 							gameState.beautifulCount = 1;
-							addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
+							addLog('开会事件', '【社交>=6】和活泼的异性学者交流', 'SAN值+5，社交能力+1');
 							return changeStats({ san: 5, social: 1 });
 						},
 						category: 'advanced'
@@ -9325,7 +9344,7 @@
 							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
 							gameState.metSmart = true;
 							gameState.smartCount = 1;
-							addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+							addLog('开会事件', '【社交>=6】和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
 							updateBuffs();
 							return changeStats({ san: 1, social: 1 });
 						},
@@ -9344,7 +9363,7 @@
 					fn: () => {
 						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
-						addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
+						addLog('开会事件', '【科研>=12】和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
 						updateBuffs();
 						if (gameState.bigBullDeepCount >= 2 && !gameState.permanentlyBlockedBigBullCoop) {
 							setTimeout(showBigBullCoopModal, 300);
@@ -9361,7 +9380,7 @@
 					text: '💕 和上次那个活泼的异性学者交流', 
 					fn: () => {
 						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
-						addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
+						addLog('开会事件', '【社交>=12】和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
 						gameState.sanMax += 3;
 						changeSan(8);
 						if (gameState.beautifulCount >= 2 && !gameState.permanentlyBlockedBeautifulLover) {
@@ -9379,7 +9398,7 @@
 					text: '🧠 和上次那个聪慧的异性学者交流', 
 					fn: () => {
 						gameState.smartCount = (gameState.smartCount || 0) + 1;
-						addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
+						addLog('开会事件', '和【社交>=12】上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
 						changeSan(1);
 						changeResearch(1);
 						if (gameState.smartCount >= 2 && !gameState.permanentlyBlockedSmartLover) {
@@ -9398,7 +9417,7 @@
 				selected = shuffle(baseOptions).slice(0, 3);
 			} else if (grade === 'B') {
 				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
-				selected = shuffle(allOptions).slice(0, 3);
+				selected = shuffle(allOptions).slice(0, 4);
 			} else if (grade === 'A') {
 				const highPriorityOptions = [...advancedOptions, ...followUpOptions];
 				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
@@ -9422,33 +9441,24 @@
 						}
 					}
 				}
+				if (selected.length === 0) {
+					selected = shuffle(baseOptions).slice(0, 4);
+				}
 				
-				for (const opt of shuffledAll) {
-					if (!usedTexts.has(opt.text)) {
-						selected.push(opt);
-						break;
+				while (selected.length < 4) {
+					const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+					const usedTexts = new Set(selected.map(s => s.text));
+					let found = false;
+					for (const opt of shuffle(allOptions)) {
+						if (!usedTexts.has(opt.text)) {
+							selected.push(opt);
+							found = true;
+							break;
+						}
 					}
+					if (!found) break;
 				}
 			}
-			
-			if (selected.length === 0) {
-				selected = shuffle(baseOptions).slice(0, 3);
-			}
-			
-			while (selected.length < 3) {
-				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
-				const usedTexts = new Set(selected.map(s => s.text));
-				let found = false;
-				for (const opt of shuffle(allOptions)) {
-					if (!usedTexts.has(opt.text)) {
-						selected.push(opt);
-						found = true;
-						break;
-					}
-				}
-				if (!found) break;
-			}
-			
 			// 显示弹窗
 			showModal(`🎉 ${confString}`, 
 				`<div style="margin-bottom:15px;">
@@ -9485,6 +9495,9 @@
 			paper.submittedIdeaScore = paper.ideaScore;
 			paper.submittedExpScore = paper.expScore;
 			paper.submittedWriteScore = paper.writeScore;
+			// ★★★ 新增：初始化累计衰减 ★★★
+			paper.totalIdeaDecay = 0;
+			paper.totalExpDecay = 0;
 
             const currentReviews = gameState.papers.filter(p => p?.reviewing).length;
             gameState.maxConcurrentReviews = Math.max(gameState.maxConcurrentReviews || 0, currentReviews);
@@ -9746,7 +9759,6 @@
 		function showAllConferencesInfo() {
 			let html = '<div style="max-height:60vh;overflow-y:auto;">';
 			
-			// 表头
 			html += `
 			<table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
 				<thead>
@@ -9754,6 +9766,7 @@
 						<th style="padding:6px;text-align:left;border-bottom:2px solid var(--border-color);">月份</th>
 						<th style="padding:6px;text-align:left;border-bottom:2px solid var(--border-color);">等级</th>
 						<th style="padding:6px;text-align:left;border-bottom:2px solid var(--border-color);">会议名称</th>
+						<th style="padding:6px;text-align:center;border-bottom:2px solid var(--border-color);">性格</th>
 						<th style="padding:6px;text-align:center;border-bottom:2px solid var(--border-color);">投稿数</th>
 						<th style="padding:6px;text-align:center;border-bottom:2px solid var(--border-color);">中稿率</th>
 						<th style="padding:6px;text-align:center;border-bottom:2px solid var(--border-color);">中稿均分</th>
@@ -9766,7 +9779,6 @@
 			const grades = ['A', 'B', 'C'];
 			const gradeColors = { A: '#e17055', B: '#fdcb6e', C: '#00b894' };
 			
-			// 游戏月份转现实月份的函数
 			function gameMonthToRealMonth(gameMonth) {
 				return ((gameMonth - 1 + 8) % 12) + 1;
 			}
@@ -9779,7 +9791,6 @@
 					const confInfo = getConferenceInfo(month, grade, gameState.year || 1);
 					const stats = getMonthStats(month, grade, gameState.isReversed || false);
 					const impactFactor = getConferenceImpactFactor({ month: month }, grade);
-					
 					// 计算中稿均分
 					let avgAcceptedScore = '-';
 					if (stats && stats.submissions >= 10) {
@@ -9790,7 +9801,10 @@
 											  (stats.avgScoreBestPaper * (stats.bestPaper || 0));
 							avgAcceptedScore = Math.round(weightedSum / totalAccepted);
 						}
-					}
+					}					
+					// ★★★ 新增：获取会议性格 ★★★
+					const personality = getBaseConferencePersonality(month, grade);
+					const personalityDesc = getConferencePersonalityDescription(personality);
 					
 					const acceptRate = stats && stats.submissions >= 10 
 						? (stats.acceptRate * 100).toFixed(1) + '%' 
@@ -9801,12 +9815,9 @@
 						: '-';
 					
 					const rowBg = month % 2 === 0 ? 'var(--light-bg)' : 'transparent';
-					
-					// 当前月份高亮
 					const isCurrentMonth = gameState.month === month;
 					const highlightStyle = isCurrentMonth ? 'border-left:3px solid var(--primary-color);' : '';
 					
-					// 只在每个月的第一行（A类）显示月份
 					const showMonth = gradeIdx === 0;
 					const monthCell = showMonth 
 						? `<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);vertical-align:middle;" rowspan="3">
@@ -9821,9 +9832,10 @@
 					<tr style="background:${rowBg};${highlightStyle}">
 						${monthCell}
 						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);">
-							<span style="padding:2px 6px;background:${gradeColors[grade]}22;color:${gradeColors[grade]};border-radius:4px;font-weight:600;">${grade}类</span>
+							<span style="padding:2px 6px;background:${gradeColors[grade]}22;color:${gradeColors[grade]};border-radius:4px;font-weight:600;">${grade}</span>
 						</td>
 						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);font-weight:500;">${confInfo.name}</td>
+						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);text-align:center;font-size:0.7rem;">${personalityDesc}</td>
 						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);text-align:center;">${submissions}</td>
 						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);text-align:center;">${acceptRate}</td>
 						<td style="padding:5px 6px;border-bottom:1px solid var(--border-color);text-align:center;">${avgAcceptedScore}</td>
@@ -9838,10 +9850,9 @@
 			html += `
 			<div style="margin-top:12px;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.75rem;color:var(--text-secondary);">
 				<div style="margin-bottom:6px;"><strong>📖 说明：</strong></div>
-				<div>• <strong>第x月</strong>：学年第x个月 | <strong>（y月）</strong>：对应现实月份</div>
-				<div>• <strong>中稿率</strong>：全球玩家该会议的录用率</div>
-				<div>• <strong>中稿均分</strong>：被录用论文的平均投稿分数</div>
-				<div>• <strong>影响因子</strong>：基于投稿热度和中稿均分计算，影响论文引用增速</div>
+				<div>• <strong>性格标签</strong>：🔥严格/😊宽松 | 🎲多抽奖/📊少抽奖 | 🍀BL友好/💀BL严苛 | 🌪️玄学/📏稳定</div>
+				<div>• <strong>影响因子</strong>：根据中稿量和均分计算的影响力</div>
+				<div>• <strong>玩家驱动</strong>：投稿行为会影响会议的录取率和性格</div>
 				<div style="margin-top:6px;color:var(--warning-color);">
 					<i class="fas fa-info-circle"></i> 投稿数≥10时才显示详细统计数据
 				</div>
@@ -9976,7 +9987,6 @@
 					updateBuffs();
 					return true;
 				}},
-				// 找企业交流是基础选项，不需要社交≥6
 				{ text: '🏢 找企业交流', fn: () => { 
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
 					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
@@ -10003,7 +10013,7 @@
 							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
 							gameState.metBigBull = true;
 							gameState.metBigBullCoop = true;  // 标记已触发
-							addLog('开会事件', '找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+							addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
 							updateBuffs();
 							return changeSocial(1);
 						},
@@ -10018,7 +10028,7 @@
 						fn: () => { 
 							gameState.metBeautiful = true;
 							gameState.beautifulCount = 1;
-							addLog('开会事件', '和活泼的异性学者交流', 'SAN值+5，社交能力+1');
+							addLog('开会事件', '【社交>=6】和活泼的异性学者交流', 'SAN值+5，社交能力+1');
 							return changeStats({ san: 5, social: 1 });
 						},
 						category: 'advanced'
@@ -10033,7 +10043,7 @@
 							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
 							gameState.metSmart = true;
 							gameState.smartCount = 1;
-							addLog('开会事件', '和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+							addLog('开会事件', '【社交>=6】和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
 							updateBuffs();
 							return changeStats({ san: 1, social: 1 });
 						},
@@ -10052,7 +10062,7 @@
 					fn: () => {
 						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
-						addLog('开会事件', '和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
+						addLog('开会事件', '【科研>=12】和上次那个大牛深入合作', '临时buff-下次写论文分数+8');
 						updateBuffs();
 						// 第2次及以后触发联培选择
 						if (gameState.bigBullDeepCount >= 2 && !gameState.permanentlyBlockedBigBullCoop) {
@@ -10070,7 +10080,7 @@
 					text: '💕 和上次那个活泼的异性学者交流', 
 					fn: () => {
 						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
-						addLog('开会事件', '和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
+						addLog('开会事件', '【社交>=12】和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
 						gameState.sanMax += 3;
 						changeSan(8);
 						// 第2次及以后触发恋人选择
@@ -10089,7 +10099,7 @@
 					text: '🧠 和上次那个聪慧的异性学者交流', 
 					fn: () => {
 						gameState.smartCount = (gameState.smartCount || 0) + 1;
-						addLog('开会事件', '和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
+						addLog('开会事件', '【社交>=12】和上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
 						changeSan(1);
 						changeResearch(1);
 						// 第2次及以后触发恋人选择
@@ -10110,12 +10120,12 @@
 				selected = shuffle(baseOptions).slice(0, 3);
 				
 			} else if (grade === 'B') {
-				// B类会议：从所有可用选项中随机选择3个
+				// B类会议：从所有可用选项中随机选择4个
 				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
-				selected = shuffle(allOptions).slice(0, 3);
+				selected = shuffle(allOptions).slice(0, 4);
 				
 			} else if (grade === 'A') {
-				// A类会议：前2个优先从高级选项或后续选项中选，第3个从全部选
+				// A类会议：前2个优先从高级选项或后续选项中选，第3，4个从全部选
 				const highPriorityOptions = [...advancedOptions, ...followUpOptions];
 				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
 				
@@ -10140,37 +10150,27 @@
 							if (selected.length >= 2) break;
 						}
 					}
+				}			
+				// 确保至少有选项可选
+				if (selected.length === 0) {
+					selected = shuffle(baseOptions).slice(0, 4);
 				}
 				
-				// 第3个从所有选项中选（排除已选的）
-				for (const opt of shuffledAll) {
-					if (!usedTexts.has(opt.text)) {
-						selected.push(opt);
-						break;
+				// 确保有4个选项（如果可用选项不足4个则尽量多选）
+				while (selected.length < 4) {
+					const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
+					const usedTexts = new Set(selected.map(s => s.text));
+					let found = false;
+					for (const opt of shuffle(allOptions)) {
+						if (!usedTexts.has(opt.text)) {
+							selected.push(opt);
+							found = true;
+							break;
+						}
 					}
+					if (!found) break;
 				}
 			}
-			
-			// 确保至少有选项可选
-			if (selected.length === 0) {
-				selected = shuffle(baseOptions).slice(0, 3);
-			}
-			
-			// 确保有3个选项（如果可用选项不足3个则尽量多选）
-			while (selected.length < 3) {
-				const allOptions = [...baseOptions, ...advancedOptions, ...followUpOptions];
-				const usedTexts = new Set(selected.map(s => s.text));
-				let found = false;
-				for (const opt of shuffle(allOptions)) {
-					if (!usedTexts.has(opt.text)) {
-						selected.push(opt);
-						found = true;
-						break;
-					}
-				}
-				if (!found) break;
-			}
-			
 			// 显示弹窗
 			showModal(`🎉 ${confString}`, 
 				`<div style="margin-bottom:15px;">
@@ -11349,10 +11349,10 @@
                 { text: '让师弟师妹去指导', class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹对你颇有微词，社交能力-1');
+                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
                         changeSocial(-1);
                     } else {
-                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '师弟师妹成功为你分忧');
+                        addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '【社交>=6】师弟师妹成功为你分忧');
                         updateAllUI();
                     }
                 }}
@@ -11374,7 +11374,7 @@
                     
                     if (Math.random() < 0.5) {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
-                        addLog('随机事件', '导师让你帮他审稿 - 认真审稿', `得到了启发，${sanText}，临时buff-下次想idea分数+4`);
+                        addLog('随机事件', '导师让你帮他审稿 - 认真审稿', `运气好得到了启发，${sanText}，临时buff-下次想idea分数+4`);
                         updateBuffs();
                     } else {
                         addLog('随机事件', '导师让你帮他审稿 - 认真审稿', `无事发生，${sanText}`);
@@ -11384,10 +11384,10 @@
                 { text: '交给师弟师妹', class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
-                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹对你颇有微词，社交能力-1');
+                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
                         changeSocial(-1);
                     } else {
-                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹成功为你分忧');
+                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '【社交>=6】师弟师妹成功为你分忧');
                         updateAllUI();
                     }
                 }}
@@ -11398,24 +11398,22 @@
 			showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
 				{ text: '强撑', class: 'btn-danger', action: () => {
 					closeModal();
-					if (Math.random() < 0.5) {
+					if (gameState.san>=8) {
 						const baseSanCost = -8;
 						const actualSanCost = getActualSanChange(baseSanCost);
 						const sanText = actualSanCost !== baseSanCost 
 							? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
 							: `SAN值${actualSanCost}`;
-						addLog('随机事件', '突然感冒了 - 强撑', `身体透支了，${sanText}`);
+						addLog('随机事件', '突然感冒了 - 强撑', `【SAN>=8】身体透支了，${sanText}`);
 						changeSan(baseSanCost);
 					} else {
-						// ★★★ 修改：年轻人身体好的结果 ★★★
-						gameState.sanMax -= 2;
-						// ★★★ 新增：如果当前SAN高于新上限，则同步降低 ★★★
+						gameState.sanMax -= 4;
 						if (gameState.san > gameState.sanMax) {
 							const sanReduced = gameState.san - gameState.sanMax;
 							gameState.san = gameState.sanMax;
-							addLog('随机事件', '突然感冒了 - 强撑', `这次没事但留下了病根，SAN上限-2，SAN值-${sanReduced}`);
+							addLog('随机事件', '突然感冒了 - 强撑', `【SAN<8】留下了永久病根，SAN上限-4，SAN值-${sanReduced}`);
 						} else {
-							addLog('随机事件', '突然感冒了 - 强撑', '这次没事但留下了病根，SAN上限-2');
+							addLog('随机事件', '突然感冒了 - 强撑', '【SAN<8】留下了永久病根，SAN上限-4');
 						}
 						updateAllUI();
 					}
@@ -11459,13 +11457,13 @@
                 { text: '拒绝项目', class: 'btn-danger', action: () => {
                     closeModal();
                     if (gameState.research < 6) {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你比较不满，导师好感度-2');
+                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '【科研<6】导师对你比较不满，导师好感度-2');
                         changeFavor(-2);
                     } else if (gameState.research < 12) {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师对你略为不满，导师好感度-1');
+                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '【科研>=6】导师对你略为不满，导师好感度-1');
                         changeFavor(-1);
                     } else {
-                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '导师让你以科研为重');
+                        addLog('随机事件', '导师安排你做项目 - 拒绝项目', '【科研>=12】导师让你以科研为重');
                         updateAllUI();
                     }
                 }},
@@ -11475,17 +11473,17 @@
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
                         const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `师弟师妹对你颇有微词，${sanText}，社交能力-1`);
+                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `【社交<6】师弟师妹对你颇有微词，${sanText}，社交能力-1`);
                         changeSocial(-1);
                         changeSan(baseSanCost);
                     } else if (gameState.social < 12) {
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
                         const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `师弟师妹成功为你分忧，${sanText}`);
+                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `【社交>=6】师弟师妹成功为你分忧，${sanText}`);
                         changeSan(baseSanCost);
                     } else {
-                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '师弟师妹主动全包了');
+                        addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', '【社交>=12】师弟师妹主动全包了');
                         updateAllUI();
                     }
                 }}
@@ -11496,27 +11494,27 @@
             showModal('💬 随机事件', '<p>导师找你谈话。</p>', [
                 { text: '认真准备科研进展', class: 'btn-primary', action: () => {
                     closeModal();
-                    if (Math.random() < 0.5) {
+                    if (gameState.research >= 6) {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
-                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师指出你关键错误，临时buff-下次想idea分数+5');
+                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '【科研>=6】导师顺着你的思路进行改进，临时buff-下次想idea分数+5');
                         updateBuffs();
                         updateAllUI();
                     } else {
-                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '导师发现你在摸鱼，导师好感度-1');
+                        addLog('随机事件', '导师找你谈话 - 认真准备科研进展', '【科研<6】导师发现你一直在摸鱼，导师好感度-1');
                         changeFavor(-1);
                     }
                 }},
                 { text: '向导师询问如何科研', class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.favor < 6) {
-                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师觉得你天资愚笨，导师好感度-1');
+                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '【好感<6】导师感觉你事情很多，导师好感度-1');
                         changeFavor(-1);
                     } else {
-                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '导师传授你科研秘诀，科研能力+1');
+                        addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '【好感>=6】导师传授你科研秘诀，科研能力+1');
                         changeResearch(1);
                     }
                 }},
-                { text: '告诉导师想要去实习', class: 'btn-warning', action: () => {
+                { text: '告诉导师想要去短期实习', class: 'btn-warning', action: () => {
                     closeModal();
                     if (gameState.favor >= 6) {
                         const baseSanCost = -6;
@@ -11524,11 +11522,11 @@
                         const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
                         gameState.gold += 5;
-                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', `导师居然同意了但要兼顾科研，${sanText}，临时buff-下次做实验分数+5，金钱+5`);
+                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去短期实习', `【好感>=6】导师居然同意了但要兼顾科研，${sanText}，临时buff-下次做实验分数+5，金钱+5`);
                         updateBuffs();
                         changeSan(baseSanCost);
                     } else {
-                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去实习', '导师果然拒绝了，导师好感度-1');
+                        addLog('随机事件', '导师找你谈话 - 告诉导师想要去短期实习', '【好感<6】导师果然拒绝了，导师好感度-1');
                         changeFavor(-1);
                     }
                 }}
@@ -11540,10 +11538,10 @@
                 { text: '讲解一篇深奥论文', class: 'btn-primary', action: () => {
                     closeModal();
                     if (gameState.research < 6) {
-                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师发现你不懂装懂，导师好感度-1');
+                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '【科研<6】导师发现你不懂装懂，导师好感度-1');
                         changeFavor(-1);
                     } else {
-                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '导师夸赞了你的见解，导师好感度+1');
+                        addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '【科研>=6】导师夸赞了你的见解，导师好感度+1');
                         changeFavor(1);
                     }
                 }},
@@ -11557,7 +11555,7 @@
                         addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师大力夸赞了你的见解，${sanText}，导师好感度+2`);
                         gameState.favor = Math.min(20, gameState.favor + 2);
                     } else {
-                        addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师没来参会，${sanText}`);
+                        addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但运气不好导师没来参会，${sanText}`);
                     }
                     changeSan(baseSanCost);
                 }},
@@ -11567,7 +11565,7 @@
                         addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师对你略有不满，导师好感度-1');
                         changeFavor(-1);
                     } else {
-                        addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师恰好没来');
+                        addLog('随机事件', '实验室召开组会 - 偷偷水过去', '运气好导师恰好没来');
                         updateAllUI();
                     }
                 }}
@@ -11585,10 +11583,10 @@
                 { text: '🃏 打德州扑克', class: 'btn-warning', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '输了，金钱-5');
-                        changeGold(-5);
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '运气不好输了，金钱-4');
+                        changeGold(-4);
                     } else {
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '赢了，金钱+5');
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '运气好赢了，金钱+5');
                         changeGold(5);
                     }
                 }},
@@ -11604,7 +11602,7 @@
 						gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
 						changeGold(-3);
 					} else {
-						addLog('随机事件', '实验室组织团建 - 聚餐', '导师请客，SAN值+5');
+						addLog('随机事件', '实验室组织团建 - 聚餐', '运气好导师请客，SAN值+5');
 						changeSan(5);
 					}
 				}}
@@ -11619,19 +11617,25 @@
                         addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '导师并不想买');
                     } else {
                         gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做一次', value: 1, permanent: true });
-                        addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '你只分到了一张显卡，但总比没有好，永久buff-每次做实验多做一次');
+                        addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '运气好，你分到了一张显卡，永久buff-每次做实验多做一次');
                         updateBuffs();
                     }
                     updateAllUI();
                 }},
-                { text: '💵 多发劳务费', class: 'btn-warning', action: () => {
-                    closeModal();
-                    const amount = gameState.favor < 6 ? 2 : gameState.favor < 12 ? 4 : 8;
-                    const desc = gameState.favor < 6 ? '导师只发了一点点' : gameState.favor < 12 ? '导师发了很多' : '导师全给你了';
-                    gameState.gold += amount;
-                    addLog('随机事件', '导师科研经费充足 - 多发劳务费', `${desc}，金钱+${amount}`);
-                    updateAllUI();
-                }},
+				{ text: '💵 多发劳务费', class: 'btn-warning', action: () => {
+					closeModal();
+					if (gameState.favor < 6) {
+						addLog('随机事件', '导师科研经费充足 - 多发劳务费', `【好感<6】导师只发了一点点，金钱+2`);
+						changeGold(2);
+					} else if (gameState.favor < 12) {
+						addLog('随机事件', '导师科研经费充足 - 多发劳务费', `【好感>=6】导师发了很多，金钱+4`);
+						changeGold(4);
+					} else {
+						addLog('随机事件', '导师科研经费充足 - 多发劳务费', `【好感>=12】导师全给你了，金钱+8`);
+						changeGold(8);
+					}
+					updateAllUI();
+				}},
                 { text: '🪑 装修学生工位', class: 'btn-info', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push(
@@ -11657,17 +11661,17 @@
                         updateAllUI();
                     }
                 }},
-                { text: '💻 代码知识', class: 'btn-info', action: () => {
-                    closeModal();
-                    gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
-                    addLog('随机事件', '学习新知识 - 代码知识', '永久buff-每次做实验分数+1');
-                    updateAllUI();
-                    updateBuffs();
-                }},
                 { text: '🚀 最新技术', class: 'btn-warning', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push({ type: 'idea_bonus', name: '每次想idea分数+1', value: 1, permanent: true });
                     addLog('随机事件', '学习新知识 - 最新技术', '永久buff-每次想idea分数+1');
+                    updateAllUI();
+                    updateBuffs();
+                }},
+                { text: '💻 代码知识', class: 'btn-info', action: () => {
+                    closeModal();
+                    gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
+                    addLog('随机事件', '学习新知识 - 代码知识', '永久buff-每次做实验分数+1');
                     updateAllUI();
                     updateBuffs();
                 }},
@@ -11685,12 +11689,12 @@
             showModal('🤝 随机事件', '<p>同门找你合作论文，你会选择。</p>', [
                 { text: '学术交流', class: 'btn-primary', action: () => {
                     closeModal();
-					if (Math.random() < 0.5) {
+					if (gameState.social < 6) {
 						gameState.buffs.temporary.push({ type: 'idea_stolen', name: '下次想idea总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
-						addLog('随机事件', '同门找你合作论文 - 学术交流', '被同门偷走idea，临时debuff-下次想idea总分÷2');
+						addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交<6】被同门偷走idea，临时debuff-下次想idea总分÷2');
 					} else {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
-                        addLog('随机事件', '同门找你合作论文 - 学术交流', '共同进步，临时buff-下次想idea分数+5');
+                        addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交>=6】共同进步，临时buff-下次想idea分数+5');
                     }
                     updateAllUI();
                     updateBuffs();
@@ -11699,7 +11703,7 @@
 					closeModal();
 					if (Math.random() < 0.5) {
 						gameState.buffs.temporary.push({ type: 'citation_multiply', name: '下一篇中稿论文引用速度+100%', value: 2, permanent: false });
-						addLog('随机事件', '同门找你合作论文 - 约定互挂论文', '你们一起中了论文，临时buff-下一篇中稿的论文引用速度+100%（与其他推广加成叠加）');
+						addLog('随机事件', '同门找你合作论文 - 约定互挂论文', '运气好，你们一起中了论文，临时buff-下一篇中稿的论文引用速度+100%（与其他推广加成叠加）');
 					} else {
                         addLog('随机事件', '同门找你合作论文 - 约定互挂论文', '同门太菜了，一直没中论文');
                     }
@@ -11714,13 +11718,13 @@
                     closeModal();
                     if (gameState.social < 6) {
                         gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false });
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '成功合作，临时buff-下次想idea多想1次');
+                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '【社交<6】成功合作，临时buff-下次想idea多想1次');
                     } else {
                         gameState.buffs.temporary.push(
                             { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
                             { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
                         );
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '深入合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次');
+                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '【社交>=6】深入合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次');
                     }
                     updateAllUI();
                     updateBuffs();
@@ -11742,9 +11746,12 @@
                     updateBuffs();
                 }},
                 { text: '深入合作', class: 'btn-warning', action: () => {
-                    addLog('随机事件', '师兄师姐找你合作论文 - 深入合作', '遇到靠谱的师兄师姐，科研能力+1');
+                    addLog('随机事件', '师兄师姐找你合作论文 - 深入合作', '遇到靠谱的师兄师姐，科研能力+1，临时buff-下次想idea分数+5');
                     closeModal();
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
                     changeResearch(1);
+					updateAllUI();
+                    updateBuffs();
                 }},
                 { text: '拜入门下', class: 'btn-success', action: () => {
                     closeModal();
@@ -11758,10 +11765,8 @@
         }
 
 		function showRandomEvent12() {
-			// ★★★ 新增：判断是否为导师子女角色 ★★★
 			const isTeacherChild = gameState.character === 'teacher-child';
 			
-			// ★★★ 新增：根据角色动态生成选项文本 ★★★
 			const grabOptionText = isTeacherChild 
 				? '劝说导师抢师弟师妹一作 🎁（导师子女：获得C类论文）' 
 				: '劝说导师抢师弟师妹一作';
@@ -11771,18 +11776,18 @@
 				{ text: '向导师诉苦', class: 'btn-primary', action: () => {
 					closeModal();
 					if (gameState.favor >= 6) {
-						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师心软了');
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '【好感>=6】导师心软了');
 						updateAllUI();
 					} else {
 						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数-5', value: -5, permanent: false });
-						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-3');
+						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '【好感<6】导师不要一作了，但也减少了指导，临时debuff-下次想idea分数-5');
 						updateAllUI();
 						updateBuffs();
 					}
 				}},
-				{ text: grabOptionText, class: grabOptionClass, action: () => {  // ★★★ 使用动态文本和样式 ★★★
+				{ text: grabOptionText, class: grabOptionClass, action: () => {  
 					closeModal();
-					if (gameState.character === 'teacher-child') {  // ★★★ 简化判断条件 ★★★
+					if (gameState.character === 'teacher-child') {  
 						const title = generatePaperTitle();
 						gameState.publishedPapers.push({
 							title: title,
@@ -11796,7 +11801,8 @@
 						});
 						gameState.paperC++;
 						gameState.totalScore += 1;
-						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文');
+						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '导师抢来并给了你一篇C类论文，师弟师妹对你非常不满，社交能力-2');
+						changeSocial(-2);
 					} else {
 						addLog('随机事件', '导师想要抢你论文的一作 - 劝说导师抢师弟师妹一作', '师弟师妹对你略有不满，社交能力-1');
 						changeSocial(-1);
@@ -11806,13 +11812,13 @@
 				{ text: '据理力争', class: 'btn-info', action: () => {
 					closeModal();
 					if (gameState.favor >= 6) {
-						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '导师轻松被你说服');
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '【好感>=6】导师轻松被你说服');
 						updateAllUI();
 					} else {
 						const baseSanCost = -2;
 						const actualSanCost = getActualSanChange(baseSanCost);
 						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
-						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `导师艰难被你说服，${sanText}`);
+						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `【好感<6】导师艰难被你说服，${sanText}`);
 						changeSan(baseSanCost);
 					}
 				}},
@@ -11845,7 +11851,7 @@
                     const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     
                     if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `费劲周折修好了，${sanText}`);
+                        addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `运气好，费劲周折修好了，${sanText}`);
                     } else {
                         changeSocial(-1);
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次实验总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
@@ -11857,7 +11863,7 @@
                 { text: '淘宝找人修理', class: 'btn-danger', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '遇到高手修好了，金币-2');
+                        addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '运气好，遇到高手修好了，金币-2');
                         changeGold(-2);
                     } else {
                         const baseSanCost = -2;
@@ -11970,7 +11976,6 @@
                 case 'delay': title = '延毕'; desc = '你没能在规定时间内完成毕业要求，只能延期毕业...'; emoji = '⏰'; break;
                 case 'quit': title = '主动退学'; desc = '你决定放弃学业，开启人生新篇章...也许这也是一种勇气。'; emoji = '🚪'; break;
 				case 'master':
-					// ★★★ 新增：真·大多数硕士毕业时检查真·感受生活 ★★★
 					if (gameState.isTrueNormal) {
 						const tempAchievements = collectAchievements('master');
 						const achievementCount = tempAchievements.length;
@@ -11982,7 +11987,6 @@
 							break;
 						}
 					}
-					
 					if (gameState.totalScore >= 4) { 
 						title = '优秀硕士毕业'; 
 						desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
@@ -13711,15 +13715,145 @@
 			};
 		}
 
+		// ==================== 会议性格系统（新增）====================
+
+		/**
+		 * 获取会议的固定基础性格
+		 * 基于月份和等级生成稳定的伪随机特性，保证每个会议有独特个性
+		 */
+		function getBaseConferencePersonality(gameMonth, grade) {
+			const gradeNum = {'A': 1, 'B': 2, 'C': 3}[grade];
+			const seed = gameMonth * 100 + gradeNum;
+			
+			// 简单的伪随机生成器（保证同一会议每次结果一致）
+			const pseudoRandom = (n) => {
+				const x = Math.sin(seed + n * 9999) * 10000;
+				return x - Math.floor(x);
+			};
+			
+			return {
+				// 严格度：0.6-1.5，影响reject阈值（>1更严格，更容易reject）
+				strictness: 0.6 + pseudoRandom(1) * 0.9,
+				
+				// BL区间宽度：0.5-1.5，影响borderline范围大小（>1范围更大，更多论文进入抽奖）
+				borderlineWidth: 0.5 + pseudoRandom(2) * 1.0,
+				
+				// BL录取倾向：0.5-1.5，影响borderline录取概率（>1更容易中）
+				borderlineLeniency: 0.5 + pseudoRandom(3) * 1.0,
+				
+				// 结果随机性：0-0.35，影响最终结果的随机波动（越高越看运气）
+				volatility: pseudoRandom(4) * 0.35,
+			};
+		}
+
+		/**
+		 * 获取最终的会议性格（结合基础性格和历史投稿数据）
+		 * 这实现了"玩家驱动"：玩家的投稿行为会影响会议特性
+		 */
+		function getConferencePersonality(gameMonth, grade, monthStats) {
+			const base = getBaseConferencePersonality(gameMonth, grade);
+			
+			if (!monthStats || monthStats.submissions < 50) {
+				return {
+					...base,
+					dataLevel: 'insufficient',
+					adjustmentNote: '数据不足，使用基础性格'
+				};
+			}
+			
+			const targetRate = TARGET_ACCEPTANCE_RATES[grade].target;
+			const actualRate = monthStats.acceptRate;
+			const deviation = actualRate - targetRate;
+			
+			const strictnessAdjust = deviation * 0.8;
+			const leniencyAdjust = -deviation * 0.6;
+			
+			// 使用 getConferencePopularity 计算真实平均值
+			const popularity = getConferencePopularity(
+				monthStats.submissions, 
+				grade, 
+				gameState.submissionStats,
+				gameState.isReversed
+			);
+			const volumeRatio = popularity.ratio;
+			const volatilityAdjust = volumeRatio > 1.5 ? -0.1 : volumeRatio < 0.5 ? 0.1 : 0;
+			
+			return {
+				strictness: Math.max(0.5, Math.min(1.8, base.strictness + strictnessAdjust)),
+				borderlineWidth: base.borderlineWidth,
+				borderlineLeniency: Math.max(0.4, Math.min(1.8, base.borderlineLeniency + leniencyAdjust)),
+				volatility: Math.max(0, Math.min(0.4, base.volatility + volatilityAdjust)),
+				// ★★★ 删除 expertBonus ★★★
+				dataLevel: monthStats.submissions >= 100 ? 'sufficient' : 'moderate',
+				adjustmentNote: `录取率${(actualRate*100).toFixed(1)}%→严格度${strictnessAdjust > 0 ? '+' : ''}${(strictnessAdjust*100).toFixed(0)}%`
+			};
+		}
+
+		/**
+		 * 获取会议性格的描述文本（用于UI展示）
+		 */
+		function getConferencePersonalityDescription(personality) {
+			const traits = [];
+			
+			// 第一行：严格度 + BL区间
+			if (personality.strictness > 1.2) traits.push('🔥严格');
+			else if (personality.strictness < 0.8) traits.push('😊宽松');
+			else traits.push(null);  // 占位
+			
+			if (personality.borderlineWidth > 1.2) traits.push('🎲多抽奖');
+			else if (personality.borderlineWidth < 0.8) traits.push('📊少抽奖');
+			else traits.push(null);  // 占位
+			
+			// 第二行：BL友好度 + 波动性
+			if (personality.borderlineLeniency > 1.2) traits.push('🍀BL友好');
+			else if (personality.borderlineLeniency < 0.8) traits.push('💀BL严苛');
+			else traits.push(null);  // 占位
+			
+			if (personality.volatility > 0.25) traits.push('🌪️玄学');
+			else if (personality.volatility < 0.1) traits.push('📏稳定');
+			else traits.push(null);  // 占位
+			
+			// 过滤掉null
+			const row1 = [traits[0], traits[1]].filter(t => t !== null);
+			const row2 = [traits[2], traits[3]].filter(t => t !== null);
+			
+			// 如果完全没有特征
+			if (row1.length === 0 && row2.length === 0) {
+				return '⚖️中庸';
+			}
+			
+			// 组装HTML，每行2个标签
+			let html = '';
+			if (row1.length > 0) {
+				html += row1.join(' ');
+			}
+			if (row2.length > 0) {
+				if (html) html += '<br>';
+				html += row2.join(' ');
+			}
+			
+			return html;
+		}
+
 		// ==================== 核心：非对称调整系统 ====================
 
+		// 增加会议性格的影响
+
 		function calculateAsymmetricAdjustment(grade, monthStats, adjustedTarget) {
-			// 初始化结果：使用基础阈值，不调整
+			// 获取会议性格
+			const personality = getConferencePersonality(
+				monthStats._gameMonth || 1, 
+				grade, 
+				monthStats
+			);
+			
+			// 初始化结果
 			const result = {
 				thresholds: {},
 				borderlineBaseRate: BORDERLINE_BASE_CONFIG[grade].baseRate,
-				useScoreBasedBL: true,  // 是否使用基于分数的BL概率
+				useScoreBasedBL: true,
 				adjustmentEnabled: false,
+				personality: personality,  // ★★★ 新增：存储性格信息 ★★★
 				adjustmentDetails: {
 					rejectChange: 0,
 					borderlineChange: 0,
@@ -13728,23 +13862,39 @@
 				}
 			};
 			
-			// 复制基础阈值
+			// 复制基础阈值，并应用会议性格
 			for (const reviewerType in BASE_THRESHOLDS[grade]) {
-				result.thresholds[reviewerType] = { ...BASE_THRESHOLDS[grade][reviewerType] };
+				const base = BASE_THRESHOLDS[grade][reviewerType];
+				
+				// ★★★ 修改：应用会议性格到基础阈值 ★★★
+				// 严格度影响reject阈值
+				const adjustedReject = Math.round(base.reject * personality.strictness);
+				
+				// BL区间宽度影响borderline阈值
+				const blGap = base.borderline - base.reject;
+				const adjustedBorderline = adjustedReject + Math.round(blGap * personality.borderlineWidth);
+				
+				result.thresholds[reviewerType] = {
+					reject: adjustedReject,
+					borderline: adjustedBorderline
+				};
 			}
 			
-			// ========== 检查是否启用调整 ==========
+			// ★★★ 修改：应用会议性格到BL基础录取率 ★★★
+			result.borderlineBaseRate = BORDERLINE_BASE_CONFIG[grade].baseRate * personality.borderlineLeniency;
+			result.borderlineBaseRate = Math.max(0.15, Math.min(0.95, result.borderlineBaseRate));
 			
-			// 条件：累计投稿未达到100
+			// 条件：累计投稿未达到阈值
 			if (monthStats.submissions < MIN_SUBMISSIONS_FOR_ADJUSTMENT) {
 				result.adjustmentDetails.reason = 
-					`累计投稿${monthStats.submissions}篇，未达到${MIN_SUBMISSIONS_FOR_ADJUSTMENT}篇调整阈值`;
+					`累计投稿${monthStats.submissions}篇，未达到${MIN_SUBMISSIONS_FOR_ADJUSTMENT}篇调整阈值。` +
+					`会议性格：${getConferencePersonalityDescription(personality)}`;
 				return result;
 			}
 			
-			// ========== 启用调整 ==========
+			// 启用调整
 			result.adjustmentEnabled = true;
-			result.useScoreBasedBL = false;  // 启用调整后，BL概率由调整系统控制
+			result.useScoreBasedBL = false;
 			
 			const actualRate = monthStats.acceptRate;
 			const targetRate = adjustedTarget.target;
@@ -13753,16 +13903,17 @@
 			// 在目标范围内不调整
 			if (actualRate >= adjustedTarget.min && actualRate <= adjustedTarget.max) {
 				result.adjustmentDetails.reason = 
-					`录取率${(actualRate * 100).toFixed(1)}%在目标范围[${(adjustedTarget.min * 100).toFixed(0)}%-${(adjustedTarget.max * 100).toFixed(0)}%]内`;
+					`录取率${(actualRate * 100).toFixed(1)}%在目标范围内。` +
+					`会议性格：${getConferencePersonalityDescription(personality)}`;
 				return result;
 			}
 			
-			// 录取率过高：需要降低
+			// 录取率过高
 			if (deviation > 0) {
 				return adjustForHighAcceptanceRate(grade, deviation, monthStats, result);
 			}
-			
-			// 录取率过低：需要提高
+
+			// 录取率过低
 			if (deviation < 0) {
 				return adjustForLowAcceptanceRate(grade, -deviation, monthStats, result);
 			}
@@ -13772,33 +13923,28 @@
 
 		/*** 录取率过高时的调整，策略：50%通过提高Reject阈值，50%通过降低BL概率*/
 		function adjustForHighAcceptanceRate(grade, excess, monthStats, result) {
+			const personality = result.personality;  // ★★★ 从result中获取 ★★★
 			const halfExcess = excess / 2;
-			
-			// === 估算当前Borderline区间比例 ===
 			const estimatedBLRatio = estimateBorderlineRatio(grade, monthStats);
 			
-			// === 计算Reject阈值调整 ===
-			// 经验公式：阈值提高X%，Reject比例约增加X*0.5%
-			const rejectAdjustPercent = Math.min(0.30, halfExcess * 2);
+			// 严格会议调整幅度更大
+			const strictnessMultiplier = personality ? personality.strictness : 1.0;
 			
-			// === 计算Borderline阈值调整（小幅跟随，约为Reject的30%）===
+			const rejectAdjustPercent = Math.min(0.40, halfExcess * 2 * strictnessMultiplier);
 			const borderlineAdjustPercent = rejectAdjustPercent * 0.3;
 			
-			// === 计算BL录取概率调整 ===
-			const baseBLRate = BORDERLINE_BASE_CONFIG[grade].baseRate;
+			const baseBLRate = result.borderlineBaseRate;
 			const blRateReduction = estimatedBLRatio > 0 ? halfExcess / estimatedBLRatio : halfExcess;
-			result.borderlineBaseRate = Math.max(0.20, baseBLRate - blRateReduction);
+			result.borderlineBaseRate = Math.max(0.15, baseBLRate - blRateReduction * strictnessMultiplier);
 			
-			// === 应用到各审稿人（考虑敏感度）===
 			applyThresholdAdjustments(grade, result, rejectAdjustPercent, borderlineAdjustPercent, 'increase');
 			
 			result.adjustmentDetails = {
 				rejectChange: rejectAdjustPercent,
 				borderlineChange: borderlineAdjustPercent,
 				blRateChange: -(baseBLRate - result.borderlineBaseRate),
-				reason: `录取率过高(${(monthStats.acceptRate * 100).toFixed(1)}%→目标${(monthStats.acceptRate * 100 - excess * 100).toFixed(1)}%)：` +
-						`Reject阈值+${(rejectAdjustPercent * 100).toFixed(0)}%，` +
-						`BL基础概率${(result.borderlineBaseRate * 100).toFixed(0)}%`
+				reason: `录取率过高(${(monthStats.acceptRate * 100).toFixed(1)}%)` +
+						(personality ? `，${getConferencePersonalityDescription(personality)}` : '')
 			};
 			
 			return result;
@@ -13806,49 +13952,44 @@
 
 		/*** 录取率过低时的调整，策略：优先提高BL概率（最高100%），不够再降低Reject阈值*/
 		function adjustForLowAcceptanceRate(grade, deficit, monthStats, result) {
+			const personality = result.personality;  // ★★★ 从result中获取 ★★★
 			const estimatedBLRatio = estimateBorderlineRatio(grade, monthStats);
-			const baseBLRate = BORDERLINE_BASE_CONFIG[grade].baseRate;
+			const baseBLRate = result.borderlineBaseRate;
 			
-			// === 计算BL概率提升能贡献多少 ===
+			// 宽松会议调整幅度更大
+			const leniencyMultiplier = personality ? personality.borderlineLeniency : 1.0;
+			
 			const blRateRoom = 1.0 - baseBLRate;
 			const maxBLContribution = estimatedBLRatio * blRateRoom;
 			
-			if (deficit <= maxBLContribution) {
-				// BL概率提升即可满足
+			if (deficit <= maxBLContribution * leniencyMultiplier) {
 				const blRateIncrease = estimatedBLRatio > 0 ? deficit / estimatedBLRatio : deficit;
-				result.borderlineBaseRate = Math.min(1.0, baseBLRate + blRateIncrease);
+				result.borderlineBaseRate = Math.min(1.0, baseBLRate + blRateIncrease * leniencyMultiplier);
 				
 				result.adjustmentDetails = {
 					rejectChange: 0,
 					borderlineChange: 0,
 					blRateChange: result.borderlineBaseRate - baseBLRate,
-					reason: `录取率偏低(${(monthStats.acceptRate * 100).toFixed(1)}%)：` +
-							`BL基础概率提升至${(result.borderlineBaseRate * 100).toFixed(0)}%`
+					reason: `录取率偏低(${(monthStats.acceptRate * 100).toFixed(1)}%)` +
+							(personality ? `，${getConferencePersonalityDescription(personality)}` : '')
 				};
 				
 				return result;
 			}
 			
-			// === BL已拉满，需要降低Reject阈值 ===
 			result.borderlineBaseRate = 1.0;
-			
 			const remaining = deficit - maxBLContribution;
-			
-			// 降低Reject阈值，扩大Borderline区间
-			const rejectAdjustPercent = Math.min(0.25, remaining * 2);
-			
-			// Borderline阈值小幅降低
+			const rejectAdjustPercent = Math.min(0.30, remaining * 2 * leniencyMultiplier);
 			const borderlineAdjustPercent = rejectAdjustPercent * 0.15;
 			
-			// 应用调整
 			applyThresholdAdjustments(grade, result, rejectAdjustPercent, borderlineAdjustPercent, 'decrease');
 			
 			result.adjustmentDetails = {
 				rejectChange: -rejectAdjustPercent,
 				borderlineChange: -borderlineAdjustPercent,
 				blRateChange: 1.0 - baseBLRate,
-				reason: `录取率过低(${(monthStats.acceptRate * 100).toFixed(1)}%)：` +
-						`BL概率100%，Reject阈值-${(rejectAdjustPercent * 100).toFixed(0)}%`
+				reason: `录取率过低(${(monthStats.acceptRate * 100).toFixed(1)}%)，BL概率100%` +
+						(personality ? `，${getConferencePersonalityDescription(personality)}` : '')
 			};
 			
 			return result;
@@ -13894,18 +14035,15 @@
 
 		function calculateFinalBorderlineRate(paperScore, grade, reviewScore, adjustment) {
 			const config = BORDERLINE_BASE_CONFIG[grade];
+			const personality = adjustment.personality || getBaseConferencePersonality(1, grade);
 			
-			// === 基础概率 ===
 			let baseProbability;
 			
 			if (adjustment.useScoreBasedBL) {
-				// 未启用调整：完全基于论文分数计算
 				baseProbability = calculateScoreBasedBLRate(paperScore, grade, reviewScore);
 			} else {
-				// 已启用调整：使用调整后的基础概率，再叠加分数影响
 				baseProbability = adjustment.borderlineBaseRate;
 				
-				// 根据审稿总分微调
 				if (reviewScore === 1) {
 					baseProbability = Math.min(0.95, baseProbability + 0.15);
 				} else if (reviewScore === -1) {
@@ -13913,14 +14051,19 @@
 				}
 			}
 			
-			// === 论文分数修正（始终应用）===
+			// 分数修正
 			const scoreModifier = calculateScoreModifier(paperScore, grade);
 			
-			// === 最终概率 ===
-			const finalRate = baseProbability + scoreModifier;
+			// ★★★ 新增：应用会议波动性（volatility）★★★
+			// 高波动会议：最终概率会有更大的随机偏移
+			const volatilityOffset = (Math.random() - 0.5) * 2 * personality.volatility;
 			
-			return Math.max(0.10, Math.min(0.98, finalRate));
+			// 最终概率
+			let finalRate = baseProbability + scoreModifier + volatilityOffset;
+			
+			return Math.max(0.08, Math.min(0.98, finalRate));
 		}
+
 
 		/*** 基于分数的BL录取率（用于未启用调整时）*/
 		function calculateScoreBasedBLRate(paperScore, grade, reviewScore) {
@@ -13985,9 +14128,28 @@
 					effectiveScore = minScore * 3;
 					weightInfo = '最低项×3';
 					break;
-				case 'normal':
+				
+				// ★★★ 修改：GPT审稿人独立处理，随机性大幅增加 ★★★
 				case 'gpt':
+					// GPT审稿人：权重范围 0.2-1.8，远大于普通审稿人
+					const gTotal = 3.0;  // 总权重固定为3
+					const gR1 = Math.random() * 1.6;  // 第一个权重 0-1.6
+					const gR2 = Math.random() * Math.min(1.6, gTotal - gR1);  // 第二个权重
+					const gR3 = gTotal - gR1 - gR2;  // 第三个权重（保证总和为3）
+					
+					// 随机分配给三个维度
+					const gWeights = [gR1, gR2, gR3].sort(() => Math.random() - 0.5);
+					const gw1 = Math.max(0.2, Math.min(1.8, gWeights[0]));
+					const gw2 = Math.max(0.2, Math.min(1.8, gWeights[1]));
+					const gw3 = Math.max(0.2, Math.min(1.8, gWeights[2]));
+					
+					effectiveScore = ideaScore * gw1 + expScore * gw2 + writeScore * gw3;
+					weightInfo = `idea×${gw1.toFixed(2)}, exp×${gw2.toFixed(2)}, write×${gw3.toFixed(2)} (GPT随机)`;
+					break;
+				
+				case 'normal':
 				default:
+					// 普通审稿人：权重范围 0.8-1.4（较小波动）
 					const r1 = Math.random() * 0.6;
 					const r2 = Math.random() * (0.6 - r1);
 					const r3 = 0.6 - r1 - r2;
@@ -14115,14 +14277,16 @@
 			const submittedScore = paper.submittedScore;
 			const submittedMonth = paper.submittedMonth || gameState.month;
 			
-			// ★★★ 修改：使用投稿时的分数快照 ★★★
 			const submittedIdeaScore = paper.submittedIdeaScore || paper.ideaScore;
 			const submittedExpScore = paper.submittedExpScore || paper.expScore;
 			const submittedWriteScore = paper.submittedWriteScore || paper.writeScore;
-    
 			
 			// 获取统计数据
 			const monthStats = getMonthStats(submittedMonth, grade, gameState.isReversed);
+			// ★★★ 新增：为monthStats添加月份信息，供性格系统使用 ★★★
+			if (monthStats) {
+				monthStats._gameMonth = submittedMonth;
+			}
 			
 			// 计算调整后的目标录取率
 			const adjustedTarget = getAdjustedTargetRate(
@@ -14132,7 +14296,7 @@
 				gameState.isReversed
 			);
 			
-			// 计算非对称调整参数
+			// 计算非对称调整参数（现在包含会议性格）
 			const adjustment = calculateAsymmetricAdjustment(grade, monthStats, adjustedTarget);
 			
 			// 记录审稿期间的分数变化
@@ -14149,9 +14313,9 @@
 			const results = reviewers.map(reviewer => 
 				getReviewResultV2(
 					reviewer, grade, submittedScore,
-					submittedIdeaScore,    // ★ 改用投稿时分数
-					submittedExpScore,     // ★ 改用投稿时分数
-					submittedWriteScore,   // ★ 改用投稿时分数
+					submittedIdeaScore,
+					submittedExpScore,
+					submittedWriteScore,
 					adjustment
 				)
 			);
@@ -14159,28 +14323,25 @@
 			// 汇总审稿分数
 			const totalReviewScore = results.reduce((sum, r) => sum + r.score, 0);
 			
-			// PC决策
+			// PC决策（增加会议波动性影响）
 			let accepted = false;
 			let acceptType = null;
 			let borderlineChance = null;
+			const personality = adjustment.personality || getBaseConferencePersonality(submittedMonth, grade);
 			
 			if (totalReviewScore >= 1) {
-				// 审稿人一致认可
 				accepted = true;
 			} else if (totalReviewScore === 0) {
-				// Borderline：计算录取概率
 				borderlineChance = calculateFinalBorderlineRate(
 					submittedScore, grade, totalReviewScore, adjustment
 				);
 				accepted = Math.random() < borderlineChance;
 			} else if (totalReviewScore === -1) {
-				// 偏负面但非完全拒绝：小概率录取
 				borderlineChance = calculateFinalBorderlineRate(
 					submittedScore, grade, totalReviewScore, adjustment
 				) * 0.5;
 				accepted = Math.random() < borderlineChance;
 			} else {
-				// 完全拒绝
 				accepted = false;
 			}
 			
@@ -14188,17 +14349,9 @@
 				acceptType = determineAcceptTypeV2(submittedScore, grade, monthStats);
 			}
 			
-			// 应用分数衰减和改进
-			let ideaDecay = reviewMonthsPassed;
-			let expDecay = reviewMonthsPassed;
-			
-			if (gameState.noDecay) {
-				ideaDecay = 0;
-				expDecay = 0;
-			} else {
-				paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
-				paper.expScore = Math.max(1, paper.expScore - expDecay);
-			}
+			// ★★★ 修改：基于投稿时分数计算时效性衰减，10%向下取整，最少为1 ★★★
+			const ideaDecay = paper.totalIdeaDecay || 0;
+			const expDecay = paper.totalExpDecay || 0;
 			
 			// 应用审稿人改进建议
 			results.forEach(r => {
@@ -14218,7 +14371,6 @@
 			
 			checkReviewAchievements(results, afterScores);
 			
-
 			const extraInfo = {
 				adjustment,
 				adjustedTarget,
@@ -14227,6 +14379,7 @@
 				submittedMonth,
 				ideaDecay,
 				expDecay,
+				personality,  // ★★★ 新增：传递会议性格信息 ★★★
 				badReviewerCount: results.filter(r => 
 					r.reviewer.type === 'hostile' || r.reviewer.type === 'questions'
 				).length,
@@ -14599,10 +14752,14 @@
 				? `<span style="color:var(--success-color);">✓ 已启用</span>` 
 				: `<span style="color:var(--text-secondary);">○ 未启用(需≥${MIN_SUBMISSIONS_FOR_ADJUSTMENT}篇)</span>`;
 			
+			// ★★★ 新增：会议性格显示 ★★★
+			const personality = adjustment.personality;
+			const personalityDesc = personality ? getConferencePersonalityDescription(personality) : '⚖️ 中庸';
+			
 			return `
 			<div style="padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.1),rgba(243,156,18,0.1));border-radius:8px;margin-bottom:12px;font-size:0.8rem;">
 				<div style="font-weight:600;color:#d68910;margin-bottom:6px;">
-					<i class="fas fa-balance-scale"></i> 录取率调整机制 ${adjustmentStatus}
+					<i class="fas fa-balance-scale"></i> 会议特性 ${adjustmentStatus}
 				</div>
 				<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
 					<div>
@@ -14618,6 +14775,20 @@
 						</span>
 					</div>
 				</div>
+				
+				<!-- ★★★ 新增：会议性格标签 ★★★ -->
+				<div style="margin-top:8px;padding:6px;background:var(--card-bg);border-radius:4px;border:1px solid var(--border-color);">
+					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:4px;">📋 会议性格</div>
+					<div style="font-size:0.85rem;font-weight:500;">${personalityDesc}</div>
+					${personality ? `
+					<div style="font-size:0.65rem;color:var(--text-secondary);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+						<span>严格度:${(personality.strictness*100).toFixed(0)}%</span>
+						<span>BL范围:${(personality.borderlineWidth*100).toFixed(0)}%</span>
+						<span>BL友好:${(personality.borderlineLeniency*100).toFixed(0)}%</span>
+						<span>波动性:${(personality.volatility*100).toFixed(0)}%</span>
+					</div>` : ''}
+				</div>
+				
 				${adjustment.adjustmentEnabled ? `
 				<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);border-top:1px dashed rgba(243,156,18,0.3);padding-top:6px;">
 					${adjustment.adjustmentDetails.reason}
@@ -14650,10 +14821,15 @@
 				</div>`;
 			} else if (totalDecay > 0) {
 				html += `<div style="margin-bottom:8px;padding:8px;background:rgba(225,112,85,0.1);border-radius:6px;border-left:3px solid var(--danger-color);">
-					<div style="font-size:0.8rem;color:var(--danger-color);">⏳ 时效性降低：Idea-${ideaDecay}, 实验-${expDecay}</div>
+					<div style="font-size:0.8rem;color:var(--danger-color);">
+						⏳ 时效性降低（4个月累计）：Idea-${ideaDecay}, 实验-${expDecay}
+					</div>
+					<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:4px;">
+						每月衰减当前分数的10%（最少1），高分论文衰减更快
+					</div>
 				</div>`;
 			}
-			
+						
 			// 改进信息
 			if (improvements.length > 0) {
 				html += `<div style="margin-bottom:8px;padding:8px;background:rgba(0,184,148,0.1);border-radius:6px;border-left:3px solid var(--success-color);">
@@ -14665,7 +14841,6 @@
 				html += `</div></div>`;
 			}
 			
-			// ★★★ 修改：white 改为 var(--card-bg) ★★★
 			html += `<div style="text-align:center;padding:8px;background:var(--card-bg);border-radius:6px;border:1px solid var(--border-color);">
 				总分变化：${beforeScores.total} → <span style="color:${netColor};font-weight:600;">${afterScores.total}</span>
 				(净变化：<span style="color:${netColor};">${netChange >= 0 ? '+' : ''}${netChange}</span>)
