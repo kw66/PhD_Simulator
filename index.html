@@ -3638,6 +3638,7 @@
 				reversedAwakened: false,
 				blockedResearchGains: 0,
 				
+				phdChoiceMadeThisYear: false,
 				pendingPhDChoice: false,
 				pendingConference: null,
 				goldSpentTotal: 0,
@@ -6801,10 +6802,11 @@
 						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1`);
 				}
 			}
-			
+						
 			if (gameState.month > 12) {
 				gameState.month = 1;
 				gameState.year++;
+				gameState.phdChoiceMadeThisYear = false;  // 新的一年重置标志
 			}
 
 			// ★★★ 修改：工资计算（加入月度工资加成）★★★
@@ -7329,13 +7331,16 @@
             
             const maxMonths = gameState.maxYears * 12;
             
-            if (gameState.degree === 'master') {
-                if ((gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
-                    (gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)) {
-                    showPhDOptionModal();
-                    return;
-                }
-            }
+			if (gameState.degree === 'master') {
+				// ★★★ 新增：检查本年度是否已做过转博选择 ★★★
+				if (!gameState.phdChoiceMadeThisYear) {
+					if ((gameState.year === 2 && gameState.month === 12 && gameState.totalScore >= 2) ||
+						(gameState.year === 3 && gameState.month === 12 && gameState.totalScore >= 3)) {
+						showPhDOptionModal();
+						return;
+					}
+				}
+			}
             
             if (gameState.totalMonths >= maxMonths) {
                 if (gameState.degree === 'master') {
@@ -7383,6 +7388,7 @@
 				[
 					{ text: notPhDText, class: 'btn-info', action: () => { 
 						gameState.pendingPhDChoice = false;
+						gameState.phdChoiceMadeThisYear = true; 
 						gameState.phdOpportunitiesRejected = (gameState.phdOpportunitiesRejected || 0) + 1;
 						if (gameState.phdOpportunitiesRejected >= 2) {
 							gameState.achievementConditions = gameState.achievementConditions || {};
@@ -7405,6 +7411,7 @@
 					}},
 					{ text: '📚 转为博士', class: 'btn-primary', action: () => {
 						gameState.pendingPhDChoice = false;
+						gameState.phdChoiceMadeThisYear = true;
 						gameState.degree = 'phd';
 						gameState.maxYears = 5;
 						closeModal();
