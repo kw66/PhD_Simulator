@@ -3242,7 +3242,7 @@
 			// 隐藏觉醒
 			hiddenAwakenName: '师兄师姐救我',
 			hiddenAwakenIcon: '🆘',
-			hiddenAwakenDesc: '获得主动技能（限用1次）：下次想idea时，科研能力视为科研+社交',
+			hiddenAwakenDesc: '获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+社交',
 			hiddenAwakenCondition: (gs) => gs.social <= 6,
 			stats: { social: 5 },
 			reversed: {
@@ -3294,7 +3294,7 @@
 			// 隐藏觉醒
 			hiddenAwakenName: '导师救我',
 			hiddenAwakenIcon: '🛡️',
-			hiddenAwakenDesc: '获得主动技能（限用1次）：下次想idea时，科研能力视为科研+好感度',
+			hiddenAwakenDesc: '获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+好感度',
 			hiddenAwakenCondition: (gs) => gs.favor <= 6,
 			stats: { favor: 5 },
 			reversed: {
@@ -3646,7 +3646,7 @@
 				ailabInternship: false,
 				firstBestPaperAccepted: false,
 				firstABestPaperAccepted: false,
-				badmintonMonth: -1,
+				badmintonYear: -1,
 				
 				lastResetMonth: 0,
 				socialAwakened: false,
@@ -6251,6 +6251,18 @@
 				return;
 			}
 			
+			// ★★★ 新增：检查是否已经有待生效的师兄师姐救我加成 ★★★
+			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'senior') {
+				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
+					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				showModal('⚠️ 技能待生效', 
+					`<p>你已经选择了对【${actionName}】使用师兄师姐救我。</p>
+					 <p style="color:var(--warning-color);">请先执行【${actionName}】操作后，技能才会生效，届时可再次使用。</p>
+					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.seniorHelpUses}/3</p>`, 
+					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			const bonusValue = gameState.social;
 			
 			showModal('🆘 师兄师姐救我', 
@@ -6264,7 +6276,10 @@
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 社交(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>`,
+				</div>
+				<p style="font-size:0.8rem;color:var(--warning-color);text-align:center;">
+					⚠️ 选择后请执行对应操作，否则技能不会生效
+				</p>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
 					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
@@ -6288,6 +6303,18 @@
 				return;
 			}
 			
+			// ★★★ 新增：检查是否已经有待生效的导师救我加成 ★★★
+			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'teacher') {
+				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
+					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				showModal('⚠️ 技能待生效', 
+					`<p>你已经选择了对【${actionName}】使用导师救我。</p>
+					 <p style="color:var(--warning-color);">请先执行【${actionName}】操作后，技能才会生效，届时可再次使用。</p>
+					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.teacherHelpUses}/3</p>`, 
+					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+			
 			const bonusValue = gameState.favor;
 			
 			showModal('🛡️ 导师救我', 
@@ -6301,7 +6328,10 @@
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 好感度(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>`,
+				</div>
+				<p style="font-size:0.8rem;color:var(--warning-color);text-align:center;">
+					⚠️ 选择后请执行对应操作，否则技能不会生效
+				</p>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
 					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
@@ -10749,7 +10779,7 @@
 			
 			shopItems.forEach(item => {
 				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
-				const reason = gameState.gold < item.price ? '金币不足' : (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : '';
+				const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
 				
 				// ★★★ 新增：冰美式动态描述 ★★★
 				let itemDesc = item.desc;
@@ -11256,8 +11286,8 @@
             
             const eventIndex = Math.floor(Math.random() * availableEvents.length);
             const eventId = availableEvents[eventIndex];
-            // ★★★ 新增：检查是否抵抗感冒 ★★★
-			if (eventId === 3 && gameState.totalMonths === gameState.badmintonMonth + 1) {
+			// ★★★ 新增：检查是否抵抗感冒（今年打过羽毛球）★★★
+			if (eventId === 3 && gameState.badmintonYear === gameState.year) {
 				// 从可用池中移除感冒事件
 				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 3);
 				if (!gameState.usedRandomEvents.includes(3)) {
@@ -11268,12 +11298,12 @@
 				showModal('💪 随机事件', 
 					`<p>本来你要感冒了...</p>
 					 <div style="text-align:center;font-size:2rem;margin:15px 0;">🏸➡️🛡️</div>
-					 <p>但是上个月打羽毛球强化了身体，成功抵抗了感冒！</p>`,
+					 <p>但是今年打过羽毛球强化了身体，成功抵抗了感冒！</p>`,
 					[{ 
 						text: '身体倍儿棒！', 
 						class: 'btn-success', 
 						action: () => {
-							addLog('随机事件', '感冒来袭', '上个月打羽毛球强化了身体，成功抵抗！');
+							addLog('随机事件', '感冒来袭', '今年打过羽毛球，成功抵抗感冒！');
 							closeModal();
 							updateAllUI();
 						}
@@ -11561,12 +11591,12 @@
 
         function showRandomEvent7() {
             showModal('🎉 随机事件', '<p>实验室组织团建。</p>', [
-                { text: '🏸 打羽毛球', class: 'btn-primary', action: () => {
-					gameState.badmintonMonth = gameState.totalMonths;
-                    addLog('随机事件', '实验室组织团建 - 打羽毛球', '脖子和手臂得到了强化，有助于抵抗感冒，SAN值+2');
-                    closeModal();
-                    changeSan(2);
-                }},
+				{ text: '🏸 打羽毛球', class: 'btn-primary', action: () => {
+					gameState.badmintonYear = gameState.year;
+					addLog('随机事件', '实验室组织团建 - 打羽毛球', '脖子和手臂得到了强化，今年不会感冒了，SAN值+2');
+					closeModal();
+					changeSan(2);
+				}},
                 { text: '🃏 打德州扑克', class: 'btn-warning', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
@@ -12943,7 +12973,7 @@
                 lastResetMonth: gameState.lastResetMonth || 0,
 				socialAwakened: gameState.socialAwakened || false,
 				reviewerDistribution: gameState.reviewerDistribution || null,
-				badmintonMonth: gameState.badmintonMonth || -1,
+				badmintonYear: gameState.badmintonYear || -1,
 				ideaClickCount: gameState.ideaClickCount || 0,
 				expClickCount: gameState.expClickCount || 0,
 				writeClickCount: gameState.writeClickCount || 0,
@@ -13136,7 +13166,7 @@
                             lastResetMonth: save.lastResetMonth || 0,
 							socialAwakened: save.socialAwakened || false,
 							reviewerDistribution: save.reviewerDistribution || null,
-							badmintonMonth: save.badmintonMonth || -1,
+							badmintonYear: save.badmintonYear || -1,
 							ideaClickCount: save.ideaClickCount || 0,
 							expClickCount: save.expClickCount || 0,
 							writeClickCount: save.writeClickCount || 0,
