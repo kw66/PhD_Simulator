@@ -6030,43 +6030,33 @@
 				});
 			}
 			
-			if (allBuffs.length === 0) {
-				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
-				return;
-			}
+			// ★★★ 修复：移除提前return，改为标记 ★★★
+			const hasRegularBuffs = allBuffs.length > 0;
 			
-			// ★★★ 定义负面debuff类型（需要单独显示，不合并）★★★
+			// 定义负面debuff类型
 			const negativeDebuffTypes = [
-				'idea_exhaustion',      // 灵感枯竭
-				'exp_overheat',         // 主机发烫
-				'write_block',          // 无从下笔
-				'slack_debuff',         // 松懈
-				'idea_stolen'           // 被偷idea
+				'idea_exhaustion', 'exp_overheat', 'write_block', 'slack_debuff', 'idea_stolen'
 			];
 			
-			// ★★★ 定义正面订阅buff类型（需要单独显示，不合并）★★★
+			// 定义订阅buff类型
 			const subscriptionBuffTypes = [
-				'idea_san_reduce',      // Gemini订阅
-				'exp_san_reduce',       // GPT订阅
-				'write_san_reduce_temp' // Claude订阅
+				'idea_san_reduce', 'exp_san_reduce', 'write_san_reduce_temp'
 			];
 			
-			// ★★★ 定义debuff类型的显示名称 ★★★
+			// debuff显示名称
 			const specialBuffNames = {
-				// 负面debuff
 				'idea_exhaustion': '💫 灵感枯竭：下次想idea总分÷2',
 				'exp_overheat': '🔥 主机发烫：下次做实验总分÷2',
 				'write_block': '✏️ 无从下笔：下次写论文总分÷2',
 				'slack_debuff': '😴 松懈：下月所有操作总分÷2',
 				'idea_stolen': '😈 被偷idea：下次想idea总分÷2',
-				// 正面订阅buff
 				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+4',
 				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+4',
 				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+4'
 			};
 			
 			const mergedMap = {};
-			const specialBuffs = [];  // 单独存放特殊buff/debuff
+			const specialBuffs = [];
 			
 			allBuffs.forEach(buff => {
 				if (buff.isLove) {
@@ -6082,7 +6072,6 @@
 					return;
 				}
 				
-				// ★★★ 负面debuff单独处理 ★★★
 				if (negativeDebuffTypes.includes(buff.type)) {
 					specialBuffs.push({
 						name: specialBuffNames[buff.type] || buff.name,
@@ -6094,9 +6083,7 @@
 					return;
 				}
 				
-				// ★★★ 订阅buff单独处理（正面效果）★★★
 				if (subscriptionBuffTypes.includes(buff.type)) {
-					// 检查是否已经添加过（避免重复显示）
 					const alreadyAdded = specialBuffs.some(b => b.subscriptionType === buff.type);
 					if (!alreadyAdded) {
 						specialBuffs.push({
@@ -6104,7 +6091,7 @@
 							permanent: false,
 							isLove: false,
 							isDebuff: false,
-							isSubscription: true,  // ★★★ 标记为订阅buff ★★★
+							isSubscription: true,
 							subscriptionType: buff.type
 						});
 					}
@@ -6186,14 +6173,14 @@
 				return { name, permanent: buff.permanent, isLove: false, isDebuff };
 			});
 			
-			// ★★★ 合并普通buff和特殊buff ★★★
 			const allDisplayBuffs = [...merged, ...specialBuffs];
 			
+			// ★★★ 修复：先渲染普通buff（可能为空字符串）★★★
 			list.innerHTML = allDisplayBuffs.map(buff => {
 				let tagClass = 'buff-tag ';
 				if (buff.isLove) tagClass += 'love';
 				else if (buff.isInternship) tagClass += 'temporary';
-				else if (buff.isSubscription) tagClass += 'temporary';  // ★★★ 订阅buff用蓝色 ★★★
+				else if (buff.isSubscription) tagClass += 'temporary';
 				else if (buff.isSpecialDebuff) tagClass += 'debuff';
 				else if (buff.isMentorship) tagClass += 'permanent';
 				else if (buff.isDebuff) tagClass += 'debuff';
@@ -6203,7 +6190,7 @@
 				let icon = 'fa-clock';
 				if (buff.isLove) icon = 'fa-heart';
 				else if (buff.isInternship) icon = 'fa-building';
-				else if (buff.isSubscription) icon = 'fa-robot';  // ★★★ 订阅buff用机器人图标 ★★★
+				else if (buff.isSubscription) icon = 'fa-robot';
 				else if (buff.isSpecialDebuff) icon = 'fa-exclamation-triangle';
 				else if (buff.isMentorship) icon = 'fa-user-graduate';
 				else if (buff.isDebuff) icon = 'fa-arrow-down';
@@ -6216,9 +6203,10 @@
 					${buff.name}${descText}
 				</span>`;
 			}).join('');
-			const buffListEl = document.getElementById('buff-list');
 			
-			// 师兄师姐救我技能（修改显示逻辑）
+			// ★★★ 修复：技能显示放在这里，不受allBuffs.length影响 ★★★
+			
+			// 师兄师姐救我技能
 			if (gameState.hasSeniorHelpSkill && gameState.seniorHelpUses > 0) {
 				const pendingText = gameState.nextActionBonusSource === 'senior' && gameState.nextActionBonusType
 					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
@@ -6227,10 +6215,10 @@
 					<i class="fas fa-hands-helping"></i>
 					🆘 师兄师姐救我 (${gameState.seniorHelpUses}/3) ${pendingText}
 				</span>`;
-				buffListEl.innerHTML += skillHtml;
+				list.innerHTML += skillHtml;
 			}
 
-			// 导师救我技能（修改显示逻辑）
+			// 导师救我技能
 			if (gameState.hasTeacherHelpSkill && gameState.teacherHelpUses > 0) {
 				const pendingText = gameState.nextActionBonusSource === 'teacher' && gameState.nextActionBonusType
 					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
@@ -6239,11 +6227,15 @@
 					<i class="fas fa-user-shield"></i>
 					🛡️ 导师救我 (${gameState.teacherHelpUses}/3) ${pendingText}
 				</span>`;
-				buffListEl.innerHTML += skillHtml;
+				list.innerHTML += skillHtml;
+			}
+			
+			// ★★★ 修复：最后检查是否完全没有内容 ★★★
+			if (list.innerHTML.trim() === '') {
+				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';
 			}
 		}			
 
-		// ★★★ 完全重写：师兄师姐救我技能 ★★★
 		function useSeniorHelpSkill() {
 			if (!gameState.hasSeniorHelpSkill || gameState.seniorHelpUses <= 0) {
 				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
@@ -6251,13 +6243,13 @@
 				return;
 			}
 			
-			// ★★★ 新增：检查是否已经有待生效的师兄师姐救我加成 ★★★
+			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'senior') {
 				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
 					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
 				showModal('⚠️ 技能待生效', 
 					`<p>你已经选择了对【${actionName}】使用师兄师姐救我。</p>
-					 <p style="color:var(--warning-color);">请先执行【${actionName}】操作后，技能才会生效，届时可再次使用。</p>
+					 <p style="color:var(--warning-color);">请先执行该操作后，才能再次使用技能。</p>
 					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.seniorHelpUses}/3</p>`, 
 					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
 				return;
@@ -6276,10 +6268,7 @@
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 社交(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>
-				<p style="font-size:0.8rem;color:var(--warning-color);text-align:center;">
-					⚠️ 选择后请执行对应操作，否则技能不会生效
-				</p>`,
+				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
 					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
@@ -6295,7 +6284,6 @@
 			);
 		}
 
-		// ★★★ 完全重写：导师救我技能 ★★★
 		function useTeacherHelpSkill() {
 			if (!gameState.hasTeacherHelpSkill || gameState.teacherHelpUses <= 0) {
 				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
@@ -6303,13 +6291,13 @@
 				return;
 			}
 			
-			// ★★★ 新增：检查是否已经有待生效的导师救我加成 ★★★
+			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'teacher') {
 				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
 					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
 				showModal('⚠️ 技能待生效', 
 					`<p>你已经选择了对【${actionName}】使用导师救我。</p>
-					 <p style="color:var(--warning-color);">请先执行【${actionName}】操作后，技能才会生效，届时可再次使用。</p>
+					 <p style="color:var(--warning-color);">请先执行该操作后，才能再次使用技能。</p>
 					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.teacherHelpUses}/3</p>`, 
 					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
 				return;
@@ -6328,10 +6316,7 @@
 					<span style="font-size:1.2rem;color:var(--primary-color);font-weight:600;">
 						科研(${gameState.research}) + 好感度(${bonusValue}) = ${gameState.research + bonusValue}
 					</span>
-				</div>
-				<p style="font-size:0.8rem;color:var(--warning-color);text-align:center;">
-					⚠️ 选择后请执行对应操作，否则技能不会生效
-				</p>`,
+				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
 					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
