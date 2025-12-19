@@ -14301,11 +14301,12 @@
 			
 			// 记录审稿期间的分数变化
 			const reviewMonthsPassed = 4;
+			// ★★★ 修改：使用投稿时的分数快照作为起点 ★★★
 			const beforeScores = {
-				idea: paper.ideaScore,
-				exp: paper.expScore,
-				write: paper.writeScore,
-				total: paper.ideaScore + paper.expScore + paper.writeScore
+				idea: paper.submittedIdeaScore || paper.ideaScore,
+				exp: paper.submittedExpScore || paper.expScore,
+				write: paper.submittedWriteScore || paper.writeScore,
+				total: paper.submittedScore || (paper.ideaScore + paper.expScore + paper.writeScore)
 			};
 			
 			// 生成审稿人并获取评审结果
@@ -14811,7 +14812,7 @@
 			
 			let html = `<div style="padding:12px;background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(116,185,255,0.1));border-radius:8px;margin-bottom:12px;font-size:0.85rem;border:1px solid var(--border-color);">
 				<div style="font-weight:600;color:var(--primary-color);margin-bottom:10px;">
-					<i class="fas fa-chart-line"></i> 审稿期间分数变化
+					<i class="fas fa-chart-line"></i> 论文分数变化（投稿时 → 现在）
 				</div>`;
 			
 			// 衰减信息
@@ -14842,8 +14843,8 @@
 			}
 			
 			html += `<div style="text-align:center;padding:8px;background:var(--card-bg);border-radius:6px;border:1px solid var(--border-color);">
-				总分变化：${beforeScores.total} → <span style="color:${netColor};font-weight:600;">${afterScores.total}</span>
-				(净变化：<span style="color:${netColor};">${netChange >= 0 ? '+' : ''}${netChange}</span>)
+				投稿时：<strong>${beforeScores.total}</strong> → 现在：<span style="color:${netColor};font-weight:600;">${afterScores.total}</span>
+				（净变化：<span style="color:${netColor};">${netChange >= 0 ? '+' : ''}${netChange}</span>）
 			</div>`;
 			
 			html += '</div>';
