@@ -1,0 +1,445 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研究生模拟器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Game Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+
+<body>
+    <!-- 开始界面 -->
+    <div id="start-screen">
+        <div class="start-container">
+			<h1 class="game-title"><span style="filter:grayscale(100%);">🎓</span> 研究生模拟器-正式版</h1>
+			<p class="game-author">
+				作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
+				&nbsp;|&nbsp;
+				项目：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a>
+				&nbsp;|&nbsp;
+				测试：雁栖湖
+				&nbsp;|&nbsp;
+				<a href="http://xhslink.com/o/8czcPQfNziK" target="_blank" style="color:var(--accent-color);text-decoration:none;">🎨 科研绘图</a>
+				&nbsp;|&nbsp;
+				<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank" style="color:var(--success-color);text-decoration:none;">🏢 实习</a>
+			</p>
+
+			<!-- 访问统计 -->
+			<div id="visitor-stats" style="text-align:center;font-size:0.75rem;color:var(--text-secondary);margin-bottom:15px;">
+				<!-- 第一行：实时数据 -->
+				<div style="margin-bottom:5px;">
+					<span style="display:inline;">
+						🟢 历史在线 <span id="max-online-value" style="color:var(--success-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span id="busuanzi_container_site_pv" style="display:inline;">
+						📊 总访问 <span id="busuanzi_value_site_pv" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span> 
+					&nbsp;|&nbsp; 
+					<span id="busuanzi_container_site_uv" style="display:inline;">
+						👥 总访客 <span id="busuanzi_value_site_uv" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span id="total-games-container" style="display:inline;">
+						🎮 总游玩 <span id="total-games-value" style="color:var(--primary-color);font-weight:600;">-</span>
+					</span>
+				</div>
+				<!-- 第二行：今日数据 -->
+				<div>
+					<span style="display:inline;">
+						🟢 当前在线 <span id="online-count-value" style="color:var(--success-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span style="display:inline;">
+						☀️ 今日访问 <span id="today-pv-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span style="display:inline;">
+						👤 今日访客 <span id="today-uv-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+					&nbsp;|&nbsp; 
+					<span style="display:inline;">
+						🎯 今日游玩 <span id="today-games-value" style="color:var(--warning-color);font-weight:600;">-</span>
+					</span>
+				</div>
+			</div>
+            
+            <!-- 模式切换按钮 -->
+            <div class="mode-toggle-container" style="display:none;">
+                <button class="mode-toggle-btn active" id="normal-mode-btn" onclick="switchMode(false)">
+                    ☀️ 正位
+                </button>
+                <button class="mode-toggle-btn" id="reversed-mode-btn" onclick="switchMode(true)">
+                    🌑 逆位
+                </button>
+            </div>
+
+            <div class="game-intro" id="game-intro">
+                <p>📚 <strong>欢迎来到研究生模拟器！</strong>体验研究生生涯，平衡科研、生活和人际关系，努力发表论文，最终顺利毕业。</p>
+                <p>🎯 <strong>游戏目标</strong>：硕士毕业科研分≥1（3年），博士毕业科研分≥7（5年）</p>
+                <p>📝 <strong>论文科研分</strong>：A类=4分，B类=2分，C类=1分</p>
+                <p>💡 <strong>属性影响</strong>：科研能力影响论文分数；社交能力和导师好感度影响事件选项和结果。<strong>建议优先将属性提升至6以解锁更多选项！</strong></p>
+                <p>⚠️ <strong>注意</strong>：保持SAN值、导师好感度和金钱为正数，否则将触发不良结局！</p>
+            </div>
+			
+			<!-- ==================== 5. 修改开始页面HTML结构 ==================== -->
+
+			<!-- 角色选择区块 -->
+			<div class="collapsible-section" id="character-section">
+				<div id="character-body">
+					<!-- 真·大多数解锁进度容器（包含4×4网格、预览卡牌和按钮）-->
+					<div id="true-normal-progress" style="margin-top:15px;"></div>
+					<div class="character-grid" id="character-grid" style="margin-top:10px;"></div>
+				</div>
+			</div>
+						
+			<!-- ==================== 游戏说明按钮区域 ==================== -->
+			<div class="collapsible-section" id="guide-section" style="margin-top:20px;">
+				<div class="collapsible-header" onclick="toggleStartSection('guide')">
+					<h3 style="margin:0;font-size:0.95rem;color:var(--primary-color);display:flex;align-items:center;gap:6px;">
+						<i class="fas fa-book"></i> 游戏说明与攻略
+					</h3>
+					<i class="fas fa-chevron-down collapse-toggle" id="guide-collapse-icon"></i>
+				</div>
+				<div class="collapsible-body" id="guide-body">
+					<div class="guide-content">
+						<div class="guide-grid">
+							<button class="guide-btn" onclick="showGuide('basics')">
+								<i class="fas fa-gamepad"></i><span>基础玩法与属性</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('paperScore')">
+								<i class="fas fa-calculator"></i><span>论文分数计算</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('review')">
+								<i class="fas fa-user-edit"></i><span>审稿机制详解</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('citation')">
+								<i class="fas fa-chart-line"></i><span>引用增长公式</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('events')">
+								<i class="fas fa-dice"></i><span>事件系统</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('buffs')">
+								<i class="fas fa-magic"></i><span>Buff与Debuff</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('characters')">
+								<i class="fas fa-users"></i><span>角色与觉醒系统</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('strategy')">
+								<i class="fas fa-chess"></i><span>进阶策略攻略</span>
+							</button>
+						</div>
+						<div class="guide-hint">
+							<i class="fas fa-info-circle"></i> 点击按钮查看详细的游戏机制说明和公式
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- ==================== 游戏说明按钮区域结束 ==================== -->
+			
+			
+			<!-- 全球统计面板（可折叠）-->
+			<div class="collapsible-section" id="stats-section" style="margin-top:20px;display:none;">
+				<div class="collapsible-header" onclick="toggleStartSection('stats')">
+					<h3 style="margin:0;font-size:0.95rem;color:var(--primary-color);display:flex;align-items:center;gap:6px;">
+						<i class="fas fa-chart-pie"></i> 全球统计
+					</h3>
+					<i class="fas fa-chevron-down collapse-toggle" id="stats-collapse-icon"></i>
+				</div>
+				<div class="collapsible-body" id="stats-body">
+					<div id="global-stats-content" style="padding:15px;background:var(--light-bg);border-radius:0 0 10px 10px;">
+						<div id="stats-loading" style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">
+							<i class="fas fa-spinner fa-spin"></i> 加载中...
+						</div>
+						<div id="stats-content" style="display:none;">
+							<!-- 正位统计 -->
+							<div id="normal-stats-section" class="stats-section">
+								<div id="normal-ending-stats" style="margin-bottom:10px;"></div>
+								<div id="normal-achievement-stats"></div>
+							</div>
+							
+							<!-- 逆位统计 -->
+							<div id="reversed-stats-section" class="stats-section" style="display:none;">
+								<div id="reversed-ending-stats" style="margin-bottom:10px;"></div>
+								<div id="reversed-achievement-stats"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 留言板（可折叠）-->
+			<div class="collapsible-section" id="message-section" style="margin-top:20px;">
+				<div class="collapsible-header" onclick="toggleStartSection('message')">
+					<h3 style="margin:0;font-size:0.95rem;color:var(--primary-color);display:flex;align-items:center;gap:6px;">
+						<i class="fas fa-comments"></i> 留言板
+					</h3>
+					<i class="fas fa-chevron-down collapse-toggle" id="message-collapse-icon"></i>
+				</div>
+				<div class="collapsible-body" id="message-body">
+					<div id="message-board" style="padding:15px;background:var(--light-bg);border-radius:0 0 10px 10px;">
+						<!-- 发表留言区 -->
+						<div class="message-input-area">
+							<div style="display:flex;gap:10px;margin-bottom:10px;">
+								<input type="text" id="msg-nickname" placeholder="昵称（必填）" maxlength="20" 
+									   style="flex:1;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:0.85rem;font-family:inherit;background:var(--card-bg);color:var(--text-primary);">
+								<button class="btn btn-primary" onclick="postMessage()" style="padding:8px 16px;font-size:0.85rem;">
+									<i class="fas fa-paper-plane"></i> 发送
+								</button>
+							</div>
+							<textarea id="msg-content" placeholder="说点什么吧...（支持回复其他人的留言）" maxlength="500" rows="3"
+									  style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:0.85rem;font-family:inherit;resize:vertical;background:var(--card-bg);color:var(--text-primary);"></textarea>
+							<div id="reply-indicator" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(108,92,231,0.1);border-radius:6px;font-size:0.8rem;">
+								<span style="color:var(--primary-color);">回复 <strong id="reply-to-name"></strong>：</span>
+								<span id="reply-preview" style="color:var(--text-secondary);"></span>
+								<button onclick="cancelReply()" style="float:right;background:none;border:none;color:var(--danger-color);cursor:pointer;font-size:0.8rem;">
+									<i class="fas fa-times"></i> 取消
+								</button>
+							</div>
+						</div>
+						
+						<!-- 留言列表 -->
+						<div id="message-list" style="margin-top:15px;">
+							<div style="text-align:center;color:var(--text-secondary);font-size:0.85rem;padding:20px;">
+								<i class="fas fa-spinner fa-spin"></i> 加载留言中...
+							</div>
+						</div>
+						
+						<!-- 分页控制 -->
+						<div id="message-pagination" style="display:none;margin-top:15px;text-align:center;">
+							<button class="btn btn-info" id="prev-page-btn" onclick="changeMessagePage(-1)" style="padding:6px 12px;font-size:0.8rem;" disabled>
+								<i class="fas fa-chevron-left"></i> 上一页
+							</button>
+							<span id="page-info" style="margin:0 15px;font-size:0.85rem;color:var(--text-secondary);">第 1 页</span>
+							<button class="btn btn-info" id="next-page-btn" onclick="changeMessagePage(1)" style="padding:6px 12px;font-size:0.8rem;">
+								下一页 <i class="fas fa-chevron-right"></i>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+        </div>
+    </div>
+
+
+
+
+	<!-- 游戏主界面 -->
+	<div id="game-screen">
+		<div class="game-container">
+			<!-- 左侧栏 -->
+			<div class="left-column">
+				<!-- 属性栏 -->
+				<div class="panel" id="attributes-panel">
+					<div class="panel-title">
+						<span class="char-icon" id="char-icon">👤</span>
+						<span id="char-name">角色名称</span>
+						<button class="btn btn-info ability-btn" onclick="showCharacterDetail()" style="margin-left:auto;padding:2px 8px;font-size:0.7rem;">
+							<i class="fas fa-user"></i> 能力
+						</button>
+					</div>
+					<div id="attributes-panel-content">
+						<div class="attribute-bar">
+							<div class="attribute-label">
+								<span class="name" title="精神状态，降为负数则不堪重负"><i class="fas fa-brain"></i> SAN值</span>
+								<span class="value"><span id="san-value">20</span>/<span id="san-max">20</span></span>
+							</div>
+							<div class="progress-bar"><div class="progress-fill san" id="san-bar"></div></div>
+						</div>
+						<div class="attribute-bar">
+							<div class="attribute-label">
+								<span class="name" title="影响论文分数生成，达到6/12/18解锁新论文槽"><i class="fas fa-flask"></i> 科研能力</span>
+								<span class="value"><span id="research-value">1</span>/<span id="research-max">20</span></span>
+							</div>
+							<div class="progress-bar"><div class="progress-fill research" id="research-bar"></div></div>
+						</div>
+						<div class="attribute-bar">
+							<div class="attribute-label">
+								<span class="name" title="影响事件选项和结果，达到6/12解锁更多选项"><i class="fas fa-users"></i> 社交能力</span>
+								<span class="value"><span id="social-value">1</span>/20</span>
+							</div>
+							<div class="progress-bar"><div class="progress-fill social" id="social-bar"></div></div>
+						</div>
+						<div class="attribute-bar">
+							<div class="attribute-label">
+								<span class="name" title="影响事件选项和结果，降为负数则被退学"><i class="fas fa-heart"></i> 导师好感度</span>
+								<span class="value"><span id="favor-value">1</span>/20</span>
+							</div>
+							<div class="progress-bar"><div class="progress-fill favor" id="favor-bar"></div></div>
+						</div>
+						<div class="currency-display">
+							<div class="currency-item">
+								<i class="fas fa-coins"></i>
+								<span>金币</span>
+								<span id="gold-value">1</span>
+							</div>
+							<div class="currency-item achievement-currency">
+								<i class="fas fa-trophy"></i>
+								<span>成就币</span>
+								<span id="achievement-coins-display">0</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 科研成果栏 -->
+				<div class="panel" id="research-panel">
+					<div class="panel-title collapsible" onclick="toggleCollapse('research-panel')">
+						<i class="fas fa-award"></i> 科研成果
+						<i class="fas fa-chevron-down collapse-icon" id="research-panel-collapse-icon"></i>
+					</div>
+					<div class="collapsible-content" id="research-panel-content">
+						<div class="research-summary">
+							<div class="research-stat"><div class="label">A类</div><div class="value" id="paper-a-count">0</div></div>
+							<div class="research-stat"><div class="label">B类</div><div class="value" id="paper-b-count">0</div></div>
+							<div class="research-stat"><div class="label">C类</div><div class="value" id="paper-c-count">0</div></div>
+						</div>
+						<div class="research-summary-wide" style="display:flex;gap:8px;margin-top:5px;">
+							<div class="research-stat" style="flex:1;"><div class="label">科研分</div><div class="value" id="total-score">0</div></div>
+							<div class="research-stat" style="flex:1;"><div class="label">总引用</div><div class="value" id="total-citations">0</div></div>
+						</div>
+						<div style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:6px;text-align:center;">A类=4分 B类=2分 C类=1分</div>
+						<div class="paper-list" id="published-papers">
+							<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 中间栏 -->
+			<div class="middle-column">
+				<!-- 游戏日志栏 -->
+				<div class="panel" id="log-panel" style="flex:1;">
+					<div class="panel-title collapsible" onclick="toggleCollapse('log-panel')">
+						<span style="white-space:nowrap;display:flex;align-items:center;gap:6px;"><i class="fas fa-scroll"></i> 游戏日志</span>
+						<span id="event-preview" style="margin-left:8px;font-size:0.7rem;font-weight:400;color:var(--text-secondary);"></span>
+						<i class="fas fa-chevron-down collapse-icon" id="log-panel-collapse-icon" style="margin-left:auto;"></i>
+					</div>
+					<div class="collapsible-content" id="log-panel-content">
+						<div class="log-content" id="log-content"></div>
+					</div>
+				</div>
+
+				<!-- 增益/减益效果栏 -->
+				<div class="panel" id="buff-panel">
+					<div class="panel-title collapsible" onclick="toggleCollapse('buff-panel')">
+						<i class="fas fa-magic"></i> 增益/减益效果
+						<i class="fas fa-chevron-down collapse-icon" id="buff-panel-collapse-icon"></i>
+					</div>
+					<div class="collapsible-content" id="buff-panel-content">
+						<div class="buff-list" id="buff-list"><span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span></div>
+					</div>
+				</div>
+
+				<!-- 操作栏 -->
+				<div class="panel" id="action-panel">
+					<div class="collapsible-content" id="action-panel-content" style="display:block;">
+						<div class="action-grid">
+							<button class="btn action-btn" id="btn-read" onclick="readPaper()"><i class="fas fa-book-open"></i><span>看论文</span></button>
+							<button class="btn action-btn" id="btn-work" onclick="partTimeJob()"><i class="fas fa-briefcase"></i><span>打工</span></button>
+							<button class="btn action-btn" id="btn-idea" onclick="thinkIdea()"><i class="fas fa-lightbulb"></i><span>想idea</span></button>
+							<button class="btn action-btn" id="btn-experiment" onclick="doExperiment()"><i class="fas fa-vial"></i><span>做实验</span></button>
+							<button class="btn action-btn" id="btn-write" onclick="writePaper()"><i class="fas fa-pen-fancy"></i><span>写论文</span></button>
+							<button class="btn action-btn action-btn-next" id="btn-next" onclick="nextMonth()"><i class="fas fa-forward"></i><span>下一月</span></button>
+						</div>
+						<!-- 功能按钮区 -->
+						<div class="utility-buttons">
+							<button class="btn utility-btn" onclick="openShop()"><i class="fas fa-store"></i><span>金币商店</span></button>
+							<button class="btn utility-btn" onclick="openAchievementShop()"><i class="fas fa-trophy"></i><span>成就商店</span></button>
+							<button class="btn utility-btn" onclick="openSaveModal()"><i class="fas fa-save"></i><span>存档</span></button>
+							<button class="btn utility-btn" onclick="openLoadModal()"><i class="fas fa-folder-open"></i><span>读档</span></button>
+							<button class="btn utility-btn utility-btn-danger" onclick="confirmRestart()"><i class="fas fa-redo"></i><span>重开</span></button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 右侧栏 -->
+			<div class="right-column">
+				<div class="panel" id="workstation-panel">
+					<div class="panel-title collapsible" onclick="toggleCollapse('workstation-panel')">
+						<i class="fas fa-file-alt"></i> 论文工作站
+						<div style="margin-left:auto;display:flex;gap:5px;align-items:center;">
+							<button class="btn btn-info" style="padding:3px 8px;font-size:0.7rem;" onclick="event.stopPropagation();showAllConferencesInfo()">
+								<i class="fas fa-calendar-alt"></i> 会议一览
+							</button>
+							<i class="fas fa-chevron-down collapse-icon" id="workstation-panel-collapse-icon"></i>
+						</div>
+					</div>
+					<div class="collapsible-content" id="workstation-panel-content">
+						<div class="paper-slots" id="paper-slots"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <!-- 弹窗 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <h3 class="modal-title" id="modal-title">标题</h3>
+            <div class="modal-content" id="modal-content">内容</div>
+            <div class="modal-buttons" id="modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- 移动端底部快捷栏 -->
+    <div class="mobile-quick-bar" id="mobile-quick-bar">
+        <button class="quick-btn" onclick="scrollToPanel('action-panel')">
+            <i class="fas fa-gamepad"></i>
+            <span>操作</span>
+        </button>
+        <button class="quick-btn" onclick="scrollToPanel('workstation-panel')">
+            <i class="fas fa-file-alt"></i>
+            <span>论文</span>
+        </button>
+        <button class="quick-btn" onclick="scrollToPanel('attributes-panel')">
+            <i class="fas fa-chart-bar"></i>
+            <span>属性</span>
+        </button>
+        <button class="quick-btn" onclick="openShop()">
+            <i class="fas fa-store"></i>
+            <span>商店</span>
+        </button>
+		<button class="quick-btn" onclick="openAchievementShop()" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;">
+			<i class="fas fa-trophy" style="color:white;"></i>
+			<span>成就</span>
+		</button>
+        <button class="quick-btn next-month-btn" onclick="nextMonth()">
+            <i class="fas fa-forward"></i>
+            <span>下月</span>
+        </button>
+    </div>
+	<!-- 快速折叠/展开按钮（移动端） -->
+	<button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllPanels()">
+		<i class="fas fa-compress-alt" id="collapse-all-btn-icon"></i>
+		<span id="collapse-all-btn-text">收起全部</span>
+	</button>
+
+    <!-- Game Scripts (load in order) -->
+    <script src="js/ui/panels.js"></script>
+    <script src="js/config/gameData.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/systems/stats.js"></script>
+    <script src="js/features/characters.js"></script>
+    <script src="js/core/attributes.js"></script>
+    <script src="js/ui/updateUI.js"></script>
+    <script src="js/core/gameLoop.js"></script>
+    <script src="js/features/papers.js"></script>
+    <script src="js/features/submission.js"></script>
+    <script src="js/features/shop.js"></script>
+    <script src="js/features/events.js"></script>
+    <script src="js/features/endings.js"></script>
+    <script src="js/systems/save.js"></script>
+    <script src="js/ui/modals.js"></script>
+    <script src="js/systems/review.js"></script>
+    <script src="js/systems/online.js"></script>
+    <script src="js/ui/instructions.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
