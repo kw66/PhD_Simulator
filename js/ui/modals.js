@@ -44,8 +44,11 @@
             const degreeText = gameState.degree === 'master' ? '硕' : '博';
             const dateStr = `${degreeText}${gameState.year}-${gameState.month}月 剩${remaining}月`;
             const isNegative = result && (result.includes('-') || result.includes('拒稿') || result.includes('不满') || result.includes('失败') || result.includes('落选'));
+            const isAchievement = event.includes('成就') || event.includes('🏆');
             const entry = document.createElement('div');
-            entry.className = `log-entry ${isNegative ? 'negative' : ''}`;
+            entry.className = `log-entry ${isNegative ? 'negative' : ''} ${isAchievement ? 'achievement' : ''}`;
+            entry.style.position = 'relative';
+            entry.style.overflow = 'hidden';
             entry.innerHTML = `<div class="date">[${dateStr}] ${event}</div><div class="event">${detail}</div>${result ? `<div class="result">→ ${result}</div>` : ''}`;
             logContent.insertBefore(entry, logContent.firstChild);
             while (logContent.children.length > 100) logContent.removeChild(logContent.lastChild);

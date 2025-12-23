@@ -234,6 +234,17 @@
 		<div class="game-container">
 			<!-- 左侧栏 -->
 			<div class="left-column">
+				<!-- 年月显示栏（置顶）-->
+				<div class="panel time-display-panel" id="time-display-panel">
+					<div class="time-display-content">
+						<div class="time-main">
+							<span class="time-year" id="time-year">第1年</span>
+							<span class="time-month" id="time-month">第1月</span>
+						</div>
+						<div class="time-remaining" id="time-remaining">剩余35月</div>
+					</div>
+				</div>
+
 				<!-- 属性栏 -->
 				<div class="panel" id="attributes-panel">
 					<div class="panel-title">
@@ -353,6 +364,7 @@
 							<button class="btn utility-btn" onclick="openAchievementShop()"><i class="fas fa-trophy"></i><span>成就商店</span></button>
 							<button class="btn utility-btn" onclick="openSaveModal()"><i class="fas fa-save"></i><span>存档</span></button>
 							<button class="btn utility-btn" onclick="openLoadModal()"><i class="fas fa-folder-open"></i><span>读档</span></button>
+							<button class="btn utility-btn" onclick="openAutoSaveModal()"><i class="fas fa-history"></i><span>回溯</span></button>
 							<button class="btn utility-btn utility-btn-danger" onclick="confirmRestart()"><i class="fas fa-redo"></i><span>重开</span></button>
 						</div>
 					</div>
@@ -406,8 +418,8 @@
             <i class="fas fa-store"></i>
             <span>商店</span>
         </button>
-		<button class="quick-btn" onclick="openAchievementShop()" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;">
-			<i class="fas fa-trophy" style="color:white;"></i>
+		<button class="quick-btn" onclick="openAchievementShop()">
+			<i class="fas fa-trophy"></i>
 			<span>成就</span>
 		</button>
         <button class="quick-btn next-month-btn" onclick="nextMonth()">

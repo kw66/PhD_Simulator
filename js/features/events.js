@@ -232,15 +232,19 @@
 				if (!gameState.usedRandomEvents.includes(3)) {
 					gameState.usedRandomEvents.push(3);
 				}
-				
+
+				// ★★★ 标记成就：强身健体 ★★★
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.badmintonAvoidedCold = true;
+
 				// 显示抵抗感冒的提示
-				showModal('💪 随机事件', 
+				showModal('💪 随机事件',
 					`<p>本来你要感冒了...</p>
 					 <div style="text-align:center;font-size:2rem;margin:15px 0;">🏸➡️🛡️</div>
 					 <p>但是今年打过羽毛球强化了身体，成功抵抗了感冒！</p>`,
-					[{ 
-						text: '身体倍儿棒！', 
-						class: 'btn-success', 
+					[{
+						text: '身体倍儿棒！',
+						class: 'btn-success',
 						action: () => {
 							addLog('随机事件', '感冒来袭', '今年打过羽毛球，成功抵抗感冒！');
 							closeModal();

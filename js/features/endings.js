@@ -101,24 +101,18 @@
 
 		function collectAchievements(endingType) {
 			const a = [];
-			
+
 			// 定义顺利毕业的结局类型
 			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 			const isGraduated = graduationEndings.includes(endingType);
-			
-			// 所有成就都需要顺利毕业才能取得
-			if (!isGraduated) {
-				return a;
-			}
-			
+
+			// ★★★ 以下成就不需要顺利毕业也可以获得 ★★★
 			if (gameState.hasLover) a.push('❤️ 喜结良缘');
 			if (gameState.gold >= 30) a.push('💰 家财万贯');
 			if (gameState.research > 15 && gameState.social > 15 && gameState.favor > 15 && gameState.gold > 15) a.push('⬡ 六边形战士');
 			if (gameState.research >= 20) a.push('🏆 诺奖选手');
 			if (gameState.social >= 20) a.push('🌸 交际花');
 			if (gameState.favor >= 20) a.push('🤝 铁杆师生');
-			if (gameState.san >= 20) a.push('⚡ 精力满满');
-			if (gameState.rejectedCount === 0 && gameState.publishedPapers.length > 0) a.push('🎯 百发百中');
 			if (gameState.teaBreakCount >= 3) a.push('☕ 我爱茶歇');
 			if (gameState.tourCount >= 3) a.push('🏖️ 公费旅游');
 			if (gameState.publishedPapers.length >= 10) a.push('🤖 论文机器');
@@ -129,8 +123,6 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
 			if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
 			if (gameState.achievementConditions && gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
-			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
-			if (gameState.san === 0 && gameState.gold === 0) a.push('💪 全力以赴');
 			const requiredTypes = [
 				'A-Poster', 'A-Oral', 'A-Best Paper',
 				'B-Poster', 'B-Oral', 'B-Best Paper',
@@ -144,7 +136,7 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.bought5GPUs) a.push('🤖 机械飞升');
 			if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
 			if (gameState.achievementConditions && gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
-			
+
 			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
 			if (hasCPaperOver100) a.push('💎 无法埋没');
 			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) a.push('🔔 不鸣则已');
@@ -157,12 +149,126 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.twoInOneConference) a.push('🏹 一箭双雕');
 			if (gameState.achievementConditions && gameState.achievementConditions.savedByPC) a.push('🎣 力挽狂澜');
 			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
-			if (rejectedLoverTwice && !gameState.hasLover) { a.push('💔 不入爱河');}
 			if (rejectedLoverTwice && gameState.hasLover) { a.push('💕 我在等你');}
 			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
 			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
-			if (rejectedBigBullTwice && rejectedInternshipTwice) { a.push('🏠 偏安一隅');}    
+			if (rejectedBigBullTwice && rejectedInternshipTwice) { a.push('🏠 偏安一隅');}
+
+			// ★★★ 以下成就结局时判定（不需要顺利毕业）★★★
+			if (gameState.san > 20) a.push('⚡ 精力满满');
+			// 百发百中：前5次投稿全部命中
+			const first5Submissions = (gameState.submissionHistory || []).slice(0, 5);
+			if (first5Submissions.length >= 5 && first5Submissions.every(s => s.accepted)) a.push('🎯 百发百中');
+			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
+			if (rejectedLoverTwice && !gameState.hasLover) { a.push('💔 不入爱河');}
+			// 强身健体：打羽毛球后成功规避了感冒事件
+			if (gameState.achievementConditions && gameState.achievementConditions.badmintonAvoidedCold) a.push('💪 强身健体');
+
+			// ★★★ 以下成就仍然需要顺利毕业 ★★★
+			if (!isGraduated) {
+				return a;
+			}
+
+			if (gameState.san === 0 && gameState.gold === 0) a.push('🏋️ 全力以赴');
+
 			return a;
+		}
+
+		// ★★★ 新增：游戏内成就检测（实时检测可达成的成就）★★★
+		function checkInGameAchievements() {
+			const earnedThisGame = gameState.earnedAchievementsThisGame || [];
+			const newAchievements = [];
+
+			// 检测各种可在游戏中途达成的成就
+			const achievementsToCheck = [];
+
+			// 属性相关
+			if (gameState.gold >= 30) achievementsToCheck.push('💰 家财万贯');
+			if (gameState.research > 15 && gameState.social > 15 && gameState.favor > 15 && gameState.gold > 15) achievementsToCheck.push('⬡ 六边形战士');
+			if (gameState.research >= 20) achievementsToCheck.push('🏆 诺奖选手');
+			if (gameState.social >= 20) achievementsToCheck.push('🌸 交际花');
+			if (gameState.favor >= 20) achievementsToCheck.push('🤝 铁杆师生');
+			if (gameState.san > 20) achievementsToCheck.push('⚡ 精力满满');
+			const stats = [gameState.research, gameState.favor, gameState.social];
+			const maxStat = Math.max(...stats);
+			const minStat = Math.min(...stats);
+			if (maxStat - minStat > 12) achievementsToCheck.push('📊 严重偏科');
+
+			// 恋爱相关
+			if (gameState.hasLover) achievementsToCheck.push('❤️ 喜结良缘');
+
+			// 活动相关
+			if (gameState.teaBreakCount >= 3) achievementsToCheck.push('☕ 我爱茶歇');
+			if (gameState.tourCount >= 3) achievementsToCheck.push('🏖️ 公费旅游');
+			if ((gameState.workCount || 0) >= 10) achievementsToCheck.push('💼 打工狂人');
+			if ((gameState.readCount || 0) >= 20) achievementsToCheck.push('📖 爱看论文');
+
+			// 论文相关
+			if (gameState.publishedPapers.length >= 10) achievementsToCheck.push('🤖 论文机器');
+			if (gameState.totalCitations >= 1000) achievementsToCheck.push('📚 千引大佬');
+			if (gameState.rejectedCount >= 5) achievementsToCheck.push('👊 越战越勇');
+			if (gameState.maxConcurrentReviews >= 4) achievementsToCheck.push('🔥 火力全开');
+			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
+			if (hasCPaperOver100) achievementsToCheck.push('💎 无法埋没');
+			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) achievementsToCheck.push('🔔 不鸣则已');
+			if (gameState.paperA > 0 && gameState.paperB === 0 && gameState.paperC === 0) achievementsToCheck.push('🎻 曲高和寡');
+			// 百发百中：前5次投稿全部命中
+			const first5Submissions = (gameState.submissionHistory || []).slice(0, 5);
+			if (first5Submissions.length >= 5 && first5Submissions.every(s => s.accepted)) achievementsToCheck.push('🎯 百发百中');
+
+			// 咖啡相关
+			const coffeeBonus = 3 + Math.floor((gameState.coffeeBoughtCount || 0) / 15);
+			if (coffeeBonus >= 6) achievementsToCheck.push('☕ 绝世咖啡');
+
+			// Buff相关
+			if (gameState.triggeredBuffTypes && typeof ALL_BUFF_TYPES !== 'undefined' && ALL_BUFF_TYPES.every(type => gameState.triggeredBuffTypes.includes(type))) achievementsToCheck.push('✨ Buff之神');
+
+			// 条件类成就
+			if (gameState.achievementConditions) {
+				if (gameState.achievementConditions.highScorePaper) achievementsToCheck.push('📜 高分论文');
+				if (gameState.achievementConditions.unanimousImprovement) achievementsToCheck.push('🍀 幸运儿');
+				if (gameState.achievementConditions.allBadReviewers) achievementsToCheck.push('😭 倒霉蛋');
+				if (gameState.achievementConditions.tripleRejected) achievementsToCheck.push('🍚 食之无味');
+				if (gameState.achievementConditions.bought5GPUs) achievementsToCheck.push('🤖 机械飞升');
+				if (gameState.achievementConditions.fullFurnitureSet) achievementsToCheck.push('🛋️ 全套家具');
+				if (gameState.achievementConditions.phdRequirementMetEarly) achievementsToCheck.push('🧒 天才少年');
+				if (gameState.achievementConditions.rejectedPhdTwice) achievementsToCheck.push('🧠 人间清醒');
+				if (gameState.achievementConditions.twoInOneConference) achievementsToCheck.push('🏹 一箭双雕');
+				if (gameState.achievementConditions.savedByPC) achievementsToCheck.push('🎣 力挽狂澜');
+				if (gameState.achievementConditions.badmintonAvoidedCold) achievementsToCheck.push('💪 强身健体');
+			}
+
+			// 论文收集
+			const requiredTypes = [
+				'A-Poster', 'A-Oral', 'A-Best Paper',
+				'B-Poster', 'B-Oral', 'B-Best Paper',
+				'C-Poster', 'C-Oral', 'C-Best Paper'
+			];
+			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) achievementsToCheck.push('🏆 全收集');
+
+			// 社交事件相关
+			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
+			if (rejectedLoverTwice && gameState.hasLover) achievementsToCheck.push('💕 我在等你');
+			if (rejectedLoverTwice && !gameState.hasLover) achievementsToCheck.push('💔 不入爱河');
+			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
+			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
+			if (rejectedBigBullTwice && rejectedInternshipTwice) achievementsToCheck.push('🏠 偏安一隅');
+
+			// 检查哪些是新获得的
+			achievementsToCheck.forEach(ach => {
+				if (!earnedThisGame.includes(ach)) {
+					newAchievements.push(ach);
+				}
+			});
+
+			// 为新成就添加奖励
+			newAchievements.forEach(ach => {
+				gameState.earnedAchievementsThisGame.push(ach);
+				gameState.achievementCoins = (gameState.achievementCoins || 0) + 5;
+				addLog('🏆 成就达成', ach, '获得5成就币！');
+			});
+
+			return newAchievements;
 		}
 
 

@@ -1,5 +1,6 @@
 ﻿        // ==================== UI更新 ====================
         function updateAllUI() {
+            updateTimeDisplay();
             updateAttributes();
             updateGraduation();
             updateBuffs();
@@ -7,6 +8,35 @@
             updateActionButtons();
             updateEventPreview();
         }
+
+		// ==================== 年月时间显示 ====================
+		function updateTimeDisplay() {
+			const timePanelEl = document.getElementById('time-display-panel');
+			const timeYearEl = document.getElementById('time-year');
+			const timeMonthEl = document.getElementById('time-month');
+			const timeRemainingEl = document.getElementById('time-remaining');
+
+			// ★★★ 根据逆位模式切换时间栏颜色 ★★★
+			if (timePanelEl) {
+				if (gameState.isReversed) {
+					timePanelEl.classList.add('reversed-time');
+				} else {
+					timePanelEl.classList.remove('reversed-time');
+				}
+			}
+
+			if (timeYearEl) {
+				timeYearEl.textContent = `第${gameState.year}年`;
+			}
+			if (timeMonthEl) {
+				timeMonthEl.textContent = `第${gameState.month}月`;
+			}
+			if (timeRemainingEl) {
+				const maxMonths = gameState.maxYears * 12;
+				const remaining = maxMonths - gameState.totalMonths;
+				timeRemainingEl.textContent = `剩余${remaining}月`;
+			}
+		}
 
 		function updateAttributes() {
 			// ★★★ 修复：添加null检查避免错误 ★★★
@@ -25,23 +55,23 @@
 			if (researchMaxEl) researchMaxEl.textContent = researchMax;
 			if (researchBarEl) researchBarEl.style.width = `${(gameState.research / researchMax) * 100}%`;
 
-			// ★★★ 修改：支持动态社交上限 ★★★
+			// ★★★ 修改：支持动态社交上限，修复nth-child选择器(3而非4) ★★★
 			const socialMax = gameState.socialMax || 20;
 			const socialValueEl2 = document.getElementById('social-value');
 			if (socialValueEl2) socialValueEl2.textContent = gameState.social;
 			// 需要在HTML中添加social-max元素，或者修改显示方式
-			const socialValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(4) .value');
+			const socialValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(3) .value');
 			if (socialValueEl) {
 				socialValueEl.innerHTML = `<span id="social-value">${gameState.social}</span>/${socialMax}`;
 			}
 			const socialBarEl = document.getElementById('social-bar');
 			if (socialBarEl) socialBarEl.style.width = `${(gameState.social / socialMax) * 100}%`;
 
-			// ★★★ 修改：支持动态好感上限 ★★★
+			// ★★★ 修改：支持动态好感上限，修复nth-child选择器(4而非5) ★★★
 			const favorMax = gameState.favorMax || 20;
 			const favorValueEl2 = document.getElementById('favor-value');
 			if (favorValueEl2) favorValueEl2.textContent = gameState.favor;
-			const favorValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(5) .value');
+			const favorValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(4) .value');
 			if (favorValueEl) {
 				favorValueEl.innerHTML = `<span id="favor-value">${gameState.favor}</span>/${favorMax}`;
 			}

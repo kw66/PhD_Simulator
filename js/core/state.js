@@ -136,6 +136,15 @@
                 submissionStats: null,           // 投稿统计快照
                 pendingConferenceInfo: null,      // 待开会议信息
 				achievementCoins: 0,  // 成就币
+				earnedAchievementsThisGame: [],  // 本局游戏中获得的成就
+				// ★★★ 新增：预购订阅状态 ★★★
+				subscriptions: {
+					coffee: false,      // 冰美式订阅
+					claude: false,      // Claude订阅
+					gpt: false,         // GPT订阅
+					gemini: false,      // Gemini订阅
+					gpu_rent: false     // 租GPU服务器订阅
+				},
 			};
 		}
 

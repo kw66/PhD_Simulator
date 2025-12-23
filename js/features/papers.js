@@ -409,9 +409,12 @@
 
 
 		function thinkIdea() {
+			// ★★★ 新增：处理预购订阅（想idea时购买gemini）★★★
+			processSubscriptions('idea');
+
 			// ★★★ 修改：检查行动次数 ★★★
 			if (gameState.actionCount >= gameState.actionLimit) {
-				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -568,8 +571,11 @@
 		}
 
 		function doExperiment() {
+			// ★★★ 新增：处理预购订阅（做实验时购买gpt和租gpu）★★★
+			processSubscriptions('experiment');
+
 			if (gameState.actionCount >= gameState.actionLimit) {
-				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -712,8 +718,11 @@
 		}
 
 		function writePaper() {
+			// ★★★ 新增：处理预购订阅（写论文时购买claude）★★★
+			processSubscriptions('write');
+
 			if (gameState.actionCount >= gameState.actionLimit) {
-				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}

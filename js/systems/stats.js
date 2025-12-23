@@ -542,24 +542,69 @@
 			}
 		}
 
+		// 合并正位和逆位统计数据
+		function mergeModeStats(stats) {
+			const merged = {
+				endings: {},
+				achievements: {},
+				totalGames: 0,
+				characterEndings: {}
+			};
+
+			// 合并结局数据
+			['normal', 'reversed'].forEach(mode => {
+				if (stats[mode]) {
+					merged.totalGames += stats[mode].totalGames || 0;
+
+					// 合并结局计数
+					Object.entries(stats[mode].endings || {}).forEach(([type, count]) => {
+						merged.endings[type] = (merged.endings[type] || 0) + count;
+					});
+
+					// 合并成就计数
+					Object.entries(stats[mode].achievements || {}).forEach(([name, count]) => {
+						merged.achievements[name] = (merged.achievements[name] || 0) + count;
+					});
+				}
+			});
+
+			return merged;
+		}
+
 		function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
 			if (!endingContainer || !achievementContainer) {
 				console.warn('统计容器不存在');
 				return;
 			}
-			
+
 			const playerRecords = getPlayerAchievements();
-			const playerEndingsSet = playerRecords.endings[mode] || new Set();
-			const playerAchievementsSet = playerRecords.achievements[mode] || new Set();
-			
+			// 合并正位和逆位的玩家记录
+			const playerEndingsNormal = playerRecords.endings.normal || new Set();
+			const playerEndingsReversed = playerRecords.endings.reversed || new Set();
+			const playerAchievementsNormal = playerRecords.achievements.normal || new Set();
+			const playerAchievementsReversed = playerRecords.achievements.reversed || new Set();
+
+			// 合并为一个Set
+			const playerEndingsSet = new Set();
+			const addToSet = (set, items) => {
+				if (items instanceof Set) {
+					items.forEach(item => set.add(item));
+				} else if (Array.isArray(items)) {
+					items.forEach(item => set.add(item));
+				}
+			};
+			addToSet(playerEndingsSet, playerEndingsNormal);
+			addToSet(playerEndingsSet, playerEndingsReversed);
+
+			const playerAchievementsSet = new Set();
+			addToSet(playerAchievementsSet, playerAchievementsNormal);
+			addToSet(playerAchievementsSet, playerAchievementsReversed);
+
 			const totalGames = modeStats.totalGames || 0;
 			
 			// ==================== 渲染结局统计（按完成率排序）====================
-			// ★★★ 新增：逆位模式下过滤掉真·大多数相关结局（逆位无法选择真·大多数）★★★
-			const trueNormalEndings = ['true_phd', 'true_devotion', 'true_life'];
-			const endingsToShow = mode === 'reversed' 
-				? Object.entries(ENDING_NAMES).filter(([type]) => !trueNormalEndings.includes(type))
-				: Object.entries(ENDING_NAMES);
+			// 统计合并后显示所有结局
+			const endingsToShow = Object.entries(ENDING_NAMES);
 			
 			// 构建结局数据数组
 			const endingEntries = endingsToShow.map(([type, name]) => {
@@ -767,6 +812,8 @@
                 return '<span class="no-data">数据不足</span>';
             }
 
+            // 内部值1-12对应显示0.5-6颗星
+            // stars=1 → 0.5星, stars=2 → 1星, ..., stars=12 → 6星
             let html = '';
             const fullStars = Math.floor(stars / 2);
             const halfStar = stars % 2 === 1;
@@ -776,10 +823,11 @@
                 html += '<i class="fas fa-star"></i>';
             }
             if (halfStar) {
-                html += '<i class="far fa-star"></i>';
+                // 使用半星图标
+                html += '<i class="fas fa-star-half-alt"></i>';
             }
             for (let i = 0; i < emptyStars; i++) {
-                html += '<i class="far fa-star" style="opacity:0.3;"></i>';
+                html += '<i class="far fa-star"></i>';
             }
 
             return html;
@@ -849,38 +897,27 @@
 					}
 					
 					characterDifficultyData = calculateCharacterDifficulty(stats);
-					
+
 					loading.style.display = 'none';
 					content.style.display = 'block';
-					
-					// 渲染统计（使用原有的combined容器或新的分离容器）
+
+					// ★★★ 修改：合并正位和逆位统计 ★★★
+					const mergedStats = mergeModeStats(stats);
+
+					// 使用normal容器显示合并后的数据
 					const normalEndingEl = document.getElementById('normal-ending-stats');
 					const normalAchEl = document.getElementById('normal-achievement-stats');
-					const reversedEndingEl = document.getElementById('reversed-ending-stats');
-					const reversedAchEl = document.getElementById('reversed-achievement-stats');
-					
-					// 如果有分离的容器，使用分离显示
-					if (normalEndingEl && reversedEndingEl) {
-						renderModeStats('normal', stats.normal, normalEndingEl, normalAchEl);
-						renderModeStats('reversed', stats.reversed, reversedEndingEl, reversedAchEl);
-						
-						// 根据当前模式显示对应统计
-						const normalSection = document.getElementById('normal-stats-section');
-						const reversedSection = document.getElementById('reversed-stats-section');
-						if (normalSection && reversedSection) {
-							normalSection.style.display = isReversedMode ? 'none' : 'block';
-							reversedSection.style.display = isReversedMode ? 'block' : 'none';
-						}
-					} else {
-						// 兼容旧的combined容器
-						const combinedEndingEl = document.getElementById('combined-ending-stats');
-						const combinedAchEl = document.getElementById('combined-achievement-stats');
-						if (combinedEndingEl && combinedAchEl) {
-							const currentMode = isReversedMode ? 'reversed' : 'normal';
-							renderModeStats(currentMode, stats[currentMode], combinedEndingEl, combinedAchEl);
-						}
+
+					if (normalEndingEl && normalAchEl) {
+						renderModeStats('combined', mergedStats, normalEndingEl, normalAchEl);
 					}
-					
+
+					// 显示normal区域，隐藏reversed区域
+					const normalSection = document.getElementById('normal-stats-section');
+					const reversedSection = document.getElementById('reversed-stats-section');
+					if (normalSection) normalSection.style.display = 'block';
+					if (reversedSection) reversedSection.style.display = 'none';
+
 					renderCharacterGrid();
 					
 					// 角色记录异步加载

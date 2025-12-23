@@ -84,6 +84,16 @@
 
 
 		function handlePaperAccepted(paper, grade, acceptType, slot, extraInfo) {
+			// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
+			gameState.submissionHistory = gameState.submissionHistory || [];
+			gameState.submissionHistory.push({
+				title: paper.title,
+				grade: grade,
+				accepted: true,
+				month: extraInfo?.submittedMonth || gameState.month,
+				year: gameState.year
+			});
+
 			// ★★★ 新增：检查并应用引用倍增buff ★★★
 			let citationBuff = 1;
 			const citationMultiplyBuff = gameState.buffs.temporary.find(b => b.type === 'citation_multiply');
@@ -517,8 +527,8 @@
 					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
 					updateBuffs();
 					
-					// 第3次及以后触发实习邀请（需要未实习且未永久阻止）
-					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship) {
+					// 第3次及以后触发实习邀请（需要未实习、未永久阻止、导师好感度≥6）
+					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship && gameState.favor >= 6) {
 						setTimeout(() => showAILabInternshipModal(), 300);
 					}
 					return true;

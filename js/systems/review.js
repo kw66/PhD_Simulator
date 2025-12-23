@@ -1121,7 +1121,17 @@
 								'rejected',
 								gameState.isReversed
 							);
-							
+
+							// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
+							gameState.submissionHistory = gameState.submissionHistory || [];
+							gameState.submissionHistory.push({
+								title: paper.title,
+								grade: grade,
+								accepted: false,
+								month: extraInfo.submittedMonth || gameState.month,
+								year: gameState.year
+							});
+
 							gameState.rejectedCount++;
 							gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
 							

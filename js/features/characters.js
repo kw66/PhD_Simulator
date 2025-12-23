@@ -43,14 +43,14 @@
             
             selectedCharacter = null;
             document.getElementById('start-btn').disabled = true;
-			// ★★★ 切换统计面板显示 ★★★
-			const normalSection = document.getElementById('normal-stats-section');
-			const reversedSection = document.getElementById('reversed-stats-section');
-			if (normalSection && reversedSection) {
-				normalSection.style.display = reversed ? 'none' : 'block';
-				reversedSection.style.display = reversed ? 'block' : 'none';
-			}
-            
+			// ★★★ 修改：统计已合并，不再需要切换显示 ★★★
+			// const normalSection = document.getElementById('normal-stats-section');
+			// const reversedSection = document.getElementById('reversed-stats-section');
+			// if (normalSection && reversedSection) {
+			// 	normalSection.style.display = reversed ? 'none' : 'block';
+			// 	reversedSection.style.display = reversed ? 'block' : 'none';
+			// }
+
             renderCharacterGrid();
         }
 
@@ -250,6 +250,12 @@
 
 			previewContainer.innerHTML = `
 				<div class="${cardClass}" style="max-width:280px;">
+					<!-- 1. 角落装饰 -->
+					<div class="corner-decoration top-left"></div>
+					<div class="corner-decoration top-right"></div>
+					<div class="corner-decoration bottom-left"></div>
+					<div class="corner-decoration bottom-right"></div>
+
 					<!-- 头部 -->
 					<div class="preview-header">
 						<span class="preview-icon">${displayIcon}</span>
@@ -320,7 +326,7 @@
 						</div>
 						<div style="text-align:right;">
 							${badgeHtml}
-							<div style="font-size:0.6rem;color:var(--text-secondary);margin-top:2px;">
+							<div class="difficulty-rate">
 								博士率:${rateText} (${totalGames}局)
 							</div>
 						</div>
@@ -521,6 +527,9 @@
 							</button>
 							<button class="btn btn-warning start-btn" onclick="openLoadModalFromStart()">
 								<i class="fas fa-folder-open"></i> 读档
+							</button>
+							<button class="btn btn-info start-btn" onclick="openAutoSaveModal()">
+								<i class="fas fa-history"></i> 回溯
 							</button>
 						</div>
 					</div>
@@ -870,8 +879,11 @@
 		async function startGame() {
 			if (!selectedCharacter) return;
 
+			// ★★★ 清空自动存档（开始新游戏时）★★★
+			clearAutoSaves();
+
 			gameState = getInitialState();
-			
+
 			resetAchievementShop();
 			const achievementCount = getPlayerAchievementCount();
 			gameState.achievementCoins = achievementCount;
@@ -917,6 +929,13 @@
 
 			// ★★★ 修改：先使用默认值，立即显示游戏界面 ★★★
 			gameState.submissionStats = getDefaultSubmissionStats();
+
+			// ★★★ 修复：根据模式设置/清除 reversed-theme class ★★★
+			if (isReversedMode) {
+				document.body.classList.add('reversed-theme');
+			} else {
+				document.body.classList.remove('reversed-theme');
+			}
 
 			// ★★★ 先切换界面，不要等待数据加载 ★★★
 			document.getElementById('start-screen').classList.add('hidden');

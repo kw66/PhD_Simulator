@@ -3,9 +3,15 @@
 			// ★★★ 新增：重置行动次数 ★★★
 			gameState.actionCount = 0;
 			gameState.actionUsed = false;
-			
+
+			// ★★★ 自动存档（每3个月，在月份增加前保存当前状态）★★★
+			autoSave();
+
 			gameState.month++;
 			gameState.totalMonths++;
+
+			// ★★★ 黑市：重置护身符每月使用记录 ★★★
+			resetAmuletMonthlyUsage();
 			
 			// ★★★ 空想之天选之人：月初最先执行属性交换 ★★★
 			if (gameState.isReversed && gameState.character === 'chosen') {
@@ -64,10 +70,10 @@
 			const baseSalary = gameState.degree === 'master' ? 1 : 3;
 			const salary = baseSalary + (gameState.monthlyWageBonus || 0);  // 不求暴富但求稳定加成
 			
-			// ★★★ 贪求之富可敌国：只保留每月+3金 ★★★
+			// ★★★ 贪求之富可敌国：每月加金（未觉醒+3，觉醒后+4）★★★
 			let extraGold = 0;
 			if (gameState.isReversed && gameState.character === 'rich') {
-				extraGold = 3;
+				extraGold = gameState.reversedAwakened ? 4 : 3;
 			}
 			
 			gameState.gold += salary - 1 + extraGold;
@@ -103,6 +109,9 @@
 					}
 				}
 				
+				// ★★★ 黑市：零钱护身符检查 ★★★
+				checkAmuletEffects();
+
 				if (gameState.gold < 0) {
 					triggerEnding('poor');
 					return;
@@ -112,11 +121,14 @@
 			// ★★★ AILab 实习效果 ★★★
 			if (gameState.ailabInternship) {
 				gameState.gold += 2;
-				
+
 				const baseSanCost = 3;
 				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 				gameState.san -= actualSanCost;
-				
+
+				// ★★★ 黑市：理智护身符检查 ★★★
+				checkAmuletEffects();
+
 				if (gameState.san < 0) {
 					triggerEnding('burnout');
 					return;
@@ -212,6 +224,9 @@
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
 
+			// ★★★ 新增：处理预购订阅（月初自动购买冰美式）★★★
+			processSubscriptions('nextMonth');
+
 			let logResult = `工资+${salary}`;
 			// ★★★ 新增：显示工资加成来源 ★★★
 			if (gameState.monthlyWageBonus > 0) {
@@ -286,6 +301,7 @@
 					
 					// 非12月时检查毕业
 					checkGraduation();
+					checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
 					updateAllUI();
 					renderPaperSlots();
 				};
@@ -328,6 +344,7 @@
 			}
 
 			checkGraduation();
+			checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
 			updateAllUI();
 			renderPaperSlots();
 		}
@@ -773,15 +790,17 @@
 					case 'normal': // 怠惰之大多数
 						effectName = '💀 极致怠惰';
 						effectDesc = '懒惰的极致就是一切都翻倍...包括痛苦';
-						const oldR1 = gameState.research, oldS1 = gameState.social, oldF1 = gameState.favor, oldG1 = gameState.gold;
+						const oldR1 = gameState.research, oldS1 = gameState.social, oldF1 = gameState.favor;
 						gameState.research = Math.min(20, gameState.research * 2);
 						gameState.social = Math.min(20, gameState.social * 2);
 						gameState.favor = Math.min(20, gameState.favor * 2);
+						// ★★★ 金币不翻倍 ★★★
 						bonusDetails.push(`科研 ${oldR1} → ${gameState.research}`);
 						bonusDetails.push(`社交 ${oldS1} → ${gameState.social}`);
 						bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
+						bonusDetails.push('💰 金币不翻倍');
 						bonusDetails.push('⚠️ SAN减少变为3倍');
-						bonusDetails.push('✨ 每月SAN回复变为5');
+						bonusDetails.push('✨ 每月SAN回复变为4');
 						
 						const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
 						if (mentorshipBuff) {
@@ -831,7 +850,7 @@
 					case 'teacher-child': // 玩世之导师子女
 						effectName = '🃏 变本加厉';
 						effectDesc = '叛逆到底，但收益依旧';
-						bonusDetails.push('好感归零时重置为2（原为4）');
+						bonusDetails.push('好感归零时重置为3（原为5）');
 						bonusDetails.push('重置时仍获得：社交+1，科研+1，金币+2');
 						break;
 						

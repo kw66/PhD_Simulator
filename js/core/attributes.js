@@ -20,6 +20,8 @@
                 gameState.san += delta;
             }
             updateAllUI();
+            // ★★★ 黑市：理智护身符检查 ★★★
+            checkAmuletEffects();
             if (gameState.san < 0) {
                 triggerEnding('burnout');
                 return false;
@@ -50,6 +52,8 @@
 			
 			gameState.gold += delta;
 			updateAllUI();
+			// ★★★ 黑市：零钱护身符检查 ★★★
+			checkAmuletEffects();
 			if (gameState.gold < 0) {
 				triggerEnding('poor');
 				return false;
@@ -59,7 +63,7 @@
 
 		function changeFavor(delta) {
 			const favorMax = gameState.favorMax || 20;
-			
+
 			// ★★★ 玩世之导师子女：全新能力 - 好感不会低于0，归零时重置 ★★★
 			if (gameState.isReversed && gameState.character === 'teacher-child') {
 				// 正常应用好感度变化（不反转）
@@ -68,26 +72,23 @@
 				} else {
 					gameState.favor += delta;
 				}
-				
+
 				// 好感度归零检测
 				if (gameState.favor <= 0) {
+					// ★★★ 关键修复：未觉醒时重置为5，觉醒后重置为3 ★★★
+					const resetValue = (gameState.reversedAwakened === true) ? 3 : 5;
+					gameState.favor = resetValue;
+					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+					gameState.gold += 2;
+
 					if (gameState.reversedAwakened) {
-						// 觉醒后：重置为2，社交+1，科研+1，金币+2
-						gameState.favor = 2;
-						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-						gameState.gold += 2;
-						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为2 → 社交+1, 科研+1, 金币+2`);
+						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
 					} else {
-						// 未觉醒：重置为4，社交+1，科研+1，金币+2
-						gameState.favor = 4;
-						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-						gameState.gold += 2;
-						addLog('逆位效果', '变本加厉', `好感度归零，重置为4 → 社交+1, 科研+1, 金币+2`);
+						addLog('逆位效果', '变本加厉', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
 					}
 				}
-				
+
 				updateAllUI();
 				// 玩世之导师子女不会因好感度触发退学
 				return true;
@@ -99,8 +100,10 @@
 			} else {
 				gameState.favor += delta;
 			}
-			
+
 			updateAllUI();
+			// ★★★ 黑市：好感护身符检查 ★★★
+			checkAmuletEffects();
 			if (gameState.favor < 0) {
 				triggerEnding('expelled');
 				return false;
@@ -113,7 +116,7 @@
 			if (gameState.isReversed && gameState.character === 'genius') {
 				if (delta > 0) {
 					gameState.blockedResearchGains += delta;
-					if (gameState.reversedAwakened) {
+					if (gameState.reversedAwakened === true) {
 						// ★★★ 修改：觉醒后金+8，SAN+8，社交+2，好感+2 ★★★
 						const sanGain = delta * 8;
 						const goldGain = delta * 8;
@@ -164,9 +167,12 @@
 				gameState.social += delta;
 			}
 
+			// ★★★ 黑市：社交护身符检查 ★★★
+			checkAmuletEffects();
+
 			// 检查社交能力是否为负数
 			if (gameState.social < 0) {
-				triggerEnding('isolated'); // 触发“被孤立”结局
+				triggerEnding('isolated'); // 触发"被孤立"结局
 				return false;
 			}
 
@@ -244,21 +250,20 @@
 					} else {
 						gameState.favor += changes.favor;
 					}
-					
+
 					// ✅ 添加归零条件判断
 					if (gameState.favor <= 0) {
+						// ★★★ 关键修复：未觉醒时重置为5，觉醒后重置为3 ★★★
+						const resetValue = (gameState.reversedAwakened === true) ? 3 : 5;
+						gameState.favor = resetValue;
+						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+						gameState.gold += 2;
+
 						if (gameState.reversedAwakened) {
-							gameState.favor = 2;
-							gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-							gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-							gameState.gold += 2;
-							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为2 → 社交+1, 科研+1, 金币+2`);
+							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
 						} else {
-							gameState.favor = 4;
-							gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-							gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-							gameState.gold += 2;
-							addLog('逆位效果', '变本加厉', `好感度归零，重置为4 → 社交+1, 科研+1, 金币+2`);
+							addLog('逆位效果', '变本加厉', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
 						}
 					}
 					// 玩世之导师子女不会因好感度触发退学
@@ -277,13 +282,13 @@
 				if (gameState.isReversed && gameState.character === 'genius') {
 					if (changes.research > 0) {
 						gameState.blockedResearchGains += changes.research;
-						// ★★★ 修改：觉醒后8倍，未觉醒4倍 ★★★
-						const sanGain = changes.research * (gameState.reversedAwakened ? 8 : 4);
-						const goldGain = changes.research * (gameState.reversedAwakened ? 8 : 4);
+						// ★★★ 修改：觉醒后8倍，未觉醒4倍（使用严格布尔比较）★★★
+						const sanGain = changes.research * (gameState.reversedAwakened === true ? 8 : 4);
+						const goldGain = changes.research * (gameState.reversedAwakened === true ? 8 : 4);
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
-						// ★★★ 修改：未觉醒也有社交和好感加成 ★★★
-						if (gameState.reversedAwakened) {
+						// ★★★ 修改：未觉醒也有社交和好感加成（使用严格布尔比较）★★★
+						if (gameState.reversedAwakened === true) {
 							gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
 							gameState.social = Math.min(20, gameState.social + changes.research * 2);
 						} else {
@@ -328,7 +333,16 @@
 			}
             
             updateAllUI();
-            
+
+            // ★★★ 黑市：护身符效果检查（可能重置属性归零状态）★★★
+            checkAmuletEffects();
+
+            // ★★★ 重新检查是否还需要触发结局 ★★★
+            gameOver = false;
+            if (gameState.san < 0) gameOver = 'burnout';
+            if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
+            if (gameState.favor < 0 && !gameOver && !(gameState.isReversed && gameState.character === 'teacher-child')) gameOver = 'expelled';
+
             if (gameOver) {
                 triggerEnding(gameOver);
                 return false;

@@ -1,326 +1,677 @@
-﻿		// ==================== 成就商店系统 ====================
-		const achievementShopItems = [
-			{ 
-				id: 'soap', 
-				name: '🧼 香皂', 
-				desc: '清除所有携带的非永久buff和debuff', 
-				basePrice: 7, 
-				pricePerYear: 0,  // 价格不随年份变化
-				once: false, 
-				bought: false 
-			},
-			{ 
-				id: 'premium_soap', 
-				name: '🧴 高级香皂', 
-				desc: '清除所有携带的非永久debuff', 
-				basePrice: 10, 
-				pricePerYear: 0, 
-				once: false, 
-				bought: false 
-			},
-			{ 
-				id: 'chicken_burger', 
-				name: '🍔 板烧鸡腿堡', 
-				desc: '回复2点SAN值', 
-				basePrice: 5, 
-				pricePerYear: -1,  // 每年售价-1
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'beef_burger', 
-				name: '🥩 安格斯厚牛堡', 
-				desc: 'SAN上限+2', 
-				basePrice: 3, 
-				pricePerYear: 1,  // 每年售价+1
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'fake_flower', 
-				name: '🌸 假花', 
-				desc: '导师好感度+1', 
-				basePrice: 8, 
-				pricePerYear: -1, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'real_flower', 
-				name: '💐 鲜花', 
-				desc: '导师好感度上限+1', 
-				basePrice: 3, 
-				pricePerYear: 1, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'mooncake', 
-				name: '🥮 月饼', 
-				desc: '社交能力+1', 
-				basePrice: 8, 
-				pricePerYear: -1, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'snow_mooncake', 
-				name: '🍡 冰皮月饼', 
-				desc: '社交能力上限+1', 
-				basePrice: 3, 
-				pricePerYear: 1, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'watermelon_book', 
-				name: '📗 西瓜书', 
-				desc: '科研能力+1', 
-				basePrice: 12, 
-				pricePerYear: -2, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'andrew_ng_course', 
-				name: '💻 吴恩达课程', 
-				desc: '科研能力上限+1', 
-				basePrice: 4, 
-				pricePerYear: 1, 
-				once: true, 
-				bought: false 
-			},
-			{ 
-				id: 'bitcoin', 
-				name: '₿ 比特币', 
-				desc: '金币+1（每年额外+1）', 
-				basePrice: 8, 
-				pricePerYear: 0, 
-				once: true, 
-				bought: false,
-				special: 'bitcoin'  // 特殊标记：比特币效果随年份增加
-			}
-		];
+﻿		// ==================== 黑市系统 ====================
 
-		// 获取玩家历史成就数量（用于计算成就币）
-		function getPlayerAchievementCount() {
-			const playerRecords = getPlayerAchievements();
-			const normalCount = playerRecords.achievements.normal instanceof Set 
-				? playerRecords.achievements.normal.size 
-				: (Array.isArray(playerRecords.achievements.normal) ? playerRecords.achievements.normal.length : 0);
-			const reversedCount = playerRecords.achievements.reversed instanceof Set 
-				? playerRecords.achievements.reversed.size 
-				: (Array.isArray(playerRecords.achievements.reversed) ? playerRecords.achievements.reversed.length : 0);
-			
-			// 返回两种模式成就的并集数量（去重）
-			const allAchievements = new Set();
-			
-			if (playerRecords.achievements.normal instanceof Set) {
-				playerRecords.achievements.normal.forEach(a => allAchievements.add(a));
-			} else if (Array.isArray(playerRecords.achievements.normal)) {
-				playerRecords.achievements.normal.forEach(a => allAchievements.add(a));
-			}
-			
-			if (playerRecords.achievements.reversed instanceof Set) {
-				playerRecords.achievements.reversed.forEach(a => allAchievements.add(a));
-			} else if (Array.isArray(playerRecords.achievements.reversed)) {
-				playerRecords.achievements.reversed.forEach(a => allAchievements.add(a));
-			}
-			
-			return allAchievements.size;
-		}
-
-		// 计算成就商店物品当前价格
-		function getAchievementItemPrice(item) {
-			const yearsPassed = gameState.year - 1;  // 第1年为0年过去
-			let price = item.basePrice + (item.pricePerYear * yearsPassed);
-			return Math.max(1, price);  // 最低价格为1
-		}
-
-		// 获取比特币当前效果
-		function getBitcoinEffect() {
-			const yearsPassed = gameState.year - 1;
-			return 1 + yearsPassed;  // 第1年+1金，第2年+2金，以此类推
-		}
-
-		// 打开成就商店
-		function openAchievementShop() {
-			const achievementCoins = gameState.achievementCoins || 0;
-			
-			let html = `
-				<div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:10px;border:1px solid rgba(243,156,18,0.4);">
-					<div style="display:flex;justify-content:space-between;align-items:center;">
-						<div>
-							<span style="font-size:1.2rem;">🏆</span>
-							<span style="font-weight:600;color:#d68910;">成就币</span>
-						</div>
-						<div style="font-size:1.3rem;font-weight:700;color:#d68910;">${achievementCoins}</div>
-					</div>
-					<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:5px;">
-						基于历史成就数量获得，每局游戏重置
-					</div>
-				</div>
-				<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:10px;">
-					💡 提示：部分物品价格会随游戏年份变化
-				</div>
-				<div style="max-height:350px;overflow-y:auto;">
-			`;
-			
-			achievementShopItems.forEach(item => {
-				const currentPrice = getAchievementItemPrice(item);
-				const canBuy = achievementCoins >= currentPrice && !item.bought;
-				const reason = item.bought ? '已购买' : (achievementCoins < currentPrice ? '成就币不足' : '');
-				
-				// 动态描述
-				let displayDesc = item.desc;
-				if (item.special === 'bitcoin') {
-					const effect = getBitcoinEffect();
-					displayDesc = `金币+${effect}（当前年份效果）`;
+		// 黑市商品定义
+		const blackMarketItems = [
+			{
+				id: 'research_note_1',
+				name: '📘 启研札记',
+				desc: '获得时若科研能力≤3，科研能力+1（愚钝转化）',
+				price: 6,
+				condition: (gs) => gs.research <= 3,
+				effect: (gs) => {
+					// ★★★ 愚钝之院士转世：科研提升转化为其他属性 ★★★
+					if (gs.isReversed && gs.character === 'genius') {
+						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
+						if (gs.reversedAwakened === true) {
+							gs.san = Math.min(gs.sanMax, gs.san + 8);
+							gs.gold += 8;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+						} else {
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
+						}
+					}
+					gs.research++;
+					return '科研能力+1';
 				}
-				
-				// 价格变化提示
-				let priceHint = '';
-				if (item.pricePerYear !== 0) {
-					const change = item.pricePerYear > 0 ? `+${item.pricePerYear}` : `${item.pricePerYear}`;
-					priceHint = `<span style="font-size:0.65rem;color:${item.pricePerYear > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">(每年${change})</span>`;
+			},
+			{
+				id: 'research_note_2',
+				name: '📗 研思进阶录',
+				desc: '获得时若科研能力≤6，科研能力+1（愚钝转化）',
+				price: 8,
+				condition: (gs) => gs.research <= 6,
+				effect: (gs) => {
+					// ★★★ 愚钝之院士转世：科研提升转化为其他属性 ★★★
+					if (gs.isReversed && gs.character === 'genius') {
+						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
+						if (gs.reversedAwakened === true) {
+							gs.san = Math.min(gs.sanMax, gs.san + 8);
+							gs.gold += 8;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+						} else {
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
+						}
+					}
+					gs.research++;
+					return '科研能力+1';
 				}
-				
-				html += `
-					<div class="shop-item ${!canBuy ? 'disabled' : ''}" style="margin-bottom:8px;">
-						<div class="shop-item-info">
-							<div class="shop-item-name">${item.name}</div>
-							<div class="shop-item-desc">${displayDesc}</div>
-						</div>
-						<div class="shop-item-action">
-							<span class="shop-item-price" style="color:#d68910;">🏆${currentPrice} ${priceHint}</span>
-							<button class="btn btn-warning" onclick="buyAchievementItem('${item.id}')" ${!canBuy ? 'disabled' : ''} style="padding:4px 10px;font-size:0.75rem;">
-								${reason || '购买'}
-							</button>
-						</div>
-					</div>
-				`;
-			});
-			
-			html += '</div>';
-			
-			showModal('🏆 成就商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
-		}
-
-		// 购买成就商店物品
-		function buyAchievementItem(id) {
-			const item = achievementShopItems.find(i => i.id === id);
-			if (!item) return;
-			
-			const currentPrice = getAchievementItemPrice(item);
-			
-			if (gameState.achievementCoins < currentPrice) {
-				showModal('❌ 购买失败', `<p>成就币不足！需要${currentPrice}成就币，当前只有${gameState.achievementCoins}成就币。</p>`, 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			// ★★★ 修改：香皂类物品不检查bought状态 ★★★
-			if (item.once && item.bought) {
-				showModal('❌ 购买失败', `<p>该物品已购买过！</p>`, 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			// 扣除成就币
-			gameState.achievementCoins -= currentPrice;
-			
-			// ★★★ 修改：只有once为true的物品才设置bought ★★★
-			if (item.once) {
-				item.bought = true;
-			}
-			
-			let result = `成就币-${currentPrice}`;
-			
-			// 应用物品效果
-			switch (id) {
-				case 'soap':
-					// 清除所有非永久buff和debuff
-					const removedCount = gameState.buffs.temporary.length;
-					gameState.buffs.temporary = [];
-					result += `，清除了${removedCount}个临时效果`;
-					break;
-					
-				case 'premium_soap':
-					// 只清除非永久debuff（保留正面buff）
+			},
+			{
+				id: 'research_note_3',
+				name: '📕 格物精要',
+				desc: '获得时若科研能力≤10，科研能力+1（愚钝转化）',
+				price: 10,
+				condition: (gs) => gs.research <= 10,
+				effect: (gs) => {
+					// ★★★ 愚钝之院士转世：科研提升转化为其他属性 ★★★
+					if (gs.isReversed && gs.character === 'genius') {
+						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
+						if (gs.reversedAwakened === true) {
+							gs.san = Math.min(gs.sanMax, gs.san + 8);
+							gs.gold += 8;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+						} else {
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
+						}
+					}
+					gs.research++;
+					return '科研能力+1';
+				}
+			},
+			{
+				id: 'burn_mind',
+				name: '🔥 燃智术',
+				desc: '科研能力上限-3，科研能力+1（愚钝转化）',
+				price: 5,
+				condition: () => true,
+				effect: (gs) => {
+					gs.researchMax = (gs.researchMax || 20) - 3;
+					// ★★★ 愚钝之院士转世：科研提升转化为其他属性 ★★★
+					if (gs.isReversed && gs.character === 'genius') {
+						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
+						if (gs.reversedAwakened === true) {
+							gs.san = Math.min(gs.sanMax, gs.san + 8);
+							gs.gold += 8;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							return `上限降至${gs.researchMax}，愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2`;
+						} else {
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							return `上限降至${gs.researchMax}，愚钝转化：SAN+4, 金+4, 好感+1, 社交+1`;
+						}
+					}
+					gs.research = Math.min(gs.researchMax, gs.research + 1);
+					return `科研能力+1，上限降至${gs.researchMax}`;
+				}
+			},
+			{
+				id: 'burn_body',
+				name: '💀 燃躯术',
+				desc: 'SAN上限-3，SAN+6',
+				price: 5,
+				condition: () => true,
+				effect: (gs) => {
+					gs.sanMax = (gs.sanMax || 15) - 3;
+					gs.san = Math.min(gs.sanMax, gs.san + 6);
+					return `SAN+6，上限降至${gs.sanMax}`;
+				}
+			},
+			{
+				id: 'san_amulet',
+				name: '🛡️ 理智护身符',
+				desc: '（可叠加）当SAN为0时，SAN+1（每月1次）',
+				price: 8,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.amulets = gs.amulets || {};
+					gs.amulets.san = (gs.amulets.san || 0) + 1;
+					return `获得理智护身符×1（共${gs.amulets.san}个）`;
+				}
+			},
+			{
+				id: 'gold_amulet',
+				name: '💰 零钱护身符',
+				desc: '（可叠加）当金币为0时，金币+1（每月1次）',
+				price: 12,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.amulets = gs.amulets || {};
+					gs.amulets.gold = (gs.amulets.gold || 0) + 1;
+					return `获得零钱护身符×1（共${gs.amulets.gold}个）`;
+				}
+			},
+			{
+				id: 'favor_amulet',
+				name: '🎁 好感护身符',
+				desc: '（可叠加）当导师好感度为0时，好感度+1（每月1次）',
+				price: 18,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.amulets = gs.amulets || {};
+					gs.amulets.favor = (gs.amulets.favor || 0) + 1;
+					return `获得好感护身符×1（共${gs.amulets.favor}个）`;
+				}
+			},
+			{
+				id: 'social_amulet',
+				name: '🤝 社交护身符',
+				desc: '（可叠加）当社交能力为0时，社交能力+1（每月1次）',
+				price: 18,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.amulets = gs.amulets || {};
+					gs.amulets.social = (gs.amulets.social || 0) + 1;
+					return `获得社交护身符×1（共${gs.amulets.social}个）`;
+				}
+			},
+			{
+				id: 'clear_all',
+				name: '🌀 万象清零令',
+				desc: '清除所有携带的非永久buff和debuff',
+				price: 7,
+				condition: () => true,
+				effect: (gs) => {
+					const count = gs.buffs.temporary.length;
+					gs.buffs.temporary = [];
+					return `清除了${count}个临时效果`;
+				}
+			},
+			{
+				id: 'clear_debuff',
+				name: '✨ 晦厄净除符',
+				desc: '清除所有携带的非永久debuff',
+				price: 10,
+				condition: () => true,
+				effect: (gs) => {
 					const debuffTypes = ['idea_exhaustion', 'exp_overheat', 'write_block', 'slack_debuff', 'idea_stolen'];
-					const beforeLength = gameState.buffs.temporary.length;
-					gameState.buffs.temporary = gameState.buffs.temporary.filter(b => {
-						// 保留正面buff，清除debuff
+					const beforeLength = gs.buffs.temporary.length;
+					gs.buffs.temporary = gs.buffs.temporary.filter(b => {
 						if (debuffTypes.includes(b.type)) return false;
 						if (b.isDebuff) return false;
 						if (b.value < 0 && !b.multiply) return false;
 						if (b.multiply && b.value < 1) return false;
 						return true;
 					});
-					const removedDebuffs = beforeLength - gameState.buffs.temporary.length;
-					result += `，清除了${removedDebuffs}个debuff`;
-					break;
-					
-				case 'chicken_burger':
-					gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-					result += '，SAN值+2';
-					break;
-					
-				case 'beef_burger':
-					gameState.sanMax += 2;
-					result += '，SAN上限+2';
-					break;
-					
-				case 'fake_flower':
-					gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + 1);
-					result += '，导师好感度+1';
-					break;
-					
-				case 'real_flower':
-					gameState.favorMax = (gameState.favorMax || 20) + 1;
-					result += `，导师好感度上限+1（现为${gameState.favorMax}）`;
-					break;
-					
-				case 'mooncake':
-					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-					result += '，社交能力+1';
-					break;
-					
-				case 'snow_mooncake':
-					gameState.socialMax = (gameState.socialMax || 20) + 1;
-					result += `，社交能力上限+1（现为${gameState.socialMax}）`;
-					break;
-					
-				case 'watermelon_book':
-					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-					checkResearchUnlock();
-					result += '，科研能力+1';
-					break;
-					
-				case 'andrew_ng_course':
-					gameState.researchMax = (gameState.researchMax || 20) + 1;
-					result += `，科研能力上限+1（现为${gameState.researchMax}）`;
-					break;
-					
-				case 'bitcoin':
-					const goldGain = getBitcoinEffect();
-					gameState.gold += goldGain;
-					result += `，金币+${goldGain}`;
-					break;
+					const removed = beforeLength - gs.buffs.temporary.length;
+					return `清除了${removed}个debuff`;
+				}
 			}
-			
-			addLog('成就商店', `购买了${item.name}`, result);
+		];
+
+		// 黑市状态
+		let blackMarketState = {
+			currentItems: [],     // 当前商品 [{item, locked}]
+			refreshCount: 0,      // 本局手动刷新次数
+			lastAutoRefreshMonth: 0, // 上次自动刷新的总月份
+			amuletUsedThisMonth: {} // 本月已触发的护身符
+		};
+
+		// 初始化黑市
+		function initBlackMarket() {
+			blackMarketState = {
+				currentItems: [],
+				refreshCount: 0,
+				lastAutoRefreshMonth: 0,
+				amuletUsedThisMonth: {}
+			};
+			refreshBlackMarketItems(true);
+		}
+
+		// 刷新黑市商品（isAuto表示是否自动刷新）
+		// ★★★ 修改：允许刷新出重复物品 ★★★
+		function refreshBlackMarketItems(isAuto = false) {
+			// 保留被锁定的商品
+			const lockedItems = blackMarketState.currentItems.filter(item => item.locked);
+
+			// 需要填充的空位数量
+			const slotsToFill = 3 - lockedItems.length;
+
+			// ★★★ 修改：随机选择商品，允许重复（除了与锁定商品重复）★★★
+			const lockedIds = lockedItems.map(item => item.item.id);
+			const newItems = [];
+
+			for (let i = 0; i < slotsToFill; i++) {
+				// 随机选择一个商品（可以与之前选的重复，但不能与锁定的重复）
+				const availableItems = blackMarketItems.filter(item => !lockedIds.includes(item.id));
+				if (availableItems.length > 0) {
+					const randomIndex = Math.floor(Math.random() * availableItems.length);
+					newItems.push({ item: availableItems[randomIndex], locked: false });
+				}
+			}
+
+			// 合并锁定商品和新商品
+			blackMarketState.currentItems = [...lockedItems, ...newItems];
+
+			// 更新刷新记录
+			if (isAuto) {
+				// ★★★ 防御性检查：确保gameState.totalMonths有效 ★★★
+				blackMarketState.lastAutoRefreshMonth = (gameState && gameState.totalMonths) ? gameState.totalMonths : 1;
+			}
+		}
+
+		// 检查是否需要自动刷新（每4个月）
+		function checkBlackMarketAutoRefresh() {
+			// ★★★ 防御性检查 ★★★
+			if (!gameState || !blackMarketState) return false;
+			const monthsSinceRefresh = gameState.totalMonths - (blackMarketState.lastAutoRefreshMonth || 0);
+			if (monthsSinceRefresh >= 4) {
+				refreshBlackMarketItems(true);
+				return true;
+			}
+			return false;
+		}
+
+		// 手动刷新黑市（需要消耗成就币）
+		function manualRefreshBlackMarket() {
+			const cost = blackMarketState.refreshCount + 1;
+
+			if (gameState.achievementCoins < cost) {
+				showModal('❌ 刷新失败', `<p>成就币不足！需要${cost}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 检查是否所有商品都被锁定
+			const lockedCount = blackMarketState.currentItems.filter(item => item.locked).length;
+			if (lockedCount >= 3) {
+				showModal('❌ 刷新失败', `<p>所有商品都已锁定，无法刷新！</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			gameState.achievementCoins -= cost;
+			blackMarketState.refreshCount++;
+			refreshBlackMarketItems(false);
+
+			addLog('成就商店', '手动刷新商品', `成就币-${cost}`);
 			closeModal();
-			openAchievementShop();  // 刷新商店界面
+			openBlackMarket();
+			updateAllUI();
+		}
+
+		// 切换商品锁定状态
+		function toggleItemLock(index) {
+			if (index >= 0 && index < blackMarketState.currentItems.length) {
+				blackMarketState.currentItems[index].locked = !blackMarketState.currentItems[index].locked;
+				closeModal();
+				openBlackMarket();
+			}
+		}
+
+		// 购买黑市商品
+		function buyBlackMarketItem(index) {
+			const itemData = blackMarketState.currentItems[index];
+			if (!itemData) return;
+
+			const item = itemData.item;
+
+			if (gameState.achievementCoins < item.price) {
+				showModal('❌ 购买失败', `<p>成就币不足！需要${item.price}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 检查购买条件
+			if (!item.condition(gameState)) {
+				showModal('❌ 购买失败', `<p>不满足购买条件！</p><p style="color:var(--text-secondary);font-size:0.85rem;">${item.desc}</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除成就币
+			gameState.achievementCoins -= item.price;
+
+			// 应用效果
+			const result = item.effect(gameState);
+
+			// ★★★ 修改：购买后移除商品槽位（无论是否可叠加都下架，等待刷新）★★★
+			blackMarketState.currentItems.splice(index, 1);
+
+			addLog('成就商店', `购买了${item.name}`, `成就币-${item.price}，${result}`);
+
+			checkResearchUnlock();
+			closeModal();
+			openBlackMarket();
 			updateAllUI();
 			updateBuffs();
 		}
 
-		// 重置成就商店（每局游戏开始时调用）
-		function resetAchievementShop() {
-			achievementShopItems.forEach(item => {
-				item.bought = false;
+		// 重置护身符每月使用记录（在月初调用）
+		function resetAmuletMonthlyUsage() {
+			// ★★★ 防御性检查：确保blackMarketState已初始化 ★★★
+			if (!blackMarketState) {
+				blackMarketState = {
+					currentItems: [],
+					refreshCount: 0,
+					lastAutoRefreshMonth: 0,
+					amuletUsedThisMonth: {}
+				};
+			}
+			blackMarketState.amuletUsedThisMonth = {};
+		}
+
+		// 护身符效果检查（在属性可能归零时调用）
+		function checkAmuletEffects() {
+			if (!gameState.amulets) return [];
+			// ★★★ 防御性检查：确保blackMarketState已初始化 ★★★
+			if (!blackMarketState || !blackMarketState.amuletUsedThisMonth) {
+				return [];
+			}
+
+			let triggered = [];
+
+			// SAN护身符
+			if (gameState.san <= 0 && gameState.amulets.san > 0 && !blackMarketState.amuletUsedThisMonth.san) {
+				gameState.san = 1;
+				blackMarketState.amuletUsedThisMonth.san = true;
+				triggered.push('理智护身符');
+			}
+
+			// 金币护身符
+			if (gameState.gold <= 0 && gameState.amulets.gold > 0 && !blackMarketState.amuletUsedThisMonth.gold) {
+				gameState.gold = 1;
+				blackMarketState.amuletUsedThisMonth.gold = true;
+				triggered.push('零钱护身符');
+			}
+
+			// 好感护身符
+			if (gameState.favor <= 0 && gameState.amulets.favor > 0 && !blackMarketState.amuletUsedThisMonth.favor) {
+				gameState.favor = 1;
+				blackMarketState.amuletUsedThisMonth.favor = true;
+				triggered.push('好感护身符');
+			}
+
+			// 社交护身符
+			if (gameState.social <= 0 && gameState.amulets.social > 0 && !blackMarketState.amuletUsedThisMonth.social) {
+				gameState.social = 1;
+				blackMarketState.amuletUsedThisMonth.social = true;
+				triggered.push('社交护身符');
+			}
+
+			if (triggered.length > 0) {
+				addLog('护身符', `${triggered.join('、')}生效`, '危机解除！');
+			}
+
+			return triggered;
+		}
+
+		// 获取玩家历史成就数量（用于计算成就币）
+		function getPlayerAchievementCount() {
+			const playerRecords = getPlayerAchievements();
+			const allAchievements = new Set();
+
+			if (playerRecords.achievements.normal instanceof Set) {
+				playerRecords.achievements.normal.forEach(a => allAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.normal)) {
+				playerRecords.achievements.normal.forEach(a => allAchievements.add(a));
+			}
+
+			if (playerRecords.achievements.reversed instanceof Set) {
+				playerRecords.achievements.reversed.forEach(a => allAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.reversed)) {
+				playerRecords.achievements.reversed.forEach(a => allAchievements.add(a));
+			}
+
+			return allAchievements.size;
+		}
+
+		// 获取本局已达成成就
+		function getCurrentGameAchievements() {
+			return gameState.achievements || [];
+		}
+
+		// 打开成就商店
+		function openBlackMarket() {
+			// 检查自动刷新
+			checkBlackMarketAutoRefresh();
+
+			const achievementCoins = gameState.achievementCoins || 0;
+			const refreshCost = blackMarketState.refreshCount + 1;
+			const monthsUntilRefresh = 4 - ((gameState.totalMonths - blackMarketState.lastAutoRefreshMonth) % 4);
+
+			// 护身符持有情况
+			const amulets = gameState.amulets || {};
+			const amuletInfo = [];
+			if (amulets.san > 0) amuletInfo.push(`🛡️×${amulets.san}`);
+			if (amulets.gold > 0) amuletInfo.push(`💰×${amulets.gold}`);
+			if (amulets.favor > 0) amuletInfo.push(`🎁×${amulets.favor}`);
+			if (amulets.social > 0) amuletInfo.push(`🤝×${amulets.social}`);
+
+			let html = `
+				<div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:10px;border:1px solid rgba(102,126,234,0.4);">
+					<div style="display:flex;justify-content:space-between;align-items:center;">
+						<div>
+							<span style="font-size:1.2rem;">🏆</span>
+							<span style="font-weight:600;color:var(--primary-color);">成就币</span>
+						</div>
+						<div style="font-size:1.3rem;font-weight:700;color:var(--primary-color);">${achievementCoins}</div>
+					</div>
+					${amuletInfo.length > 0 ? `<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:5px;">持有护身符：${amuletInfo.join(' ')}</div>` : ''}
+				</div>
+
+				<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+					<div style="font-size:0.8rem;color:var(--text-secondary);">
+						⏰ ${monthsUntilRefresh}个月后自动刷新
+					</div>
+					<button class="btn btn-info" onclick="manualRefreshBlackMarket()" style="padding:4px 10px;font-size:0.75rem;">
+						🔄 手动刷新 (${refreshCost}成就币)
+					</button>
+				</div>
+
+				<div style="max-height:300px;overflow-y:auto;margin-bottom:15px;">
+			`;
+
+			// ★★★ 显示空槽位提示 ★★★
+			if (blackMarketState.currentItems.length === 0) {
+				html += `<div style="text-align:center;padding:30px;color:var(--text-secondary);">
+					<div style="font-size:2rem;margin-bottom:10px;">📦</div>
+					<div>商品已售罄，请等待刷新</div>
+				</div>`;
+			}
+
+			blackMarketState.currentItems.forEach((itemData, index) => {
+				const item = itemData.item;
+				const locked = itemData.locked;
+				const canBuy = achievementCoins >= item.price && item.condition(gameState);
+				const meetsCondition = item.condition(gameState);
+
+				let reason = '';
+				if (!meetsCondition) reason = '条件不满足';
+				else if (achievementCoins < item.price) reason = '成就币不足';
+
+				html += `
+					<div class="shop-item ${!canBuy ? 'disabled' : ''}" style="margin-bottom:8px;${locked ? 'border:2px solid #e74c3c;' : ''}">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${item.name}</div>
+							<div class="shop-item-desc">${item.desc}</div>
+						</div>
+						<div class="shop-item-action" style="display:flex;align-items:center;gap:6px;">
+							<span class="shop-item-price" style="color:var(--primary-color);">🏆${item.price}</span>
+							<button class="btn ${locked ? 'btn-danger' : 'btn-secondary'}"
+								onclick="toggleItemLock(${index})"
+								style="padding:4px 8px;font-size:0.7rem;min-width:auto;"
+								title="${locked ? '点击解锁' : '点击锁定'}">
+								${locked ? '🔒' : '🔓'}
+							</button>
+							<button class="btn btn-primary" onclick="buyBlackMarketItem(${index})" ${!canBuy ? 'disabled' : ''} style="padding:4px 10px;font-size:0.75rem;">
+								${reason || '购买'}
+							</button>
+						</div>
+					</div>
+				`;
 			});
+
+			html += '</div>';
+
+			// 成就查看按钮
+			html += `
+				<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);">
+					<button class="btn btn-success" onclick="showCurrentAchievements()" style="flex:1;font-size:0.8rem;">
+						<i class="fas fa-trophy"></i> 本局成就
+					</button>
+					<button class="btn btn-warning" onclick="showAllAchievements()" style="flex:1;font-size:0.8rem;">
+						<i class="fas fa-list"></i> 全部成就
+					</button>
+				</div>
+			`;
+
+			showModal('🏆 成就商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
+		}
+
+		// 显示本局已达成成就
+		function showCurrentAchievements() {
+			const achievements = getCurrentGameAchievements();
+
+			let html = '';
+			if (achievements.length === 0) {
+				html = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">本局暂未达成任何成就</div>';
+			} else {
+				html = '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+				achievements.forEach(ach => {
+					const req = ACHIEVEMENT_REQUIREMENTS[ach] || '未知要求';
+					html += `<span class="achievement-item" onclick="showAchievementDetail('${ach}')" title="${req}">${ach}</span>`;
+				});
+				html += '</div>';
+			}
+
+			showModal('🏆 本局已达成成就', html, [
+				{ text: '返回黑市', class: 'btn-primary', action: () => { closeModal(); openBlackMarket(); } },
+				{ text: '关闭', class: 'btn-info', action: closeModal }
+			]);
+		}
+
+		// 显示全部成就及达成状态
+		function showAllAchievements() {
+			const playerRecords = getPlayerAchievements();
+			const currentAchievements = new Set(getCurrentGameAchievements());
+
+			// 合并历史成就
+			const historicalAchievements = new Set();
+			if (playerRecords.achievements.normal instanceof Set) {
+				playerRecords.achievements.normal.forEach(a => historicalAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.normal)) {
+				playerRecords.achievements.normal.forEach(a => historicalAchievements.add(a));
+			}
+			if (playerRecords.achievements.reversed instanceof Set) {
+				playerRecords.achievements.reversed.forEach(a => historicalAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.reversed)) {
+				playerRecords.achievements.reversed.forEach(a => historicalAchievements.add(a));
+			}
+
+			let html = '<div style="max-height:400px;overflow-y:auto;">';
+
+			// 本局达成
+			const currentList = ALL_ACHIEVEMENTS.filter(a => currentAchievements.has(a));
+			if (currentList.length > 0) {
+				html += `<div style="margin-bottom:12px;"><div style="font-size:0.8rem;color:var(--success-color);margin-bottom:6px;font-weight:600;">🏆 本局已达成 (${currentList.length}/${ALL_ACHIEVEMENTS.length})</div><div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+				currentList.forEach(ach => {
+					html += `<span class="achievement-item" onclick="showAchievementDetail('${ach}')" style="cursor:pointer;">${ach}</span>`;
+				});
+				html += '</div></div>';
+			}
+
+			// 历史达成但本局未达成
+			const historicalOnlyList = ALL_ACHIEVEMENTS.filter(a => historicalAchievements.has(a) && !currentAchievements.has(a));
+			if (historicalOnlyList.length > 0) {
+				html += `<div style="margin-bottom:12px;"><div style="font-size:0.8rem;color:var(--warning-color);margin-bottom:6px;font-weight:600;">📜 历史达成 (${historicalOnlyList.length})</div><div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+				historicalOnlyList.forEach(ach => {
+					html += `<span class="achievement-item" onclick="showAchievementDetail('${ach}')" style="cursor:pointer;opacity:0.7;">${ach}</span>`;
+				});
+				html += '</div></div>';
+			}
+
+			// 未达成
+			const unachievedList = ALL_ACHIEVEMENTS.filter(a => !historicalAchievements.has(a) && !currentAchievements.has(a));
+			if (unachievedList.length > 0) {
+				html += `<div><div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;font-weight:600;">🔒 未达成 (${unachievedList.length})</div><div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+				unachievedList.forEach(ach => {
+					html += `<span class="locked-achievement-tag" onclick="showAchievementDetail('${ach}')" style="cursor:pointer;">${ach}</span>`;
+				});
+				html += '</div></div>';
+			}
+
+			html += '</div>';
+
+			showModal('📋 全部成就', html, [
+				{ text: '返回黑市', class: 'btn-primary', action: () => { closeModal(); openBlackMarket(); } },
+				{ text: '关闭', class: 'btn-info', action: closeModal }
+			]);
+		}
+
+		// 显示单个成就详情
+		function showAchievementDetail(ach) {
+			const req = ACHIEVEMENT_REQUIREMENTS[ach] || '未知要求';
+			const playerRecords = getPlayerAchievements();
+			const currentAchievements = new Set(getCurrentGameAchievements());
+
+			const historicalAchievements = new Set();
+			if (playerRecords.achievements.normal instanceof Set) {
+				playerRecords.achievements.normal.forEach(a => historicalAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.normal)) {
+				playerRecords.achievements.normal.forEach(a => historicalAchievements.add(a));
+			}
+			if (playerRecords.achievements.reversed instanceof Set) {
+				playerRecords.achievements.reversed.forEach(a => historicalAchievements.add(a));
+			} else if (Array.isArray(playerRecords.achievements.reversed)) {
+				playerRecords.achievements.reversed.forEach(a => historicalAchievements.add(a));
+			}
+
+			const isCurrentlyAchieved = currentAchievements.has(ach);
+			const isHistoricallyAchieved = historicalAchievements.has(ach);
+
+			let statusText = '';
+			let statusColor = '';
+			if (isCurrentlyAchieved) {
+				statusText = '✅ 本局已达成';
+				statusColor = 'var(--success-color)';
+			} else if (isHistoricallyAchieved) {
+				statusText = '📜 历史已达成';
+				statusColor = 'var(--warning-color)';
+			} else {
+				statusText = '🔒 未达成';
+				statusColor = 'var(--text-secondary)';
+			}
+
+			const html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">${ach}</div>
+					<div style="color:${statusColor};font-weight:600;">${statusText}</div>
+				</div>
+				<div style="padding:12px;background:var(--light-bg);border-radius:8px;">
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">达成要求：</div>
+					<div style="font-size:0.9rem;">${req}</div>
+				</div>
+			`;
+
+			showModal('成就详情', html, [
+				{ text: '返回', class: 'btn-primary', action: () => { closeModal(); showAllAchievements(); } },
+				{ text: '关闭', class: 'btn-info', action: closeModal }
+			]);
+		}
+
+		// 重置黑市（每局游戏开始时调用，替代原来的resetAchievementShop）
+		function resetAchievementShop() {
+			initBlackMarket();
+		}
+
+		// 兼容旧函数名
+		function openAchievementShop() {
+			openBlackMarket();
 		}
         // ==================== 商店系统 ====================
 		function openShop() {
@@ -367,11 +718,14 @@
 			
 			// 原有购买区域
 			html += '<div style="font-weight:600;margin-bottom:8px;"><i class="fas fa-shopping-cart"></i> 购买物品</div>';
-			
+
+			// ★★★ 可预购订阅的物品列表 ★★★
+			const subscribableItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
+
 			shopItems.forEach(item => {
 				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
 				const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
-				
+
 				// ★★★ 新增：冰美式动态描述 ★★★
 				let itemDesc = item.desc;
 				if (item.id === 'coffee') {
@@ -379,11 +733,21 @@
 					const currentBonus = 3 + Math.floor(count / 15);
 					const nextMilestone = (Math.floor(count / 15) + 1) * 15;
 					const nextBonus = currentBonus + 1;
-					
+
 					itemDesc = `SAN值+${currentBonus}`;
 					itemDesc += ` (${count}/${nextMilestone}杯时+${nextBonus})`;
 				}
-				
+
+				// ★★★ 新增：订阅按钮 ★★★
+				let subscribeBtn = '';
+				if (subscribableItems.includes(item.id)) {
+					const isSubscribed = gameState.subscriptions && gameState.subscriptions[item.id];
+					const btnClass = isSubscribed ? 'btn-success' : 'btn-secondary';
+					const btnText = isSubscribed ? '🔔' : '🔕';
+					const btnTitle = isSubscribed ? '点击取消预购' : '点击开启预购';
+					subscribeBtn = `<button class="btn ${btnClass}" onclick="toggleSubscription('${item.id}')" title="${btnTitle}" style="padding:4px 8px;font-size:0.75rem;margin-right:4px;">${btnText}</button>`;
+				}
+
 				html += `<div class="shop-item ${!canBuy ? 'disabled' : ''}">
 					<div class="shop-item-info">
 						<div class="shop-item-name">${item.name}</div>
@@ -391,11 +755,18 @@
 					</div>
 					<div class="shop-item-action">
 						<span class="shop-item-price">💰${item.price}</span>
+						${subscribeBtn}
 						<button class="btn btn-primary" onclick="buyItem('${item.id}')" ${!canBuy ? 'disabled' : ''}>${reason || '购买'}</button>
 					</div>
 				</div>`;
 			});
 			html += '</div>';
+
+			// ★★★ 新增：预购说明 ★★★
+			html += `<div style="margin-top:10px;padding:8px;background:rgba(52,152,219,0.1);border-radius:6px;font-size:0.75rem;color:var(--text-secondary);">
+				<strong>🔔 预购功能：</strong>开启后，在进入下月/点击相关操作按钮时，若金钱足够会自动购买对应物品。
+			</div>`;
+
 			showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
 		}
 		// ★★★ 新增：出售物品函数 ★★★
@@ -502,14 +873,33 @@
         function buyItem(id) {
             const item = shopItems.find(i => i.id === id);
             if (!item) return;
-            
+
             if (gameState.gold < item.price) {
-                showModal('❌ 购买失败', `<p>金钱不足！购买${item.name}需要${item.price}金币，当前只有${gameState.gold}金币。</p>`, 
+                showModal('❌ 购买失败', `<p>金钱不足！购买${item.name}需要${item.price}金币，当前只有${gameState.gold}金币。</p>`,
                     [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                 return;
             }
-            
+
+            return executeBuyItem(id, false);
+        }
+
+        // ★★★ 新增：执行购买物品（可由订阅自动触发）★★★
+        function executeBuyItem(id, isAutoSubscription = false) {
+            const item = shopItems.find(i => i.id === id);
+            if (!item) return false;
+
+            if (gameState.gold < item.price) {
+                return false;
+            }
+
+            // 检查购买限制
+            if (item.once && item.bought) return false;
+            if (item.monthlyOnce && item.boughtThisMonth) return false;
+
             let result = `金钱-${item.price}`;
+            if (isAutoSubscription) {
+                result = `【预购】${result}`;
+            }
             
             // 富可敌国觉醒：通过消费增加属性
             if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened) {
@@ -633,20 +1023,84 @@
 					
 				case 'gpu_rent':
 					// 改为本月buff而不是下次
-					gameState.buffs.temporary.push({ 
-						type: 'exp_times', 
-						name: '本月做实验多做1次', 
-						value: 1, 
+					gameState.buffs.temporary.push({
+						type: 'exp_times',
+						name: '本月做实验多做1次',
+						value: 1,
 						permanent: false,
 						thisMonthOnly: true
 					});
 					result += '，获得本月buff-做实验多做1次';
 					break;
             }
-            
+
             addLog('购买', `购买了${item.name}`, result);
-            closeModal();
-            openShop();
+            if (!isAutoSubscription) {
+                closeModal();
+                openShop();
+            }
             updateAllUI();
             updateBuffs();
+            return true;
+        }
+
+        // ★★★ 新增：切换订阅状态 ★★★
+        function toggleSubscription(itemId) {
+            if (!gameState.subscriptions) {
+                gameState.subscriptions = {
+                    coffee: false,
+                    claude: false,
+                    gpt: false,
+                    gemini: false,
+                    gpu_rent: false
+                };
+            }
+            gameState.subscriptions[itemId] = !gameState.subscriptions[itemId];
+            const item = shopItems.find(i => i.id === itemId);
+            const status = gameState.subscriptions[itemId] ? '已开启' : '已关闭';
+            addLog('预购', `${item.name}预购${status}`, `每月初/相关操作时将自动购买`);
+            openShop();
+        }
+
+        // ★★★ 新增：处理订阅自动购买 ★★★
+        function processSubscriptions(triggerType) {
+            if (!gameState.subscriptions) return;
+
+            const subscriptionItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
+
+            subscriptionItems.forEach(itemId => {
+                if (!gameState.subscriptions[itemId]) return;
+
+                const item = shopItems.find(i => i.id === itemId);
+                if (!item) return;
+
+                // 检查是否已购买（月度物品）
+                if (item.monthlyOnce && item.boughtThisMonth) return;
+
+                // 根据触发类型决定是否购买
+                let shouldBuy = false;
+
+                switch (triggerType) {
+                    case 'nextMonth':
+                        // 月初自动购买冰美式
+                        if (itemId === 'coffee') shouldBuy = true;
+                        break;
+                    case 'idea':
+                        // 想idea时购买gemini
+                        if (itemId === 'gemini') shouldBuy = true;
+                        break;
+                    case 'experiment':
+                        // 做实验时购买gpt和租gpu
+                        if (itemId === 'gpt' || itemId === 'gpu_rent') shouldBuy = true;
+                        break;
+                    case 'write':
+                        // 写论文时购买claude
+                        if (itemId === 'claude') shouldBuy = true;
+                        break;
+                }
+
+                if (shouldBuy && gameState.gold >= item.price) {
+                    executeBuyItem(itemId, true);
+                }
+            });
         }
