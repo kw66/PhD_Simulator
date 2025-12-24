@@ -339,7 +339,8 @@
             senior: { researchRange: [4, 12], affinityRange: [2, 3] },
             junior: { researchRange: [0, 6], affinityRange: [2, 4] },
             peer: { researchRange: [3, 9], affinityRange: [3, 5] },
-            lover: { researchRange: [3, 9], intimacy: 10 }
+            // ★★★ 恋人的科研能力和亲密度根据类型动态计算 ★★★
+            lover: { dynamicStats: true }
         };
 
         // ==================== 人际关系网络管理 ====================
@@ -377,18 +378,32 @@
             let intimacy = 0;
 
             if (initialStats) {
-                if (initialStats.researchRange) {
-                    const [min, max] = initialStats.researchRange;
-                    research = Math.floor(Math.random() * (max - min + 1)) + min;
-                }
-                if (initialStats.affinityRange) {
-                    const [min, max] = initialStats.affinityRange;
-                    affinity = Math.floor(Math.random() * (max - min + 1)) + min;
-                } else if (initialStats.affinity !== undefined) {
-                    affinity = initialStats.affinity;
-                }
-                if (initialStats.intimacy !== undefined) {
-                    intimacy = initialStats.intimacy;
+                // ★★★ 恋人的科研能力和亲密度根据类型动态计算 ★★★
+                if (type === 'lover' && initialStats.dynamicStats) {
+                    const loverType = gameState.loverType;
+                    if (loverType === 'smart') {
+                        // 聪慧恋人：科研 = 玩家科研+1（最高16），亲密度 9-12
+                        research = Math.min(16, gameState.research + 1);
+                        intimacy = Math.floor(Math.random() * 4) + 9;  // 9-12
+                    } else {
+                        // 活泼恋人：科研 = 玩家科研-3（最低3），亲密度 12-15
+                        research = Math.max(3, gameState.research - 3);
+                        intimacy = Math.floor(Math.random() * 4) + 12;  // 12-15
+                    }
+                } else {
+                    if (initialStats.researchRange) {
+                        const [min, max] = initialStats.researchRange;
+                        research = Math.floor(Math.random() * (max - min + 1)) + min;
+                    }
+                    if (initialStats.affinityRange) {
+                        const [min, max] = initialStats.affinityRange;
+                        affinity = Math.floor(Math.random() * (max - min + 1)) + min;
+                    } else if (initialStats.affinity !== undefined) {
+                        affinity = initialStats.affinity;
+                    }
+                    if (initialStats.intimacy !== undefined) {
+                        intimacy = initialStats.intimacy;
+                    }
                 }
             }
 
@@ -464,6 +479,12 @@
 
         // 显示添加人物到关系网的弹窗
         function showAddToNetworkModal(person, onComplete) {
+            // ★★★ 防止在游戏结束后显示弹窗覆盖结局弹窗 ★★★
+            if (gameState.gameEnded) {
+                if (onComplete) onComplete(false);
+                return;
+            }
+
             const unlockedSlots = getUnlockedSlots();
             const currentCount = gameState.relationships.length;
             const typeInfo = RELATIONSHIP_TYPES[person.type];
@@ -539,10 +560,10 @@
                         </div>
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;margin-bottom:6px;">
                             <span style="font-size:0.8rem;">💕 亲密度</span>
-                            <span style="font-size:0.85rem;font-weight:600;">${person.intimacy}/20</span>
+                            <span style="font-size:0.85rem;font-weight:600;">${person.intimacy}/40</span>
                         </div>
                         <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden;">
-                            <div style="width:${(person.intimacy/20)*100}%;height:100%;background:var(--love-color);"></div>
+                            <div style="width:${(person.intimacy/40)*100}%;height:100%;background:var(--love-color);"></div>
                         </div>
                     </div>
                 `;
@@ -1245,8 +1266,8 @@
 
         // 恋人任务完成
         function handleLoverTaskCompletion(person) {
-            // 亲密度+1，科研能力+1
-            person.intimacy = Math.min(20, person.intimacy + 1);
+            // 亲密度+1（上限40），科研能力+1
+            person.intimacy = Math.min(40, person.intimacy + 1);
             person.research = Math.min(20, person.research + 1);
             person.loverTasksCompleted = (person.loverTasksCompleted || 0) + 1;
 

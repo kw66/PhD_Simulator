@@ -119,7 +119,7 @@
 				id: 'burn_body',
 				name: '💀 燃躯术',
 				desc: 'SAN上限-3，SAN+6',
-				price: 5,
+				price: 4,
 				condition: () => true,
 				effect: (gs) => {
 					gs.sanMax = (gs.sanMax || 15) - 3;
@@ -157,7 +157,7 @@
 				id: 'favor_amulet',
 				name: '🎁 好感护身符',
 				desc: '（可叠加）当导师好感度为0时，好感度+1（每月1次）',
-				price: 18,
+				price: 12,
 				condition: () => true,
 				stackable: true,
 				effect: (gs) => {
@@ -170,7 +170,7 @@
 				id: 'social_amulet',
 				name: '🤝 社交护身符',
 				desc: '（可叠加）当社交能力为0时，社交能力+1（每月1次）',
-				price: 18,
+				price: 12,
 				condition: () => true,
 				stackable: true,
 				effect: (gs) => {
@@ -210,6 +210,296 @@
 					const removed = beforeLength - gs.buffs.temporary.length;
 					return `清除了${removed}个debuff`;
 				}
+			},
+			// ==================== 社交类 ====================
+			{
+				id: 'social_note_1',
+				name: '📒 交游札记',
+				desc: '获得时若社交能力≤3，社交能力+1',
+				price: 5,
+				condition: (gs) => gs.social <= 3,
+				effect: (gs) => {
+					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					return '社交能力+1';
+				}
+			},
+			{
+				id: 'social_note_2',
+				name: '📔 人情通要',
+				desc: '获得时若社交能力≤6，社交能力+1',
+				price: 7,
+				condition: (gs) => gs.social <= 6,
+				effect: (gs) => {
+					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					return '社交能力+1';
+				}
+			},
+			{
+				id: 'social_note_3',
+				name: '📓 有朋自远方来',
+				desc: '获得时若社交能力≤10，社交能力+1',
+				price: 9,
+				condition: (gs) => gs.social <= 10,
+				effect: (gs) => {
+					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					return '社交能力+1';
+				}
+			},
+			// ==================== 好感类 ====================
+			{
+				id: 'favor_note_1',
+				name: '💌 师门投帖',
+				desc: '获得时若导师好感≤3，导师好感+1',
+				price: 4,
+				condition: (gs) => gs.favor <= 3,
+				effect: (gs) => {
+					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+					return '导师好感+1';
+				}
+			},
+			{
+				id: 'favor_note_2',
+				name: '📜 师承笺札',
+				desc: '获得时若导师好感≤6，导师好感+1',
+				price: 6,
+				condition: (gs) => gs.favor <= 6,
+				effect: (gs) => {
+					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+					return '导师好感+1';
+				}
+			},
+			{
+				id: 'favor_note_3',
+				name: '📋 登堂玉牒',
+				desc: '获得时若导师好感≤10，导师好感+1',
+				price: 8,
+				condition: (gs) => gs.favor <= 10,
+				effect: (gs) => {
+					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+					return '导师好感+1';
+				}
+			},
+			// ==================== SAN类 ====================
+			{
+				id: 'san_restore_1',
+				name: '🧘 凝神短修',
+				desc: '获得时若SAN≥15，SAN+4',
+				price: 6,
+				condition: (gs) => gs.san >= 15,
+				effect: (gs) => {
+					gs.san = Math.min(gs.sanMax, gs.san + 4);
+					return 'SAN+4';
+				}
+			},
+			{
+				id: 'san_restore_2',
+				name: '🍵 安神清茗',
+				desc: '获得时若SAN≥10，SAN+6',
+				price: 8,
+				condition: (gs) => gs.san >= 10,
+				effect: (gs) => {
+					gs.san = Math.min(gs.sanMax, gs.san + 6);
+					return 'SAN+6';
+				}
+			},
+			{
+				id: 'san_restore_3',
+				name: '😴 归梦长眠',
+				desc: '获得时若SAN≥0，SAN+8',
+				price: 10,
+				condition: (gs) => gs.san >= 0,
+				effect: (gs) => {
+					gs.san = Math.min(gs.sanMax, gs.san + 8);
+					return 'SAN+8';
+				}
+			},
+			// ==================== 金币类 ====================
+			{
+				id: 'gold_gain_1',
+				name: '🪙 聚财小符',
+				desc: '获得时若金币≥2，金币+2',
+				price: 6,
+				condition: (gs) => gs.gold >= 2,
+				effect: (gs) => {
+					gs.gold += 2;
+					return '金币+2';
+				}
+			},
+			{
+				id: 'gold_gain_2',
+				name: '💎 聚财灵符',
+				desc: '获得时若金币≥6，金币+4',
+				price: 8,
+				condition: (gs) => gs.gold >= 6,
+				effect: (gs) => {
+					gs.gold += 4;
+					return '金币+4';
+				}
+			},
+			{
+				id: 'gold_gain_3',
+				name: '👑 聚财宝符',
+				desc: '获得时若金币≥10，金币+6',
+				price: 10,
+				condition: (gs) => gs.gold >= 10,
+				effect: (gs) => {
+					gs.gold += 6;
+					return '金币+6';
+				}
+			},
+			// ==================== 燃系（上限换属性）====================
+			{
+				id: 'burn_social',
+				name: '🗣️ 话术秘卷',
+				desc: '社交能力上限-3，社交能力+1',
+				price: 5,
+				condition: () => true,
+				effect: (gs) => {
+					gs.socialMax = (gs.socialMax || 20) - 3;
+					gs.social = Math.min(gs.socialMax, gs.social + 1);
+					return `社交能力+1，上限降至${gs.socialMax}`;
+				}
+			},
+			{
+				id: 'burn_favor',
+				name: '🎁 拜师捷径',
+				desc: '导师好感上限-2，导师好感+1',
+				price: 4,
+				condition: () => true,
+				effect: (gs) => {
+					gs.favorMax = (gs.favorMax || 20) - 2;
+					gs.favor = Math.min(gs.favorMax, gs.favor + 1);
+					return `导师好感+1，上限降至${gs.favorMax}`;
+				}
+			},
+			// ==================== 刹那系（先增后减）====================
+			{
+				id: 'flash_research',
+				name: '⚡ 刹那灵光',
+				desc: '科研能力+5，进入下个月科研能力-7（对愚钝之院士转世不生效）',
+				price: 10,
+				condition: () => true,
+				effect: (gs) => {
+					// 愚钝之院士转世不生效
+					if (gs.isReversed && gs.character === 'genius') {
+						return '对愚钝之院士转世不生效，无事发生';
+					}
+					gs.research = Math.min(gs.researchMax || 20, gs.research + 5);
+					gs.buffs.temporary.push({
+						type: 'flash_research_penalty',
+						name: '刹那灵光后遗',
+						value: -7,
+						isDebuff: true,
+						applyNextMonth: true
+					});
+					return '科研能力+5，下月-7';
+				}
+			},
+			{
+				id: 'flash_favor',
+				name: '💫 刹那亲和',
+				desc: '导师好感+5，进入下个月导师好感-7',
+				price: 8,
+				condition: () => true,
+				effect: (gs) => {
+					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 5);
+					gs.buffs.temporary.push({
+						type: 'flash_favor_penalty',
+						name: '刹那亲和后遗',
+						value: -7,
+						isDebuff: true,
+						applyNextMonth: true
+					});
+					return '导师好感+5，下月-7';
+				}
+			},
+			{
+				id: 'flash_social',
+				name: '✨ 刹那魅力',
+				desc: '社交能力+5，进入下个月社交能力-7',
+				price: 9,
+				condition: () => true,
+				effect: (gs) => {
+					gs.social = Math.min(gs.socialMax || 20, gs.social + 5);
+					gs.buffs.temporary.push({
+						type: 'flash_social_penalty',
+						name: '刹那魅力后遗',
+						value: -7,
+						isDebuff: true,
+						applyNextMonth: true
+					});
+					return '社交能力+5，下月-7';
+				}
+			},
+			// ==================== 商店机制类 ====================
+			{
+				id: 'refresh_ticket',
+				name: '🎫 刷新券',
+				desc: '免费刷新一次商店',
+				price: 5,
+				condition: () => true,
+				effect: (gs) => {
+					gs.freeRefreshTickets = (gs.freeRefreshTickets || 0) + 1;
+					return `获得刷新券×1（共${gs.freeRefreshTickets}张）`;
+				}
+			},
+			{
+				id: 'refresh_discount',
+				name: '🏷️ 刷新折扣券',
+				desc: '商店刷新费用-1（可叠加）',
+				price: 6,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.refreshDiscount = (gs.refreshDiscount || 0) + 1;
+					return `刷新折扣+1（共${gs.refreshDiscount}）`;
+				}
+			},
+			{
+				id: 'chain_purchase',
+				name: '🔗 连购契约',
+				desc: '每次购买后增加一次免费刷新商店（可叠加）',
+				price: 15,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.chainPurchaseLevel = (gs.chainPurchaseLevel || 0) + 1;
+					return `连购契约等级${gs.chainPurchaseLevel}`;
+				}
+			},
+			{
+				id: 'member_card',
+				name: '💳 会员卡',
+				desc: '商店物品价格-1（可叠加，最低为3）',
+				price: 8,
+				condition: () => true,
+				stackable: true,
+				effect: (gs) => {
+					gs.memberCardLevel = (gs.memberCardLevel || 0) + 1;
+					return `会员卡等级${gs.memberCardLevel}`;
+				}
+			},
+			{
+				id: 'auto_restock',
+				name: '📦 自动进货机',
+				desc: '自动刷新间隔减少一个月（不可叠加）',
+				price: 10,
+				condition: (gs) => !gs.hasAutoRestock,
+				effect: (gs) => {
+					gs.hasAutoRestock = true;
+					return '自动刷新间隔：4月→3月';
+				}
+			},
+			{
+				id: 'display_stand',
+				name: '🗄️ 商品展示台',
+				desc: '商店展示的物品数量+1（不可叠加，下一次刷新开始生效）',
+				price: 10,
+				condition: (gs) => !gs.hasDisplayStand,
+				effect: (gs) => {
+					gs.hasDisplayStand = true;
+					return '商品槽位：3→4（下次刷新生效）';
+				}
 			}
 		];
 
@@ -233,13 +523,16 @@
 		}
 
 		// 刷新黑市商品（isAuto表示是否自动刷新）
-		// ★★★ 修改：允许刷新出重复物品 ★★★
+		// ★★★ 修改：允许刷新出重复物品，支持商品展示台 ★★★
 		function refreshBlackMarketItems(isAuto = false) {
 			// 保留被锁定的商品
 			const lockedItems = blackMarketState.currentItems.filter(item => item.locked);
 
+			// ★★★ 商品展示台：默认3个槽位，有展示台则4个 ★★★
+			const totalSlots = gameState.hasDisplayStand ? 4 : 3;
+
 			// 需要填充的空位数量
-			const slotsToFill = 3 - lockedItems.length;
+			const slotsToFill = totalSlots - lockedItems.length;
 
 			// ★★★ 修改：随机选择商品，允许重复（除了与锁定商品重复）★★★
 			const lockedIds = lockedItems.map(item => item.item.id);
@@ -264,12 +557,14 @@
 			}
 		}
 
-		// 检查是否需要自动刷新（每4个月）
+		// 检查是否需要自动刷新
+		// ★★★ 自动进货机：默认4个月，有进货机则3个月 ★★★
 		function checkBlackMarketAutoRefresh() {
 			// ★★★ 防御性检查 ★★★
 			if (!gameState || !blackMarketState) return false;
+			const refreshInterval = gameState.hasAutoRestock ? 3 : 4;
 			const monthsSinceRefresh = gameState.totalMonths - (blackMarketState.lastAutoRefreshMonth || 0);
-			if (monthsSinceRefresh >= 4) {
+			if (monthsSinceRefresh >= refreshInterval) {
 				refreshBlackMarketItems(true);
 				return true;
 			}
@@ -277,28 +572,42 @@
 		}
 
 		// 手动刷新黑市（需要消耗成就币）
+		// ★★★ 支持刷新券、刷新折扣 ★★★
 		function manualRefreshBlackMarket() {
-			const cost = blackMarketState.refreshCount + 1;
+			// 计算刷新费用（考虑折扣）
+			const baseCost = blackMarketState.refreshCount + 1;
+			const discount = gameState.refreshDiscount || 0;
+			const cost = Math.max(0, baseCost - discount);
 
-			if (gameState.achievementCoins < cost) {
-				showModal('❌ 刷新失败', `<p>成就币不足！需要${cost}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
+			// 检查是否有免费刷新券
+			const hasTicket = (gameState.freeRefreshTickets || 0) > 0;
 
 			// 检查是否所有商品都被锁定
+			const totalSlots = gameState.hasDisplayStand ? 4 : 3;
 			const lockedCount = blackMarketState.currentItems.filter(item => item.locked).length;
-			if (lockedCount >= 3) {
+			if (lockedCount >= totalSlots) {
 				showModal('❌ 刷新失败', `<p>所有商品都已锁定，无法刷新！</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
 
-			gameState.achievementCoins -= cost;
-			blackMarketState.refreshCount++;
-			refreshBlackMarketItems(false);
+			// 优先使用刷新券
+			if (hasTicket) {
+				gameState.freeRefreshTickets--;
+				blackMarketState.refreshCount++;
+				refreshBlackMarketItems(false);
+				addLog('成就商店', '使用刷新券刷新商品', `剩余刷新券${gameState.freeRefreshTickets}张`);
+			} else if (gameState.achievementCoins >= cost) {
+				gameState.achievementCoins -= cost;
+				blackMarketState.refreshCount++;
+				refreshBlackMarketItems(false);
+				addLog('成就商店', '手动刷新商品', `成就币-${cost}${discount > 0 ? `（折扣-${discount}）` : ''}`);
+			} else {
+				showModal('❌ 刷新失败', `<p>成就币不足！需要${cost}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
 
-			addLog('成就商店', '手动刷新商品', `成就币-${cost}`);
 			closeModal();
 			openBlackMarket();
 			updateAllUI();
@@ -314,14 +623,19 @@
 		}
 
 		// 购买黑市商品
+		// ★★★ 支持会员卡折扣、连购契约 ★★★
 		function buyBlackMarketItem(index) {
 			const itemData = blackMarketState.currentItems[index];
 			if (!itemData) return;
 
 			const item = itemData.item;
 
-			if (gameState.achievementCoins < item.price) {
-				showModal('❌ 购买失败', `<p>成就币不足！需要${item.price}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
+			// ★★★ 会员卡折扣：每级-1，最低3 ★★★
+			const memberDiscount = gameState.memberCardLevel || 0;
+			const actualPrice = Math.max(3, item.price - memberDiscount);
+
+			if (gameState.achievementCoins < actualPrice) {
+				showModal('❌ 购买失败', `<p>成就币不足！需要${actualPrice}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -334,7 +648,7 @@
 			}
 
 			// 扣除成就币
-			gameState.achievementCoins -= item.price;
+			gameState.achievementCoins -= actualPrice;
 
 			// 应用效果
 			const result = item.effect(gameState);
@@ -342,7 +656,15 @@
 			// ★★★ 修改：购买后移除商品槽位（无论是否可叠加都下架，等待刷新）★★★
 			blackMarketState.currentItems.splice(index, 1);
 
-			addLog('成就商店', `购买了${item.name}`, `成就币-${item.price}，${result}`);
+			const priceText = memberDiscount > 0 ? `成就币-${actualPrice}（原价${item.price}）` : `成就币-${actualPrice}`;
+			addLog('成就商店', `购买了${item.name}`, `${priceText}，${result}`);
+
+			// ★★★ 连购契约：购买后获得免费刷新 ★★★
+			const chainLevel = gameState.chainPurchaseLevel || 0;
+			if (chainLevel > 0) {
+				gameState.freeRefreshTickets = (gameState.freeRefreshTickets || 0) + chainLevel;
+				addLog('连购契约', `获得免费刷新`, `刷新券+${chainLevel}`);
+			}
 
 			checkResearchUnlock();
 			closeModal();
@@ -442,13 +764,25 @@
 		}
 
 		// 打开成就商店
+		// ★★★ 支持显示各种加成状态 ★★★
 		function openBlackMarket() {
 			// 检查自动刷新
 			checkBlackMarketAutoRefresh();
 
 			const achievementCoins = gameState.achievementCoins || 0;
-			const refreshCost = blackMarketState.refreshCount + 1;
-			const monthsUntilRefresh = 4 - ((gameState.totalMonths - blackMarketState.lastAutoRefreshMonth) % 4);
+
+			// ★★★ 计算刷新费用（考虑折扣）★★★
+			const baseCost = blackMarketState.refreshCount + 1;
+			const discount = gameState.refreshDiscount || 0;
+			const refreshCost = Math.max(0, baseCost - discount);
+			const hasTicket = (gameState.freeRefreshTickets || 0) > 0;
+
+			// ★★★ 计算自动刷新间隔（考虑自动进货机）★★★
+			const refreshInterval = gameState.hasAutoRestock ? 3 : 4;
+			const monthsUntilRefresh = refreshInterval - ((gameState.totalMonths - blackMarketState.lastAutoRefreshMonth) % refreshInterval);
+
+			// ★★★ 会员卡折扣 ★★★
+			const memberDiscount = gameState.memberCardLevel || 0;
 
 			// 护身符持有情况
 			const amulets = gameState.amulets || {};
@@ -457,6 +791,15 @@
 			if (amulets.gold > 0) amuletInfo.push(`💰×${amulets.gold}`);
 			if (amulets.favor > 0) amuletInfo.push(`🎁×${amulets.favor}`);
 			if (amulets.social > 0) amuletInfo.push(`🤝×${amulets.social}`);
+
+			// ★★★ 商店升级信息 ★★★
+			const upgradeInfo = [];
+			if (gameState.freeRefreshTickets > 0) upgradeInfo.push(`🎫×${gameState.freeRefreshTickets}`);
+			if (gameState.refreshDiscount > 0) upgradeInfo.push(`🏷️-${gameState.refreshDiscount}`);
+			if (gameState.chainPurchaseLevel > 0) upgradeInfo.push(`🔗×${gameState.chainPurchaseLevel}`);
+			if (gameState.memberCardLevel > 0) upgradeInfo.push(`💳-${gameState.memberCardLevel}`);
+			if (gameState.hasAutoRestock) upgradeInfo.push(`📦3月`);
+			if (gameState.hasDisplayStand) upgradeInfo.push(`🗄️4槽`);
 
 			let html = `
 				<div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:10px;border:1px solid rgba(102,126,234,0.4);">
@@ -467,15 +810,16 @@
 						</div>
 						<div style="font-size:1.3rem;font-weight:700;color:var(--primary-color);">${achievementCoins}</div>
 					</div>
-					${amuletInfo.length > 0 ? `<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:5px;">持有护身符：${amuletInfo.join(' ')}</div>` : ''}
+					${amuletInfo.length > 0 ? `<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:5px;">护身符：${amuletInfo.join(' ')}</div>` : ''}
+					${upgradeInfo.length > 0 ? `<div style="font-size:0.75rem;color:var(--success-color);margin-top:3px;">升级：${upgradeInfo.join(' ')}</div>` : ''}
 				</div>
 
 				<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
 					<div style="font-size:0.8rem;color:var(--text-secondary);">
-						⏰ ${monthsUntilRefresh}个月后自动刷新
+						⏰ ${monthsUntilRefresh}月后刷新${gameState.hasAutoRestock ? '(已加速)' : ''}
 					</div>
 					<button class="btn btn-info" onclick="manualRefreshBlackMarket()" style="padding:4px 10px;font-size:0.75rem;">
-						🔄 手动刷新 (${refreshCost}成就币)
+						🔄 ${hasTicket ? '使用刷新券' : `刷新 (${refreshCost}币${discount > 0 ? '↓' : ''})`}
 					</button>
 				</div>
 
@@ -493,12 +837,19 @@
 			blackMarketState.currentItems.forEach((itemData, index) => {
 				const item = itemData.item;
 				const locked = itemData.locked;
-				const canBuy = achievementCoins >= item.price && item.condition(gameState);
+				// ★★★ 计算实际价格（会员卡折扣）★★★
+				const actualPrice = Math.max(3, item.price - memberDiscount);
+				const canBuy = achievementCoins >= actualPrice && item.condition(gameState);
 				const meetsCondition = item.condition(gameState);
 
 				let reason = '';
 				if (!meetsCondition) reason = '条件不满足';
-				else if (achievementCoins < item.price) reason = '成就币不足';
+				else if (achievementCoins < actualPrice) reason = '成就币不足';
+
+				// ★★★ 显示折扣后价格 ★★★
+				const priceDisplay = memberDiscount > 0 && actualPrice < item.price
+					? `<span style="text-decoration:line-through;opacity:0.5;">${item.price}</span> ${actualPrice}`
+					: `${actualPrice}`;
 
 				html += `
 					<div class="shop-item ${!canBuy ? 'disabled' : ''}" style="margin-bottom:8px;${locked ? 'border:2px solid #e74c3c;' : ''}">
@@ -507,7 +858,7 @@
 							<div class="shop-item-desc">${item.desc}</div>
 						</div>
 						<div class="shop-item-action" style="display:flex;align-items:center;gap:6px;">
-							<span class="shop-item-price" style="color:var(--primary-color);">🏆${item.price}</span>
+							<span class="shop-item-price" style="color:var(--primary-color);">🏆${priceDisplay}</span>
 							<button class="btn ${locked ? 'btn-danger' : 'btn-secondary'}"
 								onclick="toggleItemLock(${index})"
 								style="padding:4px 8px;font-size:0.7rem;min-width:auto;"
@@ -706,14 +1057,26 @@
 					if (si.id === 'gpu_buy') {
 						ownedCount = gameState.gpuServersBought || 0;
 					}
-					
+
+					// ★★★ 椅子升级信息 ★★★
+					let chairInfo = '';
+					let upgradeBtn = '';
+					if (si.id === 'chair') {
+						const chairUpgrade = gameState.chairUpgrade;
+						if (chairUpgrade && typeof CHAIR_UPGRADES !== 'undefined' && CHAIR_UPGRADES[chairUpgrade]) {
+							chairInfo = ` → ${CHAIR_UPGRADES[chairUpgrade].icon} ${CHAIR_UPGRADES[chairUpgrade].name}`;
+						}
+						upgradeBtn = `<button class="btn btn-success" onclick="showChairUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+					}
+
 					html += `<div class="shop-item" style="background:var(--card-bg);">
 						<div class="shop-item-info">
-							<div class="shop-item-name">${si.name} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
+							<div class="shop-item-name">${si.name}${chairInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
 							<div class="shop-item-desc">出售获得 ${si.sellPrice} 金币</div>
 						</div>
 						<div class="shop-item-action">
 							<span class="shop-item-price" style="color:var(--success-color);">+💰${si.sellPrice}</span>
+							${upgradeBtn}
 							<button class="btn btn-warning" onclick="sellItem('${si.id}')" style="padding:4px 10px;font-size:0.75rem;">出售</button>
 						</div>
 					</div>`;
@@ -776,6 +1139,118 @@
 
 			showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
 		}
+		// ==================== 人体工学椅升级系统 ====================
+		const CHAIR_UPGRADES = {
+			advanced: {
+				name: '高级人体工学椅',
+				icon: '🪑✨',
+				desc: '每月SAN+2',
+				price: 18,
+				effect: 'monthly_san_2'  // 每月固定+2
+			},
+			massage: {
+				name: '电动沙发按摩椅',
+				icon: '🛋️',
+				desc: '每月恢复10%已损失SAN（上取整）',
+				price: 20,
+				effect: 'monthly_san_lost_10'  // 每月+10%已损失SAN
+			},
+			torture: {
+				name: '头悬梁锥刺股椅',
+				icon: '⚔️',
+				desc: '每月恢复当前SAN的20%（上取整）',
+				price: 20,
+				effect: 'monthly_san_current_20'  // 每月+20%当前SAN
+			}
+		};
+
+		// 显示椅子升级选项
+		function showChairUpgradeModal() {
+			const currentUpgrade = gameState.chairUpgrade;
+
+			let html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">🪑</div>
+					<div style="font-weight:600;">当前：${currentUpgrade ? CHAIR_UPGRADES[currentUpgrade].name : '人体工学椅'}</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：${currentUpgrade ? CHAIR_UPGRADES[currentUpgrade].desc : '每月SAN+1'}</div>
+				</div>
+				<div style="font-weight:600;margin-bottom:10px;">选择升级方向：</div>
+			`;
+
+			Object.entries(CHAIR_UPGRADES).forEach(([key, upgrade]) => {
+				const isCurrentUpgrade = currentUpgrade === key;
+				const canAfford = gameState.gold >= upgrade.price;
+				const isDisabled = isCurrentUpgrade || !canAfford;
+
+				let statusText = '';
+				if (isCurrentUpgrade) {
+					statusText = '当前';
+				} else if (!canAfford) {
+					statusText = '金币不足';
+				}
+
+				html += `
+					<div class="shop-item ${isDisabled ? 'disabled' : ''}" style="margin-bottom:8px;">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${upgrade.icon} ${upgrade.name}</div>
+							<div class="shop-item-desc">${upgrade.desc}</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price">💰${upgrade.price}</span>
+							<button class="btn btn-primary" onclick="upgradeChair('${key}')" ${isDisabled ? 'disabled' : ''}>
+								${statusText || '升级'}
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			showModal('🪑 椅子升级', html, [
+				{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }
+			]);
+		}
+
+		// 执行椅子升级
+		function upgradeChair(upgradeKey) {
+			const upgrade = CHAIR_UPGRADES[upgradeKey];
+			if (!upgrade) return;
+
+			if (gameState.gold < upgrade.price) {
+				showModal('❌ 升级失败', `<p>金币不足！升级到${upgrade.name}需要${upgrade.price}金币，当前只有${gameState.gold}金币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除金币
+			gameState.gold -= upgrade.price;
+
+			// 移除旧的椅子buff
+			gameState.buffs.permanent = gameState.buffs.permanent.filter(b =>
+				b.type !== 'monthly_san' &&
+				b.type !== 'monthly_san_2' &&
+				b.type !== 'monthly_san_lost_10' &&
+				b.type !== 'monthly_san_current_20'
+			);
+
+			// 添加新的升级buff
+			gameState.buffs.permanent.push({
+				type: upgrade.effect,
+				name: upgrade.name,
+				desc: upgrade.desc,
+				permanent: true
+			});
+
+			// 记录升级状态
+			gameState.chairUpgrade = upgradeKey;
+
+			addLog('升级', `椅子升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
+
+			closeModal();
+			openShop();
+			updateAllUI();
+			updateBuffs();
+		}
+
 		// ★★★ 新增：出售物品函数 ★★★
 		function sellItem(id) {
 			const sellPrices = {

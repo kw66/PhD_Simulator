@@ -207,7 +207,10 @@
                 citationMultiplier: paper.citationMultiplier || 1,
 				conferenceInfo: paper.conferenceInfo || null,
 				conferenceLocation: paper.conferenceLocation || null,
-				pendingCitationFraction: paper.pendingCitationFraction || 0
+				pendingCitationFraction: paper.pendingCitationFraction || 0,
+				effectiveScore: paper.effectiveScore || paper.score,
+				journalType: paper.journalType || null,
+				journalName: paper.journalName || null
             }));
             
             const buffsCopy = {
@@ -327,6 +330,13 @@
 				} : null,
 				// ★★★ 修复：保存护身符状态 ★★★
 				amulets: gameState.amulets ? {...gameState.amulets} : null,
+				// ★★★ 新增：商店机制字段 ★★★
+				freeRefreshTickets: gameState.freeRefreshTickets || 0,
+				refreshDiscount: gameState.refreshDiscount || 0,
+				chainPurchaseLevel: gameState.chainPurchaseLevel || 0,
+				memberCardLevel: gameState.memberCardLevel || 0,
+				hasAutoRestock: gameState.hasAutoRestock || false,
+				hasDisplayStand: gameState.hasDisplayStand || false,
 
                 rejectedPapers: {...(gameState.rejectedPapers || {})},
                 maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -425,15 +435,18 @@
                             paperC: save.paperC,
                             totalScore: save.totalScore,
                             totalCitations: save.totalCitations,
-							publishedPapers: save.publishedPapers.map(p => ({ 
-								...p, 
+							publishedPapers: save.publishedPapers.map(p => ({
+								...p,
 								promotions: p.promotions ? { ...p.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
 								citationMultiplier: p.citationMultiplier || 1,
 								monthsSincePublish: p.monthsSincePublish || 0,
 								// ★★★ 新增字段 ★★★
 								pendingCitationFraction: p.pendingCitationFraction || 0,
 								conferenceInfo: p.conferenceInfo || null,
-								conferenceLocation: p.conferenceLocation || null
+								conferenceLocation: p.conferenceLocation || null,
+								effectiveScore: p.effectiveScore || p.score,
+								journalType: p.journalType || null,
+								journalName: p.journalName || null
 							})),
                             paperSlots: save.paperSlots,
                             
@@ -609,6 +622,13 @@
 						gameState.amulets = save.amulets ? {...save.amulets} : null;
 						gameState.achievementCoins = save.achievementCoins || 0;
 						gameState.earnedAchievementsThisGame = save.earnedAchievementsThisGame ? [...save.earnedAchievementsThisGame] : [];
+						// ★★★ 新增：恢复商店机制字段 ★★★
+						gameState.freeRefreshTickets = save.freeRefreshTickets || 0;
+						gameState.refreshDiscount = save.refreshDiscount || 0;
+						gameState.chainPurchaseLevel = save.chainPurchaseLevel || 0;
+						gameState.memberCardLevel = save.memberCardLevel || 0;
+						gameState.hasAutoRestock = save.hasAutoRestock || false;
+						gameState.hasDisplayStand = save.hasDisplayStand || false;
 
 
                         document.getElementById('start-screen').classList.add('hidden');
@@ -732,7 +752,10 @@
 				citationMultiplier: paper.citationMultiplier || 1,
 				conferenceInfo: paper.conferenceInfo || null,
 				conferenceLocation: paper.conferenceLocation || null,
-				pendingCitationFraction: paper.pendingCitationFraction || 0
+				pendingCitationFraction: paper.pendingCitationFraction || 0,
+				effectiveScore: paper.effectiveScore || paper.score,
+				journalType: paper.journalType || null,
+				journalName: paper.journalName || null
 			}));
 
 			const buffsCopy = {
@@ -850,6 +873,13 @@
 				} : null,
 				// ★★★ 修复：保存护身符状态 ★★★
 				amulets: gameState.amulets ? {...gameState.amulets} : null,
+				// ★★★ 新增：商店机制字段 ★★★
+				freeRefreshTickets: gameState.freeRefreshTickets || 0,
+				refreshDiscount: gameState.refreshDiscount || 0,
+				chainPurchaseLevel: gameState.chainPurchaseLevel || 0,
+				memberCardLevel: gameState.memberCardLevel || 0,
+				hasAutoRestock: gameState.hasAutoRestock || false,
+				hasDisplayStand: gameState.hasDisplayStand || false,
 
 				rejectedPapers: {...(gameState.rejectedPapers || {})},
 				maxConcurrentReviews: gameState.maxConcurrentReviews || 0,
@@ -1052,7 +1082,10 @@
 					monthsSincePublish: p.monthsSincePublish || 0,
 					pendingCitationFraction: p.pendingCitationFraction || 0,
 					conferenceInfo: p.conferenceInfo || null,
-					conferenceLocation: p.conferenceLocation || null
+					conferenceLocation: p.conferenceLocation || null,
+					effectiveScore: p.effectiveScore || p.score,
+					journalType: p.journalType || null,
+					journalName: p.journalName || null
 				})),
 				paperSlots: save.paperSlots,
 
@@ -1221,6 +1254,13 @@
 			gameState.amulets = save.amulets ? {...save.amulets} : null;
 			gameState.achievementCoins = save.achievementCoins || 0;
 			gameState.earnedAchievementsThisGame = save.earnedAchievementsThisGame ? [...save.earnedAchievementsThisGame] : [];
+			// ★★★ 新增：恢复商店机制字段 ★★★
+			gameState.freeRefreshTickets = save.freeRefreshTickets || 0;
+			gameState.refreshDiscount = save.refreshDiscount || 0;
+			gameState.chainPurchaseLevel = save.chainPurchaseLevel || 0;
+			gameState.memberCardLevel = save.memberCardLevel || 0;
+			gameState.hasAutoRestock = save.hasAutoRestock || false;
+			gameState.hasDisplayStand = save.hasDisplayStand || false;
 
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';

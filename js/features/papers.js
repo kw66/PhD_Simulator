@@ -88,21 +88,25 @@
 					break;
 				}
 				case 'quantumbit':
-					// ★★★ 量子位保持不变，直接+100引用 ★★★
-					if (paper.grade !== 'A') {
-						showModal('❌ 操作失败', '<p>只有A类论文才能上量子位封面！</p>', 
+					// ★★★ 量子位宣传：A类和S类可用，有效分数+25%中稿分数 ★★★
+					if (paper.grade !== 'A' && paper.grade !== 'S') {
+						showModal('❌ 操作失败', '<p>只有A类或S类论文才能上量子位封面！</p>',
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					if (gameState.gold < 10) {
-						showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>', 
+						showModal('❌ 操作失败', '<p>金钱不足！需要至少10金币。</p>',
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.quantumbit = true;
-					paper.citations += 100;
-					gameState.totalCitations += 100;
-					result = '金钱-10，论文引用+100';
+					// 有效分数增加中稿时分数的25%
+					const scoreBonus = Math.floor(paper.score * 0.25);
+					if (paper.effectiveScore === undefined) {
+						paper.effectiveScore = paper.score;
+					}
+					paper.effectiveScore += scoreBonus;
+					result = `金钱-10，有效分数+${scoreBonus}（中稿分数的25%）`;
 					canProceed = changeGold(-10);
 					break;
 			}
@@ -286,12 +290,12 @@
 				} else if (!paper) {
 					// ★★★ 升级槽位的空槽显示特殊样式 ★★★
 					if (isUpgraded) {
-						html += `<div class="paper-slot upgraded-slot">
+						html += `<div class="paper-slot upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;">
 							<div class="slot-header">
-								<span class="slot-title" style="color:#9b59b6;"><i class="fas fa-crown"></i> 期刊槽${i + 1}</span>
-								<span style="font-size:0.7rem;color:#9b59b6;">📖 分数不衰减</span>
+								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽${i + 1}</span>
+								<span style="font-size:0.7rem;color:#7c3aed;">📖 分数不衰减</span>
 							</div>
-							<button class="new-paper-btn" onclick="createNewPaper(${i})" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);">
+							<button class="new-paper-btn" onclick="createNewPaper(${i})" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);color:white;border:none;">
 								<i class="fas fa-plus"></i> 开启期刊论文
 							</button>
 						</div>`;
@@ -327,23 +331,23 @@
 						const canNature = total >= 500;
 						const canNatureSub = total >= 250;
 
-						html += `<div class="paper-slot active upgraded-slot" style="border-left:4px solid #9b59b6;">
+						html += `<div class="paper-slot active upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
 							<div class="slot-header">
-								<span class="slot-title" style="color:#9b59b6;"><i class="fas fa-crown"></i> 期刊槽</span>
-								<span style="font-size:0.65rem;color:#9b59b6;">📖 分数不衰减</span>
+								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽</span>
+								<span style="font-size:0.65rem;color:#7c3aed;">📖 分数不衰减</span>
 							</div>
 							<div class="paper-title">${paper.title}</div>
 							<div class="paper-scores-compact">
 								<span class="score-box-inline"><span class="score-label">idea</span><span class="score-value">${paper.ideaScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">实验</span><span class="score-value">${paper.expScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">写作</span><span class="score-value">${paper.writeScore}</span></span>
-								<span class="score-box-inline total" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
+								<span class="score-box-inline total" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
 							</div>
 							<div class="paper-actions-compact">
-								<button class="submit-btn grade-s" onclick="submitToJournal(${i},'nature')" ${!canSubmit || !canNature?'disabled':''} title="需要500分" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);${canNature?'':'opacity:0.5;'}">
+								<button class="submit-btn grade-s" onclick="submitToJournal(${i},'nature')" ${!canSubmit || !canNature?'disabled':''} title="需要500分" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;${canNature?'':'opacity:0.5;'}">
 									Nature(${canNature?'✓':'需500'})
 								</button>
-								<button class="submit-btn grade-s-sub" onclick="submitToJournal(${i},'nature-sub')" ${!canSubmit || !canNatureSub?'disabled':''} title="需要250分" style="background:linear-gradient(135deg,#3498db,#2980b9);${canNatureSub?'':'opacity:0.5;'}">
+								<button class="submit-btn grade-s-sub" onclick="submitToJournal(${i},'nature-sub')" ${!canSubmit || !canNatureSub?'disabled':''} title="需要250分" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:white;${canNatureSub?'':'opacity:0.5;'}">
 									子刊(${canNatureSub?'✓':'需250'})
 								</button>
 								<button class="submit-btn abandon" onclick="abandonPaper(${i})" ${paper.reviewing?'disabled':''}>

@@ -1,5 +1,8 @@
 ﻿        // ==================== 游戏结局 ====================
         function triggerEnding(type) {
+            // ★★★ 设置游戏结束标志，防止其他弹窗覆盖结局弹窗 ★★★
+            gameState.gameEnded = true;
+
             let title, desc, emoji;
             let endingType = type;
             

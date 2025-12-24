@@ -32,6 +32,26 @@
 			// ★★★ 清除本月限定的buff ★★★
 			gameState.buffs.temporary = gameState.buffs.temporary.filter(b => !b.thisMonthOnly);
 
+			// ★★★ 处理刹那系buff的月初惩罚 ★★★
+			const flashPenalties = gameState.buffs.temporary.filter(b => b.applyNextMonth);
+			flashPenalties.forEach(penalty => {
+				if (penalty.type === 'flash_research_penalty') {
+					const oldVal = gameState.research;
+					gameState.research = Math.max(0, gameState.research + penalty.value);
+					addLog('刹那后遗', '刹那灵光', `科研能力 ${oldVal}→${gameState.research}`);
+				} else if (penalty.type === 'flash_favor_penalty') {
+					const oldVal = gameState.favor;
+					gameState.favor = Math.max(0, gameState.favor + penalty.value);
+					addLog('刹那后遗', '刹那亲和', `导师好感 ${oldVal}→${gameState.favor}`);
+				} else if (penalty.type === 'flash_social_penalty') {
+					const oldVal = gameState.social;
+					gameState.social = Math.max(0, gameState.social + penalty.value);
+					addLog('刹那后遗', '刹那魅力', `社交能力 ${oldVal}→${gameState.social}`);
+				}
+			});
+			// 移除已处理的刹那惩罚buff
+			gameState.buffs.temporary = gameState.buffs.temporary.filter(b => !b.applyNextMonth);
+
 			// ★★★ 贪求之富可敌国：在月初最先执行重置（属于重置类）★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
 				let shouldReset = false;
@@ -109,6 +129,21 @@
 			// ★★★ 人体工学椅效果（+SAN类）★★★
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
 				gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
+			}
+			// ★★★ 高级人体工学椅效果（+2 SAN）★★★
+			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san_2')) {
+				gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+			}
+			// ★★★ 电动沙发按摩椅效果（+10%已损失SAN，上取整）★★★
+			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san_lost_10')) {
+				const lostSan = gameState.sanMax - gameState.san;
+				const recovery = Math.ceil(lostSan * 0.1);
+				gameState.san = Math.min(gameState.sanMax, gameState.san + recovery);
+			}
+			// ★★★ 头悬梁锥刺股椅效果（+20%当前SAN，上取整）★★★
+			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san_current_20')) {
+				const recovery = Math.ceil(gameState.san * 0.2);
+				gameState.san = Math.min(gameState.sanMax, gameState.san + recovery);
 			}
 
 			// ★★★ 强身健体效果（+SAN类）★★★
@@ -521,8 +556,13 @@
 			checkResearchUnlock();
 		}
 
-		// ★★★ 新增：计算会议影响因子 ★★★
-		function getConferenceImpactFactor(conferenceInfo, grade) {
+		// ★★★ 新增：计算会议/期刊影响因子 ★★★
+		function getConferenceImpactFactor(conferenceInfo, grade, journalType) {
+			// ★★★ 期刊论文（Nature/子刊）固定影响因子1.0 ★★★
+			if (grade === 'S' || journalType === 'nature' || journalType === 'nature-sub') {
+				return 1.0;
+			}
+
 			// 如果没有统计数据，返回基础因子1.0
 			if (!gameState.submissionStats || !conferenceInfo) {
 				return 1.0;
@@ -627,55 +667,64 @@
 		function updateCitations() {
 			gameState.publishedPapers.forEach(paper => {
 				paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
-				
+
 				// 初始化小数累积字段
 				if (paper.pendingCitationFraction === undefined) {
 					paper.pendingCitationFraction = 0;
 				}
-				
-				// ★★★ 新计算方式 ★★★
-				// 基础增速 = 论文中稿分数（会随时间衰减）* 0.1
-				const baseScore = Math.max(0, paper.score - 2 * paper.monthsSincePublish);
-				let baseGrowth = baseScore * 0.1;
-				
-				// ★★★ 会议影响因子 ★★★
-				const impactFactor = getConferenceImpactFactor(paper.conferenceInfo, paper.grade);
-				
+
+				// ★★★ 初始化有效分数（首次使用中稿分数）★★★
+				if (paper.effectiveScore === undefined) {
+					paper.effectiveScore = paper.score;
+				}
+
+				// ★★★ 新计算方式：有效分数每月衰减当前值的5%（上取整）★★★
+				// 注意：院士转博觉醒和期刊"分数不衰减"只对未中稿论文生效，已发表论文的引用计算不受影响
+				const decay = Math.ceil(paper.effectiveScore * 0.05);
+				paper.effectiveScore = Math.max(0, paper.effectiveScore - decay);
+
+				// 基础增速 = 有效分数 * 0.1
+				let baseGrowth = paper.effectiveScore * 0.1;
+
+				// ★★★ 会议/期刊影响因子 ★★★
+				const impactFactor = getConferenceImpactFactor(paper.conferenceInfo, paper.grade, paper.journalType);
+
 				// ★★★ 推广倍率（加法效果）★★★
 				let promotionRate = 0;  // 额外倍率（从0开始累加）
-				
-				// 接收类型加成
+
+				// 接收类型加成（仅会议论文有效）
 				if (paper.acceptType === 'Oral') {
 					promotionRate += 0.5;  // oral提供50%倍率
 				} else if (paper.acceptType === 'Best Paper') {
 					promotionRate += 4.0;  // best paper提供400%倍率
 				}
-				
-				// 推广加成（原本是乘法，现在改为加法）
+
+				// 推广加成
 				if (paper.promotions?.arxiv) promotionRate += 0.25;
 				if (paper.promotions?.github) promotionRate += 0.5;
 				if (paper.promotions?.xiaohongshu) promotionRate += 0.25;
-				
-				// 同门合作加成（原本citationMultiplier是乘数，现在转为加成）
-				// citationMultiplier=2 表示×2，转换为+100%倍率
-				const fellowBonus = ((paper.citationMultiplier || 1) - 1) * 100 / 100;  // 转为百分比
-				promotionRate += fellowBonus;
-				
+
+				// 同门合作加成（期刊论文不享受，因为不是所有人都能中S类）
+				if (paper.grade !== 'S') {
+					const fellowBonus = ((paper.citationMultiplier || 1) - 1) * 100 / 100;
+					promotionRate += fellowBonus;
+				}
+
 				// 最终推广倍率 = 1 + 累加的所有加成
 				const promotionMultiplier = 1 + promotionRate;
-				
-				// 最终增速 = 基础增速 × 会议影响因子 × 推广倍率
+
+				// 最终增速 = 基础增速 × 影响因子 × 推广倍率
 				const finalGrowth = baseGrowth * impactFactor * promotionMultiplier;
-				
+
 				// 加上之前累积的小数部分
 				const totalGrowth = finalGrowth + paper.pendingCitationFraction;
-				
+
 				// 下取整得到本月实际增加的引用
 				const actualGain = Math.floor(totalGrowth);
-				
+
 				// 保存小数部分到下个月
 				paper.pendingCitationFraction = totalGrowth - actualGain;
-				
+
 				// 增加引用
 				if (actualGain > 0) {
 					paper.citations += actualGain;

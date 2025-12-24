@@ -189,6 +189,7 @@
 			'🎓 感谢游玩', '🤧 体弱多病', '🏅 三好学生',
 			'❤️‍🩹 爱惜生命', '💀 命悬一线', '🎤 K歌之王',
 			'💌 吾爱吾师', '👔 项目之王', '🙅 学会拒绝', '🃏 赌神转世',
+			'🎲 躲过一劫',
 		];
 
         // 结局名称映射
@@ -295,13 +296,14 @@
 			'👔 项目之王': '完成3次导师项目（横向或纵向）',
 			'🙅 学会拒绝': '拒绝过导师项目、审稿、指导本科生各1次',
 			'🃏 赌神转世': '在团建德州扑克中赢3次',
+			'🎲 躲过一劫': '数据丢失时没有正在进行的论文',
 		};
 
         // 商店物品
 		const shopItems = [
 			{ id: 'coffee', name: '冰美式', desc: 'SAN值+3', price: 2, monthlyOnce: true, boughtThisMonth: false },
 			{ id: 'gemini', name: 'Gemini订阅', desc: '本月想idea时SAN-1，分数+4', price: 2, monthlyOnce: true, boughtThisMonth: false },
-			{ id: 'gpt', name: 'GPT订阅', desc: '本月做实验时SAN-1，分数+4', price: 4, monthlyOnce: true, boughtThisMonth: false },
+			{ id: 'gpt', name: 'GPT订阅', desc: '本月做实验时SAN-1，分数+4', price: 3, monthlyOnce: true, boughtThisMonth: false },
 			{ id: 'claude', name: 'Claude订阅', desc: '本月写论文时SAN-1，分数+4', price: 3, monthlyOnce: true, boughtThisMonth: false },
 			{ id: 'gpu_rent', name: '租GPU服务器', desc: '本月做实验多做1次且分数+1', price: 2, once: false },  // ★★★ 修改：增加分数+1 ★★★
 			{ id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次且分数+1', price: 10, once: false },  // ★★★ 修改：价格12→10，增加分数+1 ★★★

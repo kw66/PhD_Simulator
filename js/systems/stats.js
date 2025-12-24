@@ -261,20 +261,23 @@
 			}
 		}
 
-		// 优化：使用计数器替代每次插入记录（大幅减少 egress）
+		// ★★★ 修复：同时插入site_visits（用于今日统计）和更新counters（用于总计）★★★
 		async function recordVisit() {
 			if (!supabase) return;
 			try {
-				// 使用 RPC 原子递增 PV 计数器
-				const { error: pvError } = await supabase.rpc('increment_counter', {
+				// ★★★ 1. 总是插入PV记录到site_visits（用于今日统计查询）★★★
+				const pvInsertPromise = supabase.from('site_visits').insert({ type: 'pv' });
+
+				// ★★★ 2. 同时尝试更新计数器（用于总计优化）★★★
+				const pvCounterPromise = supabase.rpc('increment_counter', {
 					counter_id: 'pv_total'
+				}).catch(err => {
+					console.warn('PV计数器更新失败（非致命）:', err);
 				});
 
-				if (pvError) {
-					// RPC 不可用时回退到原有方式
-					console.warn('PV计数器失败，回退到原有方式:', pvError);
-					await supabase.from('site_visits').insert({ type: 'pv' });
-				}
+				// 并行执行，但只等待insert完成
+				await pvInsertPromise;
+				console.log('✅ PV已记录');
 
 				// UV：每天每个用户只记录一次
 				const todayStr = getTodayDateString();
@@ -286,14 +289,17 @@
 				const isNewDay = lastUvDate !== todayStr;
 
 				if (isNewVisitor || isNewDay) {
-					const { error: uvError } = await supabase.rpc('increment_counter', {
+					// ★★★ 总是插入UV记录到site_visits ★★★
+					const uvInsertPromise = supabase.from('site_visits').insert({ type: 'uv' });
+
+					// 同时更新计数器
+					const uvCounterPromise = supabase.rpc('increment_counter', {
 						counter_id: 'uv_total'
+					}).catch(err => {
+						console.warn('UV计数器更新失败（非致命）:', err);
 					});
 
-					if (uvError) {
-						console.warn('UV计数器失败，回退到原有方式:', uvError);
-						await supabase.from('site_visits').insert({ type: 'uv' });
-					}
+					await uvInsertPromise;
 
 					localStorage.setItem(visitorKey, 'true');
 					localStorage.setItem(lastUvDateKey, todayStr);

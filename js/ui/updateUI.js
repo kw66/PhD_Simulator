@@ -690,12 +690,12 @@
 								${p.promotions?.xiaohongshu ? 'disabled' : ''}>
 								${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
 							</button>
-							<button class="btn ${p.promotions?.quantumbit ? '' : (p.grade === 'A' ? 'btn-warning' : '')}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || p.grade !== 'A' ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'quantumbit')" 
-								${p.promotions?.quantumbit || p.grade !== 'A' ? 'disabled' : ''}
-								title="${p.grade !== 'A' ? '仅A类论文可用' : ''}">
-								${p.promotions?.quantumbit ? '✓量子位' : (p.grade !== 'A' ? '量子位(仅A类)' : '量子位封面')}
+							<button class="btn ${p.promotions?.quantumbit ? '' : ((p.grade === 'A' || p.grade === 'S') ? 'btn-warning' : '')}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || (p.grade !== 'A' && p.grade !== 'S') ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'quantumbit')"
+								${p.promotions?.quantumbit || (p.grade !== 'A' && p.grade !== 'S') ? 'disabled' : ''}
+								title="${(p.grade !== 'A' && p.grade !== 'S') ? '仅A/S类论文可用' : '有效分数+25%中稿分'}">
+								${p.promotions?.quantumbit ? '✓量子位' : ((p.grade !== 'A' && p.grade !== 'S') ? '量子位(仅A/S)' : '量子位宣传')}
 							</button>
 						</div>
 					</div>
