@@ -66,7 +66,7 @@
                 },
                 salary: { master: 2, phd: 5 },  // 2=每月2元, 5=每月5元
                 researchResourceRange: [11, 14],
-                initialAffinityRange: [1, 2],
+                initialAffinityRange: [1, 3],
                 papersRange: [700, 900],      // 论文数范围
                 citationsRange: [70000, 90000] // 引用数范围
             },
@@ -104,7 +104,7 @@
                 },
                 salary: { master: 1.25, phd: 4 },  // 1.25=4,8,12月发2元
                 researchResourceRange: [7, 10],
-                initialAffinityRange: [3, 4],
+                initialAffinityRange: [2, 4],
                 papersRange: [250, 350],
                 citationsRange: [25000, 35000]
             },
@@ -123,7 +123,7 @@
                 },
                 salary: { master: 1.25, phd: 3 },  // 1.25=4,8,12月发2元
                 researchResourceRange: [5, 8],
-                initialAffinityRange: [4, 5],
+                initialAffinityRange: [3, 4],
                 papersRange: [80, 120],
                 citationsRange: [8000, 12000]
             },
@@ -142,7 +142,7 @@
                 },
                 salary: { master: 1, phd: 3 },
                 researchResourceRange: [3, 6],
-                initialAffinityRange: [5, 6],
+                initialAffinityRange: [3, 5],
                 papersRange: [40, 60],
                 citationsRange: [4000, 6000]
             }
@@ -336,9 +336,9 @@
 
         // 关系属性初始值范围
         const RELATIONSHIP_INITIAL_STATS = {
-            senior: { researchRange: [4, 12], affinity: 2 },
-            junior: { researchRange: [0, 6], affinity: 2 },
-            peer: { researchRange: [3, 9], affinity: 4 },
+            senior: { researchRange: [4, 12], affinityRange: [2, 3] },
+            junior: { researchRange: [0, 6], affinityRange: [2, 4] },
+            peer: { researchRange: [3, 9], affinityRange: [3, 5] },
             lover: { researchRange: [3, 9], intimacy: 10 }
         };
 
@@ -381,7 +381,10 @@
                     const [min, max] = initialStats.researchRange;
                     research = Math.floor(Math.random() * (max - min + 1)) + min;
                 }
-                if (initialStats.affinity !== undefined) {
+                if (initialStats.affinityRange) {
+                    const [min, max] = initialStats.affinityRange;
+                    affinity = Math.floor(Math.random() * (max - min + 1)) + min;
+                } else if (initialStats.affinity !== undefined) {
                     affinity = initialStats.affinity;
                 }
                 if (initialStats.intimacy !== undefined) {
@@ -1307,20 +1310,18 @@
 
         // 显示论文选择弹窗
         function showPaperSelectionModal(person, completionType) {
-            // 筛选符合条件的论文
+            // 筛选符合条件的论文（所有未投稿的论文都可以选择）
             let eligiblePapers = [];
 
             if (completionType === 'advisor' || completionType === 'lover') {
-                // 导师和恋人：idea/实验/写作都不为0的未投稿论文
+                // 导师和恋人：所有未投稿论文
                 eligiblePapers = gameState.papers.filter((p, idx) =>
-                    p && !p.reviewing && p.ideaScore > 0 && p.expScore > 0 && p.writeScore > 0
+                    p && !p.reviewing
                 ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             } else if (completionType === 'fellow') {
-                // 同门：对应项不为0
-                const targetField = person.taskType === 'idea' ? 'ideaScore' :
-                                   person.taskType === 'experiment' ? 'expScore' : 'writeScore';
+                // 同门：所有未投稿论文
                 eligiblePapers = gameState.papers.filter((p, idx) =>
-                    p && !p.reviewing && p[targetField] > 0
+                    p && !p.reviewing
                 ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             }
 

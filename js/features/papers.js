@@ -175,6 +175,73 @@
 			return tooltip;
 		}
 
+		/**
+		 * 显示会议信息弹窗
+		 */
+		function showConferenceInfoModal(month, grade, isReversed) {
+			const info = getConferenceStatsForDisplay(month, grade, isReversed);
+			const gradeColors = { 'A': '#e74c3c', 'B': '#3498db', 'C': '#2ecc71' };
+			const gradeColor = gradeColors[grade] || 'var(--primary-color)';
+
+			let personalityHtml = '';
+			if (typeof getBaseConferencePersonality === 'function') {
+				const personality = getBaseConferencePersonality(month, grade);
+				const personalityDesc = getConferencePersonalityDescription(personality);
+				personalityHtml = `
+					<div style="margin-bottom:12px;padding:8px 12px;background:rgba(155,89,182,0.1);border-radius:6px;border-left:3px solid #9b59b6;">
+						<span style="font-size:0.9rem;">🎭 <strong>性格:</strong> ${personalityDesc}</span>
+					</div>
+				`;
+			}
+
+			let statsHtml = '';
+			if (info.hasEnoughData) {
+				statsHtml = `
+					<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+						<div style="padding:10px;background:var(--light-bg);border-radius:8px;text-align:center;">
+							<div style="font-size:0.75rem;color:var(--text-secondary);">📊 投稿数</div>
+							<div style="font-size:1.2rem;font-weight:700;color:var(--text-primary);">${info.submissions}</div>
+						</div>
+						<div style="padding:10px;background:var(--light-bg);border-radius:8px;text-align:center;">
+							<div style="font-size:0.75rem;color:var(--text-secondary);">✅ 录用率</div>
+							<div style="font-size:1.2rem;font-weight:700;color:var(--success-color);">${(info.acceptRate * 100).toFixed(1)}%</div>
+						</div>
+						<div style="padding:10px;background:var(--light-bg);border-radius:8px;text-align:center;">
+							<div style="font-size:0.75rem;color:var(--text-secondary);">📈 影响因子</div>
+							<div style="font-size:1.2rem;font-weight:700;color:var(--primary-color);">${info.impactFactor.toFixed(2)}</div>
+						</div>
+						<div style="padding:10px;background:var(--light-bg);border-radius:8px;text-align:center;">
+							<div style="font-size:0.75rem;color:var(--text-secondary);">🎯 中稿均分</div>
+							<div style="font-size:1.2rem;font-weight:700;color:var(--warning-color);">${info.avgAcceptedScore}</div>
+						</div>
+					</div>
+				`;
+			} else {
+				statsHtml = `
+					<div style="margin-top:12px;padding:15px;background:var(--light-bg);border-radius:8px;text-align:center;color:var(--text-secondary);">
+						<i class="fas fa-chart-bar" style="font-size:1.5rem;margin-bottom:8px;display:block;opacity:0.5;"></i>
+						数据不足，暂无统计
+					</div>
+				`;
+			}
+
+			const content = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="display:inline-block;padding:4px 12px;background:${gradeColor}22;color:${gradeColor};border-radius:20px;font-weight:700;font-size:0.85rem;margin-bottom:8px;">
+						${grade}类会议
+					</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);">${info.fullName}</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">${info.year}</div>
+				</div>
+				${personalityHtml}
+				${statsHtml}
+			`;
+
+			showModal(`📅 会议详情`, content, [
+				{ text: '关闭', class: 'btn-primary', action: closeModal }
+			]);
+		}
+
         // ==================== 论文工作站 ====================
 		
 		
@@ -188,18 +255,13 @@
 			const confB = getConferenceInfo(gameState.month, 'B', gameState.year);
 			const confC = getConferenceInfo(gameState.month, 'C', gameState.year);
 
-			// 获取tooltip信息
-			const tooltipA = generateConferenceTooltip(gameState.month, 'A', gameState.isReversed);
-			const tooltipB = generateConferenceTooltip(gameState.month, 'B', gameState.isReversed);
-			const tooltipC = generateConferenceTooltip(gameState.month, 'C', gameState.isReversed);
-
-			// 在所有槽之前添加统一的会议信息栏
+			// 在所有槽之前添加统一的会议信息栏（点击显示弹窗）
 			html += `<div class="conference-info-bar">
 				<div class="conference-info-title"><i class="fas fa-calendar-alt"></i> 本月可投会议</div>
 				<div class="conference-info-list">
-					<span class="conf-item conf-a" title="${tooltipA.replace(/"/g, '&quot;')}">A: ${confA.name}</span>
-					<span class="conf-item conf-b" title="${tooltipB.replace(/"/g, '&quot;')}">B: ${confB.name}</span>
-					<span class="conf-item conf-c" title="${tooltipC.replace(/"/g, '&quot;')}">C: ${confC.name}</span>
+					<span class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})" style="cursor:pointer;">A: ${confA.name}</span>
+					<span class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})" style="cursor:pointer;">B: ${confB.name}</span>
+					<span class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})" style="cursor:pointer;">C: ${confC.name}</span>
 				</div>
 			</div>`;
 

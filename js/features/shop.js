@@ -409,6 +409,8 @@
 
 			if (triggered.length > 0) {
 				addLog('护身符', `${triggered.join('、')}生效`, '危机解除！');
+				// ★★★ 护身符生效后立即刷新UI显示 ★★★
+				updateAllUI();
 			}
 
 			return triggered;
