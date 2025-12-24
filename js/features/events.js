@@ -1,15 +1,21 @@
 ﻿        // ==================== 寒假暑假事件 ====================
         function triggerWinterVacationEvent() {
-            showModal('❄️ 寒假', 
+			// ★★★ 修改：恢复已损失SAN的10%（上取整）★★★
+			const lostSan = gameState.sanMax - gameState.san;
+			const sanRecovery = Math.ceil(lostSan * 0.1);
+			const finalSan = Math.min(gameState.sanMax, gameState.san + sanRecovery);
+
+            showModal('❄️ 寒假',
                 `<p>寒假到了！回家过年，收到了长辈的压岁钱，好好休息一下吧～</p>
+				 <p style="font-size:0.85rem;color:var(--text-secondary);">已损失SAN: ${lostSan}，恢复10%: +${sanRecovery}</p>
                  <div style="text-align:center;font-size:2rem;margin:15px 0;">🧧🏠🎆</div>`,
-                [{ 
-                    text: '🎊 新年快乐！', 
-                    class: 'btn-accent', 
+                [{
+                    text: '🎊 新年快乐！',
+                    class: 'btn-accent',
 					action: () => {
 						gameState.gold += 1;
-						gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-						addLog('❄️ 寒假', '回家过年', '压岁钱+1，SAN值+2');
+						gameState.san = finalSan;
+						addLog('❄️ 寒假', '回家过年', `压岁钱+1，SAN值+${sanRecovery}（恢复已损失的10%）`);
 						closeModal();
 						updateAllUI();
 					}
@@ -18,15 +24,21 @@
         }
 
         function triggerSummerVacationEvent() {
-            showModal('☀️ 暑假', 
+			// ★★★ 修改：恢复已损失SAN的20%（上取整）★★★
+			const lostSan = gameState.sanMax - gameState.san;
+			const sanRecovery = Math.ceil(lostSan * 0.2);
+			const finalSan = Math.min(gameState.sanMax, gameState.san + sanRecovery);
+
+            showModal('☀️ 暑假',
                 `<p>暑假来啦！虽然科研不能停，但可以稍微放松一下，调整状态～</p>
+				 <p style="font-size:0.85rem;color:var(--text-secondary);">已损失SAN: ${lostSan}，恢复20%: +${sanRecovery}</p>
                  <div style="text-align:center;font-size:2rem;margin:15px 0;">🏖️🍉🌴</div>`,
-                [{ 
-                    text: '😎 好好休息！', 
-                    class: 'btn-success', 
+                [{
+                    text: '😎 好好休息！',
+                    class: 'btn-success',
 					action: () => {
-						gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
-						addLog('☀️ 暑假', '暑假休息', 'SAN值+3');
+						gameState.san = finalSan;
+						addLog('☀️ 暑假', '暑假休息', `SAN值+${sanRecovery}（恢复已损失的20%）`);
 						closeModal();
 						updateAllUI();
 					}
@@ -241,7 +253,31 @@
                 return;
             }
 
-			// ★★★ 新增：感冒概率调整（根据连续低SAN月数）★★★
+			// ★★★ 新增：7月固定事件池（合作类事件）★★★
+			const julyEvents = [1, 10, 11, 14];
+			if (gameState.month === 7) {
+				// 7月只从合作类事件中选择
+				availableEvents = availableEvents.filter(e => julyEvents.includes(e));
+				// 如果没有可用的合作类事件，跳过本次随机事件
+				if (availableEvents.length === 0) {
+					addLog('随机事件', '7月合作事件已触发完毕', '等待下个月');
+					return;
+				}
+			}
+
+			// ★★★ 新增：前3次随机事件保护机制 ★★★
+			const protectedEvents = [3, 12, 13, 16]; // 感冒、抢一作、服务器坏、数据丢失
+			gameState.totalRandomEventCount = gameState.totalRandomEventCount || 0;
+			if (gameState.totalRandomEventCount < 3) {
+				// 前3次随机事件排除危险事件
+				availableEvents = availableEvents.filter(e => !protectedEvents.includes(e));
+				if (availableEvents.length === 0) {
+					addLog('随机事件', '本年度事件已触发完毕', '等待新的一年');
+					return;
+				}
+			}
+
+			// ★★★ 感冒概率调整（根据连续低SAN月数）★★★
 			const lowSanMonths = gameState.consecutiveLowSanMonths || 0;
 			if (lowSanMonths > 0 && availableEvents.includes(3)) {
 				// 增加感冒事件的权重：基础1倍 + 每连续1个月额外1倍
@@ -253,6 +289,9 @@
 
             const eventIndex = Math.floor(Math.random() * availableEvents.length);
             const eventId = availableEvents[eventIndex];
+
+			// ★★★ 新增：累计随机事件触发次数 ★★★
+			gameState.totalRandomEventCount++;
 			// ★★★ 新增：检查是否抵抗感冒（今年打过羽毛球）★★★
 			if (eventId === 3 && gameState.badmintonYear === gameState.year) {
 				// 从可用池中移除感冒事件

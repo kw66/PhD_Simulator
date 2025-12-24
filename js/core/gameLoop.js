@@ -335,15 +335,24 @@
 						renderPaperSlots();
 						return;
 					} else if (gameState.month === 5) {
-						triggerWinterVacationEvent();
+						// ★★★ 修改：延毕年（第6年）没有寒假事件 ★★★
+						if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+							triggerWinterVacationEvent();
+						}
 					} else if (gameState.month === 7) {
 						triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
 					} else if (gameState.month === 9) {
 						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 					} else if (gameState.month === 11) {
-						triggerSummerVacationEvent();
+						// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
+						if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+							triggerSummerVacationEvent();
+						}
 					} else if (gameState.month === 1 && gameState.year >= 2) {
-						triggerScholarshipEvent();
+						// ★★★ 修改：延毕年（第6年）没有奖学金事件 ★★★
+						if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+							triggerScholarshipEvent();
+						}
 					} else if (gameState.month === 2) {
 						triggerTeachersDayEvent();
 					} else if (gameState.month % 2 === 0) {
@@ -384,15 +393,24 @@
 					return;
 				}
 			} else if (gameState.month === 5) {
-				triggerWinterVacationEvent();
+				// ★★★ 修改：延毕年（第6年）没有寒假事件 ★★★
+				if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+					triggerWinterVacationEvent();
+				}
 			} else if (gameState.month === 7) {
 				triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
 			} else if (gameState.month === 9) {
 				triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 			} else if (gameState.month === 11) {
-				triggerSummerVacationEvent();
+				// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
+				if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+					triggerSummerVacationEvent();
+				}
 			} else if (gameState.month === 1 && gameState.year >= 2) {
-				triggerScholarshipEvent();
+				// ★★★ 修改：延毕年（第6年）没有奖学金事件 ★★★
+				if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
+					triggerScholarshipEvent();
+				}
 			} else if (gameState.month === 2) {
 				triggerTeachersDayEvent();
 			} else if (gameState.month % 2 === 0) {
@@ -671,9 +689,14 @@
             if (gameState.pendingPhDChoice) {
                 return;
             }
-            
+
+            // ★★★ 新增：延毕发Nature选择等待中 ★★★
+            if (gameState.pendingNatureExtension) {
+                return;
+            }
+
             const maxMonths = gameState.maxYears * 12;
-            
+
 			if (gameState.degree === 'master') {
 				// ★★★ 新增：检查本年度是否已做过转博选择 ★★★
 				if (!gameState.phdChoiceMadeThisYear) {
@@ -685,7 +708,19 @@
 					}
 				}
 			}
-            
+
+            // ★★★ 新增：博士第5年第12月延毕发Nature选择 ★★★
+            if (gameState.degree === 'phd' && gameState.year === 5 && gameState.month === 12 && !gameState.natureExtensionChoiceMade) {
+                const gradRequirements = getAdvisorRequirements();
+                const hasNaturePaper = (gameState.paperNature || 0) >= 1 || (gameState.paperNatureSub || 0) >= 1;
+                const meetsGradRequirement = gameState.totalScore >= gradRequirements.phdGrad;
+
+                if (hasNaturePaper && meetsGradRequirement) {
+                    showNatureExtensionModal();
+                    return;
+                }
+            }
+
             // ★★★ 修改：毕业检查使用导师要求 ★★★
             if (gameState.totalMonths >= maxMonths) {
                 const gradRequirements = getAdvisorRequirements();
@@ -705,6 +740,56 @@
                 return;
             }
         }
+
+		// ★★★ 新增：延毕发Nature选择弹窗 ★★★
+		function showNatureExtensionModal() {
+			gameState.pendingNatureExtension = true;
+
+			const hasNature = (gameState.paperNature || 0) >= 1;
+			const hasNatureSub = (gameState.paperNatureSub || 0) >= 1;
+			const paperType = hasNature ? 'Nature正刊' : 'Nature子刊';
+
+			showModal('🏆 导师挽留',
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:3rem;margin-bottom:10px;">🔬</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">导师：我有个想法...</div>
+				</div>
+				<div style="background:linear-gradient(135deg,rgba(155,89,182,0.1),rgba(142,68,173,0.1));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(155,89,182,0.3);">
+					<p style="margin-bottom:10px;">你已经发表过<strong style="color:#9b59b6;">${paperType}</strong>，展现了顶尖的科研实力！</p>
+					<p style="margin-bottom:10px;">导师希望你能<strong>延毕一年</strong>，集全组之力冲击<strong style="color:#b8860b;">Nature正刊</strong>！</p>
+					<p style="font-size:0.85rem;color:var(--text-secondary);">这将是载入史册的成就！</p>
+				</div>
+				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:15px;">
+					<div style="font-size:0.85rem;color:var(--warning-color);margin-bottom:8px;">⚠️ 延毕年特殊规则：</div>
+					<ul style="font-size:0.8rem;color:var(--text-secondary);margin:0;padding-left:20px;">
+						<li>游戏时间延长1年（共6年）</li>
+						<li>延毕年<strong>没有</strong>奖学金评定</li>
+						<li>延毕年<strong>没有</strong>寒暑假事件</li>
+						<li>全力冲击Nature！</li>
+					</ul>
+				</div>`,
+				[
+					{ text: '🎓 按时毕业', class: 'btn-info', action: () => {
+						gameState.pendingNatureExtension = false;
+						gameState.natureExtensionChoiceMade = true;
+						addLog('导师挽留', '选择按时毕业', '婉拒了导师的挽留');
+						closeModal();
+						// 触发学年总结，然后正常毕业
+						setTimeout(() => triggerYearEndSummaryEvent(), 200);
+					}},
+					{ text: '🔬 延毕冲Nature！', class: 'btn-primary', action: () => {
+						gameState.pendingNatureExtension = false;
+						gameState.natureExtensionChoiceMade = true;
+						gameState.isNatureExtensionYear = true;  // 标记延毕年
+						gameState.maxYears = 6;  // 延长1年
+						addLog('导师挽留', '选择延毕冲击Nature', '游戏时间延长至6年，全力冲击Nature！');
+						closeModal();
+						// 触发学年总结
+						setTimeout(() => triggerYearEndSummaryEvent(), 200);
+					}}
+				]
+			);
+		}
 
 		// ★★★ 新增：转博未达标弹窗 ★★★
 		function showMissedPhDOpportunityModal(requirements) {

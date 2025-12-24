@@ -732,12 +732,13 @@
 				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
 				const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
 
-				// ★★★ 新增：冰美式动态描述 ★★★
+				// ★★★ 修改：冰美式动态描述（前15杯不变，第16杯开始提升）★★★
 				let itemDesc = item.desc;
 				if (item.id === 'coffee') {
 					const count = gameState.coffeeBoughtCount || 0;
 					const currentBonus = 3 + Math.floor(count / 15);
-					const nextMilestone = (Math.floor(count / 15) + 1) * 15;
+					const currentTier = Math.floor(count / 15);
+					const nextMilestone = (currentTier + 1) * 15 + 1;  // 16, 31, 46...
 					const nextBonus = currentBonus + 1;
 
 					itemDesc = `SAN值+${currentBonus}`;
@@ -845,12 +846,19 @@
 								break;
 							case 'gpu_buy':
 								gameState.gpuServersBought--;
-								// 移除一个GPU buff
-								const gpuBuffIndex = gameState.buffs.permanent.findIndex(b => 
+								// 移除一个GPU exp_times buff
+								const gpuBuffIndex = gameState.buffs.permanent.findIndex(b =>
 									b.type === 'exp_times' && b.name === '每次做实验多做1次'
 								);
 								if (gpuBuffIndex !== -1) {
 									gameState.buffs.permanent.splice(gpuBuffIndex, 1);
+								}
+								// ★★★ 新增：同时移除一个GPU exp_bonus buff ★★★
+								const gpuBonusIndex = gameState.buffs.permanent.findIndex(b =>
+									b.type === 'exp_bonus' && b.name === '每次做实验分数+1'
+								);
+								if (gpuBonusIndex !== -1) {
+									gameState.buffs.permanent.splice(gpuBonusIndex, 1);
 								}
 								break;
 						}
@@ -967,7 +975,9 @@
                     break;
                 case 'gpu_buy':
                     gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true });
-                    result += '，获得永久buff-每次做实验多做1次';
+                    // ★★★ 新增：购买GPU服务器增加实验分数+1 ★★★
+                    gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
+                    result += '，获得永久buff-每次做实验多做1次且分数+1';
                     break;
                 case 'keyboard':
                     item.bought = true;
@@ -982,7 +992,8 @@
 				case 'coffee':
 					item.boughtThisMonth = true;
 					gameState.coffeeBoughtCount = (gameState.coffeeBoughtCount || 0) + 1;
-					const coffeeBonus = 3 + Math.floor(gameState.coffeeBoughtCount / 15);
+					// ★★★ 修改：前15杯不变，第16杯开始提升 ★★★
+					const coffeeBonus = 3 + Math.floor((gameState.coffeeBoughtCount - 1) / 15);
 					gameState.san = Math.min(gameState.sanMax, gameState.san + coffeeBonus);
 					result += `，SAN值+${coffeeBonus}`;
 					break;
@@ -1036,7 +1047,15 @@
 						permanent: false,
 						thisMonthOnly: true
 					});
-					result += '，获得本月buff-做实验多做1次';
+					// ★★★ 新增：租GPU服务器增加本月做实验分数+1 ★★★
+					gameState.buffs.temporary.push({
+						type: 'exp_bonus',
+						name: '本月做实验分数+1',
+						value: 1,
+						permanent: false,
+						thisMonthOnly: true
+					});
+					result += '，获得本月buff-做实验多做1次且分数+1';
 					break;
             }
 

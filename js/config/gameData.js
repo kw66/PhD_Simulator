@@ -303,8 +303,8 @@
 			{ id: 'gemini', name: 'Gemini订阅', desc: '本月想idea时SAN-1，分数+4', price: 2, monthlyOnce: true, boughtThisMonth: false },
 			{ id: 'gpt', name: 'GPT订阅', desc: '本月做实验时SAN-1，分数+4', price: 4, monthlyOnce: true, boughtThisMonth: false },
 			{ id: 'claude', name: 'Claude订阅', desc: '本月写论文时SAN-1，分数+4', price: 3, monthlyOnce: true, boughtThisMonth: false },
-			{ id: 'gpu_rent', name: '租GPU服务器', desc: '本月做实验多做1次', price: 2, once: false },
-			{ id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次', price: 12, once: false },
+			{ id: 'gpu_rent', name: '租GPU服务器', desc: '本月做实验多做1次且分数+1', price: 2, once: false },  // ★★★ 修改：增加分数+1 ★★★
+			{ id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次且分数+1', price: 10, once: false },  // ★★★ 修改：价格12→10，增加分数+1 ★★★
 			{ id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
 			{ id: 'keyboard', name: '机械键盘', desc: '永久buff-写论文变为SAN-3', price: 8, once: true, bought: false },
 			{ id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false }

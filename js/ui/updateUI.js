@@ -706,10 +706,16 @@
         function getActionCosts() {
             const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
             const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-            
+
+            // ★★★ 修改：计算动态SAN消耗和金钱奖励（1-8次基础，9次起每8次提升1档）★★★
+            const nextWorkCount = (gameState.workCount || 0) + 1;
+            const workTier = Math.floor((nextWorkCount - 1) / 8);
+            const workSan = -(5 + workTier);  // -5, -6, -7...
+            const workGold = 2 + workTier;    // 2, 3, 4...
+
             return {
                 read: { san: has4K ? -1 : -2 },
-                work: { san: -5, gold: 2 },
+                work: { san: workSan, gold: workGold },
                 idea: { san: -2 },
                 experiment: { san: -3 },
                 write: { san: hasKeyboard ? -3 : -4 }
@@ -871,13 +877,14 @@
 		}
 		// ==================== 显示完整事件日历 ====================
 		function showFullCalendar() {
-			const maxYears = 5; // 显示5年
-			
+			// ★★★ 修改：始终显示6年（含可选延毕年）★★★
+			const maxYears = 6;
+
 			// 游戏月份转现实月份
 			function gameMonthToRealMonth(gameMonth) {
 				return ((gameMonth - 1 + 8) % 12) + 1;
 			}
-			
+
 			// 获取月份的固定事件
 			function getMonthEvent(year, month) {
 				const events = [];
@@ -887,8 +894,15 @@
 					events.push({ icon: '👨‍🏫', name: '选择导师', desc: '入学第一件事：选择你的导师', color: 'rgba(108,92,231,0.25)' });
 				}
 
+				// ★★★ 修改：第6年（延毕年）没有寒暑假和奖学金 ★★★
+				const isYear6 = year === 6;
+
 				if (month === 5) {
-					events.push({ icon: '❄️', name: '寒假', desc: '回家过年，压岁钱+1，SAN+2', color: 'rgba(116,185,255,0.25)' });
+					if (isYear6) {
+						events.push({ icon: '🔬', name: '全力科研', desc: '延毕年没有寒假，专心冲击Nature', color: 'rgba(155,89,182,0.25)' });
+					} else {
+						events.push({ icon: '❄️', name: '寒假', desc: '回家过年，压岁钱+1，SAN+2', color: 'rgba(116,185,255,0.25)' });
+					}
 				}
 				if (month === 9) {
 					// ★★★ 新增：CCIG事件 ★★★
@@ -897,27 +911,41 @@
 					events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
 				}
 				if (month === 11) {
-					events.push({ icon: '☀️', name: '暑假', desc: '暑假休息，SAN+3', color: 'rgba(253,203,110,0.25)' });
+					if (isYear6) {
+						events.push({ icon: '🔬', name: '全力科研', desc: '延毕年没有暑假，专心冲击Nature', color: 'rgba(155,89,182,0.25)' });
+					} else {
+						events.push({ icon: '☀️', name: '暑假', desc: '暑假休息，SAN+3', color: 'rgba(253,203,110,0.25)' });
+					}
 				}
 				if (month === 1 && year >= 2) {
-					const req = { 2: 1, 3: 3, 4: 6, 5: 9 }[year] || 9;
-					const reward = { 2: 5, 3: 5, 4: 8, 5: 8 }[year] || 8;
-					events.push({ icon: '🎓', name: '奖学金', desc: `要求科研分≥${req}，奖励${reward}金`, color: 'rgba(108,92,231,0.25)' });
+					if (isYear6) {
+						events.push({ icon: '🔬', name: '全力科研', desc: '延毕年没有奖学金评定', color: 'rgba(155,89,182,0.25)' });
+					} else {
+						const req = { 2: 1, 3: 3, 4: 6, 5: 9 }[year] || 9;
+						const reward = { 2: 5, 3: 5, 4: 8, 5: 8 }[year] || 8;
+						events.push({ icon: '🎓', name: '奖学金', desc: `要求科研分≥${req}，奖励${reward}金`, color: 'rgba(108,92,231,0.25)' });
+					}
 				}
 				if (month === 2) {
 					events.push({ icon: '🎁', name: '教师节', desc: '可选择送礼物给导师', color: 'rgba(253,121,168,0.25)' });
 				}
 				if (month === 12) {
 					events.push({ icon: '📅', name: '学年总结', desc: '回顾这一年的经历', color: 'rgba(162,155,254,0.25)' });
-					
+
 					// 转博判断
 					if (year === 2) {
-						events.push({ icon: '🎓', name: '转博机会', desc: '科研分≥2可选择转博', color: 'rgba(0,184,148,0.25)' });
+						events.push({ icon: '🎓', name: '转博机会', desc: '科研分达标可选择转博', color: 'rgba(0,184,148,0.25)' });
 					} else if (year === 3) {
-						events.push({ icon: '🎓', name: '硕士毕业/转博', desc: '科研分≥1毕业，≥3可转博', color: 'rgba(0,184,148,0.25)' });
+						events.push({ icon: '🎓', name: '硕士毕业/转博', desc: '达标毕业，高分可转博', color: 'rgba(0,184,148,0.25)' });
+					} else if (year === 5) {
+						// ★★★ 博士第5年12月：毕业或延毕选择 ★★★
+						events.push({ icon: '🏆', name: '博士毕业/延毕', desc: '发过Nature可选择延毕冲刺', color: 'rgba(184,134,11,0.25)' });
+					} else if (year === 6) {
+						// ★★★ 第6年：博士毕业 ★★★
+						events.push({ icon: '🎓', name: '博士毕业', desc: '延毕年结束，顺利博士毕业', color: 'rgba(0,184,148,0.25)' });
 					}
 				}
-				
+
 				// ★★★ 第7月：随机事件 ★★★
 				if (month === 7) {
 					events.push({ icon: '🎲', name: '随机事件', desc: '可能遇到各种随机事件', color: 'rgba(0,184,148,0.2)' });
@@ -927,7 +955,7 @@
 				if (month % 2 === 0 && month !== 2 && month !== 12) {
 					events.push({ icon: '🎲', name: '随机事件', desc: '可能遇到各种随机事件', color: 'rgba(0,184,148,0.2)' });
 				}
-				
+
 				return events;
 			}
 			
@@ -959,9 +987,11 @@
 				// 年份标题
 				let yearLabel = `第${year}年`;
 				if (year <= 3) yearLabel += '（硕士）';
-				if (year >= 4) yearLabel += '（博士）';
+				if (year >= 4 && year <= 5) yearLabel += '（博士）';
+				if (year === 6) yearLabel += '（可选延毕）';  // ★★★ 修改：可选延毕年 ★★★
 				if (year === 3) yearLabel += ' / 硕士毕业年';
 				if (year === 5) yearLabel += ' / 博士毕业年';
+				if (year === 6) yearLabel += ' / 冲刺Nature';  // ★★★ 延毕年目标 ★★★
 				
 				html += `
 				<div style="margin-bottom:15px;padding:12px;background:${yearBg};border-radius:10px;border:${yearBorder};">
@@ -1027,6 +1057,7 @@
 					<span style="padding:2px 6px;background:rgba(162,155,254,0.25);border-radius:4px;">📅 学年总结</span>
 					<span style="padding:2px 6px;background:rgba(0,184,148,0.25);border-radius:4px;">🎓 转博/毕业</span>
 					<span style="padding:2px 6px;background:rgba(0,184,148,0.2);border-radius:4px;">🎲 随机事件</span>
+					<span style="padding:2px 6px;background:rgba(155,89,182,0.25);border-radius:4px;">🔬 延毕年</span>
 				</div>
 				<div style="margin-top:8px;color:var(--text-secondary);">
 					<div>• <strong>x月（y月）</strong>：学年第x月（现实y月）</div>
@@ -1035,8 +1066,9 @@
 				</div>
 			</div>
 			`;
-			
-			showModal('📅 完整事件日历（5年）', html, [
+
+			// ★★★ 修改：固定显示6年 ★★★
+			showModal('📅 完整事件日历（6年）', html, [
 				{ text: '关闭', class: 'btn-primary', action: closeModal }
 			]);
 		}

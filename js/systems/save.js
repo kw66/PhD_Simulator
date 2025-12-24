@@ -274,6 +274,10 @@
                 statsLocked: gameState.statsLocked,
                 
                 pendingPhDChoice: gameState.pendingPhDChoice || false,
+                // ★★★ 新增：延毕发Nature相关字段 ★★★
+                pendingNatureExtension: gameState.pendingNatureExtension || false,
+                natureExtensionChoiceMade: gameState.natureExtensionChoiceMade || false,
+                isNatureExtensionYear: gameState.isNatureExtensionYear || false,
                 pendingConference: gameState.pendingConference || null,
                 enterpriseCount: gameState.enterpriseCount || 0,
                 ailabInternship: gameState.ailabInternship || false,
@@ -487,6 +491,10 @@
                             coffeeBoughtCount: save.coffeeBoughtCount || 0,
                             
                             pendingPhDChoice: save.pendingPhDChoice || false,
+                            // ★★★ 新增：延毕发Nature相关字段 ★★★
+                            pendingNatureExtension: save.pendingNatureExtension || false,
+                            natureExtensionChoiceMade: save.natureExtensionChoiceMade || false,
+                            isNatureExtensionYear: save.isNatureExtensionYear || false,
                             pendingConference: save.pendingConference || null,
 
                             isReversed: save.isReversed === true,
@@ -791,6 +799,10 @@
 				statsLocked: gameState.statsLocked,
 
 				pendingPhDChoice: gameState.pendingPhDChoice || false,
+				// ★★★ 新增：延毕发Nature相关字段 ★★★
+				pendingNatureExtension: gameState.pendingNatureExtension || false,
+				natureExtensionChoiceMade: gameState.natureExtensionChoiceMade || false,
+				isNatureExtensionYear: gameState.isNatureExtensionYear || false,
 				pendingConference: gameState.pendingConference || null,
 				enterpriseCount: gameState.enterpriseCount || 0,
 				ailabInternship: gameState.ailabInternship || false,
@@ -1097,6 +1109,10 @@
 				coffeeBoughtCount: save.coffeeBoughtCount || 0,
 
 				pendingPhDChoice: save.pendingPhDChoice || false,
+				// ★★★ 新增：延毕发Nature相关字段 ★★★
+				pendingNatureExtension: save.pendingNatureExtension || false,
+				natureExtensionChoiceMade: save.natureExtensionChoiceMade || false,
+				isNatureExtensionYear: save.isNatureExtensionYear || false,
 				pendingConference: save.pendingConference || null,
 
 				isReversed: save.isReversed === true,

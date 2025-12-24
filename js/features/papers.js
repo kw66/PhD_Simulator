@@ -778,17 +778,24 @@
 			// ★★★ 修改：增加行动计数 ★★★
 			gameState.actionCount++;
 			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
-			
-			gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+1', value: 1, permanent: false });
 			gameState.readCount++;
+
+			// ★★★ 修改：每看论文5次，idea bonus效果+1（1-5次基础，6-10次+1）★★★
+			const ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 5);
+			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次想idea分数+${ideaBonus}`, value: ideaBonus, permanent: false });
+
+			// ★★★ 新增：计算下次提升的阈值 ★★★
+			const currentTier = Math.floor((gameState.readCount - 1) / 5);
+			const nextMilestone = (currentTier + 1) * 5 + 1;
+			const nextBonus = ideaBonus + 1;
 
 			let result = `SAN值-${actualSanCost}`;
 			if (has4K) result += '（4K显示器生效）';
 			if (actualSanCost !== baseSanCost) {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
-			result += '，获得临时buff：下次想idea分数+1';
-			
+			result += `，获得临时buff：下次想idea分数+${ideaBonus}（${gameState.readCount}/${nextMilestone}次时+${nextBonus}）`;
+
 			// ★★★ 新增：显示行动次数 ★★★
 			if (gameState.actionLimit > 1) {
 				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
@@ -807,41 +814,50 @@
 		function partTimeJob() {
 			// ★★★ 修改：检查行动次数 ★★★
 			if (gameState.actionCount >= gameState.actionLimit) {
-				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
-			const baseSanCost = 5;
+
+			// ★★★ 修改：先计算下次打工的档位，SAN消耗和金钱奖励都随档位提升 ★★★
+			const nextWorkCount = (gameState.workCount || 0) + 1;
+			const currentTier = Math.floor((nextWorkCount - 1) / 8);  // 1-8次=0档, 9-16次=1档...
+			const baseSanCost = 5 + currentTier;  // 5, 6, 7, 8...
+			const goldReward = 2 + currentTier;   // 2, 3, 4, 5...
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-			
+
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost 
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+				const tipText = actualSanCost !== baseSanCost
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText, 
+				showModal('❌ 操作失败', tipText,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			// ★★★ 修改：增加行动计数 ★★★
 			gameState.actionCount++;
 			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
-			gameState.workCount = (gameState.workCount || 0) + 1;
-			
+			gameState.workCount = nextWorkCount;
+
+			// ★★★ 计算下次提升的阈值（9, 17, 25...）★★★
+			const nextMilestone = (currentTier + 1) * 8 + 1;
+			const nextGold = goldReward + 1;
+			const nextSan = baseSanCost + 1;
+
 			let result = `SAN值-${actualSanCost}`;
 			if (actualSanCost !== baseSanCost) {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
-			result += '，金钱+2';
-			
+			result += `，金钱+${goldReward}（${gameState.workCount}/${nextMilestone}次时：SAN-${nextSan},金+${nextGold}）`;
+
 			// ★★★ 新增：显示行动次数 ★★★
 			if (gameState.actionLimit > 1) {
 				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
 			}
-			
+
 			addLog('打工', '辛苦工作赚取生活费', result);
-			changeStats({ san: -baseSanCost, gold: 2 });
+			changeStats({ san: -baseSanCost, gold: goldReward });
 		}
 
 
