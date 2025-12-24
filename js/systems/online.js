@@ -22,10 +22,10 @@
 			sendOnlineHeartbeat();
 			checkAndRecordMaxOnline();
 			
-			// 每60秒发送心跳
+			// 每180秒发送心跳（优化：减少数据库调用）
 			onlineHeartbeatTimer = setInterval(() => {
 				sendOnlineHeartbeat();
-			}, 60 * 1000);
+			}, 180 * 1000);
 			
 			// 页面关闭时清理
 			window.addEventListener('beforeunload', () => {
@@ -37,28 +37,43 @@
 			});
 		}
 
-		// 发送心跳
+		// 发送心跳（优化：使用 RPC 合并多个数据库操作为一次调用）
 		async function sendOnlineHeartbeat() {
 			if (!supabase || !onlineSessionId) return;
-			
+
 			try {
-				// 发送心跳
+				// 使用 RPC 函数：一次调用完成 upsert + 清理 + 计数
+				const { data, error } = await supabase.rpc('heartbeat', {
+					p_session_id: onlineSessionId
+				});
+
+				if (error) {
+					// RPC 不可用时回退到原有逻辑
+					console.warn('心跳RPC失败，使用回退方式:', error);
+					await sendOnlineHeartbeatFallback();
+				}
+			} catch (e) {
+				console.error('心跳发送失败:', e);
+			}
+		}
+
+		// 心跳回退方法（RPC不可用时使用）
+		async function sendOnlineHeartbeatFallback() {
+			try {
 				await supabase
 					.from('online_users')
-					.upsert({ 
-						session_id: onlineSessionId, 
-						last_seen: new Date().toISOString() 
+					.upsert({
+						session_id: onlineSessionId,
+						last_seen: new Date().toISOString()
 					});
-				
-				// 清理超过5分钟未活跃的记录
+
 				const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 				await supabase
 					.from('online_users')
 					.delete()
 					.lt('last_seen', fiveMinutesAgo);
-					
 			} catch (e) {
-				console.error('心跳发送失败:', e);
+				console.error('心跳回退失败:', e);
 			}
 		}
 
@@ -282,31 +297,41 @@
 		let totalMessagePages = 1;
 		let replyToMessage = null;
 		let messagesCache = null;
+		let messagesCacheTime = 0;
+		const MESSAGES_CACHE_DURATION = 60 * 1000;  // 留言缓存1分钟
 
-		// 加载留言
-		async function loadMessages(page = 1) {
+		// 加载留言（优化：添加短期缓存减少重复请求）
+		async function loadMessages(page = 1, forceRefresh = false) {
 			const listEl = document.getElementById('message-list');
 			const paginationEl = document.getElementById('message-pagination');
-			
+
 			if (!supabase) {
 				listEl.innerHTML = '<div class="no-messages"><i class="fas fa-database"></i><div>留言服务暂不可用</div></div>';
 				return;
 			}
-			
+
+			// 检查缓存（同一页面且未过期时使用缓存）
+			const cacheKey = `page_${page}`;
+			if (!forceRefresh && messagesCache && messagesCache.key === cacheKey &&
+				Date.now() - messagesCacheTime < MESSAGES_CACHE_DURATION) {
+				renderMessagesFromCache(listEl, paginationEl);
+				return;
+			}
+
 			listEl.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:0.85rem;padding:20px;"><i class="fas fa-spinner fa-spin"></i> 加载留言中...</div>';
-			
+
 			try {
 				// 获取主留言总数
 				const { count: totalCount, error: countError } = await supabase
 					.from('messages')
 					.select('*', { count: 'exact', head: true })
 					.is('parent_id', null);
-				
+
 				if (countError) throw countError;
-				
+
 				totalMessagePages = Math.max(1, Math.ceil(totalCount / MESSAGES_PER_PAGE));
 				currentMessagePage = Math.min(page, totalMessagePages);
-				
+
 				// 获取当前页的主留言
 				const offset = (currentMessagePage - 1) * MESSAGES_PER_PAGE;
 				const { data: mainMessages, error: mainError } = await supabase
@@ -315,15 +340,15 @@
 					.is('parent_id', null)
 					.order('created_at', { ascending: false })
 					.range(offset, offset + MESSAGES_PER_PAGE - 1);
-				
+
 				if (mainError) throw mainError;
-				
+
 				if (!mainMessages || mainMessages.length === 0) {
 					listEl.innerHTML = '<div class="no-messages"><i class="fas fa-comment-slash"></i><div>暂无留言，来做第一个留言的人吧！</div></div>';
 					paginationEl.style.display = 'none';
 					return;
 				}
-				
+
 				// 获取这些主留言的所有回复
 				const mainIds = mainMessages.map(m => m.id);
 				const { data: replies, error: repliesError } = await supabase
@@ -331,29 +356,48 @@
 					.select('*')
 					.in('parent_id', mainIds)
 					.order('created_at', { ascending: true });
-				
+
 				if (repliesError) throw repliesError;
-				
-				// 按parent_id分组回复
-				const repliesMap = {};
-				(replies || []).forEach(reply => {
-					if (!repliesMap[reply.parent_id]) {
-						repliesMap[reply.parent_id] = [];
-					}
-					repliesMap[reply.parent_id].push(reply);
-				});
-				
-				// 渲染留言
-				listEl.innerHTML = mainMessages.map(msg => renderMessage(msg, repliesMap[msg.id] || [])).join('');
-				
-				// 更新分页
-				updatePagination();
-				paginationEl.style.display = totalMessagePages > 1 ? 'block' : 'none';
-				
+
+				// 缓存结果
+				messagesCache = {
+					key: cacheKey,
+					mainMessages,
+					replies: replies || [],
+					totalPages: totalMessagePages,
+					currentPage: currentMessagePage
+				};
+				messagesCacheTime = Date.now();
+
+				renderMessagesFromCache(listEl, paginationEl);
+
 			} catch (e) {
 				console.error('加载留言失败:', e);
-				listEl.innerHTML = `<div class="no-messages"><i class="fas fa-exclamation-triangle"></i><div>加载失败，请稍后重试</div><button class="btn btn-info" onclick="loadMessages(${currentMessagePage})" style="margin-top:10px;"><i class="fas fa-redo"></i> 重试</button></div>`;
+				listEl.innerHTML = `<div class="no-messages"><i class="fas fa-exclamation-triangle"></i><div>加载失败，请稀后重试</div><button class="btn btn-info" onclick="loadMessages(${currentMessagePage})" style="margin-top:10px;"><i class="fas fa-redo"></i> 重试</button></div>`;
 			}
+		}
+
+		// 从缓存渲染留言
+		function renderMessagesFromCache(listEl, paginationEl) {
+			if (!messagesCache) return;
+
+			const { mainMessages, replies } = messagesCache;
+
+			// 按parent_id分组回复
+			const repliesMap = {};
+			replies.forEach(reply => {
+				if (!repliesMap[reply.parent_id]) {
+					repliesMap[reply.parent_id] = [];
+				}
+				repliesMap[reply.parent_id].push(reply);
+			});
+
+			// 渲染留言
+			listEl.innerHTML = mainMessages.map(msg => renderMessage(msg, repliesMap[msg.id] || [])).join('');
+
+			// 更新分页
+			updatePagination();
+			paginationEl.style.display = totalMessagePages > 1 ? 'block' : 'none';
 		}
 
 		// 渲染单条留言
@@ -499,11 +543,11 @@
 				// 保存昵称到本地
 				localStorage.setItem('graduateSimulator_nickname', nickname);
 				
-				// 如果是回复，刷新当前页；如果是新留言，跳转到第一页
+				// 如果是回复，刷新当前页；如果是新留言，跳转到第一页（强制刷新缓存）
 				if (replyToMessage) {
-					await loadMessages(currentMessagePage);
+					await loadMessages(currentMessagePage, true);
 				} else {
-					await loadMessages(1);
+					await loadMessages(1, true);
 				}
 				
 				showModal('✅ 成功', '<p>留言发表成功！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -555,8 +599,9 @@
 			
 			// 持续心跳（游戏中也发）
 			if (!onlineHeartbeatTimer) {
-				onlineHeartbeatTimer = setInterval(sendOnlineHeartbeat, 60 * 1000);
+				onlineHeartbeatTimer = setInterval(sendOnlineHeartbeat, 180 * 1000);
 			}
 		}
+
 
 

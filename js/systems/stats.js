@@ -10,7 +10,7 @@
         let statsCacheTime = 0;
         let visitStatsCache = null;
         let visitStatsCacheTime = 0;
-        const CACHE_DURATION = 10 * 60 * 1000;
+        const CACHE_DURATION = 30 * 60 * 1000;  // 30分钟缓存（优化：延长以减少查询）
 
 		// ==================== 持久化缓存系统 ====================
 		const CACHE_KEYS = {
@@ -261,24 +261,40 @@
 			}
 		}
 
+		// 优化：使用计数器替代每次插入记录（大幅减少 egress）
 		async function recordVisit() {
 			if (!supabase) return;
 			try {
-				// 记录 PV（每次访问都记录）
-				await supabase.from('site_visits').insert({ type: 'pv' });
-				
-				// ★★★ 修复：每天每个用户只记录一次 UV ★★★
+				// 使用 RPC 原子递增 PV 计数器
+				const { error: pvError } = await supabase.rpc('increment_counter', {
+					counter_id: 'pv_total'
+				});
+
+				if (pvError) {
+					// RPC 不可用时回退到原有方式
+					console.warn('PV计数器失败，回退到原有方式:', pvError);
+					await supabase.from('site_visits').insert({ type: 'pv' });
+				}
+
+				// UV：每天每个用户只记录一次
 				const todayStr = getTodayDateString();
 				const visitorKey = 'graduate_simulator_visitor';
 				const lastUvDateKey = 'graduate_simulator_last_uv_date';
-				
+
 				const isNewVisitor = !localStorage.getItem(visitorKey);
 				const lastUvDate = localStorage.getItem(lastUvDateKey);
 				const isNewDay = lastUvDate !== todayStr;
-				
-				// 新访客 或 新的一天（老访客今天第一次访问）都记录 UV
+
 				if (isNewVisitor || isNewDay) {
-					await supabase.from('site_visits').insert({ type: 'uv' });
+					const { error: uvError } = await supabase.rpc('increment_counter', {
+						counter_id: 'uv_total'
+					});
+
+					if (uvError) {
+						console.warn('UV计数器失败，回退到原有方式:', uvError);
+						await supabase.from('site_visits').insert({ type: 'uv' });
+					}
+
 					localStorage.setItem(visitorKey, 'true');
 					localStorage.setItem(lastUvDateKey, todayStr);
 					console.log(isNewVisitor ? '✅ 新访客已记录' : '✅ 今日访客已记录');
@@ -288,6 +304,7 @@
 			}
 		}
 
+		// 优化：从计数器表读取（避免全表 count 查询）
 		async function getVisitStats() {
 			// 先检查本地缓存
 			const cached = getLocalCache(CACHE_KEYS.VISIT);
@@ -297,35 +314,53 @@
 				visitStatsCacheTime = Date.now();
 				return cached;
 			}
-			
+
 			if (!supabase) return { pv: 0, uv: 0 };
-			
+
 			try {
+				// 优先使用 RPC 函数一次获取多个计数器
+				const { data, error } = await supabase.rpc('get_counters', {
+					counter_ids: ['pv_total', 'uv_total']
+				});
+
+				if (!error && data && data.length > 0) {
+					const counters = {};
+					data.forEach(row => { counters[row.id] = row.count; });
+
+					const result = {
+						pv: counters['pv_total'] || 0,
+						uv: counters['uv_total'] || 0
+					};
+
+					visitStatsCache = result;
+					visitStatsCacheTime = Date.now();
+					setLocalCache(CACHE_KEYS.VISIT, result);
+					return result;
+				}
+
+				// RPC 不可用时回退到原有方式
+				console.warn('计数器RPC失败，回退到原有方式');
 				const { count: pvCount, error: pvError } = await supabase
 					.from('site_visits')
 					.select('*', { count: 'exact', head: true })
 					.eq('type', 'pv');
-				
+
 				if (pvError) throw pvError;
-				
+
 				const { count: uvCount, error: uvError } = await supabase
 					.from('site_visits')
 					.select('*', { count: 'exact', head: true })
 					.eq('type', 'uv');
-					
+
 				if (uvError) throw uvError;
-				
+
 				const result = { pv: pvCount || 0, uv: uvCount || 0 };
-				
-				// ★★★ 成功后才缓存 ★★★
 				visitStatsCache = result;
 				visitStatsCacheTime = Date.now();
 				setLocalCache(CACHE_KEYS.VISIT, result);
-				
 				return result;
 			} catch (e) {
 				console.error('获取访问统计失败:', e);
-				// 失败时返回内存缓存或默认值，不存储缓存
 				return visitStatsCache || { pv: 0, uv: 0 };
 			}
 		}

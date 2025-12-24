@@ -195,7 +195,8 @@
             const citations = Math.floor(Math.random() * (maxCitations - minCitations + 1)) + minCitations;
 
             // 任务条和关系条
-            const taskMax = researchResource * 10 + 20;  // 任务条上限 = 科研资源*10+20
+            const taskMultiplier = Math.floor(Math.random() * 5) + 6;  // 随机6-10
+            const taskMax = researchResource * taskMultiplier + 20;  // 任务条上限 = 科研资源*随机6-10+20
             const relationMax = 40;  // 关系条上限固定40
 
             return {
@@ -214,6 +215,7 @@
                 taskProgress: 0,
                 relationProgress: 0,
                 taskMax: taskMax,
+                taskMultiplier: taskMultiplier,  // 保存乘数用于后续更新
                 relationMax: relationMax,
                 taskUsedThisMonth: false  // 本月是否已推进任务
             };
@@ -243,7 +245,8 @@
             const [minCitations, maxCitations] = selectedType.citationsRange;
             const citations = Math.floor(Math.random() * (maxCitations - minCitations + 1)) + minCitations;
 
-            const taskMax = researchResource * 10 + 20;
+            const taskMultiplier = Math.floor(Math.random() * 5) + 6;  // 随机6-10
+            const taskMax = researchResource * taskMultiplier + 20;
             const relationMax = 40;
 
             return {
@@ -261,6 +264,7 @@
                 taskProgress: 0,
                 relationProgress: 0,
                 taskMax: taskMax,
+                taskMultiplier: taskMultiplier,  // 保存乘数用于后续更新
                 relationMax: relationMax,
                 taskUsedThisMonth: false
             };
@@ -751,9 +755,14 @@
                     // 兼容旧存档：初始化进度条属性
                     if (person.taskProgress === undefined) person.taskProgress = 0;
                     if (person.relationProgress === undefined) person.relationProgress = 0;
+                    if (person.type === 'advisor' && person.taskMultiplier === undefined) {
+                        // 旧存档导师补充随机乘数
+                        person.taskMultiplier = Math.floor(Math.random() * 5) + 6;
+                    }
                     if (person.taskMax === undefined) {
                         if (person.type === 'advisor') {
-                            person.taskMax = (person.researchResource || 5) * 10 + 20;
+                            const multiplier = person.taskMultiplier || 8;
+                            person.taskMax = (person.researchResource || 5) * multiplier + 20;
                         } else if (person.type === 'lover') {
                             person.taskMax = 100;
                         } else {
@@ -1192,8 +1201,9 @@
             // 亲和度+1，科研资源+1
             person.affinity = Math.min(20, person.affinity + 1);
             person.researchResource = Math.min(20, person.researchResource + 1);
-            // 更新任务条上限
-            person.taskMax = person.researchResource * 10 + 20;
+            // 更新任务条上限（使用保存的乘数，兼容旧存档默认8）
+            const multiplier = person.taskMultiplier || 8;
+            person.taskMax = person.researchResource * multiplier + 20;
 
             // 随机横向/纵向项目
             const isHorizontal = Math.random() < 0.5;
