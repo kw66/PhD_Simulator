@@ -528,11 +528,13 @@ body {
 
 .game-container {
     display: grid;
-    grid-template-columns: 260px 1fr 280px;
+    grid-template-columns: 260px 1fr 280px 260px;
     gap: 10px;
-    max-width: 1600px;
+    max-width: 1800px;
     margin: 0 auto;
 }
+
+.rightmost-column { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
 .panel {
     background: rgba(255, 255, 255, 0.9);
@@ -1319,7 +1321,42 @@ body {
 ::-webkit-scrollbar-track { background: var(--light-bg); border-radius: 2px; }
 ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
 
-@media (max-width: 1100px) { .game-container { grid-template-columns: 1fr; } }
+/* 人际关系面板样式 */
+#relationship-panel {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.relationship-slot {
+    transition: all 0.2s ease;
+}
+
+.relationship-slot.filled:hover {
+    background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(162,155,254,0.08)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108,92,231,0.15);
+}
+
+.relationship-slot.empty {
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.relationship-slot.empty:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 1500px) {
+    .game-container { grid-template-columns: 260px 1fr 280px; }
+    .rightmost-column {
+        grid-column: 3;
+        grid-row: 2;
+    }
+}
+@media (max-width: 1100px) { .game-container { grid-template-columns: 1fr; } .rightmost-column { grid-column: 1; grid-row: auto; } }
 
 .hidden { display: none !important; }
 
@@ -3047,9 +3084,15 @@ body {
     color: #fca5a5 !important;
 }
 
-.preview-card.reversed-card:not(.gold-card) .difficulty-stars i.fas {
+.preview-card.reversed-card:not(.gold-card) .difficulty-stars i.fas.fa-star {
     color: #ef4444 !important;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+/* 半颗星移除发光效果，避免显示模糊 */
+.preview-card.reversed-card:not(.gold-card) .difficulty-stars i.fas.fa-star-half-alt {
+    color: #ef4444 !important;
+    text-shadow: none !important;
 }
 
 .preview-card.reversed-card:not(.gold-card) .difficulty-stars i.far {
