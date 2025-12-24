@@ -82,9 +82,10 @@
 
             <div class="game-intro" id="game-intro">
                 <p>📚 <strong>欢迎来到研究生模拟器！</strong>体验研究生生涯，平衡科研、生活和人际关系，努力发表论文，最终顺利毕业。</p>
-                <p>🎯 <strong>游戏目标</strong>：硕士毕业科研分≥1（3年），博士毕业科研分≥7（5年）</p>
-                <p>📝 <strong>论文科研分</strong>：A类=4分，B类=2分，C类=1分</p>
-                <p>💡 <strong>属性影响</strong>：科研能力影响论文分数；社交能力和导师好感度影响事件选项和结果。<strong>建议优先将属性提升至6以解锁更多选项！</strong></p>
+                <p>🎯 <strong>游戏目标</strong>：毕业所需科研分由导师决定（入学时选择），硕士3年，博士5年</p>
+                <p>📝 <strong>论文科研分</strong>：C=1分，B=2分，A=4分，子刊=10分，Nature=25分</p>
+                <p>📈 <strong>论文槽升级</strong>：发表A类论文后，槽位可升级为期刊槽（可投Nature系列）</p>
+                <p>💡 <strong>游戏提示</strong>：先专注自己的论文，再完成关系网的任务。属性≥6可解锁更多选项</p>
                 <p>⚠️ <strong>注意</strong>：保持SAN值、导师好感度和金钱为正数，否则将触发不良结局！</p>
             </div>
 			
@@ -113,8 +114,14 @@
 							<button class="guide-btn" onclick="showGuide('basics')">
 								<i class="fas fa-gamepad"></i><span>基础玩法与属性</span>
 							</button>
+							<button class="guide-btn" onclick="showGuide('advisor')">
+								<i class="fas fa-chalkboard-teacher"></i><span>导师系统</span>
+							</button>
 							<button class="guide-btn" onclick="showGuide('paperScore')">
 								<i class="fas fa-calculator"></i><span>论文分数计算</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('journal')">
+								<i class="fas fa-newspaper"></i><span>期刊与Nature论文</span>
 							</button>
 							<button class="guide-btn" onclick="showGuide('review')">
 								<i class="fas fa-user-edit"></i><span>审稿机制详解</span>
@@ -124,6 +131,9 @@
 							</button>
 							<button class="guide-btn" onclick="showGuide('events')">
 								<i class="fas fa-dice"></i><span>事件系统</span>
+							</button>
+							<button class="guide-btn" onclick="showGuide('shop')">
+								<i class="fas fa-store"></i><span>成就商店与黑市</span>
 							</button>
 							<button class="guide-btn" onclick="showGuide('buffs')">
 								<i class="fas fa-magic"></i><span>Buff与Debuff</span>
@@ -305,16 +315,22 @@
 						<i class="fas fa-chevron-down collapse-icon" id="research-panel-collapse-icon"></i>
 					</div>
 					<div class="collapsible-content" id="research-panel-content">
+						<!-- 隐藏的Nature/子刊计数（保留用于JS更新）-->
+						<div id="journal-stats" style="display:none;">
+							<span id="paper-nature-count">0</span>
+							<span id="paper-naturesub-count">0</span>
+						</div>
 						<div class="research-summary">
 							<div class="research-stat"><div class="label">A类</div><div class="value" id="paper-a-count">0</div></div>
 							<div class="research-stat"><div class="label">B类</div><div class="value" id="paper-b-count">0</div></div>
 							<div class="research-stat"><div class="label">C类</div><div class="value" id="paper-c-count">0</div></div>
 						</div>
-						<div class="research-summary-wide" style="display:flex;gap:8px;margin-top:5px;">
-							<div class="research-stat" style="flex:1;"><div class="label">科研分</div><div class="value" id="total-score">0</div></div>
-							<div class="research-stat" style="flex:1;"><div class="label">总引用</div><div class="value" id="total-citations">0</div></div>
+						<div class="research-summary" style="margin-top:5px;">
+							<div class="research-stat" style="background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(142,68,173,0.15));"><div class="label" style="color:#9b59b6;">S类</div><div class="value" id="paper-s-count" style="color:#9b59b6;">0</div></div>
+							<div class="research-stat"><div class="label">科研分</div><div class="value" id="total-score">0</div></div>
+							<div class="research-stat"><div class="label">总引用</div><div class="value" id="total-citations">0</div></div>
 						</div>
-						<div style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:6px;text-align:center;">A类=4分 B类=2分 C类=1分</div>
+						<div style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:6px;text-align:center;">Nature=25分 子刊=10分 | A=4分 B=2分 C=1分</div>
 						<div class="paper-list" id="published-papers">
 							<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>
 						</div>
@@ -371,7 +387,7 @@
 				</div>
 			</div>
 
-			<!-- 右侧栏 -->
+			<!-- 右侧栏：论文工作站 -->
 			<div class="right-column">
 				<div class="panel" id="workstation-panel">
 					<div class="panel-title collapsible" onclick="toggleCollapse('workstation-panel')">
@@ -386,6 +402,13 @@
 					<div class="collapsible-content" id="workstation-panel-content">
 						<div class="paper-slots" id="paper-slots"></div>
 					</div>
+				</div>
+			</div>
+
+			<!-- 最右侧栏：人际关系 -->
+			<div class="rightmost-column">
+				<div class="panel" id="relationship-panel">
+					<!-- 内容由 renderRelationshipPanel() 动态生成 -->
 				</div>
 			</div>
 		</div>
@@ -446,6 +469,7 @@
     <script src="js/features/submission.js"></script>
     <script src="js/features/shop.js"></script>
     <script src="js/features/events.js"></script>
+    <script src="js/features/relationships.js"></script>
     <script src="js/features/endings.js"></script>
     <script src="js/systems/save.js"></script>
     <script src="js/ui/modals.js"></script>
