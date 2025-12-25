@@ -391,18 +391,42 @@
 					'exp_times': '做实验',
 					'write_times': '写论文',
 					'monthly_san': '每月SAN',
+					'monthly_san_2': '每月SAN',
+					'monthly_san_lost_10': '每月SAN',
+					'monthly_san_current_20': '每月SAN',
+					'monthly_san_recovery': '每月SAN',
+					'lover_monthly_san': '每月SAN',
+					'lover_extra_idea': '想idea',
+					'lover_extra_experiment': '做实验',
+					'lover_extra_write': '写论文',
 					'read_san_reduce': '读论文SAN',
 					'write_san_reduce': '写论文SAN',
 					'citation_multiply': '中稿引用'
 				};
-				
+
 				const typeName = typeNames[buff.type] || buff.type;
 				let isDebuff = false;
-				
+
 				if (buff.type.includes('_times')) {
 					name = `${prefix}${typeName}+${buff.value}次`;
 				} else if (buff.type === 'monthly_san') {
 					name = `每月SAN+${buff.value}`;
+				} else if (buff.type === 'monthly_san_2') {
+					name = `每月SAN+2 (高级工学椅)`;
+				} else if (buff.type === 'monthly_san_lost_10') {
+					name = `每月SAN+10%已损失 (电动按摩椅)`;
+				} else if (buff.type === 'monthly_san_current_20') {
+					name = `每月SAN+20%当前 (头悬梁椅)`;
+				} else if (buff.type === 'monthly_san_recovery') {
+					name = `每月SAN+1 (强身健体)`;
+				} else if (buff.type === 'lover_monthly_san') {
+					name = buff.desc || `每月SAN+1 (恋人)`;
+				} else if (buff.type === 'lover_extra_idea') {
+					name = buff.desc || `每次想idea多想1次 (恋人)`;
+				} else if (buff.type === 'lover_extra_experiment') {
+					name = buff.desc || `每次做实验多做1次 (恋人)`;
+				} else if (buff.type === 'lover_extra_write') {
+					name = buff.desc || `每次写论文多写1次 (恋人)`;
 				} else if (buff.type === 'read_san_reduce') {
 					name = `读论文SAN-1`;
 				} else if (buff.type === 'write_san_reduce') {

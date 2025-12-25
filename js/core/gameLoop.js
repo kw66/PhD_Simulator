@@ -426,13 +426,16 @@
 					(gameState.year === 2 && gameState.totalScore >= requirements.phdYear2) ||
 					(gameState.year === 3 && gameState.totalScore >= requirements.phdYear3)
 				);
-				
+
 				if (canPhD) {
 					checkGraduation();
 					updateAllUI();
 					renderPaperSlots();
 					return;
 				} else {
+					// ★★★ 修复：在显示弹窗之前先更新UI，确保按钮可用性正确 ★★★
+					updateAllUI();
+					renderPaperSlots();
 					// 不满足转博条件，显示遗憾弹窗后再进入学年总结
 					showMissedPhDOpportunityModal(requirements);
 					return;

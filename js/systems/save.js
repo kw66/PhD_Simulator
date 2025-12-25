@@ -266,6 +266,7 @@
                 
                 availableRandomEvents: [...gameState.availableRandomEvents],
                 usedRandomEvents: [...gameState.usedRandomEvents],
+                totalRandomEventCount: gameState.totalRandomEventCount || 0,
                 triggeredBuffTypes: [...(gameState.triggeredBuffTypes || [])],
                 coffeeBoughtCount: gameState.coffeeBoughtCount || 0,
                 goldSpentTotal: gameState.goldSpentTotal || 0,
@@ -500,6 +501,7 @@
                             
                             availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
                             usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
+                            totalRandomEventCount: save.totalRandomEventCount || 0,
                             triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],
                             coffeeBoughtCount: save.coffeeBoughtCount || 0,
                             
@@ -811,6 +813,7 @@
 
 				availableRandomEvents: [...gameState.availableRandomEvents],
 				usedRandomEvents: [...gameState.usedRandomEvents],
+				totalRandomEventCount: gameState.totalRandomEventCount || 0,
 				triggeredBuffTypes: [...(gameState.triggeredBuffTypes || [])],
 				coffeeBoughtCount: gameState.coffeeBoughtCount || 0,
 				goldSpentTotal: gameState.goldSpentTotal || 0,
@@ -1138,6 +1141,7 @@
 
 				availableRandomEvents: save.availableRandomEvents ? [...save.availableRandomEvents] : [],
 				usedRandomEvents: save.usedRandomEvents ? [...save.usedRandomEvents] : [],
+				totalRandomEventCount: save.totalRandomEventCount || 0,
 				triggeredBuffTypes: save.triggeredBuffTypes ? [...save.triggeredBuffTypes] : [],
 				coffeeBoughtCount: save.coffeeBoughtCount || 0,
 
