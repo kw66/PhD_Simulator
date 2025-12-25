@@ -166,28 +166,34 @@
 				<p>你来到了<strong>${location}</strong>参加CCIG，在会议期间你打算：</p>`,
 				[
 					{ text: '📚 认真听报告', class: 'btn-primary', action: () => {
-						gameState.buffs.temporary.push({ 
-							type: 'idea_bonus', 
-							name: '下次想idea分数+5', 
-							value: 5, 
-							permanent: false 
+						gameState.buffs.temporary.push({
+							type: 'idea_bonus',
+							name: '下次想idea分数+5',
+							value: 5,
+							permanent: false
 						});
-						addLog('CCIG活动', '认真听报告', '临时buff-下次想idea分数+5');
+						gameState.buffs.permanent.push({
+							type: 'idea_bonus',
+							name: '每次想idea分数+1',
+							value: 1,
+							permanent: true
+						});
+						addLog('CCIG活动', '认真听报告', '临时buff-下次想idea分数+5，永久buff-每次想idea分数+1');
 						closeModal();
 						updateBuffs();
 						updateAllUI();
 					}},
 					{ text: '🏖️ 趁机旅游', class: 'btn-success', action: () => {
-						addLog('CCIG活动', `在${location}趁机旅游`, 'SAN值+3');
+						addLog('CCIG活动', `在${location}趁机旅游`, 'SAN值+6');
 						closeModal();
-						changeSan(3);
+						changeSan(6);
 					}},
-					{ text: '🍜 请同学品尝美食（金币-3）', class: 'btn-warning', action: () => {
+					{ text: '🍜 请同学品尝美食（金币-1）', class: 'btn-warning', action: () => {
 						closeModal();
-						if (changeGold(-3)) {
+						if (changeGold(-1)) {
 							gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
 							changeSocial(1);
-							addLog('CCIG活动', `请同学品尝${location}美食`, '金币-3，SAN值+2，社交能力+1');
+							addLog('CCIG活动', `请同学品尝${location}美食`, '金币-1，SAN值+2，社交能力+1');
 							updateAllUI();
 						}
 					}}
@@ -701,17 +707,20 @@
                 { text: '🃏 打德州扑克', class: 'btn-warning', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '运气不好输了，金钱-4');
-                        changeGold(-4);
+                        // 输钱：输掉所有钱，最多不超过4金币
+                        const loseAmount = Math.min(gameState.gold, 4);
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `手气太差，金钱-${loseAmount}`);
+                        changeGold(-loseAmount);
                     } else {
-                        // ★★★ 新增：德州扑克赢钱计数 ★★★
+                        // 赢钱：金钱翻倍，最多不超过8金币
                         gameState.pokerWinCount = (gameState.pokerWinCount || 0) + 1;
                         if (gameState.pokerWinCount >= 3) {
                             gameState.achievementConditions = gameState.achievementConditions || {};
                             gameState.achievementConditions.pokerGod = true;
                         }
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', '运气好赢了，金钱+5');
-                        changeGold(5);
+                        const winAmount = Math.min(gameState.gold, 8);
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `你翻出了皇家同花顺，金钱+${winAmount}`);
+                        changeGold(winAmount);
                     }
                 }},
                 { text: '🎤 KTV唱歌', class: 'btn-accent', action: () => {
@@ -729,11 +738,12 @@
 				{ text: '🍜 聚餐', class: 'btn-info', action: () => {
 					closeModal();
 					if (Math.random() < 0.5) {
-						addLog('随机事件', '实验室组织团建 - 聚餐', '吃饱了，金钱-3，SAN值+5');
+						addLog('随机事件', '实验室组织团建 - 聚餐', '吃饱了，金钱-2，SAN值+5');
 						gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
-						changeGold(-3);
+						changeGold(-2);
 					} else {
-						addLog('随机事件', '实验室组织团建 - 聚餐', '运气好导师请客，SAN值+5');
+						gameState.favor = Math.min(20, gameState.favor + 1);
+						addLog('随机事件', '实验室组织团建 - 聚餐', '运气好导师请客，SAN值+5，导师好感度+1');
 						changeSan(5);
 					}
 				}}
@@ -747,8 +757,22 @@
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '导师并不想买');
                     } else {
-                        gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做一次', value: 1, permanent: true });
-                        addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '运气好，你分到了一张显卡，永久buff-每次做实验多做一次');
+                        // 根据导师好感度分配显卡个数
+                        let gpuCount, buffText;
+                        if (gameState.favor <= 5) {
+                            gpuCount = 1;
+                            buffText = '【好感<=5】分到了1张显卡，永久buff-每次做实验多做一次';
+                        } else if (gameState.favor <= 11) {
+                            gpuCount = 2;
+                            buffText = '【好感6-11】分到了2张显卡，永久buff-每次做实验多做两次';
+                        } else {
+                            gpuCount = 3;
+                            buffText = '【好感>=12】分到了3张显卡，永久buff-每次做实验多做三次';
+                        }
+                        for (let i = 0; i < gpuCount; i++) {
+                            gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做一次', value: 1, permanent: true });
+                        }
+                        addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', buffText);
                         updateBuffs();
                     }
                     updateAllUI();
@@ -822,8 +846,9 @@
                 { text: '学术交流', class: 'btn-primary', action: () => {
                     closeModal();
 					if (gameState.social < 6) {
-						gameState.buffs.temporary.push({ type: 'idea_stolen', name: '下次想idea总分÷2', value: 0.5, multiply: true, permanent: false });  // ★★★ 改为除2 ★★★
-						addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交<6】被同门偷走idea，临时debuff-下次想idea总分÷2');
+						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
+						gameState.buffs.temporary.push({ type: 'idea_stolen', name: '下次想idea总分÷2', value: 0.5, multiply: true, permanent: false });
+						addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交<6】被同门窃取合作的idea，临时buff-下次想idea分数+5，临时debuff-下次想idea总分÷2');
 					} else {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
                         addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交>=6】共同进步，临时buff-下次想idea分数+5');
@@ -854,9 +879,15 @@
                 { text: '开展全面合作', class: 'btn-success', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
-                        gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false });
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '【社交<6】成功合作，临时buff-下次想idea多想1次');
-                        updateAllUI();
+                        const baseSanCost = -2;
+                        const actualSanCost = getActualSanChange(baseSanCost);
+                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        gameState.buffs.temporary.push(
+                            { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
+                            { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
+                        );
+                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', `【社交<6】艰难合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次，${sanText}`);
+                        changeSan(baseSanCost);
                         updateBuffs();
                     } else {
                         gameState.buffs.temporary.push(
@@ -995,9 +1026,11 @@
 					}
 				}},
 				{ text: '以死相逼', class: 'btn-danger', action: () => {
-					addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师对你略有不满，导师好感度-1');
+					gameState.gold += 2;
+					gameState.favor = Math.max(0, gameState.favor - 2);
+					addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师转过来安抚你，金钱+2，导师好感度-2');
 					closeModal();
-					changeFavor(-1);
+					updateAllUI();
 				}}
 			]);
 		}
