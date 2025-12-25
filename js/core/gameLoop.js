@@ -409,6 +409,9 @@
 					checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
 					updateAllUI();
 					renderPaperSlots();
+
+					// ★★★ 新增：月末事件结束后处理待处理的关系任务 ★★★
+					setTimeout(() => processPendingRelationTasks(), 500);
 				};
 				
 				// 开始审稿事件处理流程，完成后触发月末事件
@@ -466,6 +469,9 @@
 			checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
 			updateAllUI();
 			renderPaperSlots();
+
+			// ★★★ 新增：月末事件结束后处理待处理的关系任务 ★★★
+			setTimeout(() => processPendingRelationTasks(), 500);
 		}
 
         // 空想之天选之人：属性随机交换

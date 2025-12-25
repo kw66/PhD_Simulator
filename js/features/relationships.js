@@ -1451,6 +1451,9 @@
 
         // 每月更新关系进度
         function updateRelationshipProgress() {
+            // ★★★ 初始化待处理的关系任务队列 ★★★
+            gameState.pendingRelationTasks = gameState.pendingRelationTasks || [];
+
             gameState.relationships.forEach(person => {
                 // 重置本月任务使用状态
                 person.taskUsedThisMonth = false;
@@ -1486,19 +1489,400 @@
                         const overflow = person.relationProgress - person.relationMax;
                         person.relationProgress = overflow;
 
-                        // 自动执行一次免费任务
-                        addLog('关系加成', `与${person.name}关系融洽`, '自动推进任务');
-                        if (person.type === 'advisor') {
-                            advanceAdvisorTask(person.id, true);
-                        } else if (['senior', 'peer', 'junior'].includes(person.type)) {
-                            advanceFellowTask(person.id, true);
-                        } else if (person.type === 'lover') {
-                            // ★★★ 新增：恋人关系条满时自动约会 ★★★
-                            advanceLoverTask(person.id, true);
-                        }
+                        // ★★★ 修改：将任务加入待处理队列，而不是立即执行 ★★★
+                        // 这样可以避免弹窗与其他月末事件冲突
+                        gameState.pendingRelationTasks.push({
+                            personId: person.id,
+                            personName: person.name,
+                            personType: person.type
+                        });
                     }
                 }
             });
+        }
+
+        // ★★★ 新增：处理待处理的关系任务（在所有月末事件结束后调用）★★★
+        function processPendingRelationTasks() {
+            if (!gameState.pendingRelationTasks || gameState.pendingRelationTasks.length === 0) {
+                return;
+            }
+
+            // 取出第一个待处理任务
+            const task = gameState.pendingRelationTasks.shift();
+            const person = gameState.relationships.find(r => r.id === task.personId);
+
+            if (!person) {
+                // 人物已不存在，处理下一个
+                processPendingRelationTasks();
+                return;
+            }
+
+            // 执行免费任务
+            addLog('关系加成', `与${task.personName}关系融洽`, '自动推进任务');
+
+            // ★★★ 修改：任务完成后检查是否还有待处理任务 ★★★
+            const onTaskComplete = () => {
+                // 延迟处理下一个任务，给弹窗关闭留出时间
+                setTimeout(() => {
+                    processPendingRelationTasks();
+                }, 300);
+            };
+
+            if (task.personType === 'advisor') {
+                advanceAdvisorTaskWithCallback(task.personId, true, onTaskComplete);
+            } else if (['senior', 'peer', 'junior'].includes(task.personType)) {
+                advanceFellowTaskWithCallback(task.personId, true, onTaskComplete);
+            } else if (task.personType === 'lover') {
+                advanceLoverTaskWithCallback(task.personId, true, onTaskComplete);
+            } else {
+                onTaskComplete();
+            }
+        }
+
+        // ★★★ 新增：带回调的导师任务推进 ★★★
+        function advanceAdvisorTaskWithCallback(personId, isFree, onComplete) {
+            const person = gameState.relationships.find(r => r.id === personId);
+            if (!person || person.type !== 'advisor') {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            if (!isFree && person.taskUsedThisMonth) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            if (!isFree) {
+                const sanCost = 3;
+                if (gameState.san < sanCost) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+                changeSan(-sanCost);
+                person.taskUsedThisMonth = true;
+            }
+
+            const baseGrowth = gameState.research * (0.5 + Math.random());
+            const randomBonus = Math.floor(Math.random() * 6);
+            const growth = Math.floor(baseGrowth) + randomBonus;
+
+            person.taskProgress += growth;
+            addLog('导师项目', `推进了${person.name}的项目`, `进度+${growth}${isFree ? '（关系加成）' : ''}`);
+
+            // 检查任务完成（带回调）
+            checkTaskCompletionWithCallback(person, onComplete);
+
+            updateAllUI();
+            renderRelationshipPanel();
+        }
+
+        // ★★★ 新增：带回调的同门任务推进 ★★★
+        function advanceFellowTaskWithCallback(personId, isFree, onComplete) {
+            const person = gameState.relationships.find(r => r.id === personId);
+            if (!person || !['senior', 'peer', 'junior'].includes(person.type)) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            if (!isFree && person.taskUsedThisMonth) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            let baseSanCost = 0;
+            let taskName = '';
+            switch (person.taskType) {
+                case 'write': baseSanCost = 4; taskName = '帮忙写论文'; break;
+                case 'experiment': baseSanCost = 3; taskName = '帮忙做实验'; break;
+                case 'idea': baseSanCost = 2; taskName = '帮忙想idea'; break;
+            }
+
+            if (!isFree) {
+                const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+                if (gameState.san < actualSanCost) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+                changeSan(-baseSanCost);
+                person.taskUsedThisMonth = true;
+            }
+
+            const growth = calculatePaperScore();
+            person.taskProgress += growth;
+            addLog('同门任务', `帮${person.name}${taskName}`, `进度+${growth}${isFree ? '（关系加成）' : ''}`);
+
+            checkTaskCompletionWithCallback(person, onComplete);
+
+            updateAllUI();
+            renderRelationshipPanel();
+        }
+
+        // ★★★ 新增：带回调的恋人任务推进 ★★★
+        function advanceLoverTaskWithCallback(personId, isFree, onComplete) {
+            const person = gameState.relationships.find(r => r.id === personId);
+            if (!person || person.type !== 'lover') {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            if (!isFree && person.taskUsedThisMonth) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            if (!isFree) {
+                const goldCost = 2;
+                if (gameState.gold < goldCost) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+                gameState.gold -= goldCost;
+                person.taskUsedThisMonth = true;
+            }
+
+            const baseGrowth = person.intimacy * (0.5 + Math.random());
+            const randomBonus = Math.floor(Math.random() * 6);
+            const growth = Math.floor(baseGrowth) + randomBonus;
+
+            person.taskProgress += growth;
+            addLog('恋爱', `与${person.name}约会`, `进度+${growth}${isFree ? '（关系加成）' : ''}`);
+
+            checkTaskCompletionWithCallback(person, onComplete);
+
+            updateAllUI();
+            renderRelationshipPanel();
+        }
+
+        // ★★★ 新增：带回调的任务完成检查 ★★★
+        function checkTaskCompletionWithCallback(person, onComplete) {
+            if (person.taskProgress >= person.taskMax) {
+                const overflow = person.taskProgress - person.taskMax;
+                person.taskProgress = overflow;
+                handleTaskCompletionWithCallback(person, onComplete);
+            } else {
+                if (onComplete) onComplete();
+            }
+        }
+
+        // ★★★ 新增：带回调的任务完成处理 ★★★
+        function handleTaskCompletionWithCallback(person, onComplete) {
+            if (person.type === 'advisor') {
+                handleAdvisorTaskCompletionWithCallback(person, onComplete);
+            } else if (['senior', 'peer', 'junior'].includes(person.type)) {
+                handleFellowTaskCompletionWithCallback(person, onComplete);
+            } else if (person.type === 'lover') {
+                handleLoverTaskCompletionWithCallback(person, onComplete);
+            } else {
+                if (onComplete) onComplete();
+            }
+        }
+
+        // ★★★ 新增：带回调的导师任务完成处理 ★★★
+        function handleAdvisorTaskCompletionWithCallback(person, onComplete) {
+            person.affinity = Math.min(20, person.affinity + 1);
+            person.researchResource = Math.min(20, person.researchResource + 1);
+            const multiplier = person.taskMultiplier || 8;
+            person.taskMax = person.researchResource * multiplier + 20;
+
+            const isHorizontal = Math.random() < 0.5;
+            let rewardText = '';
+            if (isHorizontal) {
+                gameState.gold += 5;
+                rewardText = '横向项目，金币+5';
+            } else {
+                gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+                rewardText = '纵向项目，科研能力+1';
+            }
+
+            addLog('项目完成', `帮${person.name}完成项目`, `亲和度+1，科研资源+1，${rewardText}`);
+            showPaperSelectionModalWithCallback(person, 'advisor', onComplete);
+        }
+
+        // ★★★ 新增：带回调的同门任务完成处理 ★★★
+        function handleFellowTaskCompletionWithCallback(person, onComplete) {
+            person.affinity = Math.min(20, person.affinity + 1);
+
+            let taskName = '';
+            switch (person.taskType) {
+                case 'write': taskName = '写论文'; break;
+                case 'experiment': taskName = '做实验'; break;
+                case 'idea': taskName = '想idea'; break;
+            }
+
+            addLog('任务完成', `帮${person.name}完成${taskName}`, `亲和度+1`);
+            showPaperSelectionModalWithCallback(person, 'fellow', onComplete);
+        }
+
+        // ★★★ 新增：带回调的恋人任务完成处理 ★★★
+        function handleLoverTaskCompletionWithCallback(person, onComplete) {
+            person.intimacy = Math.min(40, person.intimacy + 1);
+            person.research = Math.min(20, person.research + 1);
+            person.loverTasksCompleted = (person.loverTasksCompleted || 0) + 1;
+
+            const loverType = gameState.loverType;
+            let specialEffect = '';
+
+            if (loverType === 'smart') {
+                const cycle = (person.loverTasksCompleted - 1) % 3;
+                switch (cycle) {
+                    case 0:
+                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_extra_idea')) {
+                            gameState.buffs.permanent.push({ type: 'lover_extra_idea', desc: '想idea多想一次' });
+                            specialEffect = '，获得永久buff：想idea多想一次';
+                        }
+                        break;
+                    case 1:
+                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_extra_experiment')) {
+                            gameState.buffs.permanent.push({ type: 'lover_extra_experiment', desc: '做实验多做一次' });
+                            specialEffect = '，获得永久buff：做实验多做一次';
+                        }
+                        break;
+                    case 2:
+                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_extra_write')) {
+                            gameState.buffs.permanent.push({ type: 'lover_extra_write', desc: '写论文多写一次' });
+                            specialEffect = '，获得永久buff：写论文多写一次';
+                        }
+                        break;
+                }
+            } else if (loverType === 'beautiful') {
+                const cycle = (person.loverTasksCompleted - 1) % 3;
+                switch (cycle) {
+                    case 0:
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + 8);
+                        specialEffect = '，SAN+8';
+                        break;
+                    case 1:
+                        gameState.sanMax += 2;
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
+                        specialEffect = '，SAN上限+2';
+                        break;
+                    case 2:
+                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_monthly_san')) {
+                            gameState.buffs.permanent.push({ type: 'lover_monthly_san', desc: '每月SAN回复+1' });
+                            specialEffect = '，获得永久buff：每月SAN回复+1';
+                        } else {
+                            gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
+                            specialEffect = '，SAN+5';
+                        }
+                        break;
+                }
+            }
+
+            addLog('恋爱进展', `与${person.name}感情升温`, `亲密度+1，科研能力+1${specialEffect}`);
+            showPaperSelectionModalWithCallback(person, 'lover', onComplete);
+        }
+
+        // ★★★ 新增：带回调的论文选择弹窗 ★★★
+        function showPaperSelectionModalWithCallback(person, completionType, onComplete) {
+            let eligiblePapers = [];
+
+            if (completionType === 'advisor' || completionType === 'lover') {
+                eligiblePapers = gameState.papers.filter((p, idx) =>
+                    p && !p.reviewing
+                ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
+            } else if (completionType === 'fellow') {
+                eligiblePapers = gameState.papers.filter((p, idx) =>
+                    p && !p.reviewing
+                ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
+            }
+
+            if (eligiblePapers.length === 0) {
+                addLog('任务奖励', '没有符合条件的论文', '奖励跳过');
+                updateAllUI();
+                renderRelationshipPanel();
+                if (onComplete) onComplete();
+                return;
+            }
+
+            // 保存回调函数供选择时使用
+            window._paperSelectionCallback = onComplete;
+
+            let papersHtml = eligiblePapers.map(({ paper, slotIndex }) => {
+                let bonusText = '';
+                if (completionType === 'advisor') {
+                    bonusText = `idea/实验/写作各+${person.researchResource}`;
+                } else if (completionType === 'fellow') {
+                    const fieldName = person.taskType === 'idea' ? 'idea' :
+                                     person.taskType === 'experiment' ? '实验' : '写作';
+                    bonusText = `${fieldName}+${person.research}`;
+                } else if (completionType === 'lover') {
+                    const bonus = Math.floor(person.research * 0.5);
+                    bonusText = `idea/实验/写作各+${bonus}`;
+                }
+                return `
+                    <div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;cursor:pointer;border:2px solid transparent;"
+                         onmouseover="this.style.borderColor='var(--primary-color)'"
+                         onmouseout="this.style.borderColor='transparent'"
+                         onclick="selectPaperForBonusWithCallback(${slotIndex}, '${person.id}', '${completionType}')">
+                        <div style="font-weight:600;font-size:0.85rem;">槽位${slotIndex + 1}</div>
+                        <div style="font-size:0.75rem;color:var(--text-secondary);">
+                            idea:${paper.ideaScore} 实验:${paper.expScore} 写作:${paper.writeScore}
+                        </div>
+                        <div style="font-size:0.7rem;color:var(--success-color);margin-top:4px;">${bonusText}</div>
+                    </div>
+                `;
+            }).join('');
+
+            showModal('📄 选择论文获得加成',
+                `<div style="max-height:300px;overflow-y:auto;">${papersHtml}</div>`,
+                [{ text: '跳过', class: 'btn-info', action: () => {
+                    const callback = window._paperSelectionCallback;
+                    window._paperSelectionCallback = null;
+                    closeModal();
+                    updateAllUI();
+                    renderRelationshipPanel();
+                    if (callback) callback();
+                }}]
+            );
+        }
+
+        // ★★★ 新增：带回调的论文选择 ★★★
+        function selectPaperForBonusWithCallback(slotIndex, personId, completionType) {
+            const person = gameState.relationships.find(r => r.id === personId);
+            const paper = gameState.papers[slotIndex];
+            const callback = window._paperSelectionCallback;
+            window._paperSelectionCallback = null;
+
+            if (!person || !paper) {
+                closeModal();
+                if (callback) callback();
+                return;
+            }
+
+            paper.receivedRelationshipBonus = true;
+
+            if (completionType === 'advisor') {
+                const bonus = person.researchResource;
+                paper.ideaScore += bonus;
+                paper.expScore += bonus;
+                paper.writeScore += bonus;
+                addLog('论文加成', `导师项目奖励`, `槽位${slotIndex + 1} idea/实验/写作各+${bonus}`);
+            } else if (completionType === 'fellow') {
+                const bonus = person.research;
+                if (person.taskType === 'idea') {
+                    paper.ideaScore += bonus;
+                    addLog('论文加成', `${person.name}帮忙想idea`, `槽位${slotIndex + 1} idea+${bonus}`);
+                } else if (person.taskType === 'experiment') {
+                    paper.expScore += bonus;
+                    addLog('论文加成', `${person.name}帮忙做实验`, `槽位${slotIndex + 1} 实验+${bonus}`);
+                } else if (person.taskType === 'write') {
+                    paper.writeScore += bonus;
+                    addLog('论文加成', `${person.name}帮忙写论文`, `槽位${slotIndex + 1} 写作+${bonus}`);
+                }
+            } else if (completionType === 'lover') {
+                const bonus = Math.floor(person.research * 0.5);
+                paper.ideaScore += bonus;
+                paper.expScore += bonus;
+                paper.writeScore += bonus;
+                addLog('论文加成', `恋人帮助`, `槽位${slotIndex + 1} idea/实验/写作各+${bonus}`);
+            }
+
+            closeModal();
+            updateAllUI();
+            renderPaperSlots();
+            renderRelationshipPanel();
+
+            if (callback) callback();
         }
 
         // 计算论文分数（与papers.js中相同的公式）
