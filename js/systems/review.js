@@ -1401,21 +1401,41 @@
 		// ==================== 辅助函数 ====================
 
 
-        // 异步记录投稿数据
-        async function recordSubmission(gameMonth, grade, submittedScore, result, isReversed) {
-            if (!supabase) return;
-            
+        // 缓存投稿数据（游戏结束时批量写入，节省数据库流量）
+        function recordSubmission(gameMonth, grade, submittedScore, result, isReversed) {
+            // 初始化待上传队列
+            if (!gameState.pendingSubmissions) {
+                gameState.pendingSubmissions = [];
+            }
+            // 缓存到队列，游戏结束时批量写入
+            gameState.pendingSubmissions.push({
+                game_month: gameMonth,
+                grade: grade,
+                submitted_score: submittedScore,
+                result: result.toLowerCase().replace(' ', '_'),
+                is_reversed: isReversed
+            });
+            console.log(`📝 投稿已缓存 (待上传: ${gameState.pendingSubmissions.length})`);
+        }
+
+        // 批量写入所有缓存的投稿数据（游戏结束时调用）
+        async function batchRecordSubmissions() {
+            if (!supabase || !gameState.pendingSubmissions || gameState.pendingSubmissions.length === 0) {
+                return;
+            }
+
+            const submissions = gameState.pendingSubmissions;
+            gameState.pendingSubmissions = []; // 清空队列
+
             try {
-                await supabase.from('paper_submissions').insert({
-                    game_month: gameMonth,
-                    grade: grade,
-                    submitted_score: submittedScore,
-                    result: result.toLowerCase().replace(' ', '_'),
-                    is_reversed: isReversed
-                });
-                console.log('✅ 投稿记录已保存');
+                const { error } = await supabase.from('paper_submissions').insert(submissions);
+                if (error) {
+                    console.error('❌ 批量写入投稿失败:', error);
+                } else {
+                    console.log(`✅ 批量写入 ${submissions.length} 条投稿记录`);
+                }
             } catch (e) {
-                console.error('记录投稿失败:', e);
+                console.error('❌ 批量写入投稿异常:', e);
             }
         }
 

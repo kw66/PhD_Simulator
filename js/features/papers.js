@@ -701,6 +701,15 @@
 
 			addLog('期刊发表', `"${paper.title.substring(0, 20)}..." 发表于${journalName}`, logDetails);
 
+			// ★★★ 记录 Nature 论文投稿数据 ★★★
+			recordSubmission(
+				gameState.month,
+				journalType === 'nature' ? 'S' : 'S-sub',  // S = Nature正刊, S-sub = Nature子刊
+				total,
+				'accepted',  // Nature 直接中稿
+				gameState.isReversed
+			);
+
 			renderPaperSlots();
 			updateAllUI();
 			updateResearchResults();

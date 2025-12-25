@@ -67,15 +67,10 @@
 			
 			initStats();
 			loadGlobalStatsDisplay();
-			
-			// ★★★ 新增：加载今日统计和在线人数 ★★★
+
+			// 加载今日统计和在线人数（只在页面加载时查询一次，游戏结束返回时会再次刷新）
 			updateAllStatsDisplay();
-			
-			// ★★★ 新增：每30秒刷新一次在线人数和今日统计 ★★★
-			setInterval(() => {
-				updateAllStatsDisplay();
-			}, 30 * 1000);
-			
+
 			setTimeout(() => {
 				const messageSection = document.getElementById('message-section');
 				if (messageSection) {

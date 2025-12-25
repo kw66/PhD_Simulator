@@ -4,7 +4,7 @@
         //const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
         //const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yemVqem15enVneHR5cnpmY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDYyMTUsImV4cCI6MjA4MDg4MjIxNX0.lx9W0v9KpRPmQR0kdxCSWVks_az5rLCr7D3JI2efeM4';
 
-        //let supabase = null;
+        // supabase 客户端变量（在 initStats 中初始化，使用隐式全局变量避免与 SDK 冲突）
         let statsInitialized = false;
         let statsCache = null;
         let statsCacheTime = 0;
@@ -263,21 +263,23 @@
 
 		// ★★★ 修复：同时插入site_visits（用于今日统计）和更新counters（用于总计）★★★
 		async function recordVisit() {
-			if (!supabase) return;
+			console.log('📊 recordVisit() 开始执行, supabase:', !!supabase);
+			if (!supabase) {
+				console.warn('⚠️ recordVisit: supabase 未初始化，跳过记录');
+				return;
+			}
 			try {
-				// ★★★ 1. 总是插入PV记录到site_visits（用于今日统计查询）★★★
-				const pvInsertPromise = supabase.from('site_visits').insert({ type: 'pv' });
+				// ★★★ 1. 插入PV记录到site_visits ★★★
+				const { error: pvError } = await supabase.from('site_visits').insert({ type: 'pv' });
 
-				// ★★★ 2. 同时尝试更新计数器（用于总计优化）★★★
-				const pvCounterPromise = supabase.rpc('increment_counter', {
-					counter_id: 'pv_total'
-				}).catch(err => {
-					console.warn('PV计数器更新失败（非致命）:', err);
-				});
+				if (pvError) {
+					console.error('❌ PV插入失败:', pvError);
+				} else {
+					console.log('✅ PV已记录');
+				}
 
-				// 并行执行，但只等待insert完成
-				await pvInsertPromise;
-				console.log('✅ PV已记录');
+				// ★★★ 2. 尝试更新计数器（非致命，忽略错误） ★★★
+				try { await supabase.rpc('increment_counter', { counter_id: 'pv_total' }); } catch(e) {}
 
 				// UV：每天每个用户只记录一次
 				const todayStr = getTodayDateString();
@@ -289,24 +291,22 @@
 				const isNewDay = lastUvDate !== todayStr;
 
 				if (isNewVisitor || isNewDay) {
-					// ★★★ 总是插入UV记录到site_visits ★★★
-					const uvInsertPromise = supabase.from('site_visits').insert({ type: 'uv' });
+					// ★★★ 插入UV记录到site_visits ★★★
+					const { error: uvError } = await supabase.from('site_visits').insert({ type: 'uv' });
 
-					// 同时更新计数器
-					const uvCounterPromise = supabase.rpc('increment_counter', {
-						counter_id: 'uv_total'
-					}).catch(err => {
-						console.warn('UV计数器更新失败（非致命）:', err);
-					});
+					if (uvError) {
+						console.error('❌ UV插入失败:', uvError);
+					} else {
+						localStorage.setItem(visitorKey, 'true');
+						localStorage.setItem(lastUvDateKey, todayStr);
+						console.log(isNewVisitor ? '✅ 新访客已记录' : '✅ 今日访客已记录');
+					}
 
-					await uvInsertPromise;
-
-					localStorage.setItem(visitorKey, 'true');
-					localStorage.setItem(lastUvDateKey, todayStr);
-					console.log(isNewVisitor ? '✅ 新访客已记录' : '✅ 今日访客已记录');
+					// 尝试更新计数器（非致命，忽略错误）
+					try { await supabase.rpc('increment_counter', { counter_id: 'uv_total' }); } catch(e) {}
 				}
 			} catch (e) {
-				console.error('记录访问失败:', e);
+				console.error('❌ 记录访问异常:', e);
 			}
 		}
 
@@ -403,6 +403,8 @@
 					paper_a: gameState.paperA,
 					paper_b: gameState.paperB,
 					paper_c: gameState.paperC,
+					paper_nature: gameState.paperNature || 0,        // ★★★ 新增：Nature正刊数量 ★★★
+					paper_nature_sub: gameState.paperNatureSub || 0, // ★★★ 新增：Nature子刊数量 ★★★
 					total_citations: gameState.totalCitations,
 					achievements_count: achievementCount
 				});

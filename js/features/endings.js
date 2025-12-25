@@ -52,10 +52,13 @@
 			}
             
             recordEnding(endingType, title);
-            
+
             const achievements = collectAchievements(endingType);
             recordAchievements(achievements);
-            
+
+            // ★★★ 游戏结束时批量写入投稿数据（节省数据库流量）★★★
+            batchRecordSubmissions();
+
             showEndingModal(title, desc, emoji, endingType);
         }
 
@@ -713,9 +716,9 @@
             }
 
             renderCharacterGrid();
-            loadGlobalStatsDisplay();
-			// ★ 返回开始页面时重新查询统计
-			updateAllStatsDisplay();
+            // 游戏结束返回时不刷新留言板/全球统计，等用户刷新页面时再更新（节省数据库流量）
+            // loadGlobalStatsDisplay();
+            // updateAllStatsDisplay();
         }
 
 		// ==================== Meta进度系统 ====================

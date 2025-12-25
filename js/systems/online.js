@@ -585,23 +585,6 @@
 			loadMessages(1);
 		}
 
-		// 启动在线追踪（心跳持续，统计只查一次）
-		function startOnlineTracking() {
-			if (!supabase) return;
-			
-			onlineSessionId = getOnlineSessionId();
-			
-			// 立即心跳
-			sendOnlineHeartbeat();
-			
-			// 只查询一次统计
-			updateAllStatsDisplay();
-			
-			// 持续心跳（游戏中也发）
-			if (!onlineHeartbeatTimer) {
-				onlineHeartbeatTimer = setInterval(sendOnlineHeartbeat, 180 * 1000);
-			}
-		}
 
 
 
