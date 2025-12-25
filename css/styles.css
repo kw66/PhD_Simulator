@@ -3481,13 +3481,16 @@ body {
         align-items: center;
     }
 
-    .constellation-select-panel {
+    /* 移动端：角色详情栏在选择栏上方 */
+    .constellation-preview-panel {
+        order: 1;
         flex: none;
         width: 100%;
         max-width: 400px;
     }
 
-    .constellation-preview-panel {
+    .constellation-select-panel {
+        order: 2;
         flex: none;
         width: 100%;
         max-width: 400px;
@@ -3594,15 +3597,23 @@ body {
     font-weight: 500;
 }
 
-/* 移动端时间显示栏置顶 */
+/* 移动端时间显示栏浮动置顶 */
 @media (max-width: 768px) {
     .time-display-panel {
-        position: sticky;
+        position: fixed;
         top: 0;
-        z-index: 100;
-        margin: 0 -10px 10px -10px;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        margin: 0;
         border-radius: 0 !important;
         padding: 8px 15px !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 游戏界面顶部留出空间给浮动月份栏 */
+    .game-container {
+        padding-top: 50px;
     }
 
     .time-main {
