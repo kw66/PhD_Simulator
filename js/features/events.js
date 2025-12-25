@@ -202,6 +202,15 @@
 		}
 		// ★★★ 新增：学年总结事件 ★★★
 		function triggerYearEndSummaryEvent() {
+			// ★★★ 防止同一年重复触发学年总结 ★★★
+			if (gameState.yearEndSummaryTriggeredThisYear === gameState.year) {
+				// 已经触发过本年度的学年总结，直接检查毕业
+				checkGraduation();
+				updateAllUI();
+				return;
+			}
+			gameState.yearEndSummaryTriggeredThisYear = gameState.year;
+
 			// ★★★ 定义学年总结完成后的回调函数 ★★★
 			const afterYearEndSummary = () => {
 				// 学年总结完成后，检查是否需要触发毕业
