@@ -698,11 +698,11 @@
                         </div>
                         <div style="margin-bottom:8px;">
                             <span style="color:var(--love-color);font-weight:600;">💞 关系积累</span> ⚡
-                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">每月自动增长，<strong>满后点击"交流"按钮免费推进一次任务</strong></div>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">每月自动增长，<strong>满后解锁交流机会（不累积）</strong></div>
                         </div>
                         <div>
                             <span style="color:var(--success-color);font-weight:600;">💬 交流按钮</span>
-                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">关系条满时可用，消耗关系条免费推进任务</div>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">关系条满后可用，点击免费推进一次任务</div>
                         </div>
                     </div>
 
@@ -855,15 +855,14 @@
                         attrHtml = `<span style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;">🔬${person.research} 💖${person.affinity}</span>`;
                     }
 
-                    // ★★★ 进度条样式：使用斜线条纹，区分于属性条 ★★★
-                    const taskBarStyle = `background:repeating-linear-gradient(135deg,var(--primary-color),var(--primary-color) 3px,rgba(108,92,231,0.6) 3px,rgba(108,92,231,0.6) 6px);`;
-                    const relationBarStyle = `background:repeating-linear-gradient(135deg,var(--love-color),var(--love-color) 3px,rgba(233,30,99,0.6) 3px,rgba(233,30,99,0.6) 6px);`;
+                    // ★★★ 进度条样式：使用斜线条纹，增强对比度 ★★★
+                    const taskBarStyle = `background:repeating-linear-gradient(135deg,var(--primary-color) 0px,var(--primary-color) 4px,rgba(108,92,231,0.35) 4px,rgba(108,92,231,0.35) 8px);`;
+                    const relationBarStyle = `background:repeating-linear-gradient(135deg,var(--love-color) 0px,var(--love-color) 4px,rgba(233,30,99,0.35) 4px,rgba(233,30,99,0.35) 8px);`;
 
-                    // ★★★ 关系条满时的特殊样式 ★★★
-                    const isRelationFull = person.relationProgress >= person.relationMax;
-                    const relationFullStyle = isRelationFull ? 'animation:pulse 1.5s infinite;box-shadow:0 0 8px var(--love-color);' : '';
-                    const interactBtnClass = isRelationFull ? 'btn-success' : 'btn-info';
-                    const interactBtnText = isRelationFull ? '💬 交流 (可用!)' : '💬 交流';
+                    // ★★★ 交流按钮状态：根据 canInteract 标志判断 ★★★
+                    const canInteract = person.canInteract || false;
+                    const interactBtnClass = canInteract ? 'btn-success' : 'btn-info';
+                    const interactBtnText = canInteract ? '💬 交流 (可用!)' : '💬 交流';
 
                     html += `
                         <div class="relationship-slot filled"
@@ -886,10 +885,10 @@
 
                             <!-- 关系积累：标签+数值在第一行，进度条在第二行 -->
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                                <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月${isRelationFull ? '，已满!' : ''})</span></span>
-                                <span style="font-size:0.7rem;color:${isRelationFull ? 'var(--success-color)' : 'var(--text-secondary)'};">${person.relationProgress}/${person.relationMax} ${isRelationFull ? '✨' : '⚡'}</span>
+                                <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月)</span></span>
+                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.relationProgress}/${person.relationMax} ⚡</span>
                             </div>
-                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;${relationFullStyle}">
+                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;">
                                 <div style="width:${relationPercent}%;height:100%;${relationBarStyle}transition:width 0.3s;"></div>
                             </div>
 
@@ -1480,31 +1479,36 @@
                     }
                 }
 
-                // 关系条增长（如果未满）
-                if (person.relationProgress < person.relationMax) {
-                    let relationGrowth = 0;
-                    if (person.type === 'advisor') {
-                        relationGrowth = gameState.favor + (person.affinity || 0);
-                    } else if (['senior', 'peer', 'junior'].includes(person.type)) {
-                        relationGrowth = gameState.social + (person.affinity || 0);
-                    } else if (person.type === 'lover') {
-                        relationGrowth = person.intimacy || 0;
-                    }
+                // 关系条增长
+                let relationGrowth = 0;
+                if (person.type === 'advisor') {
+                    relationGrowth = gameState.favor + (person.affinity || 0);
+                } else if (['senior', 'peer', 'junior'].includes(person.type)) {
+                    relationGrowth = gameState.social + (person.affinity || 0);
+                } else if (person.type === 'lover') {
+                    relationGrowth = person.intimacy || 0;
+                }
 
-                    if (relationGrowth > 0 && person.relationMax) {
-                        person.relationProgress = Math.min(person.relationMax, (person.relationProgress || 0) + relationGrowth);
+                if (relationGrowth > 0 && person.relationMax) {
+                    person.relationProgress = (person.relationProgress || 0) + relationGrowth;
+
+                    // ★★★ 关系条满时：立即重置为溢出值，设置可交流标志 ★★★
+                    if (person.relationProgress >= person.relationMax) {
+                        const overflow = person.relationProgress - person.relationMax;
+                        person.relationProgress = overflow;
+                        person.canInteract = true;  // 设置可交流标志（不累积）
                     }
                 }
             });
         }
 
-        // ★★★ 新增：交流按钮点击处理（手动触发关系满的效果）★★★
+        // ★★★ 交流按钮：检查可交流标志，推进任务 ★★★
         function interactWithPerson(personId) {
             const person = gameState.relationships.find(r => r.id === personId);
             if (!person) return;
 
-            // 检查关系条是否满
-            if (person.relationProgress < person.relationMax) {
+            // 检查是否可以交流
+            if (!person.canInteract) {
                 showModal('💬 交流',
                     `<p style="text-align:center;">与<strong>${person.name}</strong>的关系还不够深厚</p>
                      <p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">关系进度：${person.relationProgress}/${person.relationMax}</p>`,
@@ -1512,8 +1516,8 @@
                 return;
             }
 
-            // 关系条满，执行免费任务
-            person.relationProgress = 0;  // 重置关系条
+            // 清除可交流标志，执行免费任务
+            person.canInteract = false;
             addLog('关系加成', `与${person.name}关系融洽`, '自动推进任务');
 
             if (person.type === 'advisor') {
