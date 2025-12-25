@@ -696,9 +696,13 @@
                             <span style="color:var(--primary-color);font-weight:600;">📋 任务进度</span> 🎁
                             <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">点击按钮消耗资源推进，<strong>满后获得奖励+论文加成选择</strong></div>
                         </div>
-                        <div>
+                        <div style="margin-bottom:8px;">
                             <span style="color:var(--love-color);font-weight:600;">💞 关系积累</span> ⚡
-                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">每月自动增长，<strong>满后自动免费推进一次任务</strong></div>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">每月自动增长，<strong>满后点击"交流"按钮免费推进一次任务</strong></div>
+                        </div>
+                        <div>
+                            <span style="color:var(--success-color);font-weight:600;">💬 交流按钮</span>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">关系条满时可用，消耗关系条免费推进任务</div>
                         </div>
                     </div>
 
@@ -851,9 +855,15 @@
                         attrHtml = `<span style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;">🔬${person.research} 💖${person.affinity}</span>`;
                     }
 
-                    // ★★★ 进度条样式：使用条纹渐变，区分于属性条 ★★★
-                    const taskBarStyle = `background:repeating-linear-gradient(90deg,var(--primary-color),var(--primary-color) 4px,rgba(108,92,231,0.7) 4px,rgba(108,92,231,0.7) 8px);`;
-                    const relationBarStyle = `background:repeating-linear-gradient(90deg,var(--love-color),var(--love-color) 4px,rgba(233,30,99,0.7) 4px,rgba(233,30,99,0.7) 8px);`;
+                    // ★★★ 进度条样式：使用斜线条纹，区分于属性条 ★★★
+                    const taskBarStyle = `background:repeating-linear-gradient(135deg,var(--primary-color),var(--primary-color) 3px,rgba(108,92,231,0.6) 3px,rgba(108,92,231,0.6) 6px);`;
+                    const relationBarStyle = `background:repeating-linear-gradient(135deg,var(--love-color),var(--love-color) 3px,rgba(233,30,99,0.6) 3px,rgba(233,30,99,0.6) 6px);`;
+
+                    // ★★★ 关系条满时的特殊样式 ★★★
+                    const isRelationFull = person.relationProgress >= person.relationMax;
+                    const relationFullStyle = isRelationFull ? 'animation:pulse 1.5s infinite;box-shadow:0 0 8px var(--love-color);' : '';
+                    const interactBtnClass = isRelationFull ? 'btn-success' : 'btn-info';
+                    const interactBtnText = isRelationFull ? '💬 交流 (可用!)' : '💬 交流';
 
                     html += `
                         <div class="relationship-slot filled"
@@ -876,19 +886,24 @@
 
                             <!-- 关系积累：标签+数值在第一行，进度条在第二行 -->
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                                <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月，满后免费推进任务)</span></span>
-                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.relationProgress}/${person.relationMax} ⚡</span>
+                                <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月${isRelationFull ? '，已满!' : ''})</span></span>
+                                <span style="font-size:0.7rem;color:${isRelationFull ? 'var(--success-color)' : 'var(--text-secondary)'};">${person.relationProgress}/${person.relationMax} ${isRelationFull ? '✨' : '⚡'}</span>
                             </div>
-                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;">
+                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;${relationFullStyle}">
                                 <div style="width:${relationPercent}%;height:100%;${relationBarStyle}transition:width 0.3s;"></div>
                             </div>
 
                             <!-- 操作按钮 -->
-                            <div style="display:flex;justify-content:flex-end;">
+                            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                                <button class="btn ${interactBtnClass}"
+                                        onclick="event.stopPropagation();interactWithPerson('${person.id}')"
+                                        style="padding:5px 12px;font-size:0.75rem;">
+                                    ${interactBtnText}
+                                </button>
                                 <button class="btn ${taskBtnClass}" ${taskBtnDisabled}
                                         onclick="event.stopPropagation();advanceTask('${person.id}')"
                                         style="padding:5px 12px;font-size:0.75rem;">
-                                    ${canUseTask ? `${taskIcon} ${taskName} (${taskCost}) → 推进任务` : '✓ 本月已用'}
+                                    ${canUseTask ? `${taskIcon} ${taskName} (${taskCost})` : '✓ 本月已用'}
                                 </button>
                             </div>
                         </div>
@@ -1451,9 +1466,6 @@
 
         // 每月更新关系进度
         function updateRelationshipProgress() {
-            // ★★★ 初始化待处理的关系任务队列 ★★★
-            gameState.pendingRelationTasks = gameState.pendingRelationTasks || [];
-
             gameState.relationships.forEach(person => {
                 // 重置本月任务使用状态
                 person.taskUsedThisMonth = false;
@@ -1468,74 +1480,54 @@
                     }
                 }
 
-                // 关系条增长
-                let relationGrowth = 0;
-                if (person.type === 'advisor') {
-                    // 导师：好感度 + 亲和度
-                    relationGrowth = gameState.favor + (person.affinity || 0);
-                } else if (['senior', 'peer', 'junior'].includes(person.type)) {
-                    // 同门：社交 + 亲和度
-                    relationGrowth = gameState.social + (person.affinity || 0);
-                } else if (person.type === 'lover') {
-                    // ★★★ 修复：恋人关系条每月增长 = 亲密度 ★★★
-                    relationGrowth = person.intimacy || 0;
-                }
+                // 关系条增长（如果未满）
+                if (person.relationProgress < person.relationMax) {
+                    let relationGrowth = 0;
+                    if (person.type === 'advisor') {
+                        relationGrowth = gameState.favor + (person.affinity || 0);
+                    } else if (['senior', 'peer', 'junior'].includes(person.type)) {
+                        relationGrowth = gameState.social + (person.affinity || 0);
+                    } else if (person.type === 'lover') {
+                        relationGrowth = person.intimacy || 0;
+                    }
 
-                if (relationGrowth > 0 && person.relationMax) {
-                    person.relationProgress = (person.relationProgress || 0) + relationGrowth;
-
-                    // 检查关系条满
-                    if (person.relationProgress >= person.relationMax) {
-                        const overflow = person.relationProgress - person.relationMax;
-                        person.relationProgress = overflow;
-
-                        // ★★★ 修改：将任务加入待处理队列，而不是立即执行 ★★★
-                        // 这样可以避免弹窗与其他月末事件冲突
-                        gameState.pendingRelationTasks.push({
-                            personId: person.id,
-                            personName: person.name,
-                            personType: person.type
-                        });
+                    if (relationGrowth > 0 && person.relationMax) {
+                        person.relationProgress = Math.min(person.relationMax, (person.relationProgress || 0) + relationGrowth);
                     }
                 }
             });
         }
 
-        // ★★★ 新增：处理待处理的关系任务（在所有月末事件结束后调用）★★★
-        function processPendingRelationTasks() {
-            if (!gameState.pendingRelationTasks || gameState.pendingRelationTasks.length === 0) {
+        // ★★★ 新增：交流按钮点击处理（手动触发关系满的效果）★★★
+        function interactWithPerson(personId) {
+            const person = gameState.relationships.find(r => r.id === personId);
+            if (!person) return;
+
+            // 检查关系条是否满
+            if (person.relationProgress < person.relationMax) {
+                showModal('💬 交流',
+                    `<p style="text-align:center;">与<strong>${person.name}</strong>的关系还不够深厚</p>
+                     <p style="text-align:center;color:var(--text-secondary);font-size:0.85rem;">关系进度：${person.relationProgress}/${person.relationMax}</p>`,
+                    [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                 return;
             }
 
-            // 取出第一个待处理任务
-            const task = gameState.pendingRelationTasks.shift();
-            const person = gameState.relationships.find(r => r.id === task.personId);
+            // 关系条满，执行免费任务
+            person.relationProgress = 0;  // 重置关系条
+            addLog('关系加成', `与${person.name}关系融洽`, '自动推进任务');
 
-            if (!person) {
-                // 人物已不存在，处理下一个
-                processPendingRelationTasks();
-                return;
-            }
-
-            // 执行免费任务
-            addLog('关系加成', `与${task.personName}关系融洽`, '自动推进任务');
-
-            // ★★★ 修改：任务完成后检查是否还有待处理任务 ★★★
-            const onTaskComplete = () => {
-                // 延迟处理下一个任务，给弹窗关闭留出时间
-                setTimeout(() => {
-                    processPendingRelationTasks();
-                }, 300);
-            };
-
-            if (task.personType === 'advisor') {
-                advanceAdvisorTaskWithCallback(task.personId, true, onTaskComplete);
-            } else if (['senior', 'peer', 'junior'].includes(task.personType)) {
-                advanceFellowTaskWithCallback(task.personId, true, onTaskComplete);
-            } else if (task.personType === 'lover') {
-                advanceLoverTaskWithCallback(task.personId, true, onTaskComplete);
-            } else {
-                onTaskComplete();
+            if (person.type === 'advisor') {
+                advanceAdvisorTaskWithCallback(personId, true, () => {
+                    renderRelationshipPanel();
+                });
+            } else if (['senior', 'peer', 'junior'].includes(person.type)) {
+                advanceFellowTaskWithCallback(personId, true, () => {
+                    renderRelationshipPanel();
+                });
+            } else if (person.type === 'lover') {
+                advanceLoverTaskWithCallback(personId, true, () => {
+                    renderRelationshipPanel();
+                });
             }
         }
 

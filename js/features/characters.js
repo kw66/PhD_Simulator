@@ -438,9 +438,8 @@
 				const shortName = nameMap[charId] || charId;
 				const isSelected = selectedCharacter?.id === charId && isReversedMode === isReversedSide;
 				const rowClass = rowIndex < 2 ? 'top-row' : 'bottom-row';
-				// 判断是否需要显示锁图标：正位未通关或逆位未解锁时显示
-				const showLock = !isUnlocked;
 
+				// ★★★ 移除🔒图标，通关状态通过边框颜色区分（正位蓝/逆位红，由CSS处理）★★★
 				return `
 					<div class="constellation-rune gem-rune ${isUnlocked ? 'unlocked' : 'locked'} ${isReversedSide ? 'reversed-rune' : 'normal-rune'} ${rowClass} ${isSelected ? 'selected' : ''}"
 						 data-position="${position}"
@@ -448,7 +447,6 @@
 						 data-reversed="${isReversedSide}"
 						 onclick="event.stopPropagation(); selectCharacterFromRune('${charId}', ${isReversedSide})">
 						<div class="gem-glow"></div>
-						${showLock ? '<span class="rune-lock-icon">🔒</span>' : ''}
 						<div class="rune-circle">
 							<span class="rune-icon">${icon}</span>
 						</div>
