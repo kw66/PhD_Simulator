@@ -674,8 +674,8 @@
 						changeSocial(1);
 						logText += '，【冠军！】社交+1';
 
-						// 两次冠军解锁成就
-						if (gameState.badmintonChampionCount >= 2) {
+						// 一次冠军解锁成就
+						if (gameState.badmintonChampionCount >= 1) {
 							gameState.achievementConditions = gameState.achievementConditions || {};
 							gameState.achievementConditions.badmintonChampion = true;
 						}

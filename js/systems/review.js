@@ -803,8 +803,8 @@
 				total: paper.ideaScore + paper.expScore + paper.writeScore
 			};
 			
-			checkReviewAchievements(results, afterScores);
-			
+			checkReviewAchievements(results, afterScores, paper);
+
 			const extraInfo = {
 				adjustment,
 				adjustedTarget,
@@ -828,11 +828,11 @@
 		}
 
 		/** * 成就检测*/
-		function checkReviewAchievements(results, afterScores) {
+		function checkReviewAchievements(results, afterScores, paper) {
 			gameState.achievementConditions = gameState.achievementConditions || {};
-			
-			// 高分论文
-			if (afterScores.total >= 125) {
+
+			// ★★★ 修复：高分论文 - 论文未从关系角色获得分数加成且分数>=125 ★★★
+			if (afterScores.total >= 125 && !paper.receivedRelationshipBonus) {
 				gameState.achievementConditions.highScorePaper = true;
 			}
 			

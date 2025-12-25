@@ -691,46 +691,41 @@
         function showRelationshipHelp() {
             const helpContent = `
                 <div style="text-align:left;font-size:0.85rem;line-height:1.6;">
-                    <h4 style="margin:0 0 10px;color:var(--primary-color);"><i class="fas fa-info-circle"></i> 基本机制</h4>
-                    <ul style="margin:0 0 15px;padding-left:20px;">
-                        <li><strong>任务条</strong>：点击任务按钮消耗资源推进，满了获得奖励</li>
-                        <li><strong>关系条</strong>：每月自动增长，满了自动执行一次免费任务</li>
-                        <li><strong>每月限制</strong>：每人每月只能手动推进一次任务</li>
-                    </ul>
+                    <div style="background:var(--light-bg);border-radius:8px;padding:12px;margin-bottom:12px;">
+                        <div style="margin-bottom:8px;">
+                            <span style="color:var(--primary-color);font-weight:600;">📋 任务进度</span> 🎁
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">点击按钮消耗资源推进，<strong>满后获得奖励+论文加成选择</strong></div>
+                        </div>
+                        <div>
+                            <span style="color:var(--love-color);font-weight:600;">💞 关系积累</span> ⚡
+                            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">每月自动增长，<strong>满后自动免费推进一次任务</strong></div>
+                        </div>
+                    </div>
 
-                    <h4 style="margin:0 0 10px;color:var(--primary-color);"><i class="fas fa-user-tie"></i> 导师</h4>
-                    <ul style="margin:0 0 15px;padding-left:20px;">
-                        <li><strong>任务</strong>：做项目（SAN-3）</li>
-                        <li><strong>关系增长</strong>：好感度 + 亲和度</li>
-                        <li><strong>完成奖励</strong>：亲和度+1，科研资源+1，横向/纵向项目奖励，论文加成</li>
-                    </ul>
+                    <h4 style="margin:0 0 8px;font-size:0.9rem;">📌 角色类型</h4>
+                    <div style="font-size:0.8rem;">
+                        <div style="padding:6px 0;border-bottom:1px solid var(--border-color);">
+                            <strong>👨‍🏫 导师</strong>：做项目(SAN-3) → 亲和度+1，科研资源+1，项目奖励<br>
+                            <span style="color:var(--text-secondary);font-size:0.75rem;">关系增长 = 好感度 + 亲和度</span>
+                        </div>
+                        <div style="padding:6px 0;border-bottom:1px solid var(--border-color);">
+                            <strong>👨‍🎓 师兄师姐</strong>：帮写论文(SAN-4) → 亲和度+1，写作加成<br>
+                            <strong>🤝 同门</strong>：帮做实验(SAN-3) → 亲和度+1，实验加成<br>
+                            <strong>🧑‍🎓 师弟师妹</strong>：帮想idea(SAN-2) → 亲和度+1，idea加成<br>
+                            <span style="color:var(--text-secondary);font-size:0.75rem;">关系增长 = 社交 + 亲和度</span>
+                        </div>
+                        <div style="padding:6px 0;">
+                            <strong>💕 恋人</strong>：约会(💰-2) → 亲密度+1，科研+1，特殊buff<br>
+                            <span style="color:var(--text-secondary);font-size:0.75rem;">关系增长 = 亲密度</span>
+                        </div>
+                    </div>
 
-                    <h4 style="margin:0 0 10px;color:var(--success-color);"><i class="fas fa-user-friends"></i> 同门（师兄姐/同门/师弟妹）</h4>
-                    <ul style="margin:0 0 15px;padding-left:20px;">
-                        <li><strong>任务</strong>：帮写论文(SAN-4) / 帮做实验(SAN-3) / 帮想idea(SAN-2)</li>
-                        <li><strong>关系增长</strong>：社交 + 亲和度</li>
-                        <li><strong>完成奖励</strong>：亲和度+1，对应论文分数加成</li>
-                        <li><strong>成长</strong>：每12个月科研能力+1</li>
-                    </ul>
-
-                    <h4 style="margin:0 0 10px;color:var(--love-color);"><i class="fas fa-heart"></i> 恋人</h4>
-                    <ul style="margin:0 0 15px;padding-left:20px;">
-                        <li><strong>任务</strong>：约会（💰-2）</li>
-                        <li><strong>关系增长</strong>：亲密度</li>
-                        <li><strong>完成奖励</strong>：亲密度+1，科研能力+1，特殊效果，论文加成</li>
-                        <li><strong>成长</strong>：每12个月科研能力+1</li>
-                    </ul>
-
-                    <h4 style="margin:0 0 10px;color:var(--warning-color);"><i class="fas fa-unlock"></i> 槽位解锁</h4>
-                    <ul style="margin:0;padding-left:20px;">
-                        <li>初始2个槽位（1导师 + 1空）</li>
-                        <li>社交≥6：解锁第3槽位</li>
-                        <li>社交≥12：解锁第4槽位</li>
-                        <li>社交≥18：解锁第5槽位</li>
-                    </ul>
+                    <div style="margin-top:10px;padding:8px;background:rgba(108,92,231,0.1);border-radius:6px;font-size:0.75rem;color:var(--text-secondary);">
+                        💡 槽位解锁：初始2个，社交6/12/18各解锁+1
+                    </div>
                 </div>
             `;
-            showModal('👥 人际关系系统说明', helpContent, [
+            showModal('👥 人际关系说明', helpContent, [
                 { text: '知道了', class: 'btn-primary', action: closeModal }
             ]);
         }
@@ -799,30 +794,46 @@
                     const taskPercent = Math.min(100, (person.taskProgress / person.taskMax) * 100);
                     const relationPercent = Math.min(100, (person.relationProgress / person.relationMax) * 100);
 
-                    // 获取任务名称和消耗
+                    // ★★★ 计算关系条每月增长量 ★★★
+                    let relationGrowthPerMonth = 0;
+                    if (person.type === 'advisor') {
+                        relationGrowthPerMonth = gameState.favor + (person.affinity || 0);
+                    } else if (['senior', 'peer', 'junior'].includes(person.type)) {
+                        relationGrowthPerMonth = gameState.social + (person.affinity || 0);
+                    } else if (person.type === 'lover') {
+                        relationGrowthPerMonth = person.intimacy || 0;
+                    }
+
+                    // 获取任务名称、消耗和奖励说明
                     let taskName = '做项目';
                     let taskCost = 'SAN-3';
                     let taskIcon = '📋';
+                    let taskReward = '亲和度+1，科研资源+1，项目奖励';
                     if (person.type === 'advisor') {
                         taskName = '做项目';
                         taskCost = 'SAN-3';
                         taskIcon = '📋';
+                        taskReward = '亲和度+1，科研资源+1，项目奖励，可选论文加成';
                     } else if (person.type === 'senior') {
                         taskName = '帮写论文';
                         taskCost = 'SAN-4';
                         taskIcon = '✍️';
+                        taskReward = `亲和度+1，写作+${person.research || 0}`;
                     } else if (person.type === 'peer') {
                         taskName = '帮做实验';
                         taskCost = 'SAN-3';
                         taskIcon = '🔬';
+                        taskReward = `亲和度+1，实验+${person.research || 0}`;
                     } else if (person.type === 'junior') {
                         taskName = '帮想idea';
                         taskCost = 'SAN-2';
                         taskIcon = '💡';
+                        taskReward = `亲和度+1，idea+${person.research || 0}`;
                     } else if (person.type === 'lover') {
                         taskName = '约会';
                         taskCost = '💰-2';
                         taskIcon = '💕';
+                        taskReward = '亲密度+1，科研+1，特殊效果';
                     }
 
                     // 检查本月是否可用
@@ -840,6 +851,10 @@
                         attrHtml = `<span style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;">🔬${person.research} 💖${person.affinity}</span>`;
                     }
 
+                    // ★★★ 进度条样式：使用条纹渐变，区分于属性条 ★★★
+                    const taskBarStyle = `background:repeating-linear-gradient(90deg,var(--primary-color),var(--primary-color) 4px,rgba(108,92,231,0.7) 4px,rgba(108,92,231,0.7) 8px);`;
+                    const relationBarStyle = `background:repeating-linear-gradient(90deg,var(--love-color),var(--love-color) 4px,rgba(233,30,99,0.7) 4px,rgba(233,30,99,0.7) 8px);`;
+
                     html += `
                         <div class="relationship-slot filled"
                              style="padding:12px;background:var(--light-bg);border-radius:10px;margin-bottom:8px;border-left:4px solid ${typeInfo.color};">
@@ -849,28 +864,31 @@
                                 <span style="font-size:0.7rem;padding:2px 6px;background:${typeInfo.color}22;color:${typeInfo.color};border-radius:4px;font-weight:500;">${displayTypeName}</span>
                                 ${attrHtml}
                             </div>
-                            <!-- 任务进度条 -->
-                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                                <span style="font-size:0.7rem;color:var(--text-secondary);min-width:40px;">${taskIcon} 任务</span>
-                                <div style="flex:1;height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;">
-                                    <div style="width:${taskPercent}%;height:100%;background:var(--primary-color);transition:width 0.3s;"></div>
-                                </div>
-                                <span style="font-size:0.65rem;color:var(--text-secondary);min-width:40px;text-align:right;">${person.taskProgress}/${person.taskMax}</span>
+
+                            <!-- 任务进度：标签+简短奖励提示+数值在第一行，进度条在第二行 -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                <span style="font-size:0.7rem;color:var(--primary-color);font-weight:500;">📋 任务 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(满后: ${taskReward})</span></span>
+                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.taskProgress}/${person.taskMax} 🎁</span>
                             </div>
-                            <!-- 关系进度条 -->
-                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                                <span style="font-size:0.7rem;color:var(--text-secondary);min-width:40px;">💞 关系</span>
-                                <div style="flex:1;height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;">
-                                    <div style="width:${relationPercent}%;height:100%;background:var(--love-color);transition:width 0.3s;"></div>
-                                </div>
-                                <span style="font-size:0.65rem;color:var(--text-secondary);min-width:40px;text-align:right;">${person.relationProgress}/${person.relationMax}</span>
+                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+                                <div style="width:${taskPercent}%;height:100%;${taskBarStyle}transition:width 0.3s;"></div>
                             </div>
-                            <!-- 操作按钮行 -->
+
+                            <!-- 关系积累：标签+数值在第一行，进度条在第二行 -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月，满后免费推进任务)</span></span>
+                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.relationProgress}/${person.relationMax} ⚡</span>
+                            </div>
+                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;">
+                                <div style="width:${relationPercent}%;height:100%;${relationBarStyle}transition:width 0.3s;"></div>
+                            </div>
+
+                            <!-- 操作按钮 -->
                             <div style="display:flex;justify-content:flex-end;">
                                 <button class="btn ${taskBtnClass}" ${taskBtnDisabled}
                                         onclick="event.stopPropagation();advanceTask('${person.id}')"
-                                        style="padding:5px 12px;font-size:0.75rem;min-width:100px;">
-                                    ${canUseTask ? `${taskName} (${taskCost})` : '本月已用'}
+                                        style="padding:5px 12px;font-size:0.75rem;">
+                                    ${canUseTask ? `${taskIcon} ${taskName} (${taskCost}) → 推进任务` : '✓ 本月已用'}
                                 </button>
                             </div>
                         </div>
@@ -1395,6 +1413,9 @@
             const person = gameState.relationships.find(r => r.id === personId);
             const paper = gameState.papers[slotIndex];
             if (!person || !paper) return;
+
+            // ★★★ 新增：标记论文从关系角色获得了加成（用于高分论文成就判定）★★★
+            paper.receivedRelationshipBonus = true;
 
             if (completionType === 'advisor') {
                 const bonus = person.researchResource;

@@ -939,6 +939,8 @@
 					effectiveResearch += gameState.nextActionBonus;
 					skillUsed = true;
 					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					// ★★★ 标记论文使用了帮助技能（用于高分论文成就检测）★★★
+					paper.usedHelpSkill = true;
 					// 清除已使用的加成
 					gameState.nextActionBonus = 0;
 					gameState.nextActionBonusSource = null;
@@ -1097,11 +1099,13 @@
 					effectiveResearch += gameState.nextActionBonus;
 					skillUsed = true;
 					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					// ★★★ 标记论文使用了帮助技能（用于高分论文成就检测）★★★
+					paper.usedHelpSkill = true;
 					gameState.nextActionBonus = 0;
 					gameState.nextActionBonusSource = null;
 					gameState.nextActionBonusType = null;
 				}
-				
+
 				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];
@@ -1246,11 +1250,13 @@
 					effectiveResearch += gameState.nextActionBonus;
 					skillUsed = true;
 					skillSource = gameState.nextActionBonusSource === 'senior' ? '师兄师姐救我' : '导师救我';
+					// ★★★ 标记论文使用了帮助技能（用于高分论文成就检测）★★★
+					paper.usedHelpSkill = true;
 					gameState.nextActionBonus = 0;
 					gameState.nextActionBonusSource = null;
 					gameState.nextActionBonusType = null;
 				}
-				
+
 				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];

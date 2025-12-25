@@ -137,10 +137,11 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.highScorePaper) a.push('📜 高分论文');
 			if (gameState.achievementConditions && gameState.achievementConditions.unanimousImprovement) a.push('🍀 幸运儿');
 			if (gameState.achievementConditions && gameState.achievementConditions.allBadReviewers) a.push('😭 倒霉蛋');
+			// ★★★ 修改：全收集只需要6类（去掉best paper）★★★
 			const requiredTypes = [
-				'A-Poster', 'A-Oral', 'A-Best Paper',
-				'B-Poster', 'B-Oral', 'B-Best Paper',
-				'C-Poster', 'C-Oral', 'C-Best Paper'
+				'A-Poster', 'A-Oral',
+				'B-Poster', 'B-Oral',
+				'C-Poster', 'C-Oral'
 			];
 			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) a.push('🏆 全收集');
 			if (gameState.rejectedCount >= 5) a.push('👊 越战越勇');
@@ -181,7 +182,7 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.badmintonAvoidedCold) a.push('💪 强身健体');
 
 			// ★★★ 新增9个成就 ★★★
-			if (gameState.badmintonChampionCount >= 2) a.push('🏸 羽球冠军');
+			if (gameState.badmintonChampionCount >= 1) a.push('🏸 羽球冠军');
 			if (gameState.achievementConditions && gameState.achievementConditions.magicTowerMaster) a.push('🗼 穞堵臸猭畍');
 			if (gameState.achievementConditions && gameState.achievementConditions.terraria300) a.push('🌲 300颗够吗');
 			if (gameState.achievementConditions && gameState.achievementConditions.thankYouPlaying) a.push('🎓 感谢游玩');
@@ -196,12 +197,28 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.learnToSayNo) a.push('🙅 学会拒绝');
 			if (gameState.achievementConditions && gameState.achievementConditions.pokerGod) a.push('🃏 赌神转世');
 
+			// ★★★ 新增5个成就 ★★★
+			if ((gameState.paperNature || 0) >= 1) a.push('📰 Nature在手');
+			if (gameState.achievementConditions && gameState.achievementConditions.upgradedChair) a.push('🪑 高级家具');
+			// ★★★ 修复：人脉广阔需要5个角色且每个角色的亲和度或亲密度>=12 ★★★
+			const hasWideConnections = gameState.relationships &&
+				gameState.relationships.length >= 5 &&
+				gameState.relationships.every(r => (r.affinity || 0) >= 12 || (r.intimacy || 0) >= 12);
+			if (hasWideConnections) a.push('🤝 人脉广阔');
+			// ★★★ 修复：顶尖大组需要5个角色且每个角色的科研能力或科研资源>=12 ★★★
+			const isTopGroup = gameState.relationships &&
+				gameState.relationships.length >= 5 &&
+				gameState.relationships.every(r => (r.research || 0) >= 12 || (r.researchResource || 0) >= 12);
+			if (isTopGroup) a.push('🔬 顶尖大组');
+			if (gameState.achievementConditions && gameState.achievementConditions.journeyEnd) a.push('🏁 旅途的终点');
+
 			// ★★★ 以下成就仍然需要顺利毕业 ★★★
 			if (!isGraduated) {
 				return a;
 			}
 
-			if (gameState.san === 0 && gameState.gold === 0) a.push('🏋️ 全力以赴');
+			// ★★★ 修改：检查毕业前一个月结束时的状态 ★★★
+			if (gameState.achievementConditions && gameState.achievementConditions.allOutBeforeGrad) a.push('🏋️ 全力以赴');
 
 			return a;
 		}
@@ -286,15 +303,15 @@
 				if (gameState.achievementConditions.pokerGod) achievementsToCheck.push('🃏 赌神转世');
 			}
 			// 羽球冠军
-			if (gameState.badmintonChampionCount >= 2) achievementsToCheck.push('🏸 羽球冠军');
+			if (gameState.badmintonChampionCount >= 1) achievementsToCheck.push('🏸 羽球冠军');
 
-			// 论文收集
-			const requiredTypes = [
-				'A-Poster', 'A-Oral', 'A-Best Paper',
-				'B-Poster', 'B-Oral', 'B-Best Paper',
-				'C-Poster', 'C-Oral', 'C-Best Paper'
+			// ★★★ 修改：全收集只需要6类（去掉best paper）★★★
+			const requiredPaperTypes = [
+				'A-Poster', 'A-Oral',
+				'B-Poster', 'B-Oral',
+				'C-Poster', 'C-Oral'
 			];
-			if (gameState.paperTypeCollection && requiredTypes.every(type => gameState.paperTypeCollection.has(type))) achievementsToCheck.push('🏆 全收集');
+			if (gameState.paperTypeCollection && requiredPaperTypes.every(type => gameState.paperTypeCollection.has(type))) achievementsToCheck.push('🏆 全收集');
 
 			// 社交事件相关
 			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
@@ -303,6 +320,21 @@
 			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
 			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
 			if (rejectedBigBullTwice && rejectedInternshipTwice) achievementsToCheck.push('🏠 偏安一隅');
+
+			// ★★★ 新增5个成就检测 ★★★
+			if ((gameState.paperNature || 0) >= 1) achievementsToCheck.push('📰 Nature在手');
+			if (gameState.achievementConditions && gameState.achievementConditions.upgradedChair) achievementsToCheck.push('🪑 高级家具');
+			// ★★★ 修复：人脉广阔需要5个角色且每个角色的亲和度或亲密度>=12 ★★★
+			const hasWideConnections_check = gameState.relationships &&
+				gameState.relationships.length >= 5 &&
+				gameState.relationships.every(r => (r.affinity || 0) >= 12 || (r.intimacy || 0) >= 12);
+			if (hasWideConnections_check) achievementsToCheck.push('🤝 人脉广阔');
+			// ★★★ 修复：顶尖大组需要5个角色且每个角色的科研能力或科研资源>=12 ★★★
+			const isTopGroup_check = gameState.relationships &&
+				gameState.relationships.length >= 5 &&
+				gameState.relationships.every(r => (r.research || 0) >= 12 || (r.researchResource || 0) >= 12);
+			if (isTopGroup_check) achievementsToCheck.push('🔬 顶尖大组');
+			if (gameState.achievementConditions && gameState.achievementConditions.journeyEnd) achievementsToCheck.push('🏁 旅途的终点');
 
 			// 检查哪些是新获得的
 			achievementsToCheck.forEach(ach => {
@@ -536,12 +568,20 @@
                 const count = modeStats.endings[type] || 0;
                 const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
                 const barWidth = totalEndings > 0 ? (count / totalEndings) * 100 : 0;
-                
+
+                // ★★★ 修改：低于1%时显示人数 ★★★
+                let displayText;
+                if (parseFloat(percent) < 1 && count > 0) {
+                    displayText = `<span style="color:var(--warning-color);font-weight:600;">${count}人 <span style="color:var(--text-secondary);font-weight:400;">(&lt;1%)</span></span>`;
+                } else {
+                    displayText = `<span style="color:var(--primary-color);font-weight:600;">${count} <span style="color:var(--text-secondary);font-weight:400;">(${percent}%)</span></span>`;
+                }
+
                 html += `
                     <div style="padding:6px 8px;background:var(--light-bg);border-radius:6px;cursor:pointer;" onclick="showSingleEndingRequirement('${type}')">
                         <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px;">
                             <span>${name}</span>
-                            <span style="color:var(--primary-color);font-weight:600;">${count} <span style="color:var(--text-secondary);font-weight:400;">(${percent}%)</span></span>
+                            ${displayText}
                         </div>
                         <div style="height:4px;background:var(--border-color);border-radius:2px;overflow:hidden;">
                             <div style="width:${barWidth}%;height:100%;background:var(--primary-color);border-radius:2px;"></div>

@@ -7,6 +7,16 @@
 			// ★★★ 自动存档（每3个月，在月份增加前保存当前状态）★★★
 			autoSave();
 
+			// ★★★ 全力以赴成就：在进入毕业月之前记录状态 ★★★
+			const maxMonthsForAllOut = gameState.maxYears * 12;
+			if (gameState.totalMonths + 1 === maxMonthsForAllOut) {
+				// 即将进入毕业月，记录当前状态（毕业前一个月结束时）
+				if (gameState.san === 0 && gameState.gold === 0) {
+					gameState.achievementConditions = gameState.achievementConditions || {};
+					gameState.achievementConditions.allOutBeforeGrad = true;
+				}
+			}
+
 			gameState.month++;
 			gameState.totalMonths++;
 

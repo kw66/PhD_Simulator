@@ -1243,6 +1243,10 @@
 			// 记录升级状态
 			gameState.chairUpgrade = upgradeKey;
 
+			// ★★★ 新增：触发高级家具成就条件 ★★★
+			gameState.achievementConditions = gameState.achievementConditions || {};
+			gameState.achievementConditions.upgradedChair = true;
+
 			addLog('升级', `椅子升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
 
 			closeModal();

@@ -123,6 +123,30 @@
 			unlocks[mode][characterId] = true;
 			localStorage.setItem(PHD_UNLOCK_KEY, JSON.stringify(unlocks));
 			console.log(`✅ 记录博士通关: ${characterId} (${mode})`);
+
+			// ★★★ 检查旅途的终点成就：6个角色的正位和逆位都通关博士（共12个）★★★
+			const progress = getTrueNormalUnlockProgress();
+			if (progress.isComplete) {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.journeyEnd = true;
+				console.log('🏁 旅途的终点成就条件达成！（12/12）');
+			}
+		}
+
+		// ★★★ 新增：获取已通关博士的不同角色数量（正位或逆位均可）★★★
+		function getUniqueCharacterPhdCount() {
+			const unlocks = getCharacterPhdUnlocks();
+			const allCharacterIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
+			let uniqueCount = 0;
+
+			for (const charId of allCharacterIds) {
+				// 正位或逆位任一通关即算
+				if (unlocks.normal[charId] || unlocks.reversed[charId]) {
+					uniqueCount++;
+				}
+			}
+
+			return uniqueCount;
 		}
 
 		// 检查是否解锁真·大多数（需要6个角色的正位和逆位都博士毕业）
@@ -614,7 +638,8 @@
 			return merged;
 		}
 
-		function renderModeStats(mode, modeStats, endingContainer, achievementContainer) {
+		// ★★★ 修改：添加uvCount参数用于成就达成率计算 ★★★
+		function renderModeStats(mode, modeStats, endingContainer, achievementContainer, uvCount = 0) {
 			if (!endingContainer || !achievementContainer) {
 				console.warn('统计容器不存在');
 				return;
@@ -667,28 +692,31 @@
 			const unachievedEndingsSorted = endingEntries.filter(e => !e.isAchieved);
 			
 			let achievedEndingsHtml = achievedEndingsSorted.map(e => {
-				// 真实结局额外显示数量
+				// ★★★ 修复：真实结局或<1%的结局都显示人数 ★★★
 				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion' || e.type === 'true_life';
-				const displayText = isTrueEnding 
+				const isLowPercent = e.percent < 1 && e.count > 0;
+				const displayText = (isTrueEnding || isLowPercent)
 					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
 					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
 				return `
-					<span class="stats-tag ending-tag" 
-						  onclick="showSingleEndingRequirement('${e.type}')" 
+					<span class="stats-tag ending-tag"
+						  onclick="showSingleEndingRequirement('${e.type}')"
 						  style="cursor:pointer;">
 						${displayText}
 					</span>
 				`;
 			}).join('');
-			
+
 			let unachievedEndingsHtml = unachievedEndingsSorted.map(e => {
+				// ★★★ 修复：真实结局或<1%的结局都显示人数 ★★★
 				const isTrueEnding = e.type === 'true_phd' || e.type === 'true_devotion' || e.type === 'true_life';
-				const displayText = isTrueEnding 
+				const isLowPercent = e.percent < 1 && e.count > 0;
+				const displayText = (isTrueEnding || isLowPercent)
 					? `${e.name} <strong>${e.percent.toFixed(1)}% (${e.count}人)</strong>`
 					: `${e.name} <strong>${e.percent.toFixed(1)}%</strong>`;
 				return `
-					<span class="stats-tag ending-tag" 
-						  onclick="showSingleEndingRequirement('${e.type}')" 
+					<span class="stats-tag ending-tag"
+						  onclick="showSingleEndingRequirement('${e.type}')"
 						  style="cursor:pointer;opacity:0.5;">
 						${displayText}
 					</span>
@@ -715,10 +743,12 @@
 			}
 			endingContainer.innerHTML = endingHtml;
 			
-			// ==================== 渲染成就统计（按完成率排序）====================
+			// ==================== 渲染成就统计（按玩家达成率排序）====================
+			// ★★★ 修改：使用UV（玩家人数）作为分母，而非总局数 ★★★
+			const achievementDenominator = uvCount > 0 ? uvCount : totalGames;
 			const achievementEntries = ALL_ACHIEVEMENTS.map(ach => {
 				const count = modeStats.achievements[ach] || 0;
-				const percent = totalGames > 0 ? (count / totalGames) * 100 : 0;
+				const percent = achievementDenominator > 0 ? (count / achievementDenominator) * 100 : 0;
 				const isAchieved = playerAchievementsSet instanceof Set 
 					? playerAchievementsSet.has(ach) 
 					: (Array.isArray(playerAchievementsSet) && playerAchievementsSet.includes(ach));
@@ -886,15 +916,18 @@
             return '<span class="difficulty-badge easy">简单</span>';
         }
 
+		// ★★★ 新增：存储全局UV计数，用于成就达成率计算 ★★★
+		let globalUVCount = 0;
+
 		async function loadGlobalStatsDisplay() {
 			const section = document.getElementById('stats-section');
 			const loading = document.getElementById('stats-loading');
 			const content = document.getElementById('stats-content');
-			
+
 			section.style.display = 'block';
 			loading.style.display = 'block';
 			content.style.display = 'none';
-			
+
 			// 第1步：快速加载总数
 			Promise.all([
 				getVisitStats(),
@@ -903,14 +936,17 @@
 				const pvEl = document.getElementById('busuanzi_value_site_pv');
 				const uvEl = document.getElementById('busuanzi_value_site_uv');
 				const gamesEl = document.getElementById('total-games-value');
-				
+
 				if (pvEl) pvEl.textContent = visitStats.pv || 0;
 				if (uvEl) uvEl.textContent = visitStats.uv || 0;
 				if (gamesEl) gamesEl.textContent = totalGames;
+
+				// ★★★ 存储UV用于成就统计 ★★★
+				globalUVCount = visitStats.uv || 0;
 			}).catch(e => {
 				console.error('加载访问统计失败:', e);
 			});
-			
+
 			// 第2步：加载详细统计
 			setTimeout(async () => {
 				try {
@@ -923,11 +959,11 @@
 						`;
 						return;
 					}
-					
+
 					loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载详细统计...';
-					
+
 					const stats = await getGlobalStats();
-					
+
 					if (!stats) {
 						// ★★★ 加载失败时显示重试按钮 ★★★
 						loading.innerHTML = `
@@ -938,7 +974,7 @@
 						`;
 						return;
 					}
-					
+
 					characterDifficultyData = calculateCharacterDifficulty(stats);
 
 					loading.style.display = 'none';
@@ -952,7 +988,7 @@
 					const normalAchEl = document.getElementById('normal-achievement-stats');
 
 					if (normalEndingEl && normalAchEl) {
-						renderModeStats('combined', mergedStats, normalEndingEl, normalAchEl);
+						renderModeStats('combined', mergedStats, normalEndingEl, normalAchEl, globalUVCount);
 					}
 
 					// 显示normal区域，隐藏reversed区域
