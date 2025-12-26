@@ -105,13 +105,13 @@
 			},
 			'senior': {
 				icon: '👨‍🎓',
-				typeName: '师兄/师姐',
+				getTypeName: (r) => r && r.gender === 'male' ? '师兄' : (r && r.gender === 'female' ? '师姐' : '师兄/师姐'),
 				getDesc: (r) => '实验室里的前辈，踩过的坑比你走过的路还多。关键时刻的一句话，能省你好几个月。',
 				getQuote: (r) => '"这个问题我之前也遇到过，你可以试试..."'
 			},
 			'junior': {
 				icon: '👶',
-				typeName: '师弟/师妹',
+				getTypeName: (r) => r && r.gender === 'male' ? '师弟' : (r && r.gender === 'female' ? '师妹' : '师弟/师妹'),
 				getDesc: (r) => '需要你指导的后辈，教会他们的同时，你也在成长。',
 				getQuote: (r) => '"师兄/师姐，这个地方我不太懂..."'
 			},
@@ -635,6 +635,11 @@
 			const juniors = others.filter(r => r.type === 'junior');
 			const otherFriends = others.filter(r => !['senior', 'classmate', 'peer', 'junior'].includes(r.type));
 
+			// ★★★ 判断是否需要分页（有实验室成员或其他朋友时分页）★★★
+			const hasLabMembers = seniors.length > 0 || classmates.length > 0 || juniors.length > 0;
+			const hasFriends = otherFriends.length > 0;
+			const needsPagination = hasLabMembers || hasFriends;
+
 			// 生成VIP区域（导师、恋人、大牛）
 			let vipSection = '';
 			if (advisor || lover || bigbull) {
@@ -682,42 +687,109 @@
 				`;
 			}
 
-			return `
-				<div class="slide-content relationships-slide">
-					<div class="slide-bg relationships-bg"></div>
-					<div class="heart-particles"></div>
-					<div class="slide-inner">
-						<h2 class="slide-title animate-title">人际关系</h2>
-						<div class="relations-container">
-							${vipSection}
-							${labSection}
-							${friendSection}
-						</div>
-						<div class="relation-summary animate-fade-up delay-3">
-							<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
-							<div class="summary-badges">
-								${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
-								${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
-								${seniors.length >= 2 ? '<span class="summary-badge senior-badge">👨‍🎓 师门人脉</span>' : ''}
-								${juniors.length >= 2 ? '<span class="summary-badge junior-badge">👶 桃李满门</span>' : ''}
+			// ★★★ 分页布局：第一页VIP，第二页实验室成员+朋友 ★★★
+			if (needsPagination) {
+				return `
+					<div class="slide-content relationships-slide">
+						<div class="slide-bg relationships-bg"></div>
+						<div class="heart-particles"></div>
+						<div class="slide-inner">
+							<h2 class="slide-title animate-title">人际关系</h2>
+							<div class="relation-subpages">
+								<div class="relation-subpage active" data-subpage="0">
+									${vipSection}
+									<div class="relation-summary animate-fade-up delay-2">
+										<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
+										<div class="summary-badges">
+											${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
+											${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
+										</div>
+									</div>
+								</div>
+								<div class="relation-subpage" data-subpage="1">
+									${labSection}
+									${friendSection}
+									<div class="relation-summary animate-fade-up delay-2">
+										<div class="summary-badges">
+											${seniors.length >= 2 ? '<span class="summary-badge senior-badge">👨‍🎓 师门人脉</span>' : ''}
+											${juniors.length >= 2 ? '<span class="summary-badge junior-badge">👶 桃李满门</span>' : ''}
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="relation-subpage-nav">
+								<span class="subpage-dot active" onclick="switchRelationSubpage(0)"></span>
+								<span class="subpage-dot" onclick="switchRelationSubpage(1)"></span>
 							</div>
 						</div>
 					</div>
-				</div>
-			`;
+				`;
+			} else {
+				// 不需要分页时的简单布局
+				return `
+					<div class="slide-content relationships-slide">
+						<div class="slide-bg relationships-bg"></div>
+						<div class="heart-particles"></div>
+						<div class="slide-inner">
+							<h2 class="slide-title animate-title">人际关系</h2>
+							<div class="relations-container">
+								${vipSection}
+							</div>
+							<div class="relation-summary animate-fade-up delay-3">
+								<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
+								<div class="summary-badges">
+									${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
+									${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
+								</div>
+							</div>
+						</div>
+					</div>
+				`;
+			}
 		}
 
 		// ★★★ 新增：紧凑版关系卡片（VIP区域用）★★★
 		function generateRelationCardCompact(relation, type, index) {
 			const desc = RELATION_DESCRIPTIONS[type] || RELATION_DESCRIPTIONS['default'];
 			const relationQuote = typeof desc.getQuote === 'function' ? desc.getQuote(relation) : '';
+			const typeName = desc.getTypeName ? desc.getTypeName(relation) : desc.typeName;
+
+			// ★★★ 根据类型生成详细属性信息 ★★★
+			let statsHtml = '';
+			if (type === 'advisor') {
+				const advisorInfo = ADVISOR_DESCRIPTIONS[relation.advisorType] || ADVISOR_DESCRIPTIONS['default'];
+				statsHtml = `
+					<div class="compact-stats">
+						<span class="compact-stat">🔬${relation.researchResource || 0}</span>
+						<span class="compact-stat">💖${relation.affinity || 0}</span>
+						<span class="compact-stat">📄${relation.papers || 0}</span>
+					</div>
+					<div class="compact-title">${advisorInfo.title}</div>
+				`;
+			} else if (type === 'lover') {
+				const loverTypeText = gameState.loverType === 'smart' ? '聪慧型' : '活泼型';
+				statsHtml = `
+					<div class="compact-stats">
+						<span class="compact-stat">🔬${relation.research || 0}</span>
+						<span class="compact-stat">💕${relation.intimacy || 0}</span>
+						<span class="compact-stat-tag">${loverTypeText}</span>
+					</div>
+				`;
+			} else if (type === 'bigbull') {
+				statsHtml = `
+					<div class="compact-stats">
+						<span class="compact-stat">🌟 学术大牛</span>
+					</div>
+				`;
+			}
 
 			return `
 				<div class="relation-card-compact animate-slide-in" style="--delay: ${index * 0.1}s">
 					<div class="compact-avatar">${desc.icon}</div>
 					<div class="compact-info">
-						<div class="compact-type">${desc.typeName}</div>
+						<div class="compact-type">${typeName}</div>
 						<div class="compact-name">${relation.name}</div>
+						${statsHtml}
 					</div>
 					<div class="compact-quote">${relationQuote}</div>
 				</div>
@@ -730,6 +802,7 @@
 			const stats = relation.stats || {};
 			const helpCount = stats.helpReceivedCount || 0;
 			const interactCount = stats.interactCount || 0;
+			const typeName = desc.getTypeName ? desc.getTypeName(relation) : desc.typeName;
 
 			return `
 				<div class="relation-card-mini animate-pop-in" style="--delay: ${index * 0.05}s">
@@ -737,7 +810,7 @@
 						<span class="mini-icon">${desc.icon}</span>
 						<span class="mini-name">${relation.name}</span>
 					</div>
-					<div class="mini-type">${desc.typeName}</div>
+					<div class="mini-type">${typeName}</div>
 					<div class="mini-stats">
 						${helpCount > 0 ? `<span class="mini-stat">🎁${helpCount}</span>` : ''}
 						${interactCount > 0 ? `<span class="mini-stat">💬${interactCount}</span>` : ''}
@@ -751,6 +824,7 @@
 			const desc = RELATION_DESCRIPTIONS[type] || RELATION_DESCRIPTIONS['default'];
 			const relationDesc = typeof desc.getDesc === 'function' ? desc.getDesc(relation) : '';
 			const relationQuote = typeof desc.getQuote === 'function' ? desc.getQuote(relation) : '';
+			const typeName = desc.getTypeName ? desc.getTypeName(relation) : desc.typeName;
 
 			// ★★★ 使用真实统计数据 ★★★
 			const stats = relation.stats || { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
@@ -801,7 +875,7 @@
 					<div class="relation-header">
 						<div class="relation-avatar">${desc.icon}</div>
 						<div class="relation-info">
-							<div class="relation-type-tag">${desc.typeName}</div>
+							<div class="relation-type-tag">${typeName}</div>
 							<div class="relation-name">${relation.name}</div>
 						</div>
 					</div>
@@ -934,12 +1008,16 @@
 			if (gameState.isReversed) tags.push('逆位');
 			if (gameState.reversedAwakened) tags.push('觉醒');
 			if (gameState.hiddenAwakened) tags.push('隐藏觉醒');
-			if (gameState.hasLover) tags.push('脱单');
-			if (gameState.bigBullCooperation) tags.push('大牛联培');
 			if (paperNature > 0) tags.push('Nature作者');
 			if (gameState.paperA >= 3) tags.push('高产学者');
-			if (gameState.totalCitations >= 100) tags.push('百引学者');
-			if (gameState.totalCitations >= 1000) tags.push('千引大佬');
+
+			// ★★★ 新增：获取人际关系信息 ★★★
+			const relationships = gameState.relationships || [];
+			const advisor = relationships.find(r => r.type === 'advisor');
+			const lover = relationships.find(r => r.type === 'lover');
+			const hasLover = gameState.hasLover || false;
+			const hasBigBull = gameState.bigBullCooperation || false;
+			const hasInternship = gameState.internshipCompleted || false;
 
 			return `
 				<div class="slide-content share-slide">
@@ -1018,6 +1096,28 @@
 										${achievements.length > 4 ? `<span class="p-ach-more">+${achievements.length - 4}</span>` : ''}
 									</div>
 								` : ''}
+
+								<!-- 人际关系信息 -->
+								<div class="poster-relations">
+									${advisor ? `<span class="p-relation">👨‍🏫 ${advisor.name}</span>` : ''}
+									${lover ? `<span class="p-relation">❤️ ${lover.name}</span>` : ''}
+								</div>
+
+								<!-- 成就勾选项 -->
+								<div class="poster-checkboxes">
+									<span class="p-checkbox ${hasLover ? 'checked' : ''}">
+										<span class="checkbox-icon">${hasLover ? '☑' : '☐'}</span>
+										<span class="checkbox-label">恋爱</span>
+									</span>
+									<span class="p-checkbox ${hasBigBull ? 'checked' : ''}">
+										<span class="checkbox-icon">${hasBigBull ? '☑' : '☐'}</span>
+										<span class="checkbox-label">联培</span>
+									</span>
+									<span class="p-checkbox ${hasInternship ? 'checked' : ''}">
+										<span class="checkbox-icon">${hasInternship ? '☑' : '☐'}</span>
+										<span class="checkbox-label">实习</span>
+									</span>
+								</div>
 							</div>
 							<div class="poster-footer">
 								<div class="footer-text">我的研究生生涯</div>
@@ -1223,6 +1323,28 @@
 			if (e.key === 'ArrowRight') nextSlide();
 			else if (e.key === 'ArrowLeft') prevSlide();
 			else if (e.key === 'Escape') closeCareerSummary();
+		}
+
+		// ★★★ 人际关系子页面切换 ★★★
+		function switchRelationSubpage(index) {
+			const subpages = document.querySelectorAll('.relation-subpage');
+			const dots = document.querySelectorAll('.subpage-dot');
+
+			subpages.forEach((page, i) => {
+				if (i === index) {
+					page.classList.add('active');
+				} else {
+					page.classList.remove('active');
+				}
+			});
+
+			dots.forEach((dot, i) => {
+				if (i === index) {
+					dot.classList.add('active');
+				} else {
+					dot.classList.remove('active');
+				}
+			});
 		}
 
 		// ==================== 分享海报 ====================
@@ -1722,7 +1844,7 @@
 
 				/* ==================== 卡片3：高光时刻 ==================== */
 				.highlights-bg {
-					background: linear-gradient(135deg, #c9668e 0%, #d4849c 50%, #e0a3b0 100%);
+					background: linear-gradient(135deg, #c08a9e 0%, #d0a0ae 50%, #ddb5bd 100%);
 				}
 
 				.sparkle-container {
@@ -1938,7 +2060,7 @@
 
 				/* ==================== 卡片5：科研之余 ==================== */
 				.leisure-bg {
-					background: linear-gradient(135deg, #00b894 0%, #55efc4 50%, #81ecec 100%);
+					background: linear-gradient(135deg, #5ab09c 0%, #8ed9c5 50%, #a0dce0 100%);
 				}
 
 				.leisure-bubbles {
@@ -2278,6 +2400,49 @@
 					gap: 15px;
 				}
 
+				/* ★★★ 新增：人际关系子页面分页 ★★★ */
+				.relation-subpages {
+					width: 100%;
+					max-width: 340px;
+					position: relative;
+				}
+
+				.relation-subpage {
+					display: none;
+					flex-direction: column;
+					gap: 15px;
+					animation: fadeUp 0.3s ease-out;
+				}
+
+				.relation-subpage.active {
+					display: flex;
+				}
+
+				.relation-subpage-nav {
+					display: flex;
+					justify-content: center;
+					gap: 8px;
+					margin-top: 15px;
+				}
+
+				.subpage-dot {
+					width: 8px;
+					height: 8px;
+					border-radius: 50%;
+					background: rgba(255,255,255,0.3);
+					cursor: pointer;
+					transition: all 0.2s;
+				}
+
+				.subpage-dot.active {
+					background: #fff;
+					transform: scale(1.3);
+				}
+
+				.subpage-dot:hover {
+					background: rgba(255,255,255,0.6);
+				}
+
 				.section-label {
 					font-size: 0.75rem;
 					color: rgba(255,255,255,0.7);
@@ -2343,6 +2508,37 @@
 					white-space: nowrap;
 					overflow: hidden;
 					text-overflow: ellipsis;
+				}
+
+				.compact-stats {
+					display: flex;
+					gap: 6px;
+					margin-top: 4px;
+					flex-wrap: wrap;
+				}
+
+				.compact-stat {
+					font-size: 0.65rem;
+					color: rgba(255,255,255,0.8);
+					background: rgba(255,255,255,0.1);
+					padding: 2px 6px;
+					border-radius: 6px;
+				}
+
+				.compact-stat-tag {
+					font-size: 0.6rem;
+					color: #fff;
+					background: linear-gradient(135deg, rgba(233,30,99,0.5), rgba(156,39,176,0.5));
+					padding: 2px 8px;
+					border-radius: 8px;
+					font-weight: 500;
+				}
+
+				.compact-title {
+					font-size: 0.6rem;
+					color: rgba(255,255,255,0.6);
+					margin-top: 2px;
+					font-style: italic;
 				}
 
 				.compact-quote {
@@ -2818,6 +3014,60 @@
 					background: #f0f0f0;
 					padding: 2px 8px;
 					border-radius: 10px;
+				}
+
+				/* ★★★ 人际关系信息 ★★★ */
+				.poster-relations {
+					display: flex;
+					justify-content: center;
+					gap: 12px;
+					margin: 8px 0;
+					flex-wrap: wrap;
+				}
+
+				.p-relation {
+					font-size: 0.7rem;
+					color: #666;
+					background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+					padding: 4px 10px;
+					border-radius: 12px;
+					border: 1px solid rgba(102,126,234,0.2);
+				}
+
+				/* ★★★ 勾选项 ★★★ */
+				.poster-checkboxes {
+					display: flex;
+					justify-content: center;
+					gap: 10px;
+					margin: 8px 0;
+				}
+
+				.p-checkbox {
+					display: flex;
+					align-items: center;
+					gap: 3px;
+					font-size: 0.65rem;
+					color: #999;
+					padding: 3px 8px;
+					border-radius: 8px;
+					background: #f5f5f5;
+				}
+
+				.p-checkbox.checked {
+					color: #667eea;
+					background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+				}
+
+				.checkbox-icon {
+					font-size: 0.8rem;
+				}
+
+				.p-checkbox.checked .checkbox-icon {
+					color: #27ae60;
+				}
+
+				.checkbox-label {
+					font-weight: 500;
 				}
 
 				.poster-footer {

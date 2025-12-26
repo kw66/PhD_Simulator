@@ -400,6 +400,9 @@
 				<div style="color:var(--text-secondary);line-height:1.5;font-size:0.9rem;">${desc}</div>
 			</div>`;
 
+			// ★★★ 玩家统计放到作者广告栏上方 ★★★
+			html += renderPlayerStatsHTML('default');
+
 			if (isFailed) {
 				html += `
 				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
@@ -513,9 +516,6 @@
 						</div>
 					</div>`;
 			}
-
-			// ★★★ 玩家统计放到最下方 ★★★
-			html += renderPlayerStatsHTML('default');
 
 			showModal('', html, []);
 		}

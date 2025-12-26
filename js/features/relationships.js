@@ -371,12 +371,13 @@
                 gameState.relationshipSlotsUnlocked = slots;
             }
 
-            const thresholds = [0, 0, 6, 12, 18];  // 对应槽位2,3,4,5的解锁阈值
+            // ★★★ 修复：thresholds[i]表示解锁槽位i所需的社交能力 ★★★
+            const thresholds = [0, 0, 0, 6, 12, 18];  // thresholds[3]=6解锁槽3, thresholds[4]=12解锁槽4, thresholds[5]=18解锁槽5
             let newUnlock = false;
             let newSlots = gameState.relationshipSlotsUnlocked;
 
-            // 检查是否有新的解锁
-            for (let i = 2; i <= 5; i++) {
+            // 检查是否有新的解锁（槽位2是默认的，从槽位3开始检查）
+            for (let i = 3; i <= 5; i++) {
                 if (gameState.social >= thresholds[i] && gameState.relationshipSlotsUnlocked < i) {
                     newSlots = i;
                     newUnlock = true;
@@ -1449,7 +1450,7 @@
 
         // 显示论文选择弹窗
         function showPaperSelectionModal(person, completionType) {
-            // 筛选符合条件的论文（所有未投稿的论文都可以选择）
+            // 筛选符合条件的论文
             let eligiblePapers = [];
 
             if (completionType === 'advisor' || completionType === 'lover') {
@@ -1458,14 +1459,24 @@
                     p && !p.reviewing
                 ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             } else if (completionType === 'fellow') {
-                // 同门：所有未投稿论文
-                eligiblePapers = gameState.papers.filter((p, idx) =>
-                    p && !p.reviewing
-                ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
+                // ★★★ 同门：根据任务类型筛选论文 ★★★
+                eligiblePapers = gameState.papers.filter((p, idx) => {
+                    if (!p || p.reviewing) return false;
+                    // 帮忙做实验：需要idea分>0
+                    if (person.taskType === 'experiment' && p.ideaScore <= 0) return false;
+                    // 帮忙写作：需要实验分>0
+                    if (person.taskType === 'write' && p.expScore <= 0) return false;
+                    return true;
+                }).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             }
 
             if (eligiblePapers.length === 0) {
-                addLog('任务奖励', '没有符合条件的论文', '奖励跳过');
+                let reason = '没有符合条件的论文';
+                if (completionType === 'fellow') {
+                    if (person.taskType === 'experiment') reason = '没有idea分>0的论文';
+                    else if (person.taskType === 'write') reason = '没有实验分>0的论文';
+                }
+                addLog('任务奖励', reason, '奖励跳过');
                 updateAllUI();
                 renderRelationshipPanel();
                 return;
@@ -1481,8 +1492,9 @@
                                      person.taskType === 'experiment' ? '实验' : '写作';
                     bonusText = `${fieldName}+${person.research}`;
                 } else if (completionType === 'lover') {
-                    const bonus = Math.floor(person.research * 0.5);
-                    bonusText = `idea/实验/写作各+${bonus}`;
+                    // ★★★ 恋人：1.5倍优先补短板 ★★★
+                    const totalBonus = Math.floor(person.research * 1.5);
+                    bonusText = `总+${totalBonus}（优先补短板）`;
                 }
                 return `
                     <div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;cursor:pointer;border:2px solid transparent;"
@@ -1536,11 +1548,32 @@
                     addLog('论文加成', `${person.name}帮忙写论文`, `槽位${slotIndex + 1} 写作+${bonus}`);
                 }
             } else if (completionType === 'lover') {
-                const bonus = Math.floor(person.research * 0.5);
-                paper.ideaScore += bonus;
-                paper.expScore += bonus;
-                paper.writeScore += bonus;
-                addLog('论文加成', `恋人帮助`, `槽位${slotIndex + 1} idea/实验/写作各+${bonus}`);
+                // ★★★ 恋人帮忙：总加成1.5倍科研能力，优先补短板 ★★★
+                const totalBonus = Math.floor(person.research * 1.5);
+                let bonusApplied = { idea: 0, exp: 0, write: 0 };
+                let remaining = totalBonus;
+
+                // 循环分配，每次给当前最低分+1
+                while (remaining > 0) {
+                    const currentScores = [
+                        { type: 'idea', value: paper.ideaScore + bonusApplied.idea },
+                        { type: 'exp', value: paper.expScore + bonusApplied.exp },
+                        { type: 'write', value: paper.writeScore + bonusApplied.write }
+                    ];
+                    currentScores.sort((a, b) => a.value - b.value);
+                    bonusApplied[currentScores[0].type]++;
+                    remaining--;
+                }
+
+                paper.ideaScore += bonusApplied.idea;
+                paper.expScore += bonusApplied.exp;
+                paper.writeScore += bonusApplied.write;
+
+                const bonusDetails = [];
+                if (bonusApplied.idea > 0) bonusDetails.push(`idea+${bonusApplied.idea}`);
+                if (bonusApplied.exp > 0) bonusDetails.push(`实验+${bonusApplied.exp}`);
+                if (bonusApplied.write > 0) bonusDetails.push(`写作+${bonusApplied.write}`);
+                addLog('论文加成', `恋人帮助（补短板）`, `槽位${slotIndex + 1} ${bonusDetails.join('，')}`);
             }
 
             closeModal();
@@ -1895,9 +1928,15 @@
                     p && !p.reviewing
                 ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             } else if (completionType === 'fellow') {
-                eligiblePapers = gameState.papers.filter((p, idx) =>
-                    p && !p.reviewing
-                ).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
+                // ★★★ 同门：根据任务类型筛选论文 ★★★
+                eligiblePapers = gameState.papers.filter((p, idx) => {
+                    if (!p || p.reviewing) return false;
+                    // 帮忙做实验：需要idea分>0
+                    if (person.taskType === 'experiment' && p.ideaScore <= 0) return false;
+                    // 帮忙写作：需要实验分>0
+                    if (person.taskType === 'write' && p.expScore <= 0) return false;
+                    return true;
+                }).map((p, idx) => ({ paper: p, slotIndex: gameState.papers.findIndex(pp => pp && pp === p) }));
             }
 
             if (eligiblePapers.length === 0) {
@@ -1920,8 +1959,9 @@
                                      person.taskType === 'experiment' ? '实验' : '写作';
                     bonusText = `${fieldName}+${person.research}`;
                 } else if (completionType === 'lover') {
-                    const bonus = Math.floor(person.research * 0.5);
-                    bonusText = `idea/实验/写作各+${bonus}`;
+                    // ★★★ 恋人：1.5倍优先补短板 ★★★
+                    const totalBonus = Math.floor(person.research * 1.5);
+                    bonusText = `总+${totalBonus}（优先补短板）`;
                 }
                 return `
                     <div style="padding:8px;background:var(--light-bg);border-radius:6px;margin-bottom:6px;cursor:pointer;border:2px solid transparent;"
@@ -1984,11 +2024,32 @@
                     addLog('论文加成', `${person.name}帮忙写论文`, `槽位${slotIndex + 1} 写作+${bonus}`);
                 }
             } else if (completionType === 'lover') {
-                const bonus = Math.floor(person.research * 0.5);
-                paper.ideaScore += bonus;
-                paper.expScore += bonus;
-                paper.writeScore += bonus;
-                addLog('论文加成', `恋人帮助`, `槽位${slotIndex + 1} idea/实验/写作各+${bonus}`);
+                // ★★★ 恋人帮忙：总加成1.5倍科研能力，优先补短板 ★★★
+                const totalBonus = Math.floor(person.research * 1.5);
+                let bonusApplied = { idea: 0, exp: 0, write: 0 };
+                let remaining = totalBonus;
+
+                // 循环分配，每次给当前最低分+1
+                while (remaining > 0) {
+                    const currentScores = [
+                        { type: 'idea', value: paper.ideaScore + bonusApplied.idea },
+                        { type: 'exp', value: paper.expScore + bonusApplied.exp },
+                        { type: 'write', value: paper.writeScore + bonusApplied.write }
+                    ];
+                    currentScores.sort((a, b) => a.value - b.value);
+                    bonusApplied[currentScores[0].type]++;
+                    remaining--;
+                }
+
+                paper.ideaScore += bonusApplied.idea;
+                paper.expScore += bonusApplied.exp;
+                paper.writeScore += bonusApplied.write;
+
+                const bonusDetails = [];
+                if (bonusApplied.idea > 0) bonusDetails.push(`idea+${bonusApplied.idea}`);
+                if (bonusApplied.exp > 0) bonusDetails.push(`实验+${bonusApplied.exp}`);
+                if (bonusApplied.write > 0) bonusDetails.push(`写作+${bonusApplied.write}`);
+                addLog('论文加成', `恋人帮助（补短板）`, `槽位${slotIndex + 1} ${bonusDetails.join('，')}`);
             }
 
             closeModal();

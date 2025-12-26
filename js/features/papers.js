@@ -315,7 +315,9 @@
 						</div>`;
 					}
 				} else {
-					const total = paper.ideaScore + paper.expScore + paper.writeScore;
+					// ★★★ 普通槽位使用简单相加，期刊槽使用几何平均×3 ★★★
+					const simpleTotal = paper.ideaScore + paper.expScore + paper.writeScore;
+					const geometricTotal = Math.floor(3 * Math.pow(paper.ideaScore * paper.expScore * paper.writeScore, 1/3));
 					const canSubmit = paper.ideaScore > 0 && paper.expScore > 0 && paper.writeScore > 0 && !paper.reviewing;
 					const reviewingBadgeClass = paper.reviewing ? `reviewing-badge grade-${paper.submittedGrade}` : '';
 
@@ -327,7 +329,8 @@
 
 					// ★★★ 升级槽位显示期刊投稿按钮 ★★★
 					if (isUpgraded) {
-						// 期刊投稿需要的分数
+						// ★★★ 期刊槽使用几何平均分数，不能有短板 ★★★
+						const total = geometricTotal;
 						const canNature = total >= 500;
 						const canNatureSub = total >= 250;
 
@@ -341,7 +344,7 @@
 								<span class="score-box-inline"><span class="score-label">idea</span><span class="score-value">${paper.ideaScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">实验</span><span class="score-value">${paper.expScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">写作</span><span class="score-value">${paper.writeScore}</span></span>
-								<span class="score-box-inline total" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
+								<span class="score-box-inline total" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
 							</div>
 							<div class="paper-actions-compact">
 								<button class="submit-btn grade-s" onclick="submitToJournal(${i},'nature')" ${!canSubmit || !canNature?'disabled':''} title="需要500分" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;${canNature?'':'opacity:0.5;'}">
@@ -446,17 +449,17 @@
 
 			const total = paper.ideaScore + paper.expScore + paper.writeScore;
 
-			let requiredScore, journalName, researchScore, impactFactor;
+			let requiredScore, journalName, researchScore, displayImpactFactor;
 			if (journalType === 'nature') {
 				requiredScore = 500;
 				journalName = 'Nature';
 				researchScore = 25;
-				impactFactor = 12;
+				displayImpactFactor = 1;  // ★★★ 用于引用计算的实际影响因子 ★★★
 			} else {
 				requiredScore = 250;
 				journalName = 'Nature子刊';
 				researchScore = 10;
-				impactFactor = 6;
+				displayImpactFactor = 1;  // ★★★ 用于引用计算的实际影响因子 ★★★
 			}
 
 			if (total < requiredScore) {
@@ -476,7 +479,7 @@
 					<div style="background:var(--light-bg);border-radius:8px;padding:10px;text-align:left;font-size:0.8rem;">
 						<div>📖 期刊：${journalName}</div>
 						<div>🎯 科研分：+${researchScore}</div>
-						<div>📈 影响因子：${impactFactor}</div>
+						<div>📈 影响因子：${displayImpactFactor}</div>
 						<div style="color:#9b59b6;font-weight:600;margin-top:5px;">✅ 直接中稿，无需审稿</div>
 					</div>
 				</div>`,
@@ -810,13 +813,13 @@
 			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 			gameState.readCount++;
 
-			// ★★★ 修改：每看论文5次，idea bonus效果+1（1-5次基础，6-10次+1）★★★
-			const ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 5);
+			// ★★★ 修改：每看论文10次，idea bonus效果+1（1-10次基础，11-20次+1）★★★
+			const ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
 			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次想idea分数+${ideaBonus}`, value: ideaBonus, permanent: false });
 
-			// ★★★ 新增：计算下次提升的阈值 ★★★
-			const currentTier = Math.floor((gameState.readCount - 1) / 5);
-			const nextMilestone = (currentTier + 1) * 5 + 1;
+			// ★★★ 新增：计算下次提升的阈值（11,21,31...）★★★
+			const currentTier = Math.floor((gameState.readCount - 1) / 10);
+			const nextMilestone = (currentTier + 1) * 10 + 1;
 			const nextBonus = ideaBonus + 1;
 
 			let result = `SAN值-${actualSanCost}`;
@@ -831,7 +834,8 @@
 				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
 			}
 
-			if (gameState.readCount % 5 === 0) {
+			// ★★★ 修改：每10次阅读（11,21,31...）科研+1 ★★★
+			if (gameState.readCount % 10 === 1 && gameState.readCount >= 11) {
 				changeResearch(1);
 				result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
 			}
@@ -953,7 +957,18 @@
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.ideaClickCount = (gameState.ideaClickCount || 0) + 1;
-				
+
+				// ★★★ 新增：每10次想idea获得永久buff ★★★
+				if (gameState.ideaClickCount % 10 === 0) {
+					const masteryLevel = gameState.ideaClickCount / 10;
+					gameState.buffs.permanent.push({
+						type: 'idea_bonus',
+						value: 1,
+						desc: `精通加成：想idea分数+1（${masteryLevel}层）`
+					});
+					addLog('✨ 精通提升', '想idea精通', `累计想idea ${gameState.ideaClickCount}次，每次想idea永久+1分（共${masteryLevel}层）`);
+				}
+
 				const paper = gameState.papers[index];
 				const oldScore = paper.ideaScore;
 				
@@ -1114,7 +1129,18 @@
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.expClickCount = (gameState.expClickCount || 0) + 1;
-				
+
+				// ★★★ 新增：每10次做实验获得永久buff ★★★
+				if (gameState.expClickCount % 10 === 0) {
+					const masteryLevel = gameState.expClickCount / 10;
+					gameState.buffs.permanent.push({
+						type: 'exp_bonus',
+						value: 1,
+						desc: `精通加成：做实验分数+1（${masteryLevel}层）`
+					});
+					addLog('✨ 精通提升', '做实验精通', `累计做实验 ${gameState.expClickCount}次，每次做实验永久+1分（共${masteryLevel}层）`);
+				}
+
 				const paper = gameState.papers[index];
 				const oldScore = paper.expScore;
 				
@@ -1265,7 +1291,18 @@
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.writeClickCount = (gameState.writeClickCount || 0) + 1;
-				
+
+				// ★★★ 新增：每10次写论文获得永久buff ★★★
+				if (gameState.writeClickCount % 10 === 0) {
+					const masteryLevel = gameState.writeClickCount / 10;
+					gameState.buffs.permanent.push({
+						type: 'write_bonus',
+						value: 1,
+						desc: `精通加成：写论文分数+1（${masteryLevel}层）`
+					});
+					addLog('✨ 精通提升', '写论文精通', `累计写论文 ${gameState.writeClickCount}次，每次写论文永久+1分（共${masteryLevel}层）`);
+				}
+
 				const paper = gameState.papers[index];
 				const oldScore = paper.writeScore;
 				

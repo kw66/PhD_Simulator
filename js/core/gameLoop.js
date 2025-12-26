@@ -255,7 +255,18 @@
 			} else {
 				gameState.consecutiveLowSanMonths = 0;
 			}
-			
+
+			// ============================================
+			// ★★★ 月初结算完成，处理自动订阅 ★★★
+			// ============================================
+			// 重置月度商品
+			shopItems.forEach(item => {
+				if (item.monthlyOnce) item.boughtThisMonth = false;
+			});
+
+			// ★★★ 处理预购订阅（月初金钱结算后自动购买冰美式）★★★
+			processSubscriptions('nextMonth');
+
 
 			// ★★★ 修改：论文分数衰减（支持预见未来热点和升级槽位）★★★
 			let decayLogs = [];
@@ -318,14 +329,6 @@
 
 			// ★★★ 新增：更新人际关系进度 ★★★
 			updateRelationshipProgress();
-
-			// 重置月度商品
-			shopItems.forEach(item => {
-				if (item.monthlyOnce) item.boughtThisMonth = false;
-			});
-
-			// ★★★ 新增：处理预购订阅（月初自动购买冰美式）★★★
-			processSubscriptions('nextMonth');
 
 			let logResult = `工资+${salary}`;
 			// ★★★ 新增：显示隐藏觉醒工资加成 ★★★
@@ -1303,6 +1306,8 @@
 					// ★★★ 修改：社交变为6 + 技能 ★★★
 					const oldSocialHidden = gameState.social;
 					gameState.social = 6;
+					// ★★★ 修复：检查并解锁人际关系槽 ★★★
+					checkSocialUnlock();
 					gameState.hasSeniorHelpSkill = true;
 					gameState.seniorHelpUses = 3;
 					bonusDetails.push(`社交能力 ${oldSocialHidden} → 6`);

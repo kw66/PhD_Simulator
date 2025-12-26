@@ -137,34 +137,43 @@
 		function showCharacterDetail() {
 			// ★★★ 修复：真·大多数特殊处理 ★★★
 			if (gameState.character === 'true-normal' || gameState.isTrueNormal) {
+				const isAwakened = gameState.trueNormalAwakened;
+				const awakenStatus = isAwakened
+					? `<div style="margin-top:6px;"><span style="padding:3px 10px;background:linear-gradient(135deg,#ffd700,#ff8c00);color:white;border-radius:12px;font-size:0.75rem;">✨ 已觉醒</span></div>`
+					: '';
+				const awakenActivatedText = isAwakened
+					? `<div style="margin-top:6px;font-size:0.7rem;color:var(--success-color);">✅ 已激活 - 成就币已翻倍，商店2月刷新</div>`
+					: `<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发</div>`;
+
 				const html = `
 					<div style="text-align:center;margin-bottom:15px;">
 						<div style="font-size:3rem;margin-bottom:8px;"><span class="gold-icon">👤</span></div>
 						<div style="font-size:1.2rem;font-weight:700;color:#d68910;">真·大多数</div>
 						<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;">✨ 真实模式</div>
+						${awakenStatus}
 					</div>
-					
+
 					<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
 						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">📜 角色描述</div>
 						<div style="font-size:0.85rem;">经历过所有角色的洗礼，回归本真</div>
 					</div>
-					
+
 					<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
 						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">✨ 初始效果</div>
 						<div style="font-size:0.85rem;color:var(--text-secondary);font-weight:500;">无特殊能力，一切靠自己</div>
 					</div>
-					
-					<div style="background:rgba(149,165,166,0.15);border-radius:10px;padding:12px;border:1px dashed #7f8c8d;">
+
+					<div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,140,0,0.15));border-radius:10px;padding:12px;border:1px dashed #d68910;">
 						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">⚡ 转博觉醒</div>
 						<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-							<span style="font-size:1.2rem;">❌</span>
-							<span style="font-size:0.9rem;font-weight:600;color:#7f8c8d;">无觉醒效果</span>
+							<span style="font-size:1.2rem;">✨</span>
+							<span style="font-size:0.9rem;font-weight:600;color:#d68910;">往昔荣光</span>
 						</div>
-						<div style="font-size:0.85rem;">转博时没有任何特殊效果，这就是最真实的研究生生活</div>
-						<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发（无效果）</div>
+						<div style="font-size:0.85rem;">成就币翻倍，成就商店刷新间隔变为2个月</div>
+						${awakenActivatedText}
 					</div>
 				`;
-				
+
 				showModal('👤 角色详情', html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
