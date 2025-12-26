@@ -1418,26 +1418,25 @@
                         break;
                 }
             } else if (loverType === 'beautiful') {
-                // 活泼恋人：循环效果
+                // ★★★ 活泼恋人：循环效果（第1次: 回复10%已损SAN，第2次: SAN上限+1，第3次: 月回复百分比+2%）★★★
                 const cycle = (person.loverTasksCompleted - 1) % 3;
                 switch (cycle) {
                     case 0:
-                        gameState.san = Math.min(gameState.sanMax, gameState.san + 8);
-                        specialEffect = '，SAN+8';
+                        // 回复已损失SAN的10%（上取整）
+                        const lostSan0 = gameState.sanMax - gameState.san;
+                        const recovery0 = Math.ceil(lostSan0 * 0.10);
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + recovery0);
+                        specialEffect = `，SAN+${recovery0}（10%已损失）`;
                         break;
                     case 1:
-                        gameState.sanMax += 2;
-                        gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-                        specialEffect = '，SAN上限+2';
+                        // SAN上限+1
+                        gameState.sanMax += 1;
+                        specialEffect = '，SAN上限+1';
                         break;
                     case 2:
-                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_monthly_san')) {
-                            gameState.buffs.permanent.push({ type: 'lover_monthly_san', desc: '每月SAN回复+1' });
-                            specialEffect = '，获得永久buff：每月SAN回复+1';
-                        } else {
-                            gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
-                            specialEffect = '，SAN+5';
-                        }
+                        // 每月SAN回复百分比+2%
+                        gameState.beautifulLoverExtraRecoveryRate = (gameState.beautifulLoverExtraRecoveryRate || 0) + 2;
+                        specialEffect = `，每月SAN回复百分比+2%（当前总计${10 + gameState.beautifulLoverExtraRecoveryRate}%）`;
                         break;
                 }
             }
@@ -1892,25 +1891,25 @@
                         break;
                 }
             } else if (loverType === 'beautiful') {
+                // ★★★ 活泼恋人：循环效果（第1次: 回复10%已损SAN，第2次: SAN上限+1，第3次: 月回复百分比+2%）★★★
                 const cycle = (person.loverTasksCompleted - 1) % 3;
                 switch (cycle) {
                     case 0:
-                        gameState.san = Math.min(gameState.sanMax, gameState.san + 8);
-                        specialEffect = '，SAN+8';
+                        // 回复已损失SAN的10%（上取整）
+                        const lostSan0 = gameState.sanMax - gameState.san;
+                        const recovery0 = Math.ceil(lostSan0 * 0.10);
+                        gameState.san = Math.min(gameState.sanMax, gameState.san + recovery0);
+                        specialEffect = `，SAN+${recovery0}（10%已损失）`;
                         break;
                     case 1:
-                        gameState.sanMax += 2;
-                        gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
-                        specialEffect = '，SAN上限+2';
+                        // SAN上限+1
+                        gameState.sanMax += 1;
+                        specialEffect = '，SAN上限+1';
                         break;
                     case 2:
-                        if (!gameState.buffs.permanent.some(b => b.type === 'lover_monthly_san')) {
-                            gameState.buffs.permanent.push({ type: 'lover_monthly_san', desc: '每月SAN回复+1' });
-                            specialEffect = '，获得永久buff：每月SAN回复+1';
-                        } else {
-                            gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
-                            specialEffect = '，SAN+5';
-                        }
+                        // 每月SAN回复百分比+2%
+                        gameState.beautifulLoverExtraRecoveryRate = (gameState.beautifulLoverExtraRecoveryRate || 0) + 2;
+                        specialEffect = `，每月SAN回复百分比+2%（当前总计${10 + gameState.beautifulLoverExtraRecoveryRate}%）`;
                         break;
                 }
             }

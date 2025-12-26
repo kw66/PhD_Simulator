@@ -190,12 +190,12 @@
 						closeModal();
 						changeSan(6);
 					}},
-					{ text: '🍜 请同学品尝美食（金币-1）', class: 'btn-warning', action: () => {
+					{ text: '🍜 请同学品尝美食（金币-2）', class: 'btn-warning', action: () => {
 						closeModal();
-						if (changeGold(-1)) {
+						if (changeGold(-2)) {
 							gameState.san = Math.min(gameState.sanMax, gameState.san + 2);
 							changeSocial(1);
-							addLog('CCIG活动', `请同学品尝${location}美食`, '金币-1，SAN值+2，社交能力+1');
+							addLog('CCIG活动', `请同学品尝${location}美食`, '金币-2，SAN值+2，社交能力+1');
 							updateAllUI();
 						}
 					}}

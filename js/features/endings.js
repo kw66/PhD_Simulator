@@ -357,6 +357,24 @@
 			const advisorCitations_check = advisor_check ? (advisor_check.citations || 0) : 0;
 			if (advisorCitations_check > 0 && gameState.totalCitations > advisorCitations_check) achievementsToCheck.push('📖 青出于蓝');
 
+			// ★★★ 新增6个成就检测 ★★★
+			// 超级体魄：SAN上限达到45
+			if ((gameState.sanMax || 20) >= 45) achievementsToCheck.push('💪 超级体魄');
+			// 超级大脑：科研能力上限达到30
+			if ((gameState.researchMax || 20) >= 30) achievementsToCheck.push('🧠 超级大脑');
+			// 画龙点睛：全靠保底机制一次性为论文某一项分数提升达到20分
+			if (gameState.achievementConditions && gameState.achievementConditions.floorBoost20) achievementsToCheck.push('✨ 画龙点睛');
+			// 人情练达：和关系栏的所有角色共计交流50次
+			const totalInteractCount_check = gameState.relationships ?
+				gameState.relationships.reduce((sum, r) => sum + (r.stats?.interactCount || 0), 0) : 0;
+			if (totalInteractCount_check >= 50) achievementsToCheck.push('🤝 人情练达');
+			// 得力干将：完成导师任务12次
+			const advisorForTask_check = gameState.relationships && gameState.relationships.find(r => r.type === 'advisor');
+			if (advisorForTask_check && (advisorForTask_check.stats?.completedCount || 0) >= 12) achievementsToCheck.push('🎖️ 得力干将');
+			// 琴瑟和鸣：完成恋人恋爱任务12次
+			const loverForTask_check = gameState.relationships && gameState.relationships.find(r => r.type === 'lover');
+			if (loverForTask_check && (loverForTask_check.stats?.completedCount || 0) >= 12) achievementsToCheck.push('💕 琴瑟和鸣');
+
 			// 检查哪些是新获得的
 			achievementsToCheck.forEach(ach => {
 				if (!earnedThisGame.includes(ach)) {

@@ -102,6 +102,9 @@
 				yearlyResetRandomEventPool();
 			}
 
+			// ★★★ 新增：月初为本月可投会议生成随机地点（4个月后论文中稿时使用）★★★
+			generateMonthlyConferenceLocations();
+
 			// ============================================
 			// ★★★ 金币结算：先重置类（已处理），再+金币 ★★★
 			// ============================================
@@ -136,9 +139,16 @@
 			}
 			gameState.san = Math.min(gameState.sanMax, gameState.san + sanRecovery);
 
-			// ★★★ 恋人（活泼）SAN加成（+SAN类）★★★
+			// ★★★ 恋人（活泼）SAN加成（+SAN类）- 改为回复已损失SAN的百分比 ★★★
 			if (gameState.hasLover && gameState.loverType === 'beautiful') {
-				gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+				// ★★★ 基础10% + 额外百分比加成（每次约会循环第3阶段+2%）★★★
+				const baseRecoveryRate = 0.10;  // 基础10%
+				const extraRecoveryRate = (gameState.beautifulLoverExtraRecoveryRate || 0) / 100;  // 额外百分比
+				const totalRecoveryRate = baseRecoveryRate + extraRecoveryRate;
+
+				const lostSanBeautiful = gameState.sanMax - gameState.san;
+				const beautifulRecovery = Math.ceil(lostSanBeautiful * totalRecoveryRate);
+				gameState.san = Math.min(gameState.sanMax, gameState.san + beautifulRecovery);
 			}
 
 			// ★★★ 人体工学椅效果（+SAN类）★★★
@@ -175,7 +185,7 @@
 
 			// 恋人约会开销
 			if (gameState.hasLover) {
-				gameState.gold -= 1;
+				gameState.gold -= 2;  // ★★★ 修改：约会开销从1改为2 ★★★
 
 				// 富可敌国觉醒：恋爱开销也算消费
 				if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened) {
@@ -213,7 +223,7 @@
 				const internshipIncome = gameState.incomeDoubled ? 4 : 2;
 				gameState.gold += internshipIncome;  // 实习收入
 
-				const baseSanCost = 3;
+				const baseSanCost = 2;  // ★★★ 修改：实习SAN消耗从3改为2 ★★★
 				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 				gameState.san -= actualSanCost;
 
@@ -268,14 +278,14 @@
 			processSubscriptions('nextMonth');
 
 
-			// ★★★ 修改：论文分数衰减（支持预见未来热点和升级槽位）★★★
+			// ★★★ 修改：论文分数衰减（支持预见未来热点，期刊槽送审后不衰减）★★★
 			let decayLogs = [];
 			gameState.papers.forEach((paper, idx) => {
 				if (paper && !paper.reviewing) {
-					// ★★★ 新增：如果有noDecay标志或是升级槽位，跳过衰减 ★★★
-					const isUpgradedSlot = gameState.upgradedSlots && gameState.upgradedSlots.includes(idx);
-					if (gameState.noDecay || isUpgradedSlot) {
-						// 不衰减，什么都不做
+					// ★★★ 修改：期刊槽送审后进入修改阶段不衰减，其他情况正常衰减 ★★★
+					const isJournalRevising = paper.journalRevising === true;
+					if (gameState.noDecay || isJournalRevising) {
+						// 不衰减（预见未来热点 或 期刊送审修改阶段）
 					} else {
 						let decayInfo = [];
 						

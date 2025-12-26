@@ -194,6 +194,9 @@
 			'📰 Nature在手', '🪑 高级家具', '🤝 人脉广阔', '🔬 顶尖大组', '🏁 旅途的终点',
 			// ★★★ 新增2个成就 ★★★
 			'⬆️ 全部升级', '📖 青出于蓝',
+			// ★★★ 新增6个成就 ★★★
+			'💪 超级体魄', '🧠 超级大脑', '✨ 画龙点睛',
+			'🤝 人情练达', '🎖️ 得力干将', '💕 琴瑟和鸣',
 		];
 
         // 结局名称映射
@@ -312,6 +315,13 @@
 			// ★★★ 新增2个成就要求 ★★★
 			'⬆️ 全部升级': '将4个论文槽位全部升级为期刊槽位',
 			'📖 青出于蓝': '你的论文总引用数超过导师的引用数',
+			// ★★★ 新增6个成就要求 ★★★
+			'💪 超级体魄': 'SAN上限达到45',
+			'🧠 超级大脑': '科研能力上限达到30',
+			'✨ 画龙点睛': '全靠保底机制一次性为论文某一项分数提升达到20分',
+			'🤝 人情练达': '和关系栏的所有角色共计交流50次',
+			'🎖️ 得力干将': '完成导师任务12次',
+			'💕 琴瑟和鸣': '完成恋人恋爱任务12次',
 		};
 
         // 商店物品
@@ -398,46 +408,186 @@
 			}
 		};
 
+		// ==================== 会议地点分类 ====================
+		// region: 'domestic' 国内, 'asia' 亚太, 'west' 欧美
 		const CONFERENCE_LOCATIONS = [
-			// 北美
-			{ city: '旧金山', country: '美国' },
-			{ city: '西雅图', country: '美国' },
-			{ city: '新奥尔良', country: '美国' },
-			{ city: '温哥华', country: '加拿大' },
-			{ city: '蒙特利尔', country: '加拿大' },
-			{ city: '纽约', country: '美国' },
-			{ city: '迈阿密', country: '美国' },
-			{ city: '檀香山', country: '美国' },
-			{ city: '圣地亚哥', country: '美国' },
-			{ city: '波士顿', country: '美国' },
-			{ city: '洛杉矶', country: '美国' },
-			{ city: '多伦多', country: '加拿大' },
-			// 欧洲
-			{ city: '巴塞罗那', country: '西班牙' },
-			{ city: '维也纳', country: '奥地利' },
-			{ city: '阿姆斯特丹', country: '荷兰' },
-			{ city: '巴黎', country: '法国' },
-			{ city: '慕尼黑', country: '德国' },
-			{ city: '伦敦', country: '英国' },
-			{ city: '佛罗伦萨', country: '意大利' },
-			{ city: '都柏林', country: '爱尔兰' },
-			{ city: '斯德哥尔摩', country: '瑞典' },
-			{ city: '苏黎世', country: '瑞士' },
-			{ city: '爱丁堡', country: '英国' },
-			{ city: '米兰', country: '意大利' },
-			// 亚太
-			{ city: '新加坡', country: '新加坡' },
-			{ city: '东京', country: '日本' },
-			{ city: '首尔', country: '韩国' },
-			{ city: '香港', country: '中国' },
-			{ city: '北京', country: '中国' },
-			{ city: '上海', country: '中国' },
-			{ city: '悉尼', country: '澳大利亚' },
-			{ city: '墨尔本', country: '澳大利亚' },
-			{ city: '台北', country: '中国' },
-			{ city: '曼谷', country: '泰国' },
-			{ city: '京都', country: '日本' },
-			{ city: '深圳', country: '中国' }
+			// 欧美 - 北美
+			{ city: '旧金山', country: '美国', region: 'west' },
+			{ city: '西雅图', country: '美国', region: 'west' },
+			{ city: '新奥尔良', country: '美国', region: 'west' },
+			{ city: '温哥华', country: '加拿大', region: 'west' },
+			{ city: '蒙特利尔', country: '加拿大', region: 'west' },
+			{ city: '纽约', country: '美国', region: 'west' },
+			{ city: '迈阿密', country: '美国', region: 'west' },
+			{ city: '檀香山', country: '美国', region: 'west' },
+			{ city: '圣地亚哥', country: '美国', region: 'west' },
+			{ city: '波士顿', country: '美国', region: 'west' },
+			{ city: '洛杉矶', country: '美国', region: 'west' },
+			{ city: '多伦多', country: '加拿大', region: 'west' },
+			// 欧美 - 欧洲
+			{ city: '巴塞罗那', country: '西班牙', region: 'west' },
+			{ city: '维也纳', country: '奥地利', region: 'west' },
+			{ city: '阿姆斯特丹', country: '荷兰', region: 'west' },
+			{ city: '巴黎', country: '法国', region: 'west' },
+			{ city: '慕尼黑', country: '德国', region: 'west' },
+			{ city: '伦敦', country: '英国', region: 'west' },
+			{ city: '佛罗伦萨', country: '意大利', region: 'west' },
+			{ city: '都柏林', country: '爱尔兰', region: 'west' },
+			{ city: '斯德哥尔摩', country: '瑞典', region: 'west' },
+			{ city: '苏黎世', country: '瑞士', region: 'west' },
+			{ city: '爱丁堡', country: '英国', region: 'west' },
+			{ city: '米兰', country: '意大利', region: 'west' },
+			// 亚太（非中国）
+			{ city: '新加坡', country: '新加坡', region: 'asia' },
+			{ city: '东京', country: '日本', region: 'asia' },
+			{ city: '首尔', country: '韩国', region: 'asia' },
+			{ city: '悉尼', country: '澳大利亚', region: 'asia' },
+			{ city: '墨尔本', country: '澳大利亚', region: 'asia' },
+			{ city: '曼谷', country: '泰国', region: 'asia' },
+			{ city: '京都', country: '日本', region: 'asia' },
+			// 国内
+			{ city: '香港', country: '中国', region: 'domestic' },
+			{ city: '北京', country: '中国', region: 'domestic' },
+			{ city: '上海', country: '中国', region: 'domestic' },
+			{ city: '台北', country: '中国', region: 'domestic' },
+			{ city: '深圳', country: '中国', region: 'domestic' },
+			{ city: '杭州', country: '中国', region: 'domestic' },
+			{ city: '南京', country: '中国', region: 'domestic' },
+			{ city: '广州', country: '中国', region: 'domestic' }
 		];
+
+		// ★★★ 获取地点分类的显示名称和颜色 ★★★
+		function getRegionInfo(region) {
+			const info = {
+				'domestic': { name: '国内', color: '#27ae60', icon: '🏠' },
+				'asia': { name: '亚太', color: '#3498db', icon: '🌏' },
+				'west': { name: '欧美', color: '#9b59b6', icon: '✈️' }
+			};
+			return info[region] || { name: '未知', color: '#7f8c8d', icon: '📍' };
+		}
+
+		// ★★★ 根据地点分类获取开会费用配置 ★★★
+		function getConferenceCostByRegion(region, gameState) {
+			const favor = gameState.favor || 0;
+			const social = gameState.social || 0;
+
+			if (region === 'domestic') {
+				// 国内：自费2，导师报销-1好感（好感≥6免费），请人免费
+				return {
+					selfPay: 2,
+					advisorCost: favor >= 6 ? 0 : 1,
+					advisorText: favor >= 6 ? '👨‍🏫 导师报销（免费）' : '👨‍🏫 导师报销（好感度-1）',
+					proxyCost: 0,
+					proxyText: '👥 请人代参加（免费）'
+				};
+			} else if (region === 'asia') {
+				// 亚太：自费4，导师报销-2好感（好感≥6花1，好感≥12免费），请人1金
+				let advisorCost, advisorText;
+				if (favor >= 12) {
+					advisorCost = 0;
+					advisorText = '👨‍🏫 导师报销（免费）';
+				} else if (favor >= 6) {
+					advisorCost = 1;
+					advisorText = '👨‍🏫 导师报销（好感度-1）';
+				} else {
+					advisorCost = 2;
+					advisorText = '👨‍🏫 导师报销（好感度-2）';
+				}
+				return {
+					selfPay: 4,
+					advisorCost: advisorCost,
+					advisorText: advisorText,
+					proxyCost: social >= 6 ? 0 : 1,
+					proxyText: social >= 6 ? '👥 请同学代参加（免费）' : '👥 请人代参加（金钱-1）'
+				};
+			} else {
+				// 欧美：自费6，导师报销-3好感（好感≥6花2，好感≥12花1，好感≥18免费），请人按社交
+				let advisorCost, advisorText;
+				if (favor >= 18) {
+					advisorCost = 0;
+					advisorText = '👨‍🏫 导师报销（免费）';
+				} else if (favor >= 12) {
+					advisorCost = 1;
+					advisorText = '👨‍🏫 导师报销（好感度-1）';
+				} else if (favor >= 6) {
+					advisorCost = 2;
+					advisorText = '👨‍🏫 导师报销（好感度-2）';
+				} else {
+					advisorCost = 3;
+					advisorText = '👨‍🏫 导师报销（好感度-3）';
+				}
+				return {
+					selfPay: 6,
+					advisorCost: advisorCost,
+					advisorText: advisorText,
+					proxyCost: social >= 6 ? 0 : 1,
+					proxyText: social >= 6 ? '👥 请同学代参加（免费）' : '👥 请人代参加（金钱-1）'
+				};
+			}
+		}
+
+		// ★★★ 按地区筛选会议地点 ★★★
+		function getLocationsByRegion(region) {
+			return CONFERENCE_LOCATIONS.filter(loc => loc.region === region);
+		}
+
+		// ★★★ 获取随机会议地点（可指定地区）★★★
+		function getRandomConferenceLocation(region = null) {
+			const locations = region ? getLocationsByRegion(region) : CONFERENCE_LOCATIONS;
+			return locations[Math.floor(Math.random() * locations.length)];
+		}
 	
 		const CCIG_LOCATIONS = ['合肥', '成都', '苏州', '西安', '重庆'];
+
+		// ★★★ 月初生成本月可投会议的随机地点 ★★★
+		function generateMonthlyConferenceLocations() {
+			if (!gameState.monthlyConferenceLocations) {
+				gameState.monthlyConferenceLocations = {};
+			}
+
+			const monthKey = gameState.month;
+
+			// 如果本月已经生成过地点，不再重复生成
+			if (gameState.monthlyConferenceLocations[monthKey]) {
+				return;
+			}
+
+			// 为A/B/C三个级别会议各生成一个随机地点
+			gameState.monthlyConferenceLocations[monthKey] = {
+				A: getRandomConferenceLocation(),
+				B: getRandomConferenceLocation(),
+				C: getRandomConferenceLocation()
+			};
+		}
+
+		// ★★★ 获取指定月份/级别的会议地点（优先使用预存储的地点）★★★
+		function getConferenceLocation(paperOrMonth, grade) {
+			// 如果传入的是论文对象
+			if (typeof paperOrMonth === 'object' && paperOrMonth !== null) {
+				// 论文已存储的地点
+				if (paperOrMonth.conferenceLocation) {
+					return paperOrMonth.conferenceLocation;
+				}
+				// 根据论文投稿时的月份获取
+				const month = paperOrMonth.submittedMonth || gameState.month;
+				const paperGrade = paperOrMonth.submittedGrade || grade;
+				if (gameState.monthlyConferenceLocations &&
+					gameState.monthlyConferenceLocations[month] &&
+					gameState.monthlyConferenceLocations[month][paperGrade]) {
+					return gameState.monthlyConferenceLocations[month][paperGrade];
+				}
+			}
+
+			// 如果传入的是月份数字
+			if (typeof paperOrMonth === 'number') {
+				const month = paperOrMonth;
+				if (gameState.monthlyConferenceLocations &&
+					gameState.monthlyConferenceLocations[month] &&
+					gameState.monthlyConferenceLocations[month][grade]) {
+					return gameState.monthlyConferenceLocations[month][grade];
+				}
+			}
+
+			// 兜底：返回随机地点
+			return getRandomConferenceLocation();
+		}

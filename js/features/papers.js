@@ -254,18 +254,37 @@
 			const container = document.getElementById('paper-slots');
 			let html = '';
 
-			// 预先获取当前月份的会议信息
+			// 预先获取当前月份的会议信息和地点
 			const confA = getConferenceInfo(gameState.month, 'A', gameState.year);
 			const confB = getConferenceInfo(gameState.month, 'B', gameState.year);
 			const confC = getConferenceInfo(gameState.month, 'C', gameState.year);
 
+			// ★★★ 获取本月会议地点 ★★★
+			const locA = getConferenceLocation(gameState.month, 'A');
+			const locB = getConferenceLocation(gameState.month, 'B');
+			const locC = getConferenceLocation(gameState.month, 'C');
+
+			// ★★★ 获取地区信息用于显示 ★★★
+			const regionA = getRegionInfo(locA.region);
+			const regionB = getRegionInfo(locB.region);
+			const regionC = getRegionInfo(locC.region);
+
 			// 在所有槽之前添加统一的会议信息栏（点击显示弹窗）
 			html += `<div class="conference-info-bar">
-				<div class="conference-info-title"><i class="fas fa-calendar-alt"></i> 本月可投会议</div>
-				<div class="conference-info-list">
-					<span class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})" style="cursor:pointer;">A: ${confA.name}</span>
-					<span class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})" style="cursor:pointer;">B: ${confB.name}</span>
-					<span class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})" style="cursor:pointer;">C: ${confC.name}</span>
+				<div class="conference-info-title"><i class="fas fa-calendar-alt"></i> 本月可投会议（4个月后开会）</div>
+				<div class="conference-info-list" style="flex-direction:column;gap:4px;">
+					<div class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
+						<span>A: ${confA.name}</span>
+						<span style="font-size:0.7rem;color:${regionA.color};background:${regionA.color}15;padding:2px 6px;border-radius:10px;">${regionA.icon} ${locA.city}</span>
+					</div>
+					<div class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
+						<span>B: ${confB.name}</span>
+						<span style="font-size:0.7rem;color:${regionB.color};background:${regionB.color}15;padding:2px 6px;border-radius:10px;">${regionB.icon} ${locB.city}</span>
+					</div>
+					<div class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
+						<span>C: ${confC.name}</span>
+						<span style="font-size:0.7rem;color:${regionC.color};background:${regionC.color}15;padding:2px 6px;border-radius:10px;">${regionC.icon} ${locC.city}</span>
+					</div>
 				</div>
 			</div>`;
 
@@ -329,15 +348,60 @@
 
 					// ★★★ 升级槽位显示期刊投稿按钮 ★★★
 					if (isUpgraded) {
-						// ★★★ 期刊槽使用几何平均分数，不能有短板 ★★★
+						// ★★★ 期刊槽使用几何平均分数 ★★★
 						const total = geometricTotal;
-						const canNature = total >= 500;
-						const canNatureSub = total >= 250;
+						// 送审阈值
+						const canSubmitNature = total >= 150;
+						const canSubmitNatureSub = total >= 100;
+						// 接收阈值
+						const canAcceptNature = total >= 500;
+						const canAcceptNatureSub = total >= 250;
+						// 是否在审稿修改阶段
+						const isRevising = paper.journalRevising === true;
+						const revisingType = paper.journalRevisingType || '';  // 'nature' or 'nature-sub'
+
+						// 状态提示
+						let statusBadge = '<span style="font-size:0.65rem;color:#7c3aed;">📖 期刊槽</span>';
+						if (isRevising) {
+							const typeName = revisingType === 'nature' ? 'Nature' : 'Nature子刊';
+							statusBadge = `<span style="font-size:0.65rem;color:#22c55e;font-weight:600;">📝 ${typeName}修改中（不衰减）</span>`;
+						}
+
+						// 按钮区域
+						let actionButtons = '';
+						if (isRevising) {
+							// 修改阶段：显示接收按钮
+							if (revisingType === 'nature') {
+								// Nature修改中：可接收Nature(500分+20金) 或 转投子刊(250分+10金)
+								actionButtons = `
+									<button class="submit-btn grade-s" onclick="acceptJournalPaper(${i},'nature')" ${!canAcceptNature?'disabled':''} title="需要500分+20金OA费" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:white;${canAcceptNature?'':'opacity:0.5;'}">
+										接收(${canAcceptNature?'500✓':'需500'})
+									</button>
+									<button class="submit-btn grade-s-sub" onclick="acceptJournalPaper(${i},'nature-sub')" ${!canAcceptNatureSub?'disabled':''} title="转投子刊，需250分+10金OA费" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;${canAcceptNatureSub?'':'opacity:0.5;'}">
+										转子刊(${canAcceptNatureSub?'250✓':'需250'})
+									</button>`;
+							} else {
+								// 子刊修改中：只能接收子刊(250分+10金)
+								actionButtons = `
+									<button class="submit-btn grade-s-sub" onclick="acceptJournalPaper(${i},'nature-sub')" ${!canAcceptNatureSub?'disabled':''} title="需要250分+10金OA费" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:white;${canAcceptNatureSub?'':'opacity:0.5;'}">
+										接收(${canAcceptNatureSub?'250✓':'需250'})
+									</button>`;
+							}
+						} else {
+							// 未送审：显示送审按钮
+							actionButtons = `
+								<button class="submit-btn grade-s" onclick="submitToJournal(${i},'nature')" ${!canSubmit || !canSubmitNature?'disabled':''} title="送审Nature需150分" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;${canSubmitNature?'':'opacity:0.5;'}">
+									送审N(${canSubmitNature?'150✓':'需150'})
+								</button>
+								<button class="submit-btn grade-s-sub" onclick="submitToJournal(${i},'nature-sub')" ${!canSubmit || !canSubmitNatureSub?'disabled':''} title="送审子刊需100分" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:white;${canSubmitNatureSub?'':'opacity:0.5;'}">
+									送审子(${canSubmitNatureSub?'100✓':'需100'})
+								</button>`;
+						}
 
 						html += `<div class="paper-slot active upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
 							<div class="slot-header">
 								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽</span>
-								<span style="font-size:0.65rem;color:#7c3aed;">📖 分数不衰减</span>
+								${statusBadge}
 							</div>
 							<div class="paper-title">${paper.title}</div>
 							<div class="paper-scores-compact">
@@ -347,13 +411,8 @@
 								<span class="score-box-inline total" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
 							</div>
 							<div class="paper-actions-compact">
-								<button class="submit-btn grade-s" onclick="submitToJournal(${i},'nature')" ${!canSubmit || !canNature?'disabled':''} title="需要500分" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;${canNature?'':'opacity:0.5;'}">
-									Nature(${canNature?'✓':'需500'})
-								</button>
-								<button class="submit-btn grade-s-sub" onclick="submitToJournal(${i},'nature-sub')" ${!canSubmit || !canNatureSub?'disabled':''} title="需要250分" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:white;${canNatureSub?'':'opacity:0.5;'}">
-									子刊(${canNatureSub?'✓':'需250'})
-								</button>
-								<button class="submit-btn abandon" onclick="abandonPaper(${i})" ${paper.reviewing?'disabled':''}>
+								${actionButtons}
+								<button class="submit-btn abandon" onclick="abandonPaper(${i})" title="放弃论文">
 									<i class="fas fa-trash"></i>
 								</button>
 							</div>
@@ -421,10 +480,10 @@
 						<div style="font-size:0.85rem;font-weight:600;color:#9b59b6;margin-bottom:8px;">升级后特性：</div>
 						<ul style="font-size:0.8rem;color:var(--text-secondary);margin:0;padding-left:20px;">
 							<li>📖 只能投稿期刊（Nature/Nature子刊）</li>
-							<li>⏳ 论文分数<strong style="color:#9b59b6;">不再衰减</strong></li>
-							<li>✅ 投稿后<strong style="color:#9b59b6;">直接中稿</strong>，无审稿环节</li>
-							<li>🏆 Nature需500分（25科研分，IF=12）</li>
-							<li>📚 子刊需250分（10科研分，IF=6）</li>
+							<li>📝 送审后分数<strong style="color:#22c55e;">不再衰减</strong></li>
+							<li>🔄 送审后可继续提升分数直到接收</li>
+							<li>📤 送审：Nature需150分，子刊需100分</li>
+							<li>✅ 接收：Nature需500分+20金OA，子刊需250分+10金OA</li>
 						</ul>
 					</div>
 					<p style="font-size:0.8rem;color:var(--danger-color);">⚠️ 升级后无法恢复为普通槽位</p>
@@ -433,7 +492,7 @@
 					{ text: '取消', class: 'btn-info', action: closeModal },
 					{ text: '确认升级', class: 'btn-primary', action: () => {
 						gameState.upgradedSlots.push(slot);
-						addLog('槽位升级', `论文槽${slot + 1}升级为期刊槽`, '可投Nature/Nature子刊，分数不衰减');
+						addLog('槽位升级', `论文槽${slot + 1}升级为期刊槽`, '可投Nature/Nature子刊，送审后分数不衰减');
 						closeModal();
 						renderPaperSlots();
 						updateAllUI();
@@ -442,50 +501,123 @@
 			);
 		}
 
-		// ★★★ 新增：期刊投稿功能 ★★★
+		// ★★★ 修改：期刊送审功能（送审后进入修改阶段）★★★
 		function submitToJournal(slot, journalType) {
 			const paper = gameState.papers[slot];
-			if (!paper || paper.reviewing) return;
+			if (!paper || paper.reviewing || paper.journalRevising) return;
 
-			const total = paper.ideaScore + paper.expScore + paper.writeScore;
+			const geometricTotal = Math.floor(3 * Math.pow(paper.ideaScore * paper.expScore * paper.writeScore, 1/3));
 
-			let requiredScore, journalName, researchScore, displayImpactFactor;
+			let requiredScore, journalName, acceptScore, oaFee;
 			if (journalType === 'nature') {
-				requiredScore = 500;
+				requiredScore = 150;
 				journalName = 'Nature';
-				researchScore = 25;
-				displayImpactFactor = 1;  // ★★★ 用于引用计算的实际影响因子 ★★★
+				acceptScore = 500;
+				oaFee = 20;
 			} else {
-				requiredScore = 250;
+				requiredScore = 100;
 				journalName = 'Nature子刊';
-				researchScore = 10;
-				displayImpactFactor = 1;  // ★★★ 用于引用计算的实际影响因子 ★★★
+				acceptScore = 250;
+				oaFee = 10;
 			}
 
-			if (total < requiredScore) {
-				showModal('❌ 分数不足', `<p>投稿${journalName}需要论文总分≥${requiredScore}，当前总分${total}。</p>`,
+			if (geometricTotal < requiredScore) {
+				showModal('❌ 分数不足', `<p>送审${journalName}需要论文总分≥${requiredScore}，当前总分${geometricTotal}。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
 
-			showModal(`📖 投稿${journalName}`,
+			showModal(`📝 送审${journalName}`,
 				`<div style="text-align:center;">
 					<div style="font-size:2.5rem;margin-bottom:15px;">${journalType === 'nature' ? '🏆' : '📚'}</div>
-					<p>确定要将论文投稿到<strong style="color:#9b59b6;">${journalName}</strong>吗？</p>
+					<p>确定要将论文送审到<strong style="color:#9b59b6;">${journalName}</strong>吗？</p>
 					<div style="background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(142,68,173,0.15));border-radius:10px;padding:12px;margin:15px 0;">
 						<div style="font-size:0.9rem;font-weight:600;">"${paper.title}"</div>
-						<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">总分：${total}</div>
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">当前总分：${geometricTotal}</div>
 					</div>
 					<div style="background:var(--light-bg);border-radius:8px;padding:10px;text-align:left;font-size:0.8rem;">
 						<div>📖 期刊：${journalName}</div>
-						<div>🎯 科研分：+${researchScore}</div>
-						<div>📈 影响因子：${displayImpactFactor}</div>
-						<div style="color:#9b59b6;font-weight:600;margin-top:5px;">✅ 直接中稿，无需审稿</div>
+						<div>📝 送审要求：≥${requiredScore}分 ✓</div>
+						<div>🎯 接收要求：≥${acceptScore}分</div>
+						<div>💰 OA费用：${oaFee}金币</div>
+						<div style="color:#22c55e;font-weight:600;margin-top:8px;">✨ 送审后进入修改阶段：</div>
+						<ul style="margin:5px 0 0 0;padding-left:20px;color:var(--text-secondary);">
+							<li>论文分数<strong style="color:#22c55e;">不再衰减</strong></li>
+							<li>可继续提升分数直到达到接收要求</li>
+							<li>无时间限制</li>
+							${journalType === 'nature' ? '<li>可选择被子刊接收（≥250分）</li>' : ''}
+						</ul>
 					</div>
 				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: `投稿${journalName}`, class: 'btn-primary', action: () => {
+					{ text: `送审${journalName}`, class: 'btn-primary', action: () => {
+						paper.journalRevising = true;
+						paper.journalRevisingType = journalType;
+						addLog('期刊送审', `论文送审${journalName}`, `"${paper.title}"进入修改阶段，分数不再衰减`);
+						closeModal();
+						renderPaperSlots();
+						updateAllUI();
+					}}
+				]
+			);
+		}
+
+		// ★★★ 新增：期刊接收功能（需要OA费用）★★★
+		function acceptJournalPaper(slot, journalType) {
+			const paper = gameState.papers[slot];
+			if (!paper || !paper.journalRevising) return;
+
+			const geometricTotal = Math.floor(3 * Math.pow(paper.ideaScore * paper.expScore * paper.writeScore, 1/3));
+
+			let requiredScore, journalName, oaFee, researchScore;
+			if (journalType === 'nature') {
+				requiredScore = 500;
+				journalName = 'Nature';
+				oaFee = 20;
+				researchScore = 25;
+			} else {
+				requiredScore = 250;
+				journalName = 'Nature子刊';
+				oaFee = 10;
+				researchScore = 10;
+			}
+
+			if (geometricTotal < requiredScore) {
+				showModal('❌ 分数不足', `<p>被${journalName}接收需要论文总分≥${requiredScore}，当前总分${geometricTotal}。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			const isTransfer = paper.journalRevisingType === 'nature' && journalType === 'nature-sub';
+			const titleText = isTransfer ? `📚 转投${journalName}` : `✅ ${journalName}接收`;
+			const confirmText = isTransfer ? `转投${journalName}` : `确认接收`;
+
+			showModal(titleText,
+				`<div style="text-align:center;">
+					<div style="font-size:2.5rem;margin-bottom:15px;">${journalType === 'nature' ? '🏆' : '📚'}</div>
+					<p>论文即将被<strong style="color:#22c55e;">${journalName}</strong>接收！</p>
+					<div style="background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(22,163,74,0.15));border-radius:10px;padding:12px;margin:15px 0;">
+						<div style="font-size:0.9rem;font-weight:600;">"${paper.title}"</div>
+						<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">最终总分：${geometricTotal}</div>
+					</div>
+					<div style="background:var(--light-bg);border-radius:8px;padding:10px;text-align:left;font-size:0.8rem;">
+						<div>📖 期刊：${journalName}</div>
+						<div>🎯 科研分：+${researchScore}</div>
+						<div style="color:#f59e0b;font-weight:600;">💰 OA费用：${oaFee}金币</div>
+						<div style="margin-top:8px;color:var(--text-secondary);">当前金币：${gameState.gold}</div>
+					</div>
+					${gameState.gold < oaFee ? `<div style="color:#ef4444;font-size:0.85rem;margin-top:10px;">⚠️ 金币不足！需要${oaFee}金币</div>` : ''}
+				</div>`,
+				[
+					{ text: '取消', class: 'btn-info', action: closeModal },
+					{ text: confirmText, class: 'btn-success', disabled: gameState.gold < oaFee, action: () => {
+						if (gameState.gold < oaFee) {
+							showModal('❌ 金币不足', `<p>OA费用需要${oaFee}金币，当前只有${gameState.gold}金币。</p>`,
+								[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+							return;
+						}
+						gameState.gold -= oaFee;
 						closeModal();
 						handleJournalAcceptance(slot, journalType);
 					}}
@@ -498,7 +630,8 @@
 			const paper = gameState.papers[slot];
 			if (!paper) return;
 
-			const total = paper.ideaScore + paper.expScore + paper.writeScore;
+			// ★★★ 使用几何平均计算总分 ★★★
+			const total = Math.floor(3 * Math.pow(paper.ideaScore * paper.expScore * paper.writeScore, 1/3));
 
 			// ★★★ S类论文奖励参数 ★★★
 			let journalName, researchScore, impactFactor, baseFavor, favorMaxBonus, baseResearchBonus, researchMaxBonus, firstResearchBonus, paperRank;
@@ -995,17 +1128,26 @@
 				// ★★★ 核心修改：新的循环逻辑 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];  // 记录每次的分数变化
-				
+
+				// ★★★ 新增：计算保底值（永久buff每5点+1保底）★★★
+				let permanentIdeaBonus = 0;
+				gameState.buffs.permanent.forEach(b => {
+					if (b.type === 'idea_bonus' && !b.multiply) {
+						permanentIdeaBonus += b.value;
+					}
+				});
+				const ideaFloor = 1 + Math.floor(permanentIdeaBonus / 5);
+
 				for (let i = 0; i < times; i++) {
 					// ★★★ 第一次使用所有buff，后续只使用永久buff ★★★
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('idea', effectiveResearch, permanentOnly);
-					
+
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasGeminiSub && geminiSub.bonusScore) {
 						gen += geminiSub.bonusScore;
 					}
-					
+
 					// ★★★ debuff：只有第一次生效 ★★★
 					if (i === 0) {
 						if (hasExhaustion) {
@@ -1018,10 +1160,10 @@
 							gen = Math.floor(gen / 2);
 						}
 					}
-					
-					// ★★★ 每次循环都触发保底机制 ★★★
-					const newScore = Math.max(gen, currentScore + 1);
-					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + 1 });
+
+					// ★★★ 每次循环都触发保底机制（保底值=1+永久buff/5）★★★
+					const newScore = Math.max(gen, currentScore + ideaFloor);
+					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + ideaFloor });
 					currentScore = newScore;
 				}
 				
@@ -1075,7 +1217,14 @@
 				if (guaranteedCount > 0) {
 					result += `（${guaranteedCount}次保底生效）`;
 				}
-				
+
+				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★
+				const totalFloorBoost = guaranteedCount * ideaFloor;
+				if (totalFloorBoost >= 20) {
+					gameState.achievementConditions = gameState.achievementConditions || {};
+					gameState.achievementConditions.floorBoost20 = true;
+				}
+
 				addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
@@ -1165,16 +1314,25 @@
 				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];
-				
+
+				// ★★★ 新增：计算保底值（永久buff每5点+1保底）★★★
+				let permanentExpBonus = 0;
+				gameState.buffs.permanent.forEach(b => {
+					if (b.type === 'exp_bonus' && !b.multiply) {
+						permanentExpBonus += b.value;
+					}
+				});
+				const expFloor = 1 + Math.floor(permanentExpBonus / 5);
+
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('exp', effectiveResearch, permanentOnly);  // ★ 使用新函数
-					
+
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasGptSub && gptSub.bonusScore) {
 						gen += gptSub.bonusScore;
 					}
-					
+
 					// ★★★ debuff：只有第一次生效 ★★★
 					if (i === 0) {
 						if (hasOverheat) {
@@ -1184,10 +1342,10 @@
 							gen = Math.floor(gen / 2);
 						}
 					}
-					
-					// ★★★ 每次循环都触发保底机制 ★★★
-					const newScore = Math.max(gen, currentScore + 1);
-					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + 1 });
+
+					// ★★★ 每次循环都触发保底机制（保底值=1+永久buff/5）★★★
+					const newScore = Math.max(gen, currentScore + expFloor);
+					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + expFloor });
 					currentScore = newScore;
 				}
 				
@@ -1235,7 +1393,14 @@
 				if (guaranteedCount > 0) {
 					result += `（${guaranteedCount}次保底生效）`;
 				}
-				
+
+				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★
+				const totalFloorBoost = guaranteedCount * expFloor;
+				if (totalFloorBoost >= 20) {
+					gameState.achievementConditions = gameState.achievementConditions || {};
+					gameState.achievementConditions.floorBoost20 = true;
+				}
+
 				addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
@@ -1327,16 +1492,25 @@
 				// ★★★ 修改：使用effectiveResearch计算分数 ★★★
 				let currentScore = oldScore;
 				let scoreChanges = [];
-				
+
+				// ★★★ 新增：计算保底值（永久buff每5点+1保底）★★★
+				let permanentWriteBonus = 0;
+				gameState.buffs.permanent.forEach(b => {
+					if (b.type === 'write_bonus' && !b.multiply) {
+						permanentWriteBonus += b.value;
+					}
+				});
+				const writeFloor = 1 + Math.floor(permanentWriteBonus / 5);
+
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('write', effectiveResearch, permanentOnly);  // ★ 使用新函数
-					
+
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasClaudeSub && claudeSub.bonusScore) {
 						gen += claudeSub.bonusScore;
 					}
-					
+
 					// ★★★ debuff：只有第一次生效 ★★★
 					if (i === 0) {
 						if (hasWritersBlock) {
@@ -1346,10 +1520,10 @@
 							gen = Math.floor(gen / 2);
 						}
 					}
-					
-					// ★★★ 每次循环都触发保底机制 ★★★
-					const newScore = Math.max(gen, currentScore + 1);
-					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + 1 });
+
+					// ★★★ 每次循环都触发保底机制（保底值=1+永久buff/5）★★★
+					const newScore = Math.max(gen, currentScore + writeFloor);
+					scoreChanges.push({ generated: gen, result: newScore, wasGuaranteed: gen < currentScore + writeFloor });
 					currentScore = newScore;
 				}
 				
@@ -1398,7 +1572,14 @@
 				if (guaranteedCount > 0) {
 					result += `（${guaranteedCount}次保底生效）`;
 				}
-				
+
+				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★
+				const totalFloorBoost = guaranteedCount * writeFloor;
+				if (totalFloorBoost >= 20) {
+					gameState.achievementConditions = gameState.achievementConditions || {};
+					gameState.achievementConditions.floorBoost20 = true;
+				}
+
 				addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
@@ -1625,16 +1806,10 @@
 			const { confInfo, confLocation, papers, grade } = confData;
 			const paperCount = papers.length;
 			const isMultiple = paperCount >= 2;
-			
-			const favorCost = gameState.favor >= 6 ? 1 : 2;
-			const proxyCost = gameState.social >= 6 ? 0 : 1;
 
-			const favorText = gameState.favor >= 6 
-				? '👨‍🏫 导师报销（好感度-1）' 
-				: '👨‍🏫 导师报销（好感度-2）';
-			const proxyText = gameState.social >= 6 
-				? '👥 请同学代参加（免费）' 
-				: '👥 请人代参加（金钱-1）';
+			// ★★★ 使用基于地区的费用计算 ★★★
+			const regionInfo = getRegionInfo(confLocation.region);
+			const costs = getConferenceCostByRegion(confLocation.region, gameState);
 
 			// 构建论文列表显示
 			let papersListHtml = '';
@@ -1650,51 +1825,65 @@
 				</div>`;
 			}
 
-			showModal('🎓 开会选择', 
+			// ★★★ 构建费用说明 ★★★
+			const costExplanationHtml = `
+				<div style="margin:10px 0;padding:8px 12px;background:${regionInfo.color}15;border-radius:8px;border-left:3px solid ${regionInfo.color};">
+					<div style="font-size:0.8rem;color:${regionInfo.color};font-weight:600;margin-bottom:4px;">
+						${regionInfo.icon} ${regionInfo.name}会议费用标准
+					</div>
+					<div style="font-size:0.75rem;color:var(--text-secondary);">
+						自费${costs.selfPay}金 | 导师报销${costs.advisorCost > 0 ? '好感-' + costs.advisorCost : '免费'} | 代参加${costs.proxyCost > 0 ? costs.proxyCost + '金' : '免费'}
+					</div>
+				</div>`;
+
+			showModal('🎓 开会选择',
 				`<p>恭喜！${isMultiple ? `${paperCount}篇` : ''}论文被接收！需要参加学术会议进行展示。</p>
 				 <div style="margin:15px 0;padding:12px;background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.1));border-radius:10px;border:1px solid rgba(108,92,231,0.2);">
 					 <div style="font-size:0.9rem;font-weight:600;color:var(--primary-color);margin-bottom:5px;">📍 会议信息</div>
 					 <div style="font-size:1rem;font-weight:700;">${confInfo.name} ${confInfo.year}</div>
 					 <div style="font-size:0.85rem;color:var(--text-secondary);">${confInfo.fullName}</div>
-					 <div style="font-size:0.85rem;margin-top:5px;">📌 ${confLocation.city}, ${confLocation.country}</div>
+					 <div style="font-size:0.85rem;margin-top:5px;">📌 ${confLocation.city}, ${confLocation.country} <span style="color:${regionInfo.color};font-weight:600;">(${regionInfo.name})</span></div>
 				 </div>
+				 ${costExplanationHtml}
 				 ${papersListHtml}
-				 <p>请选择参会方式：</p>`, 
+				 <p>请选择参会方式：</p>`,
 				[
-				{ text: '💰 自己出钱（金钱-4）', class: 'btn-warning', action: () => {
-					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-4${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+				{ text: `💰 自己出钱（金钱-${costs.selfPay}）`, class: 'btn-warning', action: () => {
+					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${costs.selfPay}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
 					closeModal();
-					if (changeGold(-4)) {
+					if (changeGold(-costs.selfPay)) {
 						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
 					} else {
 						// 金钱不足导致游戏结束
 						processNextConferenceInQueue();
 					}
 				}},
-				{ text: favorText, class: 'btn-info', action: () => {
-					const result = gameState.favor >= 6 
-						? '导师爽快报销，好感度-1' 
-						: '导师好感度-2';
-					addLog('开会', `导师报销参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `${result}${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+				{ text: costs.advisorText, class: 'btn-info', action: () => {
+					const result = costs.advisorCost === 0
+						? '导师爽快报销，免费'
+						: `导师好感度-${costs.advisorCost}`;
+					addLog('开会', `导师报销参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `${result}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
 					closeModal();
-					if (changeFavor(-favorCost)) {
+					if (costs.advisorCost === 0) {
+						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
+					} else if (changeFavor(-costs.advisorCost)) {
 						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
 					} else {
 						// 好感度不足导致游戏结束
 						processNextConferenceInQueue();
 					}
 				}},
-				{ text: proxyText, class: 'btn-primary', action: () => {
-					if (gameState.social >= 6) {
-						addLog('开会', `请同学代为参加 ${confInfo.name} ${confInfo.year}`, '同学义气帮忙，免费');
+				{ text: costs.proxyText, class: 'btn-primary', action: () => {
+					if (costs.proxyCost === 0) {
+						addLog('开会', `请同学代为参加 ${confInfo.name} ${confInfo.year}`, `同学义气帮忙，免费（${regionInfo.name}）`);
 						closeModal();
 						// 代参加不触发开会事件，直接处理下一个
 						processNextConferenceInQueue();
 					} else {
-						addLog('开会', `请人代为参加 ${confInfo.name} ${confInfo.year}`, '金钱-1');
+						addLog('开会', `请人代为参加 ${confInfo.name} ${confInfo.year}`, `金钱-${costs.proxyCost}（${regionInfo.name}）`);
 						closeModal();
 						// ★★★ 修改：检查changeGold返回值，如果触发结局则不继续处理 ★★★
-						if (changeGold(-proxyCost)) {
+						if (changeGold(-costs.proxyCost)) {
 							// 代参加不触发开会事件，直接处理下一个
 							processNextConferenceInQueue();
 						}
