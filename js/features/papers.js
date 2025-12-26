@@ -14,7 +14,7 @@
 				arxiv: '挂arxiv',
 				github: 'github开源',
 				xiaohongshu: '小红书宣传',
-				quantumbit: '量子位封面'
+				quantumbit: paper.grade === 'S' ? '机器之心' : '量子位封面'
 			};
 
 			let result = '';
@@ -88,9 +88,9 @@
 					break;
 				}
 				case 'quantumbit':
-					// ★★★ 量子位宣传：A类和S类可用，有效分数+25%中稿分数 ★★★
+					// ★★★ 量子位/机器之心宣传：A类可用量子位，S类可用机器之心，有效分数+25%中稿分数 ★★★
 					if (paper.grade !== 'A' && paper.grade !== 'S') {
-						showModal('❌ 操作失败', '<p>只有A类或S类论文才能上量子位封面！</p>',
+						showModal('❌ 操作失败', '<p>只有A类论文可用量子位，S类论文可用机器之心！</p>',
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}

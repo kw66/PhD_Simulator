@@ -217,7 +217,14 @@
                 taskMax: taskMax,
                 taskMultiplier: taskMultiplier,  // 保存乘数用于后续更新
                 relationMax: relationMax,
-                taskUsedThisMonth: false  // 本月是否已推进任务
+                taskUsedThisMonth: false,  // 本月是否已推进任务
+                // ★★★ 新增：互动统计 ★★★
+                stats: {
+                    taskCount: 0,        // 推进任务次数
+                    interactCount: 0,    // 交流次数
+                    completedCount: 0,   // 任务完成次数（获得奖励）
+                    helpReceivedCount: 0 // 对方帮助你的次数
+                }
             };
         }
 
@@ -266,7 +273,14 @@
                 taskMax: taskMax,
                 taskMultiplier: taskMultiplier,  // 保存乘数用于后续更新
                 relationMax: relationMax,
-                taskUsedThisMonth: false
+                taskUsedThisMonth: false,
+                // ★★★ 新增：互动统计 ★★★
+                stats: {
+                    taskCount: 0,        // 推进任务次数
+                    interactCount: 0,    // 交流次数
+                    completedCount: 0,   // 任务完成次数（获得奖励）
+                    helpReceivedCount: 0 // 对方帮助你的次数
+                }
             };
         }
 
@@ -487,6 +501,13 @@
                 taskType: taskType,
                 taskUsedThisMonth: false,
                 loverTasksCompleted: 0,  // 恋人完成任务次数（用于循环buff）
+                // ★★★ 新增：互动统计 ★★★
+                stats: {
+                    taskCount: 0,        // 推进任务次数
+                    interactCount: 0,    // 交流次数
+                    completedCount: 0,   // 任务完成次数（获得奖励）
+                    helpReceivedCount: 0 // 对方帮助你的次数
+                },
                 ...customData
             };
 
@@ -1162,6 +1183,10 @@
                 person.taskUsedThisMonth = true;
             }
 
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
+
             // 计算进度增长
             const baseGrowth = gameState.research * (0.5 + Math.random());  // 0.5-1.5倍
             const randomBonus = Math.floor(Math.random() * 6);  // 0-5
@@ -1218,6 +1243,10 @@
                 person.taskUsedThisMonth = true;
             }
 
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
+
             // 计算进度增长（使用对应操作的公式）
             const growth = calculatePaperScore();  // 使用相同的公式
             person.taskProgress += growth;
@@ -1252,6 +1281,10 @@
                 gameState.gold -= goldCost;
                 person.taskUsedThisMonth = true;
             }
+
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
 
             // 计算进度增长
             const baseGrowth = person.intimacy * (0.5 + Math.random());  // 0.5-1.5倍
@@ -1292,6 +1325,11 @@
 
         // 导师任务完成
         function handleAdvisorTaskCompletion(person) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             // 亲和度+1，科研资源+1
             person.affinity = Math.min(20, person.affinity + 1);
             person.researchResource = Math.min(20, person.researchResource + 1);
@@ -1318,6 +1356,11 @@
 
         // 同门任务完成
         function handleFellowTaskCompletion(person) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             // 亲和度+1
             person.affinity = Math.min(20, person.affinity + 1);
 
@@ -1336,6 +1379,11 @@
 
         // 恋人任务完成
         function handleLoverTaskCompletion(person) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             // 亲密度+1（上限40），科研能力+1
             person.intimacy = Math.min(40, person.intimacy + 1);
             person.research = Math.min(20, person.research + 1);
@@ -1556,6 +1604,11 @@
 
             // 清除可交流标志，执行免费任务
             person.canInteract = false;
+
+            // ★★★ 统计：交流次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.interactCount++;
+
             addLog('关系加成', `与${person.name}关系融洽`, '自动推进任务');
 
             if (person.type === 'advisor') {
@@ -1595,6 +1648,10 @@
                 changeSan(-sanCost);
                 person.taskUsedThisMonth = true;
             }
+
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
 
             const baseGrowth = gameState.research * (0.5 + Math.random());
             const randomBonus = Math.floor(Math.random() * 6);
@@ -1641,6 +1698,10 @@
                 person.taskUsedThisMonth = true;
             }
 
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
+
             const growth = calculatePaperScore();
             person.taskProgress += growth;
             addLog('同门任务', `帮${person.name}${taskName}`, `进度+${growth}${isFree ? '（关系加成）' : ''}`);
@@ -1673,6 +1734,10 @@
                 gameState.gold -= goldCost;
                 person.taskUsedThisMonth = true;
             }
+
+            // ★★★ 统计：推进任务次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.taskCount++;
 
             const baseGrowth = person.intimacy * (0.5 + Math.random());
             const randomBonus = Math.floor(Math.random() * 6);
@@ -1713,6 +1778,11 @@
 
         // ★★★ 新增：带回调的导师任务完成处理 ★★★
         function handleAdvisorTaskCompletionWithCallback(person, onComplete) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             person.affinity = Math.min(20, person.affinity + 1);
             person.researchResource = Math.min(20, person.researchResource + 1);
             const multiplier = person.taskMultiplier || 8;
@@ -1734,6 +1804,11 @@
 
         // ★★★ 新增：带回调的同门任务完成处理 ★★★
         function handleFellowTaskCompletionWithCallback(person, onComplete) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             person.affinity = Math.min(20, person.affinity + 1);
 
             let taskName = '';
@@ -1749,6 +1824,11 @@
 
         // ★★★ 新增：带回调的恋人任务完成处理 ★★★
         function handleLoverTaskCompletionWithCallback(person, onComplete) {
+            // ★★★ 统计：任务完成次数和获得帮助次数 ★★★
+            if (!person.stats) person.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+            person.stats.completedCount++;
+            person.stats.helpReceivedCount++;
+
             person.intimacy = Math.min(40, person.intimacy + 1);
             person.research = Math.min(20, person.research + 1);
             person.loverTasksCompleted = (person.loverTasksCompleted || 0) + 1;

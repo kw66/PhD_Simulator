@@ -382,7 +382,13 @@
                 upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : [],
                 // ★★★ 新增：永久解锁记录 ★★★
                 paperSlotsUnlocked: gameState.paperSlotsUnlocked || gameState.paperSlots || 1,
-                relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2
+                relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2,
+                // ★★★ 新增：生涯里程碑和统计数据 ★★★
+                careerMilestones: gameState.careerMilestones || [],
+                peakStats: gameState.peakStats || null,
+                totalSubmissions: gameState.totalSubmissions || 0,
+                totalAccepts: gameState.totalAccepts || 0,
+                totalRejects: gameState.totalRejects || 0
             };
             
             saves[slot] = saveData;
@@ -601,7 +607,13 @@
                             upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : [],
                             // ★★★ 新增：永久解锁记录恢复 ★★★
                             paperSlotsUnlocked: save.paperSlotsUnlocked || save.paperSlots || 1,
-                            relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2
+                            relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2,
+                            // ★★★ 新增：生涯里程碑和统计数据恢复 ★★★
+                            careerMilestones: save.careerMilestones || [],
+                            peakStats: save.peakStats || null,
+                            totalSubmissions: save.totalSubmissions || 0,
+                            totalAccepts: save.totalAccepts || 0,
+                            totalRejects: save.totalRejects || 0
                         };
                         
                         if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
@@ -932,7 +944,13 @@
 				upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : [],
 				// ★★★ 新增：永久解锁记录 ★★★
 				paperSlotsUnlocked: gameState.paperSlotsUnlocked || gameState.paperSlots || 1,
-				relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2
+				relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2,
+				// ★★★ 新增：生涯里程碑和统计数据 ★★★
+				careerMilestones: gameState.careerMilestones || [],
+				peakStats: gameState.peakStats || null,
+				totalSubmissions: gameState.totalSubmissions || 0,
+				totalAccepts: gameState.totalAccepts || 0,
+				totalRejects: gameState.totalRejects || 0
 			};
 		}
 
@@ -1243,7 +1261,13 @@
 				upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : [],
 				// ★★★ 新增：永久解锁记录恢复 ★★★
 				paperSlotsUnlocked: save.paperSlotsUnlocked || save.paperSlots || 1,
-				relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2
+				relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2,
+				// ★★★ 新增：生涯里程碑和统计数据恢复 ★★★
+				careerMilestones: save.careerMilestones || [],
+				peakStats: save.peakStats || null,
+				totalSubmissions: save.totalSubmissions || 0,
+				totalAccepts: save.totalAccepts || 0,
+				totalRejects: save.totalRejects || 0
 			};
 
 			if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {

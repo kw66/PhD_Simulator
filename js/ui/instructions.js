@@ -359,7 +359,8 @@
 					<tr><td style="padding:6px;">📄 挂arxiv</td><td style="padding:6px;text-align:center;color:var(--success-color);">+25%</td><td style="padding:6px;text-align:center;">SAN-3</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">💻 GitHub开源</td><td style="padding:6px;text-align:center;color:var(--success-color);">+50%</td><td style="padding:6px;text-align:center;">SAN-6</td></tr>
 					<tr><td style="padding:6px;">📱 小红书宣传</td><td style="padding:6px;text-align:center;color:var(--success-color);">+25%</td><td style="padding:6px;text-align:center;">SAN-3</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">📰 量子位封面（仅A类）</td><td style="padding:6px;text-align:center;color:var(--success-color);">+100引用</td><td style="padding:6px;text-align:center;">金钱-10</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">📰 量子位封面（仅A类）</td><td style="padding:6px;text-align:center;color:var(--success-color);">+25%有效分数</td><td style="padding:6px;text-align:center;">金钱-10</td></tr>
+					<tr><td style="padding:6px;">📰 机器之心（仅S类）</td><td style="padding:6px;text-align:center;color:var(--success-color);">+25%有效分数</td><td style="padding:6px;text-align:center;">金钱-10</td></tr>
 				</table>
 			</div>
 			
@@ -422,7 +423,7 @@
 					<li><strong>争取Oral/Best Paper</strong>：提供50%~400%的永久加成</li>
 					<li><strong>及时推广</strong>：arxiv+GitHub+小红书组合可达+100%加成</li>
 					<li><strong>同门合作buff</strong>：随机事件中约定互挂可获得+100%加成</li>
-					<li><strong>A类论文可用量子位</strong>：直接+100引用</li>
+					<li><strong>A类论文用量子位，S类用机器之心</strong>：+25%有效分数</li>
 				</ul>
 			</div>
 		</div>`;

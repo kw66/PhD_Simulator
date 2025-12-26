@@ -154,7 +154,56 @@
 				// ★★★ 新增：永久解锁记录（一旦解锁不会因能力下降而重新锁定）★★★
 				paperSlotsUnlocked: 1,        // 论文槽已解锁数量（初始1个）
 				relationshipSlotsUnlocked: 2, // 人际关系槽已解锁数量（初始2个）
+
+				// ★★★ 新增：生涯里程碑记录（用于结局总结）★★★
+				careerMilestones: [],         // 重要事件记录 [{month, type, title, detail}]
+				// ★★★ 新增：峰值/谷值记录 ★★★
+				peakStats: {
+					maxSan: 20,               // SAN最高值
+					minSan: 20,               // SAN最低值
+					maxResearch: 1,           // 科研最高值
+					maxSocial: 1,             // 社交最高值
+					maxFavor: 1,              // 好感最高值
+					maxGold: 1,               // 金币最高值
+				},
+				// ★★★ 新增：操作统计（用于结局总结）★★★
+				totalSubmissions: 0,          // 总投稿次数
+				totalAccepts: 0,              // 总中稿次数
+				totalRejects: 0,              // 总拒稿次数
+				submissionHistory: [],        // 投稿历史 [{month, grade, accepted}]
 			};
+		}
+
+		// ★★★ 新增：记录生涯里程碑 ★★★
+		function addCareerMilestone(type, title, detail = null) {
+			if (!gameState.careerMilestones) {
+				gameState.careerMilestones = [];
+			}
+			gameState.careerMilestones.push({
+				month: gameState.totalMonths,
+				year: gameState.year,
+				monthInYear: gameState.month,
+				type: type,
+				title: title,
+				detail: detail
+			});
+		}
+
+		// ★★★ 新增：更新峰值/谷值记录 ★★★
+		function updatePeakStats() {
+			if (!gameState.peakStats) {
+				gameState.peakStats = {
+					maxSan: 20, minSan: 20,
+					maxResearch: 1, maxSocial: 1, maxFavor: 1, maxGold: 1
+				};
+			}
+			const ps = gameState.peakStats;
+			if (gameState.san > ps.maxSan) ps.maxSan = gameState.san;
+			if (gameState.san < ps.minSan) ps.minSan = gameState.san;
+			if (gameState.research > ps.maxResearch) ps.maxResearch = gameState.research;
+			if (gameState.social > ps.maxSocial) ps.maxSocial = gameState.social;
+			if (gameState.favor > ps.maxFavor) ps.maxFavor = gameState.favor;
+			if (gameState.gold > ps.maxGold) ps.maxGold = gameState.gold;
 		}
 
 

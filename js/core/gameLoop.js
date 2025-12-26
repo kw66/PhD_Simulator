@@ -956,6 +956,8 @@
 						gameState.phdChoiceMadeThisYear = true;
 						gameState.degree = 'phd';
 						gameState.maxYears = 5;
+						// ★★★ 新增：记录转博里程碑 ★★★
+						addCareerMilestone('phd_convert', '转博成功', '开启博士之旅');
 						closeModal();
 						// ★★★ 转博渡劫弹窗，渡劫完成后会触发学年总结 ★★★
 						setTimeout(() => showPhDTribulationModal(), 200);

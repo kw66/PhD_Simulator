@@ -1132,11 +1132,19 @@
 								year: gameState.year
 							});
 
+							// ★★★ 新增：更新拒稿统计 ★★★
+							gameState.totalRejects = (gameState.totalRejects || 0) + 1;
+							if (gameState.totalRejects === 1) {
+								addCareerMilestone('first_reject', '第一次被拒', `${paper.conferenceInfo?.name || grade + '类会议'} - 科研路上的必经之坎`);
+							}
+
 							gameState.rejectedCount++;
 							gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
-							
+
 							if (gameState.rejectedPapers[paper.title] >= 3) {
 								gameState.achievementConditions.tripleRejected = true;
+								// ★★★ 新增：记录连续被拒里程碑 ★★★
+								addCareerMilestone('triple_reject', '三连拒稿', `"${paper.title.substring(0, 10)}..." 屡败屡战`);
 							}
 							
 							if (extraInfo.hasExpert) {

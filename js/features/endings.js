@@ -211,6 +211,14 @@
 				gameState.relationships.every(r => (r.research || 0) >= 12 || (r.researchResource || 0) >= 12);
 			if (isTopGroup) a.push('🔬 顶尖大组');
 			if (gameState.achievementConditions && gameState.achievementConditions.journeyEnd) a.push('🏁 旅途的终点');
+			// ★★★ 新增2个成就 ★★★
+			// 全部升级：升级四个论文槽为期刊槽
+			const allSlotsUpgraded = gameState.upgradedSlots && gameState.upgradedSlots.length >= 4;
+			if (allSlotsUpgraded) a.push('⬆️ 全部升级');
+			// 青出于蓝：你的论文引用数超过导师
+			const advisor = gameState.relationships && gameState.relationships.find(r => r.type === 'advisor');
+			const advisorCitations = advisor ? (advisor.citations || 0) : 0;
+			if (advisorCitations > 0 && gameState.totalCitations > advisorCitations) a.push('📖 青出于蓝');
 
 			// ★★★ 以下成就仍然需要顺利毕业 ★★★
 			if (!isGraduated) {
@@ -335,6 +343,14 @@
 				gameState.relationships.every(r => (r.research || 0) >= 12 || (r.researchResource || 0) >= 12);
 			if (isTopGroup_check) achievementsToCheck.push('🔬 顶尖大组');
 			if (gameState.achievementConditions && gameState.achievementConditions.journeyEnd) achievementsToCheck.push('🏁 旅途的终点');
+			// ★★★ 新增2个成就检测 ★★★
+			// 全部升级：升级四个论文槽为期刊槽
+			const allSlotsUpgraded_check = gameState.upgradedSlots && gameState.upgradedSlots.length >= 4;
+			if (allSlotsUpgraded_check) achievementsToCheck.push('⬆️ 全部升级');
+			// 青出于蓝：你的论文引用数超过导师
+			const advisor_check = gameState.relationships && gameState.relationships.find(r => r.type === 'advisor');
+			const advisorCitations_check = advisor_check ? (advisor_check.citations || 0) : 0;
+			if (advisorCitations_check > 0 && gameState.totalCitations > advisorCitations_check) achievementsToCheck.push('📖 青出于蓝');
 
 			// 检查哪些是新获得的
 			achievementsToCheck.forEach(ach => {
@@ -446,7 +462,19 @@
 			
 			// 生涯总结 - 浅粉黄渐变背景
 			html += `<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;margin-bottom:12px;">
-				<div style="font-weight:600;margin-bottom:10px;color:#7c3aed;font-size:0.9rem;"><i class="fas fa-scroll"></i> 生涯总结</div>
+				<div style="text-align:center;margin-bottom:12px;">
+					<button onclick="showCareerSummary()"
+							style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;
+								   background:linear-gradient(135deg,#667eea,#764ba2);
+								   color:white;border:none;border-radius:25px;font-size:0.9rem;font-weight:600;
+								   cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4);
+								   transition:all 0.3s ease;font-family:inherit;"
+							onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102,126,234,0.5)'"
+							onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102,126,234,0.4)'">
+						<i class="fas fa-book-open"></i>
+						📖 回顾我的研究生生涯
+					</button>
+				</div>
 				<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:0.8rem;color:#374151;">
 					<div>👤 角色：${gameState.characterName}</div>
 					<div>📅 历时：${gameState.totalMonths}个月</div>

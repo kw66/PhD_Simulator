@@ -6,7 +6,7 @@
 
 			const confInfo = getConferenceInfo(gameState.month, grade, gameState.year);
 			const location = getConferenceLocation(paper.title);
-			
+
 			paper.reviewing = true;
 			paper.reviewMonths = 4;
 			paper.submittedGrade = grade;
@@ -14,7 +14,7 @@
 			paper.submittedMonth = gameState.month;
 			paper.conferenceInfo = confInfo;
 			paper.conferenceLocation = location;
-			
+
 			// ✅ 新增：保存投稿时的分数快照
 			paper.submittedIdeaScore = paper.ideaScore;
 			paper.submittedExpScore = paper.expScore;
@@ -25,6 +25,12 @@
 
             const currentReviews = gameState.papers.filter(p => p?.reviewing).length;
             gameState.maxConcurrentReviews = Math.max(gameState.maxConcurrentReviews || 0, currentReviews);
+
+            // ★★★ 新增：记录投稿统计和里程碑 ★★★
+            gameState.totalSubmissions = (gameState.totalSubmissions || 0) + 1;
+            if (gameState.totalSubmissions === 1) {
+                addCareerMilestone('first_submit', '第一次投稿', `${confInfo.name}（${grade}类）`);
+            }
 
             // ★★★ 修改日志，显示会议名称 ★★★
             addLog('投稿', `将"${paper.title.substring(0, 15)}..."投至${confInfo.name} ${confInfo.year}（${grade}类）`, `总分${paper.submittedScore}，进入4个月审稿期`);
@@ -94,6 +100,9 @@
 				year: gameState.year
 			});
 
+			// ★★★ 新增：更新中稿统计 ★★★
+			gameState.totalAccepts = (gameState.totalAccepts || 0) + 1;
+
 			// ★★★ 新增：检查并应用引用倍增buff ★★★
 			let citationBuff = 1;
 			const citationMultiplyBuff = gameState.buffs.temporary.find(b => b.type === 'citation_multiply');
@@ -102,17 +111,17 @@
 				gameState.buffs.temporary = gameState.buffs.temporary.filter(b => b.type !== 'citation_multiply');
 				addLog('Buff生效', '同门合作', `本篇论文引用速度+${(citationBuff-1)*100}%（与推广加成叠加）`);
 			}
-			
+
 			const scoreMap = { 'A': 4, 'B': 2, 'C': 1 };
-			const sanGain = { 
-				'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 }, 
-				'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 }, 
-				'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 } 
+			const sanGain = {
+				'A': { 'Poster': 6, 'Oral': 8, 'Best Paper': 12 },
+				'B': { 'Poster': 3, 'Oral': 4, 'Best Paper': 5 },
+				'C': { 'Poster': 2, 'Oral': 2, 'Best Paper': 3 }
 			};
-			const favorGain = { 
-				'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 }, 
-				'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 }, 
-				'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 } 
+			const favorGain = {
+				'A': { 'Poster': 2, 'Oral': 3, 'Best Paper': 4 },
+				'B': { 'Poster': 1, 'Oral': 1, 'Best Paper': 2 },
+				'C': { 'Poster': 0, 'Oral': 0, 'Best Paper': 1 }
 			};
 
 			const paperRankMap = {
@@ -126,23 +135,23 @@
 				'C-Oral': 2,
 				'C-Poster': 1
 			};
-			
+
 			const currentRank = paperRankMap[`${grade}-${acceptType}`];
-			
+
 			const higherOrEqualCount = gameState.publishedPapers.filter(p => {
 				const pRank = paperRankMap[`${p.grade}-${p.acceptType}`];
 				return pRank >= currentRank;
 			}).length;
-			
+
 			const baseSan = sanGain[grade][acceptType];
 			const baseFavor = favorGain[grade][acceptType];
-			
+
 			const actualSanGain = Math.max(1, baseSan - higherOrEqualCount);
 			const favorReduction = Math.floor(higherOrEqualCount / 2);
 			const actualFavorGain = baseFavor > 0 ? Math.max(0, baseFavor - favorReduction) : 0;
-			
+
 			const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
-			
+
 			gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
 			gameState.favor = Math.min(20, gameState.favor + actualFavorGain);
 			gameState.totalScore += scoreMap[grade];
@@ -161,21 +170,33 @@
 				gameState.firstPaperAccepted = true;
 				bonusResearch++;
 				addLog('首次发表论文', '科研能力+1', '首次发表论文奖励');
+				// ★★★ 新增：记录第一次中稿里程碑 ★★★
+				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+				addCareerMilestone('first_accept', '第一篇论文接收', `${confInfo.name}（${grade}类 ${acceptType}）`);
 			}
 			if (grade === 'A' && !gameState.firstAPaperAccepted) {
 				gameState.firstAPaperAccepted = true;
 				bonusResearch++;
 				addLog('首次发表A类论文', '科研能力+1', '首次发表A类论文奖励');
+				// ★★★ 新增：记录第一次A类里程碑 ★★★
+				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+				addCareerMilestone('first_A', '第一篇A类论文', `${confInfo.name}（${acceptType}）`);
 			}
 			if (acceptType === 'Best Paper' && !gameState.firstBestPaperAccepted) {
 				gameState.firstBestPaperAccepted = true;
 				bonusResearch++;
 				addLog('首次发表Best Paper', '科研能力+1', '首次发表Best Paper奖励');
+				// ★★★ 新增：记录第一次Best Paper里程碑 ★★★
+				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+				addCareerMilestone('first_best_paper', '第一个Best Paper', `${confInfo.name}（${grade}类）`);
 			}
 			if (grade === 'A' && acceptType === 'Best Paper' && !gameState.firstABestPaperAccepted) {
 				gameState.firstABestPaperAccepted = true;
 				bonusResearch++;
 				addLog('首次发表A类Best Paper', '科研能力+1', '首次发表A类Best Paper奖励');
+				// ★★★ 新增：记录A类Best Paper里程碑 ★★★
+				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+				addCareerMilestone('first_A_best_paper', 'A类Best Paper', `${confInfo.name} - 学术巅峰！`);
 			}
 			if (bonusResearch > 0) {
 				changeResearch(bonusResearch);
@@ -785,6 +806,9 @@
 				{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
 					gameState.hasLover = true;
 					gameState.loverType = type;
+					// ★★★ 新增：记录恋人里程碑 ★★★
+					const loverTypeName = type === 'beautiful' ? '活泼的' : '聪慧的';
+					addCareerMilestone('lover', '遇见爱情', `与${loverTypeName}异性学者成为恋人`);
 					if (type === 'beautiful') {
 						gameState.san = gameState.sanMax;
 						gameState.sanMax += 4;

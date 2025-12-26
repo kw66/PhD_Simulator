@@ -8,6 +8,7 @@
             updateActionButtons();
             updateEventPreview();
             renderRelationshipPanel();  // ★★★ 新增：更新人际关系面板 ★★★
+            updatePeakStats();          // ★★★ 新增：更新峰值/谷值记录 ★★★
         }
 
 		// ==================== 年月时间显示 ====================
@@ -708,19 +709,21 @@
 								${p.promotions?.github ? 'disabled' : ''}>
 								${p.promotions?.github ? '✓开源' : 'github开源'}
 							</button>
-							<button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'xiaohongshu')" 
+							<button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'xiaohongshu')"
 								${p.promotions?.xiaohongshu ? 'disabled' : ''}>
 								${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
 							</button>
-							<button class="btn ${p.promotions?.quantumbit ? '' : ((p.grade === 'A' || p.grade === 'S') ? 'btn-warning' : '')}"
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit || (p.grade !== 'A' && p.grade !== 'S') ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+							${(p.grade === 'A' || p.grade === 'S') ? `
+							<button class="btn ${p.promotions?.quantumbit ? '' : 'btn-warning'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.quantumbit ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
 								onclick="promotePaper(${index}, 'quantumbit')"
-								${p.promotions?.quantumbit || (p.grade !== 'A' && p.grade !== 'S') ? 'disabled' : ''}
-								title="${(p.grade !== 'A' && p.grade !== 'S') ? '仅A/S类论文可用' : '有效分数+25%中稿分'}">
-								${p.promotions?.quantumbit ? '✓量子位' : ((p.grade !== 'A' && p.grade !== 'S') ? '量子位(仅A/S)' : '量子位宣传')}
+								${p.promotions?.quantumbit ? 'disabled' : ''}
+								title="有效分数+25%中稿分">
+								${p.promotions?.quantumbit ? (p.grade === 'S' ? '✓机器之心' : '✓量子位') : (p.grade === 'S' ? '机器之心' : '量子位宣传')}
 							</button>
+							` : ''}
 						</div>
 					</div>
 				`}).join('');
