@@ -442,7 +442,7 @@
 				} else if (buff.type === 'write_san_reduce') {
 					name = `写论文SAN-3`;
 				} else if (buff.type === 'citation_multiply') {
-					name = `下篇中稿引用×${buff.value}`;
+					name = `下篇中稿引用+${Math.round((buff.value-1)*100)}%`;
 				} else if (buff.multiply) {
 					if (buff.value < 1) isDebuff = true;
 					name = `${prefix}${typeName}×${buff.value}`;
@@ -767,22 +767,27 @@
 
 		function updateActionButtons() {
 			const btns = ['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'];
-			
-			// 基于行动次数判断
-			const actionsRemaining = gameState.actionLimit - gameState.actionCount;
+
+			// ★★★ 修复：添加默认值，防止 undefined 导致 NaN 计算 ★★★
+			const actionLimit = gameState.actionLimit || 1;
+			const actionCount = gameState.actionCount || 0;
+			const actionsRemaining = actionLimit - actionCount;
 			const allUsed = actionsRemaining <= 0;
-			
+
 			btns.forEach(id => {
 				const btn = document.getElementById(id);
+				if (!btn) return;
 				btn.disabled = allUsed;
 				btn.style.opacity = allUsed ? '0.5' : '1';
+				// ★★★ 新增：确保禁用状态下不可点击 ★★★
+				btn.style.pointerEvents = allUsed ? 'none' : 'auto';
 			});
-			
+
 			const costs = getActionCosts();
-			
+
 			// 显示剩余行动次数
-			const actionCountDisplay = gameState.actionLimit > 1 
-				? ` (${actionsRemaining}/${gameState.actionLimit})` 
+			const actionCountDisplay = actionLimit > 1
+				? ` (${actionsRemaining}/${actionLimit})`
 				: '';
 			
 			// 改为2行布局：第一行图标+文字，第二行效果

@@ -477,23 +477,21 @@
 					<div>📝 论文数：${gameState.publishedPapers.length}</div>
 					<div><span style="color:#e74c3c;font-weight:bold;">🅰️</span> A类：${gameState.paperA} <span style="color:#3498db;font-weight:bold;margin-left:6px;">🅱️</span> B类：${gameState.paperB}</div>
 					<div>©️ C类：${gameState.paperC} 📈 引用：${gameState.totalCitations}</div>
+					<div>🏆 Nature：${gameState.paperNature || 0} 📚 子刊：${gameState.paperNatureSub || 0}</div>
+					<div>👥 关系人数：${(gameState.relationships || []).length}</div>
 					<div>🧠 科研：${gameState.research} 👥 社交：${gameState.social}</div>
 					<div>❤️ 好感：${gameState.favor} 💰 金币：${gameState.gold}</div>
 				</div>
-				<!-- ★★★ 重开按钮放在生涯总结框内下方 ★★★ -->
-				<div style="text-align:center;margin-top:12px;">
-					<button onclick="restartGame()"
-							style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 35px;
-								   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
-								   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
-								   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
-								   transition:all 0.3s ease;font-family:inherit;"
-							onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(139,92,246,0.45)'"
-							onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(139,92,246,0.35)'">
-						<i class="fas fa-redo"></i>
-						<i class="fas fa-gamepad"></i>
-						我要重开
-					</button>
+				<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:0.75rem;">
+					<span style="padding:3px 8px;border-radius:12px;${gameState.hasLover ? 'background:rgba(236,72,153,0.2);color:#ec4899;' : 'background:rgba(156,163,175,0.2);color:#9ca3af;'}">
+						💕 恋人${gameState.hasLover ? ' ✓' : ' ✗'}
+					</span>
+					<span style="padding:3px 8px;border-radius:12px;${gameState.bigBullCooperation ? 'background:rgba(16,185,129,0.2);color:#10b981;' : 'background:rgba(156,163,175,0.2);color:#9ca3af;'}">
+						🎓 联培${gameState.bigBullCooperation ? ' ✓' : ' ✗'}
+					</span>
+					<span style="padding:3px 8px;border-radius:12px;${gameState.ailabInternship ? 'background:rgba(59,130,246,0.2);color:#3b82f6;' : 'background:rgba(156,163,175,0.2);color:#9ca3af;'}">
+						🏢 实习${gameState.ailabInternship ? ' ✓' : ' ✗'}
+					</span>
 				</div>
 			</div>`;
 
@@ -516,6 +514,23 @@
 						</div>
 					</div>`;
 			}
+
+			// ★★★ 重开按钮放在成就框之后 ★★★
+			html += `
+			<div style="text-align:center;margin-top:8px;">
+				<button onclick="restartGame()"
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 35px;
+							   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+							   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
+							   transition:all 0.3s ease;font-family:inherit;"
+						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(139,92,246,0.45)'"
+						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(139,92,246,0.35)'">
+					<i class="fas fa-redo"></i>
+					<i class="fas fa-gamepad"></i>
+					我要重开
+				</button>
+			</div>`;
 
 			showModal('', html, []);
 		}
