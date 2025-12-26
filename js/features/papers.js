@@ -744,22 +744,35 @@
         }
 
         function checkResearchUnlock(silent = false) {
+            // ★★★ 兼容旧存档：初始化永久解锁记录 ★★★
+            if (gameState.paperSlotsUnlocked === undefined) {
+                gameState.paperSlotsUnlocked = gameState.paperSlots || 1;
+            }
+
             // 愚钝之院士转世：已全部解锁
             if (gameState.isReversed && gameState.character === 'genius') {
                 gameState.paperSlots = 4;
+                gameState.paperSlotsUnlocked = 4;
                 return;
             }
-            
+
             const thresholds = [0, 6, 12, 18];
             let newUnlock = false;
+
+            // ★★★ 修改：检查当前科研能力应该解锁几个槽位 ★★★
             for (let i = 1; i < 4; i++) {
-                if (gameState.research >= thresholds[i] && gameState.paperSlots <= i) {
-                    gameState.paperSlots = i + 1;
+                if (gameState.research >= thresholds[i] && gameState.paperSlotsUnlocked <= i) {
+                    // 更新永久解锁记录
+                    gameState.paperSlotsUnlocked = i + 1;
                     newUnlock = true;
                 }
             }
+
+            // ★★★ 关键：paperSlots 始终使用永久解锁记录，确保不会因科研下降而重新锁定 ★★★
+            gameState.paperSlots = gameState.paperSlotsUnlocked;
+
             if (newUnlock && !silent) {
-                showModal('🎉 新论文槽解锁！', 
+                showModal('🎉 新论文槽解锁！',
                     `<p>恭喜！科研能力达到${gameState.research}，解锁论文槽${gameState.paperSlots}！</p>`,
                     [{ text: '太棒了！', class: 'btn-primary', action: closeModal }]);
                 renderPaperSlots();

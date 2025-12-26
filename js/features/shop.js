@@ -1168,37 +1168,48 @@
 		function showChairUpgradeModal() {
 			const currentUpgrade = gameState.chairUpgrade;
 
+			// ★★★ 修复：如果已经升级过，不能再选择其他方向 ★★★
+			if (currentUpgrade) {
+				const upgrade = CHAIR_UPGRADES[currentUpgrade];
+				showModal('🪑 椅子升级',
+					`<div style="text-align:center;">
+						<div style="font-size:3rem;margin-bottom:10px;">${upgrade.icon}</div>
+						<div style="font-weight:600;font-size:1.1rem;">${upgrade.name}</div>
+						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;">效果：${upgrade.desc}</div>
+						<div style="margin-top:15px;padding:12px;background:var(--light-bg);border-radius:8px;">
+							<p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+								<i class="fas fa-info-circle"></i> 椅子已升级完成<br>
+								如需更换升级方向，请先卖出椅子后重新购买
+							</p>
+						</div>
+					</div>`,
+					[{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }]
+				);
+				return;
+			}
+
 			let html = `
 				<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2rem;margin-bottom:8px;">🪑</div>
-					<div style="font-weight:600;">当前：${currentUpgrade ? CHAIR_UPGRADES[currentUpgrade].name : '人体工学椅'}</div>
-					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：${currentUpgrade ? CHAIR_UPGRADES[currentUpgrade].desc : '每月SAN+1'}</div>
+					<div style="font-weight:600;">当前：人体工学椅</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：每月SAN+1</div>
 				</div>
-				<div style="font-weight:600;margin-bottom:10px;">选择升级方向：</div>
+				<div style="font-weight:600;margin-bottom:10px;">选择升级方向（只能选择一次）：</div>
 			`;
 
 			Object.entries(CHAIR_UPGRADES).forEach(([key, upgrade]) => {
-				const isCurrentUpgrade = currentUpgrade === key;
 				const canAfford = gameState.gold >= upgrade.price;
-				const isDisabled = isCurrentUpgrade || !canAfford;
-
-				let statusText = '';
-				if (isCurrentUpgrade) {
-					statusText = '当前';
-				} else if (!canAfford) {
-					statusText = '金币不足';
-				}
 
 				html += `
-					<div class="shop-item ${isDisabled ? 'disabled' : ''}" style="margin-bottom:8px;">
+					<div class="shop-item ${!canAfford ? 'disabled' : ''}" style="margin-bottom:8px;">
 						<div class="shop-item-info">
 							<div class="shop-item-name">${upgrade.icon} ${upgrade.name}</div>
 							<div class="shop-item-desc">${upgrade.desc}</div>
 						</div>
 						<div class="shop-item-action">
 							<span class="shop-item-price">💰${upgrade.price}</span>
-							<button class="btn btn-primary" onclick="upgradeChair('${key}')" ${isDisabled ? 'disabled' : ''}>
-								${statusText || '升级'}
+							<button class="btn btn-primary" onclick="upgradeChair('${key}')" ${!canAfford ? 'disabled' : ''}>
+								${canAfford ? '升级' : '金币不足'}
 							</button>
 						</div>
 					</div>
@@ -1257,23 +1268,39 @@
 
 		// ★★★ 新增：出售物品函数 ★★★
 		function sellItem(id) {
+			// ★★★ 修复：椅子卖出价格根据升级状态计算 ★★★
+			const getChairSellPrice = () => {
+				let basePrice = 5;
+				if (gameState.chairUpgrade) {
+					const upgrade = CHAIR_UPGRADES[gameState.chairUpgrade];
+					// 升级后卖出价格 = 基础价格 + 升级价格的一半（下取整）
+					basePrice += Math.floor(upgrade.price / 2);
+				}
+				return basePrice;
+			};
+
 			const sellPrices = {
-				'chair': 5,
+				'chair': getChairSellPrice(),
 				'monitor': 4,
 				'keyboard': 4,
 				'gpu_buy': 6
 			};
-			
+
 			const sellPrice = sellPrices[id];
 			if (!sellPrice) return;
-			
+
 			let canSell = false;
 			let itemName = '';
-			
+
 			switch (id) {
 				case 'chair':
 					canSell = gameState.furnitureBought && gameState.furnitureBought.chair;
-					itemName = '人体工学椅';
+					// ★★★ 修复：显示升级后的椅子名称 ★★★
+					if (gameState.chairUpgrade) {
+						itemName = CHAIR_UPGRADES[gameState.chairUpgrade].name;
+					} else {
+						itemName = '人体工学椅';
+					}
 					break;
 				case 'monitor':
 					canSell = gameState.furnitureBought && gameState.furnitureBought.monitor;
@@ -1306,7 +1333,15 @@
 						switch (id) {
 							case 'chair':
 								gameState.furnitureBought.chair = false;
-								gameState.buffs.permanent = gameState.buffs.permanent.filter(b => b.type !== 'monthly_san');
+								// ★★★ 修复：移除所有椅子相关buff（包括基础和升级版本）★★★
+								gameState.buffs.permanent = gameState.buffs.permanent.filter(b =>
+									b.type !== 'monthly_san' &&
+									b.type !== 'monthly_san_2' &&
+									b.type !== 'monthly_san_lost_10' &&
+									b.type !== 'monthly_san_current_20'
+								);
+								// ★★★ 修复：重置升级状态，再次购买可重新选择升级方向 ★★★
+								gameState.chairUpgrade = null;
 								// 恢复商店状态
 								const chairItem = shopItems.find(i => i.id === 'chair');
 								if (chairItem) chairItem.bought = false;

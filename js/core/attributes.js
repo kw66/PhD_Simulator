@@ -163,6 +163,8 @@
 
 			if (delta > 0) {
 				gameState.social = Math.min(socialMax, gameState.social + delta);
+				// ★★★ 新增：社交能力提升时检查解锁 ★★★
+				checkSocialUnlock();
 			} else {
 				gameState.social += delta;
 			}
@@ -312,10 +314,12 @@
 				const socialMax = gameState.socialMax || 20;  // ★★★ 新增 ★★★
 				if (changes.social > 0) {
 					gameState.social = Math.min(socialMax, gameState.social + changes.social);  // ★★★ 修改 ★★★
+					// ★★★ 新增：社交能力提升时检查解锁 ★★★
+					checkSocialUnlock();
 				} else {
 					gameState.social = Math.max(0, gameState.social + changes.social);
 				}
-				
+
 				// 嫉妒之社交达人
 				if (gameState.isReversed && gameState.character === 'social') {
 					const change = gameState.social - oldSocial;

@@ -952,7 +952,9 @@
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
 
 			document.getElementById('log-content').innerHTML = '';
+			// ★★★ 修改：游戏开始时检查初始解锁状态（科研和社交）★★★
 			checkResearchUnlock(true);
+			checkSocialUnlock(true);
 			updateAllUI();
 			renderPaperSlots();
 			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★

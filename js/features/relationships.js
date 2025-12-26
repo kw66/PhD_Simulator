@@ -345,14 +345,52 @@
 
         // ==================== 人际关系网络管理 ====================
 
-        // 获取当前解锁的槽位数量
+        // ★★★ 修改：检查并更新社交解锁（永久解锁机制）★★★
+        function checkSocialUnlock(silent = false) {
+            // ★★★ 兼容旧存档：初始化永久解锁记录 ★★★
+            if (gameState.relationshipSlotsUnlocked === undefined) {
+                // 根据当前社交能力计算应该有多少槽位
+                let slots = 2;
+                if (gameState.social >= 6) slots++;
+                if (gameState.social >= 12) slots++;
+                if (gameState.social >= 18) slots++;
+                gameState.relationshipSlotsUnlocked = slots;
+            }
+
+            const thresholds = [0, 0, 6, 12, 18];  // 对应槽位2,3,4,5的解锁阈值
+            let newUnlock = false;
+            let newSlots = gameState.relationshipSlotsUnlocked;
+
+            // 检查是否有新的解锁
+            for (let i = 2; i <= 5; i++) {
+                if (gameState.social >= thresholds[i] && gameState.relationshipSlotsUnlocked < i) {
+                    newSlots = i;
+                    newUnlock = true;
+                }
+            }
+
+            // 更新永久解锁记录
+            if (newSlots > gameState.relationshipSlotsUnlocked) {
+                gameState.relationshipSlotsUnlocked = newSlots;
+                if (!silent && newUnlock) {
+                    showModal('🎉 新关系槽解锁！',
+                        `<p>恭喜！社交能力达到${gameState.social}，解锁关系槽${gameState.relationshipSlotsUnlocked}！</p>`,
+                        [{ text: '太棒了！', class: 'btn-primary', action: closeModal }]);
+                    renderRelationshipPanel();
+                }
+            }
+
+            return newUnlock;
+        }
+
+        // ★★★ 修改：获取当前解锁的槽位数量（使用永久解锁记录）★★★
         function getUnlockedSlots() {
-            // 初始2个槽位（1导师+1空），社交6/12/18各解锁1个
-            let slots = 2;
-            if (gameState.social >= 6) slots++;
-            if (gameState.social >= 12) slots++;
-            if (gameState.social >= 18) slots++;
-            return slots;
+            // ★★★ 兼容旧存档：如果没有永久解锁记录，先检查一次 ★★★
+            if (gameState.relationshipSlotsUnlocked === undefined) {
+                checkSocialUnlock(true);
+            }
+            // 返回永久解锁的槽位数量，确保不会因社交能力下降而减少
+            return gameState.relationshipSlotsUnlocked;
         }
 
         // 初始化人际关系网络（游戏开始时调用）

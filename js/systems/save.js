@@ -344,6 +344,7 @@
                 phdOpportunitiesRejected: gameState.phdOpportunitiesRejected || 0,
                 gpuServersBought: gameState.gpuServersBought || 0,
                 furnitureBought: {...(gameState.furnitureBought || {})},
+                chairUpgrade: gameState.chairUpgrade || null,
                 achievementConditions: {...(gameState.achievementConditions || {})},
                 paperTypeCollection: gameState.paperTypeCollection ? [...gameState.paperTypeCollection] : [],
 				// ★★★ 新增：高级选项触发记录 ★★★
@@ -378,7 +379,10 @@
                 paperS: gameState.paperS || 0,
                 paperNature: gameState.paperNature || 0,
                 paperNatureSub: gameState.paperNatureSub || 0,
-                upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : []
+                upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : [],
+                // ★★★ 新增：永久解锁记录 ★★★
+                paperSlotsUnlocked: gameState.paperSlotsUnlocked || gameState.paperSlots || 1,
+                relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2
             };
             
             saves[slot] = saveData;
@@ -567,6 +571,7 @@
                                 monitor: false,
                                 keyboard: false
                             },
+                            chairUpgrade: save.chairUpgrade || null,
                             achievementConditions: save.achievementConditions ? {...save.achievementConditions} : {
                                 highScorePaper: false,
                                 unanimousImprovement: false,
@@ -593,7 +598,10 @@
                             paperS: save.paperS || 0,
                             paperNature: save.paperNature || 0,
                             paperNatureSub: save.paperNatureSub || 0,
-                            upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : []
+                            upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : [],
+                            // ★★★ 新增：永久解锁记录恢复 ★★★
+                            paperSlotsUnlocked: save.paperSlotsUnlocked || save.paperSlots || 1,
+                            relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2
                         };
                         
                         if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
@@ -889,6 +897,7 @@
 				phdOpportunitiesRejected: gameState.phdOpportunitiesRejected || 0,
 				gpuServersBought: gameState.gpuServersBought || 0,
 				furnitureBought: {...(gameState.furnitureBought || {})},
+				chairUpgrade: gameState.chairUpgrade || null,
 				achievementConditions: {...(gameState.achievementConditions || {})},
 				paperTypeCollection: gameState.paperTypeCollection ? [...gameState.paperTypeCollection] : [],
 				metBigBullCoop: gameState.metBigBullCoop || false,
@@ -920,7 +929,10 @@
 				paperS: gameState.paperS || 0,
 				paperNature: gameState.paperNature || 0,
 				paperNatureSub: gameState.paperNatureSub || 0,
-				upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : []
+				upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : [],
+				// ★★★ 新增：永久解锁记录 ★★★
+				paperSlotsUnlocked: gameState.paperSlotsUnlocked || gameState.paperSlots || 1,
+				relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2
 			};
 		}
 
@@ -1202,6 +1214,7 @@
 					monitor: false,
 					keyboard: false
 				},
+				chairUpgrade: save.chairUpgrade || null,
 				achievementConditions: save.achievementConditions ? {...save.achievementConditions} : {
 					highScorePaper: false,
 					unanimousImprovement: false,
@@ -1227,7 +1240,10 @@
 				paperS: save.paperS || 0,
 				paperNature: save.paperNature || 0,
 				paperNatureSub: save.paperNatureSub || 0,
-				upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : []
+				upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : [],
+				// ★★★ 新增：永久解锁记录恢复 ★★★
+				paperSlotsUnlocked: save.paperSlotsUnlocked || save.paperSlots || 1,
+				relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2
 			};
 
 			if (!gameState.availableRandomEvents || gameState.availableRandomEvents.length === 0) {
