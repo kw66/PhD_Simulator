@@ -75,22 +75,27 @@
 				// 计算当前成就数量（用于真·感受生活判定）
 				const tempAchievements = collectAchievements('phd');
 				const achievementCount = tempAchievements.length;
-				
-				// 优先级1：真·投身科研（引用≥1000）
+
+				// 优先级1：真·诺奖之始（发表Nature论文）
+				if ((gameState.paperNature || 0) >= 1) {
+					return { type: 'true_nobel_start', title: '真·诺奖之始', desc: '没有任何外挂，你凭借自己的努力发表了Nature论文！', emoji: '🏅' };
+				}
+
+				// 优先级2：真·投身科研（引用≥1000）
 				if (totalCitations >= 1000) {
 					return { type: 'true_devotion', title: '真·投身科研', desc: '你用最朴素的方式，达到了科研的巅峰。', emoji: '💫' };
 				}
-				
-				// 优先级2：真·感受生活（10个成就 + 引用<1000）
-				if (achievementCount >= 10 && totalCitations < 1000) {
-					return { type: 'true_life', title: '真·感受生活', desc: '科研不是全部，你体验了丰富多彩的研究生生活。', emoji: '🌈' };
-				}
-				
+
 				// 优先级3：真·博士毕业（发表≥3篇论文）
 				if (totalPapers >= 3) {
 					return { type: 'true_phd', title: '真·博士毕业', desc: '没有任何外挂，你凭借自己的努力完成了博士学业。', emoji: '🌟' };
 				}
-				
+
+				// 优先级4：真·感受生活（12个成就）
+				if (achievementCount >= 12) {
+					return { type: 'true_life', title: '真·感受生活', desc: '科研不是全部，你体验了丰富多彩的研究生生活。', emoji: '🌈' };
+				}
+
 				// 真·大多数但未达成真实结局条件，返回普通博士结局
 				return { type: 'phd', title: '博士毕业', desc: '恭喜！你顺利完成了博士学业！', emoji: '🎓' };
 			}
@@ -117,7 +122,7 @@
 			const a = [];
 
 			// 定义顺利毕业的结局类型
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life'];
 			const isGraduated = graduationEndings.includes(endingType);
 
 			// ★★★ 以下成就不需要顺利毕业也可以获得 ★★★
@@ -385,14 +390,16 @@
 			const isSuccess = successEndings.includes(endingType);
 			const isTrueNormalSuccess = trueNormalSuccessEndings.includes(endingType);
 
-			let html = `<div style="text-align:center;margin-bottom:15px;">
+			// ★★★ 移除顶部玩家统计 ★★★
+		let html = `
+			<div style="text-align:center;margin-bottom:15px;">
 				<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;">
 					<span style="font-size:2.5rem;">${emoji}</span>
 					<span style="font-size:1.5rem;font-weight:700;color:var(--primary-color);">${title}</span>
 				</div>
 				<div style="color:var(--text-secondary);line-height:1.5;font-size:0.9rem;">${desc}</div>
 			</div>`;
-			
+
 			if (isFailed) {
 				html += `
 				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
@@ -443,23 +450,8 @@
 					<div style="text-align:center;margin-top:12px;font-size:0.8rem;color:var(--text-secondary);">—— 感谢游玩《研究生模拟器》——</div>
 				</div>`;
 			}
-			
-			html += `
-			<div style="text-align:center;margin-bottom:12px;">
-				<button onclick="restartGame()" 
-						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 35px;
-							   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
-							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
-							   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
-							   transition:all 0.3s ease;font-family:inherit;"
-						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(139,92,246,0.45)'"
-						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(139,92,246,0.35)'">
-					<i class="fas fa-redo"></i>
-					<i class="fas fa-gamepad"></i>
-					我要重开
-				</button>
-			</div>`;
-			
+
+			// ★★★ 调整顺序：生涯总结在前 ★★★
 			// 生涯总结 - 浅粉黄渐变背景
 			html += `<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;margin-bottom:12px;">
 				<div style="text-align:center;margin-bottom:12px;">
@@ -485,12 +477,27 @@
 					<div>🧠 科研：${gameState.research} 👥 社交：${gameState.social}</div>
 					<div>❤️ 好感：${gameState.favor} 💰 金币：${gameState.gold}</div>
 				</div>
+				<!-- ★★★ 重开按钮放在生涯总结框内下方 ★★★ -->
+				<div style="text-align:center;margin-top:12px;">
+					<button onclick="restartGame()"
+							style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 35px;
+								   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+								   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+								   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
+								   transition:all 0.3s ease;font-family:inherit;"
+							onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(139,92,246,0.45)'"
+							onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(139,92,246,0.35)'">
+						<i class="fas fa-redo"></i>
+						<i class="fas fa-gamepad"></i>
+						我要重开
+					</button>
+				</div>
 			</div>`;
 
 			if (achievements.length > 0) {
 				// 成就卡片 - 浅粉黄渐变背景
 				html += `
-					<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;">
+					<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;margin-bottom:12px;">
 						<div style="font-weight:600;margin-bottom:10px;color:#d97706;">
 							<i class="fas fa-trophy"></i> 达成成就 (${achievements.length})
 						</div>
@@ -506,6 +513,9 @@
 						</div>
 					</div>`;
 			}
+
+			// ★★★ 玩家统计放到最下方 ★★★
+			html += renderPlayerStatsHTML('default');
 
 			showModal('', html, []);
 		}

@@ -967,9 +967,24 @@
 			// 添加自动存档标签
 			saveData.autoSaveLabel = `第${gameState.year}年第${gameState.month}月`;
 			saveData.isAutoSave = true;
+			// 添加唯一标识符用于去重
+			saveData.saveKey = `${gameState.year}-${gameState.month}`;
 
-			// 插入到最前面（最新的在最前）
-			autoSaves.unshift(saveData);
+			// ★★★ 去重逻辑：同一时间点只保留一个存档 ★★★
+			// 查找是否已存在同一时间点的存档
+			const existingIndex = autoSaves.findIndex(save =>
+				save && save.saveKey === saveData.saveKey
+			);
+
+			if (existingIndex !== -1) {
+				// 已存在同一时间点的存档，覆盖它
+				autoSaves[existingIndex] = saveData;
+				addLog('系统', '自动存档', `已覆盖 ${saveData.autoSaveLabel} 的存档`);
+			} else {
+				// 不存在同一时间点的存档，插入到最前面
+				autoSaves.unshift(saveData);
+				addLog('系统', '自动存档', `已保存 ${saveData.autoSaveLabel} 的进度`);
+			}
 
 			// 保留最近20个
 			while (autoSaves.length > MAX_AUTO_SAVES) {
@@ -977,9 +992,6 @@
 			}
 
 			saveAutoSaves(autoSaves);
-
-			// 在日志中显示（不弹窗打扰玩家）
-			addLog('系统', '自动存档', `已保存 ${saveData.autoSaveLabel} 的进度`);
 		}
 
 		// 打开自动存档读取弹窗

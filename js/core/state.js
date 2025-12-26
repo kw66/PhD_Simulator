@@ -171,6 +171,28 @@
 				totalAccepts: 0,              // 总中稿次数
 				totalRejects: 0,              // 总拒稿次数
 				submissionHistory: [],        // 投稿历史 [{month, grade, accepted}]
+
+				// ★★★ 新增：生涯总结统计数据 ★★★
+				// 审稿人统计
+				maliciousReviewerCount: 0,    // 恶意小同行次数
+				thirtyNineQuestionsCount: 0,  // 39个问题审稿人次数
+				// 科研之余统计
+				dinnerCount: 0,               // 聚餐次数
+				meetingCount: 0,              // 开会次数
+				gamePlayCount: 0,             // 打游戏总次数
+				// 里程碑相关
+				scholarshipCount: 0,          // 获得奖学金次数
+				serverCrashCount: 0,          // 服务器损坏次数
+				dataLossCount: 0,             // 数据丢失次数
+				firstOralMonth: 0,            // 第一篇oral的月份
+				firstJournalMonth: 0,         // 第一篇期刊的月份
+				firstMentoringMonth: 0,       // 第一次指导师弟师妹的月份
+				firstWorkMonth: 0,            // 第一次打工的月份
+				firstLoverMonth: 0,           // 第一次遇见恋人的月份
+				citation100Month: 0,          // 引用破百的月份
+				citation1000Month: 0,         // 引用破千的月份
+				// 入学信息
+				startYear: new Date().getFullYear(), // 入学年份（现实年份）
 			};
 		}
 

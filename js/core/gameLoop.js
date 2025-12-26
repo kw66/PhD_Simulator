@@ -126,8 +126,13 @@
 			// 基础SAN回复
 			let sanRecovery = 1;
 			if (gameState.isReversed && gameState.character === 'normal') {
-				// ★★★ 修改：转博后回复4而不是5 ★★★
-				sanRecovery = gameState.reversedAwakened ? 4 : 3;
+				if (gameState.slothAwakened) {
+					// ★★★ 修改：觉醒后每月SAN+已损SAN的10%（上取整）★★★
+					const lostSanSloth = gameState.sanMax - gameState.san;
+					sanRecovery = 3 + Math.ceil(lostSanSloth * 0.1);
+				} else {
+					sanRecovery = 3;
+				}
 			}
 			gameState.san = Math.min(gameState.sanMax, gameState.san + sanRecovery);
 
@@ -204,7 +209,9 @@
 
 			// ★★★ AILab 实习效果（-SAN类）★★★
 			if (gameState.ailabInternship) {
-				gameState.gold += 2;  // 实习收入
+				// ★★★ 修改：白手起家术 - 实习收入翻倍 ★★★
+				const internshipIncome = gameState.incomeDoubled ? 4 : 2;
+				gameState.gold += internshipIncome;  // 实习收入
 
 				const baseSanCost = 3;
 				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
@@ -742,6 +749,16 @@
 				if (actualGain > 0) {
 					paper.citations += actualGain;
 					gameState.totalCitations += actualGain;
+
+					// ★★★ 新增：检查引用里程碑 ★★★
+					if (!gameState.citation100Month && gameState.totalCitations >= 100) {
+						gameState.citation100Month = gameState.totalMonths;
+						addCareerMilestone('citation_100', '总引用突破100', `论文开始被同行认可`);
+					}
+					if (!gameState.citation1000Month && gameState.totalCitations >= 1000) {
+						gameState.citation1000Month = gameState.totalMonths;
+						addCareerMilestone('citation_1000', '总引用突破1000', `成为领域内的知名学者`);
+					}
 				}
 			});
 		}
@@ -975,7 +992,14 @@
 			if (character === 'true-normal' || gameState.isTrueNormal) {
 				// 确保状态一致
 				gameState.isTrueNormal = true;
-				
+
+				// ★★★ 新增：往昔荣光效果 - 成就币翻倍 ★★★
+				const oldAchievementCoins = gameState.achievementCoins;
+				gameState.achievementCoins = gameState.achievementCoins * 2;
+				// ★★★ 成就商店刷新间隔变为2个月 ★★★
+				gameState.achievementShopRefreshInterval = 2;
+				gameState.trueNormalAwakened = true;
+
 				const html = `
 					<div style="text-align:center;">
 						<div style="font-size:4rem;margin-bottom:15px;"><span class="gold-icon">👤</span></div>
@@ -983,33 +1007,33 @@
 							转博成功
 						</div>
 						<div style="font-size:0.95rem;color:var(--text-secondary);margin-bottom:20px;">
-							作为真·大多数，你没有任何觉醒技能
+							作为真·大多数，你的往昔经历化为力量！
 						</div>
 					</div>
-					
+
 					<div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,140,0,0.15));border-radius:12px;padding:15px;margin-bottom:15px;border:2px solid rgba(255,140,0,0.3);">
 						<div style="text-align:center;margin-bottom:12px;">
-							<div style="font-size:1.3rem;font-weight:700;color:#d68910;margin-bottom:5px;">❌ 无觉醒</div>
-							<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">一切都要靠自己</div>
+							<div style="font-size:1.3rem;font-weight:700;color:#d68910;margin-bottom:5px;">✨ 往昔荣光</div>
+							<div style="font-size:0.85rem;color:var(--text-secondary);font-style:italic;">过去的成就不会被遗忘</div>
 						</div>
 						<div style="background:white;border-radius:8px;padding:12px;text-align:center;">
 							<div style="font-size:0.9rem;color:var(--text-secondary);">
-								没有任何属性加成<br>
-								没有任何特殊能力<br>
-								这就是最真实的研究生生活
+								成就币翻倍：${oldAchievementCoins} → ${gameState.achievementCoins}<br>
+								成就商店刷新间隔：1月 → 2月<br>
+								更多机会获取强力道具！
 							</div>
 						</div>
 					</div>
-					
+
 					<div style="text-align:center;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
 						<div style="color:#d68910;font-weight:600;margin-bottom:5px;">📜 真实的博士之路</div>
 						<div style="color:var(--text-secondary);">博士毕业要求：科研分 ≥ 7</div>
 					</div>
 				`;
-				
+
 				showModal('🎓 真·转博', html, [
-					{ text: '❌ 靠自己！', class: 'btn-warning', action: () => {
-						addLog('真·转博', '转博成功，没有任何觉醒效果', '一切都要靠自己');
+					{ text: '✨ 往昔荣光！', class: 'btn-warning', action: () => {
+						addLog('真·转博', '触发【往昔荣光】', `成就币 ${oldAchievementCoins} → ${gameState.achievementCoins}，商店刷新间隔变为2月`);
 						closeModal();
 						updateAllUI();
 						renderPaperSlots();
@@ -1048,17 +1072,24 @@
 						effectName = '💀 极致怠惰';
 						effectDesc = '懒惰的极致就是一切都翻倍...包括痛苦';
 						const oldR1 = gameState.research, oldS1 = gameState.social, oldF1 = gameState.favor;
+						const oldSanMax1 = gameState.sanMax;
 						gameState.research = Math.min(20, gameState.research * 2);
 						gameState.social = Math.min(20, gameState.social * 2);
 						gameState.favor = Math.min(20, gameState.favor * 2);
+						// ★★★ 修改：SAN上限+50%（上取整）★★★
+						const sanMaxGain = Math.ceil(gameState.sanMax * 0.5);
+						gameState.sanMax = gameState.sanMax + sanMaxGain;
+						// ★★★ 标记怠惰觉醒，用于每月SAN恢复计算 ★★★
+						gameState.slothAwakened = true;
 						// ★★★ 金币不翻倍 ★★★
 						bonusDetails.push(`科研 ${oldR1} → ${gameState.research}`);
 						bonusDetails.push(`社交 ${oldS1} → ${gameState.social}`);
 						bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
+						bonusDetails.push(`SAN上限 ${oldSanMax1} → ${gameState.sanMax}（+50%上取整）`);
 						bonusDetails.push('💰 金币不翻倍');
 						bonusDetails.push('⚠️ SAN减少变为3倍');
-						bonusDetails.push('✨ 每月SAN回复变为4');
-						
+						bonusDetails.push('✨ 每月SAN+已损SAN的10%（上取整）');
+
 						const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
 						if (mentorshipBuff) {
 							mentorshipBuff.desc = '每月SAN-3（怠惰×3），总引用+科研能力值';
@@ -1158,10 +1189,12 @@
 				showModal('🌑 逆位觉醒', html, [
 					{ text: '🌙 拥抱黑暗', class: 'btn-danger', action: () => {
 						addLog('逆位觉醒', `触发【${effectName}】`, bonusDetails.join('，'));
+						// ★★★ 新增：添加觉醒里程碑 ★★★
+						addCareerMilestone('awaken', '逆位觉醒', effectName);
 						closeModal();
 						updateAllUI();
 						renderPaperSlots();
-						
+
 						// ★★★ 逆位觉醒后触发学年总结 ★★★
 						setTimeout(() => triggerYearEndSummaryEvent(), 300);
 					}}
@@ -1267,25 +1300,35 @@
 					break;
 					
 				case 'social': // 师兄师姐救我
+					// ★★★ 修改：社交变为6 + 技能 ★★★
+					const oldSocialHidden = gameState.social;
+					gameState.social = 6;
 					gameState.hasSeniorHelpSkill = true;
-					gameState.seniorHelpUses = 3;  // ★★★ 修改：3次使用次数 ★★★
+					gameState.seniorHelpUses = 3;
+					bonusDetails.push(`社交能力 ${oldSocialHidden} → 6`);
 					bonusDetails.push('获得主动技能【师兄师姐救我】');
-					bonusDetails.push('使用后：下次想idea/做实验/写论文时科研能力视为 科研+社交');
-					bonusDetails.push('⚠️ 此技能可使用3次');  // ★★★ 修改描述 ★★★
+					bonusDetails.push('使用后：下次生产论文时科研能力视为 科研+社交');
+					bonusDetails.push('⚠️ 此技能可使用3次');
 					break;
-					
-				case 'rich': // 不求暴富但求稳定
-					gameState.monthlyWageBonus = 1;
-					bonusDetails.push('每月工资额外+1');
-					bonusDetails.push('✨ 稳定的收入让生活更从容');
+
+				case 'rich': // 白手起家术
+					// ★★★ 修改：打工/实习金钱翻倍 ★★★
+					gameState.incomeDoubled = true;
+					bonusDetails.push('后续打工的金钱收入翻倍');
+					bonusDetails.push('后续实习的金钱收入翻倍');
+					bonusDetails.push('💰 白手起家，财富翻倍！');
 					break;
-					
+
 				case 'teacher-child': // 导师救我
+					// ★★★ 修改：好感度变为6 + 技能 ★★★
+					const oldFavorHidden = gameState.favor;
+					gameState.favor = 6;
 					gameState.hasTeacherHelpSkill = true;
-					gameState.teacherHelpUses = 3;  // ★★★ 修改：3次使用次数 ★★★
+					gameState.teacherHelpUses = 3;
+					bonusDetails.push(`导师好感度 ${oldFavorHidden} → 6`);
 					bonusDetails.push('获得主动技能【导师救我】');
-					bonusDetails.push('使用后：下次想idea/做实验/写论文时科研能力视为 科研+好感度');
-					bonusDetails.push('⚠️ 此技能可使用3次');  // ★★★ 修改描述 ★★★
+					bonusDetails.push('使用后：下次生产论文时科研能力视为 科研+好感度');
+					bonusDetails.push('⚠️ 此技能可使用3次');
 					break;
 					
 				case 'chosen': // 孤注一掷
@@ -1433,9 +1476,9 @@
 					const paperS_genius = (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
 					const aCount = (gameState.paperA || 0) + paperS_genius;
 					if (aCount > 0) {
-						// 每篇A/S类论文科研+2，上限+3
+						// 每篇A/S类论文科研+2，上限+4
 						const researchGain = aCount * 2;
-						const maxGain = aCount * 3;
+						const maxGain = aCount * 4;
 						gameState.researchMax = (gameState.researchMax || 20) + maxGain;
 						gameState.research = Math.min(gameState.researchMax, gameState.research + researchGain);
 						const aOnlyCount = gameState.paperA || 0;
@@ -1453,15 +1496,17 @@
 					effectName = '🌐 人脉网络激活';
 					effectDesc = '社交达人的人脉全面绽放，冥冥之中影响了审稿人分布！';
 					gameState.socialAwakened = true;
-					
-					const socialVal = gameState.social;
+
+					// ★★★ 修改：实际用于计算的社交能力为 min(20, 社交+5) ★★★
+					const actualSocialVal = Math.min(20, gameState.social + 5);
+					const socialVal = actualSocialVal;
 					let normalP = Math.max(0, 0.40 - socialVal * 0.01);
 					let kindP = 0.10 + socialVal * 0.005;
 					let expertP = 0.10 + socialVal * 0.01;
 					let hostileP = Math.max(0, 0.10 - socialVal * 0.005);
 					let gptP = Math.max(0, 0.20 - socialVal * 0.005);
 					let questionsP = Math.max(0, 0.10 - socialVal * 0.005);
-					
+
 					const totalP = normalP + kindP + expertP + hostileP + gptP + questionsP;
 					normalP /= totalP;
 					kindP /= totalP;
@@ -1469,7 +1514,7 @@
 					hostileP /= totalP;
 					gptP /= totalP;
 					questionsP /= totalP;
-					
+
 					gameState.reviewerDistribution = {
 						normal: normalP,
 						kind: kindP,
@@ -1478,8 +1523,8 @@
 						gpt: gptP,
 						questions: questionsP
 					};
-					
-					bonusDetails.push(`转博时社交: ${socialVal}`);
+
+					bonusDetails.push(`转博时社交: ${gameState.social}（+5加成后按${actualSocialVal}计算）`);
 					bonusDetails.push(`审稿人分布已永久改变`);
 					break;
 					
@@ -1493,18 +1538,19 @@
 					
 				case 'teacher-child':
 					effectName = '👑 血脉共鸣';
-					effectDesc = '导师子女的身份优势凸显，将人脉转化为实际资源！';
+					effectDesc = '导师子女的身份优势凸显，好感度转化为科研能力和工资！';
+					// ★★★ 修改：每5好感度提升1科研，0.5月工资 ★★★
 					const oldFavorTC = gameState.favor;
-					if (oldFavorTC > 12) {
-						const overflow = oldFavorTC - 12;
-						gameState.favor = 12;
-						gameState.research = Math.min(20, gameState.research + overflow);
-						gameState.gold += overflow;
-						bonusDetails.push(`导师好感度 ${oldFavorTC} → 12`);
-						bonusDetails.push(`科研能力 +${overflow}`);
-						bonusDetails.push(`金币 +${overflow}`);
+					const researchGainTC = Math.floor(oldFavorTC / 5);
+					const wageGainTC = Math.floor(oldFavorTC / 5) * 0.5;
+					if (researchGainTC > 0) {
+						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + researchGainTC);
+						gameState.monthlyWageBonus = (gameState.monthlyWageBonus || 0) + wageGainTC;
+						bonusDetails.push(`好感度 ${oldFavorTC}（每5点转化）`);
+						bonusDetails.push(`科研能力 +${researchGainTC}`);
+						bonusDetails.push(`每月工资 +${wageGainTC}`);
 					} else {
-						bonusDetails.push(`导师好感度未超过12，暂无转化`);
+						bonusDetails.push(`好感度不足5，暂无转化`);
 					}
 					break;
 					

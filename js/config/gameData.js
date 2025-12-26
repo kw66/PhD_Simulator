@@ -13,7 +13,7 @@
 			hiddenAwakenName: '勤能补拙',
 			hiddenAwakenIcon: '💪',
 			hiddenAwakenDesc: '每个月行动次数+1（看论文、写论文、想idea、打工、做实验可以做2次）',
-			hiddenAwakenCondition: (gs) => gs.research <= 3 && gs.favor <= 3 && gs.social <= 3,
+			hiddenAwakenCondition: (gs) => gs.research <= 5 && gs.favor <= 5 && gs.social <= 5,
 			stats: { research: 0, social: 0, favor: 0, gold: 0 },
 			reversed: {
 				name: '怠惰之《大多数》',
@@ -22,7 +22,7 @@
 				desc: '懒惰是原罪，也是护盾',
 				bonus: 'SAN减少翻倍，初始属性全5（金币为1），每月SAN+3',
 				awakenName: '极致怠惰',
-				awakenDesc: '转博时属性翻倍。SAN减少3倍，每月SAN+4',
+				awakenDesc: '转博时属性翻倍，SAN上限+50%（上取整）。SAN减少3倍，每月SAN+已损SAN的10%（上取整）',
 				stats: { research: 4, social: 4, favor: 4, gold: 0 }
 			}
 		},
@@ -34,7 +34,7 @@
 			desc: '天生就是做科研的料', 
 			bonus: '科研能力初始+5', 
 			awakenName: '学术天赋觉醒',
-			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+3',
+			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+4',
 			// 隐藏觉醒
 			hiddenAwakenName: '预见未来热点',
 			hiddenAwakenIcon: '🔮',
@@ -60,11 +60,11 @@
 			desc: '八面玲珑的社交高手', 
 			bonus: '社交能力初始+5', 
 			awakenName: '人脉网络激活',
-			awakenDesc: '转博时根据社交能力改变审稿人分布',
+			awakenDesc: '转博时根据社交能力改变审稿人分布（社交+5计算）',
 			// 隐藏觉醒
 			hiddenAwakenName: '师兄师姐救我',
 			hiddenAwakenIcon: '🆘',
-			hiddenAwakenDesc: '获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+社交',
+			hiddenAwakenDesc: '社交变为6且获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+社交',
 			hiddenAwakenCondition: (gs) => gs.social <= 6,
 			stats: { social: 5 },
 			reversed: {
@@ -88,10 +88,10 @@
 			awakenName: '财富倍增术',
 			awakenDesc: '转博时金币×3',
 			// 隐藏觉醒
-			hiddenAwakenName: '不求暴富但求稳定',
+			hiddenAwakenName: '白手起家术',
 			hiddenAwakenIcon: '🏦',
-			hiddenAwakenDesc: '每月工资+1',
-			hiddenAwakenCondition: (gs) => gs.gold <= 2,
+			hiddenAwakenDesc: '后续打工、实习的金钱收入翻倍',
+			hiddenAwakenCondition: (gs) => gs.gold <= 3,
 			stats: { gold: 8 },
 			reversed: {
 				name: '贪求之《富可敌国》',
@@ -112,11 +112,11 @@
 			desc: '近水楼台先得月', 
 			bonus: '导师好感度初始+5', 
 			awakenName: '血脉共鸣',
-			awakenDesc: '转博时好感度超12的部分转化为科研和金币',
+			awakenDesc: '转博时根据好感度提升科研和月工资，每5好感度提升1科研和0.5月工资',
 			// 隐藏觉醒
 			hiddenAwakenName: '导师救我',
 			hiddenAwakenIcon: '🛡️',
-			hiddenAwakenDesc: '获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+好感度',
+			hiddenAwakenDesc: '好感度变为6且获得主动技能（限用3次）：下次生产论文时，科研能力视为科研+好感度',
 			hiddenAwakenCondition: (gs) => gs.favor <= 6,
 			stats: { favor: 5 },
 			reversed: {
@@ -214,13 +214,14 @@
 			'future_academician': '👑 未来院士',
 			'nobel_start': '🏅 诺奖之始',  // ★★★ 新增：Nature论文结局 ★★★
 			// 真实结局
+			'true_nobel_start': '🏅 真·诺奖之始',  // ★★★ 新增：真·大多数发表Nature ★★★
 			'true_phd': '🌟 真·博士毕业',
 			'true_devotion': '💫 真·投身学术',
 			'true_life': '🌈 真·感受生活',
 		};
 
         // 困难结局（博士毕业及以上）
-		const HARD_ENDINGS = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life'];
+		const HARD_ENDINGS = ['phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life'];
 
         // 结局达成要求数据
 		const ENDING_REQUIREMENTS = {
@@ -241,9 +242,10 @@
 			'future_academician': '博士毕业且A类≥5、引用>2000、大牛联合培养',
 			'nobel_start': '博士毕业且发表过Nature论文',  // ★★★ 新增 ★★★
 			// 真实结局
+			'true_nobel_start': '使用真·大多数角色，博士毕业且发表过Nature论文',  // ★★★ 新增 ★★★
 			'true_phd': '使用真·大多数角色，博士毕业且发表≥3篇论文',
 			'true_devotion': '使用真·大多数角色，博士毕业且总引用≥1000',
-			'true_life': '使用真·大多数角色，顺利毕业（硕士或博士）且达成≥10个成就且总引用<1000'
+			'true_life': '使用真·大多数角色，顺利毕业（硕士或博士）且达成≥12个成就'
 		};
 
         // 成就达成要求数据
@@ -307,6 +309,9 @@
 			'🤝 人脉广阔': '同时拥有5个社交关系，且每个关系的亲和度或亲密度都>=12',
 			'🔬 顶尖大组': '同时拥有5个社交关系，且每个关系的科研能力或科研资源都>=12',
 			'🏁 旅途的终点': '使用6个角色的正位和逆位各通关博士一次（共12个）',
+			// ★★★ 新增2个成就要求 ★★★
+			'⬆️ 全部升级': '将4个论文槽位全部升级为期刊槽位',
+			'📖 青出于蓝': '你的论文总引用数超过导师的引用数',
 		};
 
         // 商店物品

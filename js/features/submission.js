@@ -190,6 +190,12 @@
 				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
 				addCareerMilestone('first_best_paper', '第一个Best Paper', `${confInfo.name}（${grade}类）`);
 			}
+			// ★★★ 新增：记录第一次Oral ★★★
+			if (acceptType === 'Oral' && !gameState.firstOralMonth) {
+				gameState.firstOralMonth = gameState.totalMonths;
+				const confInfo = paper.conferenceInfo || getConferenceInfo(gameState.month, grade, gameState.year);
+				addCareerMilestone('first_oral', '第一个Oral', `${confInfo.name}（${grade}类）`);
+			}
 			if (grade === 'A' && acceptType === 'Best Paper' && !gameState.firstABestPaperAccepted) {
 				gameState.firstABestPaperAccepted = true;
 				bonusResearch++;
@@ -495,6 +501,9 @@
 		function showConferenceEventModal(confInfo, confLocation, grade) {
 			// 清除会议信息
 			gameState.pendingConferenceInfo = null;
+
+			// ★★★ 新增：记录开会次数 ★★★
+			gameState.meetingCount = (gameState.meetingCount || 0) + 1;
 			
 			// 如果没有传入会议信息，使用默认值
 			if (!confInfo) {
@@ -806,6 +815,8 @@
 				{ text: '❤️ 成为恋人', class: 'btn-accent', action: () => {
 					gameState.hasLover = true;
 					gameState.loverType = type;
+					// ★★★ 新增：记录恋人月份 ★★★
+					gameState.firstLoverMonth = gameState.totalMonths;
 					// ★★★ 新增：记录恋人里程碑 ★★★
 					const loverTypeName = type === 'beautiful' ? '活泼的' : '聪慧的';
 					addCareerMilestone('lover', '遇见爱情', `与${loverTypeName}异性学者成为恋人`);

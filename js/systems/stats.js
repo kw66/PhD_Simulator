@@ -149,6 +149,53 @@
 			return uniqueCount;
 		}
 
+		// ★★★ 新增：获取总通关角色位置数（正位6+逆位6+真大多数1=13个位置）★★★
+		function getTotalClearedCharacterSlots() {
+			const unlocks = getCharacterPhdUnlocks();
+			const allCharacterIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
+			let totalSlots = 0;
+
+			// 统计正位通关数
+			for (const charId of allCharacterIds) {
+				if (unlocks.normal[charId]) {
+					totalSlots++;
+				}
+			}
+
+			// 统计逆位通关数
+			for (const charId of allCharacterIds) {
+				if (unlocks.reversed[charId]) {
+					totalSlots++;
+				}
+			}
+
+			// 检查真大多数是否通关（需要查看玩家记录）
+			const playerRecords = getPlayerAchievements();
+			const normalEndings = playerRecords.endings.normal || new Set();
+			const trueNormalEndings = ['true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+
+			let trueNormalCleared = false;
+			for (const ending of trueNormalEndings) {
+				if (normalEndings instanceof Set) {
+					if (normalEndings.has(ending)) {
+						trueNormalCleared = true;
+						break;
+					}
+				} else if (Array.isArray(normalEndings)) {
+					if (normalEndings.includes(ending)) {
+						trueNormalCleared = true;
+						break;
+					}
+				}
+			}
+
+			if (trueNormalCleared) {
+				totalSlots++;
+			}
+
+			return totalSlots;
+		}
+
 		// 检查是否解锁真·大多数（需要6个角色的正位和逆位都博士毕业）
 		function isTrueNormalUnlocked() {
 			const unlocks = getCharacterPhdUnlocks();
@@ -1033,6 +1080,198 @@
 			globalCharacterRecordsTime = 0;
 			// 重新加载
 			loadGlobalStatsDisplay();
+		}
+
+		// ==================== 玩家个人统计数据 ====================
+		// 获取玩家个人统计数据（总局数、通关数、总成就数、总通关角色数）
+		function getPlayerStats() {
+			const playerRecords = getPlayerAchievements();
+			const phdUnlocks = getCharacterPhdUnlocks();
+
+			// 计算总局数（从本地存储获取）
+			const gamesPlayedKey = 'graduateSimulator_gamesPlayed';
+			let totalGames = 0;
+			try {
+				totalGames = parseInt(localStorage.getItem(gamesPlayedKey) || '0', 10);
+			} catch (e) {
+				totalGames = 0;
+			}
+
+			// ★★★ 修复：计算通关数（分开统计正位和逆位的好结局数量）★★★
+			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+			let clearCount = 0;
+			const normalEndings = playerRecords.endings.normal || new Set();
+			const reversedEndings = playerRecords.endings.reversed || new Set();
+
+			// 分别统计正位和逆位的好结局数量
+			goodEndings.forEach(ending => {
+				if (normalEndings instanceof Set) {
+					if (normalEndings.has(ending)) clearCount++;
+				} else if (Array.isArray(normalEndings)) {
+					if (normalEndings.includes(ending)) clearCount++;
+				}
+				if (reversedEndings instanceof Set) {
+					if (reversedEndings.has(ending)) clearCount++;
+				} else if (Array.isArray(reversedEndings)) {
+					if (reversedEndings.includes(ending)) clearCount++;
+				}
+			});
+
+			// 计算总成就数
+			const normalAchievements = playerRecords.achievements.normal || new Set();
+			const reversedAchievements = playerRecords.achievements.reversed || new Set();
+			const allAchievements = new Set();
+			if (normalAchievements instanceof Set) {
+				normalAchievements.forEach(a => allAchievements.add(a));
+			} else if (Array.isArray(normalAchievements)) {
+				normalAchievements.forEach(a => allAchievements.add(a));
+			}
+			if (reversedAchievements instanceof Set) {
+				reversedAchievements.forEach(a => allAchievements.add(a));
+			} else if (Array.isArray(reversedAchievements)) {
+				reversedAchievements.forEach(a => allAchievements.add(a));
+			}
+			const totalAchievements = allAchievements.size;
+
+			// ★★★ 修复：计算总通关角色数（正位6个+逆位6个+真大多数1个=13个）★★★
+			const totalClearedCharacters = getTotalClearedCharacterSlots();
+
+			return {
+				totalGames,
+				clearCount,
+				totalAchievements,
+				totalClearedCharacters
+			};
+		}
+
+		// 增加游戏局数计数
+		function incrementGamesPlayed() {
+			const gamesPlayedKey = 'graduateSimulator_gamesPlayed';
+			try {
+				let count = parseInt(localStorage.getItem(gamesPlayedKey) || '0', 10);
+				count++;
+				localStorage.setItem(gamesPlayedKey, count.toString());
+			} catch (e) {
+				console.error('增加游戏局数失败:', e);
+			}
+		}
+
+		// ★★★ 新增：迁移老玩家数据，根据已有结局数统计总局数 ★★★
+		function migrateGamesPlayedCount() {
+			const gamesPlayedKey = 'graduateSimulator_gamesPlayed';
+			const migrationKey = 'graduateSimulator_gamesPlayed_migrated';
+
+			try {
+				// 检查是否已经迁移过
+				if (localStorage.getItem(migrationKey)) {
+					return;
+				}
+
+				// 检查当前总局数
+				const currentCount = parseInt(localStorage.getItem(gamesPlayedKey) || '0', 10);
+				if (currentCount > 0) {
+					// 已有数据，标记已迁移
+					localStorage.setItem(migrationKey, 'true');
+					return;
+				}
+
+				// 获取已有的游戏记录
+				const playerRecords = getPlayerAchievements();
+
+				// 统计所有结局数量（正位+逆位）= 总局数
+				let totalGames = 0;
+				const normalEndings = playerRecords.endings.normal;
+				const reversedEndings = playerRecords.endings.reversed;
+
+				if (normalEndings instanceof Set) {
+					totalGames += normalEndings.size;
+				} else if (Array.isArray(normalEndings)) {
+					totalGames += normalEndings.length;
+				}
+				if (reversedEndings instanceof Set) {
+					totalGames += reversedEndings.size;
+				} else if (Array.isArray(reversedEndings)) {
+					totalGames += reversedEndings.length;
+				}
+
+				if (totalGames > 0) {
+					localStorage.setItem(gamesPlayedKey, totalGames.toString());
+					console.log(`📊 迁移老玩家数据：总局数为 ${totalGames}（正位+逆位结局数）`);
+				}
+
+				// 标记已迁移
+				localStorage.setItem(migrationKey, 'true');
+
+			} catch (e) {
+				console.error('迁移游戏局数失败:', e);
+			}
+		}
+
+		// 生成玩家统计HTML（用于多处显示）
+		function renderPlayerStatsHTML(style = 'default') {
+			const stats = getPlayerStats();
+
+			if (style === 'compact') {
+				// 紧凑样式（已弃用）
+				return `
+					<div class="player-stats-compact">
+						<span class="ps-item">🎮 ${stats.totalGames}局</span>
+						<span class="ps-item">✅ ${stats.clearCount}通关</span>
+						<span class="ps-item">🏆 ${stats.totalAchievements}成就</span>
+						<span class="ps-item">👤 ${stats.totalClearedCharacters}角色</span>
+					</div>
+				`;
+			} else if (style === 'poster') {
+				// 海报样式（用于分享页毕业纪念卡内）
+				return `
+					<div class="player-stats-poster">
+						<div class="psp-title">📊 我的游戏记录</div>
+						<div class="psp-row">
+							<span class="psp-item">🎮 ${stats.totalGames}局</span>
+							<span class="psp-item">✅ ${stats.clearCount}通关</span>
+							<span class="psp-item">🏆 ${stats.totalAchievements}成就</span>
+							<span class="psp-item">👤 ${stats.totalClearedCharacters}/13角色</span>
+						</div>
+					</div>
+				`;
+			} else if (style === 'banner') {
+				// 横幅样式（已弃用）
+				return `
+					<div class="player-stats-banner">
+						<div class="psb-title">📊 我的游戏记录</div>
+						<div class="psb-items">
+							<div class="psb-item">
+								<div class="psb-value">${stats.totalGames}</div>
+								<div class="psb-label">总局数</div>
+							</div>
+							<div class="psb-item">
+								<div class="psb-value">${stats.clearCount}</div>
+								<div class="psb-label">通关数</div>
+							</div>
+							<div class="psb-item">
+								<div class="psb-value">${stats.totalAchievements}</div>
+								<div class="psb-label">总成就</div>
+							</div>
+							<div class="psb-item">
+								<div class="psb-value">${stats.totalClearedCharacters}</div>
+								<div class="psb-label">通关角色</div>
+							</div>
+						</div>
+					</div>
+				`;
+			} else {
+				// 默认样式（用于开始页面和结局弹窗）- 淡金色真大多数配色
+				return `
+					<div class="player-stats-box">
+						<div class="ps-row">
+							<span class="ps-item"><i class="fas fa-gamepad"></i> 总局数 <strong>${stats.totalGames}</strong></span>
+							<span class="ps-item"><i class="fas fa-check-circle"></i> 通关数 <strong>${stats.clearCount}</strong></span>
+							<span class="ps-item"><i class="fas fa-trophy"></i> 总成就 <strong>${stats.totalAchievements}</strong></span>
+							<span class="ps-item"><i class="fas fa-user-check"></i> 通关角色 <strong>${stats.totalClearedCharacters}/13</strong></span>
+						</div>
+					</div>
+				`;
+			}
 		}
 
 

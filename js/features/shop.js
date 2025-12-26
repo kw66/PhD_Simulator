@@ -376,7 +376,7 @@
 			{
 				id: 'flash_research',
 				name: '⚡ 刹那灵光',
-				desc: '科研能力+5，进入下个月科研能力-7（对愚钝之院士转世不生效）',
+				desc: '科研能力+3，进入下个月科研能力-5（不会扣为负数，对愚钝之院士转世不生效）',
 				price: 10,
 				condition: () => true,
 				effect: (gs) => {
@@ -384,51 +384,51 @@
 					if (gs.isReversed && gs.character === 'genius') {
 						return '对愚钝之院士转世不生效，无事发生';
 					}
-					gs.research = Math.min(gs.researchMax || 20, gs.research + 5);
+					gs.research = Math.min(gs.researchMax || 20, gs.research + 3);
 					gs.buffs.temporary.push({
 						type: 'flash_research_penalty',
 						name: '刹那灵光后遗',
-						value: -7,
+						value: -5,
 						isDebuff: true,
 						applyNextMonth: true
 					});
-					return '科研能力+5，下月-7';
+					return '科研能力+3，下月-5';
 				}
 			},
 			{
 				id: 'flash_favor',
 				name: '💫 刹那亲和',
-				desc: '导师好感+5，进入下个月导师好感-7',
+				desc: '导师好感+3，进入下个月导师好感-5（不会扣为负数）',
 				price: 8,
 				condition: () => true,
 				effect: (gs) => {
-					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 5);
+					gs.favor = Math.min(gs.favorMax || 20, gs.favor + 3);
 					gs.buffs.temporary.push({
 						type: 'flash_favor_penalty',
 						name: '刹那亲和后遗',
-						value: -7,
+						value: -5,
 						isDebuff: true,
 						applyNextMonth: true
 					});
-					return '导师好感+5，下月-7';
+					return '导师好感+3，下月-5';
 				}
 			},
 			{
 				id: 'flash_social',
 				name: '✨ 刹那魅力',
-				desc: '社交能力+5，进入下个月社交能力-7',
+				desc: '社交能力+3，进入下个月社交能力-5（不会扣为负数）',
 				price: 9,
 				condition: () => true,
 				effect: (gs) => {
-					gs.social = Math.min(gs.socialMax || 20, gs.social + 5);
+					gs.social = Math.min(gs.socialMax || 20, gs.social + 3);
 					gs.buffs.temporary.push({
 						type: 'flash_social_penalty',
 						name: '刹那魅力后遗',
-						value: -7,
+						value: -5,
 						isDebuff: true,
 						applyNextMonth: true
 					});
-					return '社交能力+5，下月-7';
+					return '社交能力+3，下月-5';
 				}
 			},
 			// ==================== 商店机制类 ====================
@@ -436,7 +436,7 @@
 				id: 'refresh_ticket',
 				name: '🎫 刷新券',
 				desc: '免费刷新一次商店',
-				price: 5,
+				price: 2,
 				condition: () => true,
 				effect: (gs) => {
 					gs.freeRefreshTickets = (gs.freeRefreshTickets || 0) + 1;
@@ -446,13 +446,16 @@
 			{
 				id: 'refresh_discount',
 				name: '🏷️ 刷新折扣券',
-				desc: '商店刷新费用-1（可叠加）',
+				desc: '立即将刷新费用减半（下取整），后续刷新费用在此基础上递增',
 				price: 6,
 				condition: () => true,
-				stackable: true,
 				effect: (gs) => {
-					gs.refreshDiscount = (gs.refreshDiscount || 0) + 1;
-					return `刷新折扣+1（共${gs.refreshDiscount}）`;
+					// ★★★ 永久减半refreshCount，后续费用从减半的基础递增 ★★★
+					const oldCount = blackMarketState.refreshCount;
+					blackMarketState.refreshCount = Math.floor(blackMarketState.refreshCount / 2);
+					const oldCost = oldCount + 1;
+					const newCost = blackMarketState.refreshCount + 1;
+					return `刷新费用${oldCost}→${newCost}（永久生效）`;
 				}
 			},
 			{
@@ -470,7 +473,7 @@
 			{
 				id: 'member_card',
 				name: '💳 会员卡',
-				desc: '商店物品价格-1（可叠加，最低为3）',
+				desc: '商店物品价格-1（可叠加，最低为2）',
 				price: 8,
 				condition: () => true,
 				stackable: true,
@@ -558,11 +561,15 @@
 		}
 
 		// 检查是否需要自动刷新
-		// ★★★ 自动进货机：默认4个月，有进货机则3个月 ★★★
+		// ★★★ 自动进货机：默认4个月，有进货机则3个月，真大多数觉醒则2个月 ★★★
 		function checkBlackMarketAutoRefresh() {
 			// ★★★ 防御性检查 ★★★
 			if (!gameState || !blackMarketState) return false;
-			const refreshInterval = gameState.hasAutoRestock ? 3 : 4;
+			// ★★★ 修改：真大多数往昔荣光觉醒 - 刷新间隔变为2个月 ★★★
+			let refreshInterval = gameState.hasAutoRestock ? 3 : 4;
+			if (gameState.achievementShopRefreshInterval) {
+				refreshInterval = gameState.achievementShopRefreshInterval;
+			}
 			const monthsSinceRefresh = gameState.totalMonths - (blackMarketState.lastAutoRefreshMonth || 0);
 			if (monthsSinceRefresh >= refreshInterval) {
 				refreshBlackMarketItems(true);
@@ -572,12 +579,10 @@
 		}
 
 		// 手动刷新黑市（需要消耗成就币）
-		// ★★★ 支持刷新券、刷新折扣 ★★★
+		// ★★★ 支持刷新券 ★★★
 		function manualRefreshBlackMarket() {
-			// 计算刷新费用（考虑折扣）
-			const baseCost = blackMarketState.refreshCount + 1;
-			const discount = gameState.refreshDiscount || 0;
-			const cost = Math.max(0, baseCost - discount);
+			// 计算刷新费用
+			const cost = blackMarketState.refreshCount + 1;
 
 			// 检查是否有免费刷新券
 			const hasTicket = (gameState.freeRefreshTickets || 0) > 0;
@@ -591,7 +596,7 @@
 				return;
 			}
 
-			// 优先使用刷新券
+			// 优先使用免费刷新券
 			if (hasTicket) {
 				gameState.freeRefreshTickets--;
 				blackMarketState.refreshCount++;
@@ -601,7 +606,7 @@
 				gameState.achievementCoins -= cost;
 				blackMarketState.refreshCount++;
 				refreshBlackMarketItems(false);
-				addLog('成就商店', '手动刷新商品', `成就币-${cost}${discount > 0 ? `（折扣-${discount}）` : ''}`);
+				addLog('成就商店', '手动刷新商品', `成就币-${cost}`);
 			} else {
 				showModal('❌ 刷新失败', `<p>成就币不足！需要${cost}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -630,9 +635,9 @@
 
 			const item = itemData.item;
 
-			// ★★★ 会员卡折扣：每级-1，最低3 ★★★
+			// ★★★ 会员卡折扣：每级-1，最低2 ★★★
 			const memberDiscount = gameState.memberCardLevel || 0;
-			const actualPrice = Math.max(3, item.price - memberDiscount);
+			const actualPrice = Math.max(2, item.price - memberDiscount);
 
 			if (gameState.achievementCoins < actualPrice) {
 				showModal('❌ 购买失败', `<p>成就币不足！需要${actualPrice}成就币，当前只有${gameState.achievementCoins}成就币。</p>`,
@@ -771,10 +776,8 @@
 
 			const achievementCoins = gameState.achievementCoins || 0;
 
-			// ★★★ 计算刷新费用（考虑折扣）★★★
-			const baseCost = blackMarketState.refreshCount + 1;
-			const discount = gameState.refreshDiscount || 0;
-			const refreshCost = Math.max(0, baseCost - discount);
+			// ★★★ 计算刷新费用 ★★★
+			const refreshCost = blackMarketState.refreshCount + 1;
 			const hasTicket = (gameState.freeRefreshTickets || 0) > 0;
 
 			// ★★★ 计算自动刷新间隔（考虑自动进货机）★★★
@@ -795,7 +798,6 @@
 			// ★★★ 商店升级信息 ★★★
 			const upgradeInfo = [];
 			if (gameState.freeRefreshTickets > 0) upgradeInfo.push(`🎫×${gameState.freeRefreshTickets}`);
-			if (gameState.refreshDiscount > 0) upgradeInfo.push(`🏷️-${gameState.refreshDiscount}`);
 			if (gameState.chainPurchaseLevel > 0) upgradeInfo.push(`🔗×${gameState.chainPurchaseLevel}`);
 			if (gameState.memberCardLevel > 0) upgradeInfo.push(`💳-${gameState.memberCardLevel}`);
 			if (gameState.hasAutoRestock) upgradeInfo.push(`📦3月`);
@@ -819,7 +821,7 @@
 						⏰ ${monthsUntilRefresh}月后刷新${gameState.hasAutoRestock ? '(已加速)' : ''}
 					</div>
 					<button class="btn btn-info" onclick="manualRefreshBlackMarket()" style="padding:4px 10px;font-size:0.75rem;">
-						🔄 ${hasTicket ? '使用刷新券' : `刷新 (${refreshCost}币${discount > 0 ? '↓' : ''})`}
+						🔄 ${hasTicket ? '使用刷新券' : `刷新 (${refreshCost}币)`}
 					</button>
 				</div>
 
@@ -837,8 +839,8 @@
 			blackMarketState.currentItems.forEach((itemData, index) => {
 				const item = itemData.item;
 				const locked = itemData.locked;
-				// ★★★ 计算实际价格（会员卡折扣）★★★
-				const actualPrice = Math.max(3, item.price - memberDiscount);
+				// ★★★ 计算实际价格（会员卡折扣，最低2）★★★
+				const actualPrice = Math.max(2, item.price - memberDiscount);
 				const canBuy = achievementCoins >= actualPrice && item.condition(gameState);
 				const meetsCondition = item.condition(gameState);
 

@@ -158,7 +158,7 @@
 				displayName = '真·大多数';
 				displayDesc = '经历过所有角色的洗礼，回归本真';
 				displayBonus = '无特殊能力，一切靠自己';
-				displayAwaken = { icon: '❌', name: '无', desc: '转博时没有任何觉醒效果' };
+				displayAwaken = { icon: '✨', name: '往昔荣光', desc: '成就币翻倍，成就商店刷新间隔变为2个月' };
 				statsCharId = 'true-normal';
 				statsIsReversed = false;
 			} else if (isReversedSide && char.reversed) {
@@ -346,6 +346,15 @@
 		function renderCharacterGrid() {
 			const grid = document.getElementById('character-grid');
 			if (!grid) return;  // ★★★ 修复：添加null检查 ★★★
+
+			// ★★★ 迁移老玩家数据（首次加载时估算总局数）★★★
+			migrateGamesPlayedCount();
+
+			// ★★★ 渲染玩家统计（选择角色栏之上）★★★
+			const playerStatsContainer = document.getElementById('player-stats-start');
+			if (playerStatsContainer) {
+				playerStatsContainer.innerHTML = renderPlayerStatsHTML('default');
+			}
 
 			const globalRecords = globalCharacterRecords;
 
@@ -563,9 +572,9 @@
 					displayDesc = '经历过所有角色的洗礼，回归本真';
 					displayBonus = '无特殊能力，一切靠自己';
 					displayAwaken = {
-						icon: '❌',
-						name: '无',
-						desc: '转博时没有任何觉醒效果'
+						icon: '✨',
+						name: '往昔荣光',
+						desc: '成就币翻倍，成就商店刷新间隔变为2个月'
 					};
 					data = char;
 					statsCharId = 'true-normal';
@@ -881,6 +890,9 @@
 
 		async function startGame() {
 			if (!selectedCharacter) return;
+
+			// ★★★ 增加游戏局数计数 ★★★
+			incrementGamesPlayed();
 
 			// ★★★ 清空自动存档（开始新游戏时）★★★
 			clearAutoSaves();

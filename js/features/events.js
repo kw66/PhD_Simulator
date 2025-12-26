@@ -54,6 +54,8 @@
 
 			if (gameState.totalScore >= req) {
 				gameState.gold += reward;
+				// ★★★ 新增：奖学金总计数 ★★★
+				gameState.scholarshipCount = (gameState.scholarshipCount || 0) + 1;
 				// ★★★ 新增：连续获奖计数 ★★★
 				gameState.consecutiveScholarships = (gameState.consecutiveScholarships || 0) + 1;
 				if (gameState.consecutiveScholarships >= 3) {
@@ -745,6 +747,8 @@
                     changeSocial(1);
                 }},
 				{ text: '🍜 聚餐', class: 'btn-info', action: () => {
+					// ★★★ 新增：聚餐计数 ★★★
+					gameState.dinnerCount = (gameState.dinnerCount || 0) + 1;
 					closeModal();
 					if (Math.random() < 0.5) {
 						addLog('随机事件', '实验室组织团建 - 聚餐', '吃饱了，金钱-2，SAN值+5');
@@ -1045,6 +1049,8 @@
 		}
 
         function showRandomEvent13() {
+			// ★★★ 新增：服务器损坏计数 ★★★
+			gameState.serverCrashCount = (gameState.serverCrashCount || 0) + 1;
             showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
                 { text: '催导师快修', class: 'btn-primary', action: () => {
                     closeModal();
@@ -1104,6 +1110,11 @@
                     closeModal();
                 }},
                 { text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
+					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
+					if (!gameState.firstMentoringMonth) {
+						gameState.firstMentoringMonth = gameState.totalMonths;
+						addCareerMilestone('first_mentoring', '第一次指导师弟师妹', `开始传承学术薪火`);
+					}
 					const baseCost = 5;
 					const actualCost = Math.abs(getActualSanChange(-baseCost));
 
@@ -1125,6 +1136,11 @@
 					}, 300);
 				}},
                 { text: '展开长期合作', class: 'btn-success', action: () => {
+					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
+					if (!gameState.firstMentoringMonth) {
+						gameState.firstMentoringMonth = gameState.totalMonths;
+						addCareerMilestone('first_mentoring', '第一次指导师弟师妹', `开始传承学术薪火`);
+					}
                     gameState.buffs.permanent.push({
                         type: 'mentorship',
                         name: '指导师弟师妹',
@@ -1147,6 +1163,8 @@
         }
 
 		function showRandomEvent15() {
+			// ★★★ 新增：游戏总次数统计 ★★★
+			gameState.gamePlayCount = (gameState.gamePlayCount || 0) + 1;
 			showModal('🎮 随机事件', '<p>学了一天你打算玩游戏放松一下。</p>', [
 				{ text: '🌲 玩泰拉瑞亚', class: 'btn-success', action: () => {
 					// ★★★ 新增：泰拉瑞亚计数 ★★★
@@ -1221,6 +1239,9 @@
 				checkAchievement('🎲 躲过一劫');
 				return;
 			}
+
+			// ★★★ 新增：数据丢失计数（只有真正触发时才计数）★★★
+			gameState.dataLossCount = (gameState.dataLossCount || 0) + 1;
 
 			showModal('💾 随机事件', '<p>实验室服务器崩溃了，你的实验数据全部丢失！</p>', [
 				{ text: '😤 熬夜补数据', class: 'btn-danger', action: () => {

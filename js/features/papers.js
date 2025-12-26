@@ -598,6 +598,8 @@
 				gameState.firstNatureAccepted = true;
 				totalResearchBonus += firstResearchBonus;
 				bonusResearchDetails.push({ label: '首次发表Nature', value: firstResearchBonus });
+				// ★★★ 新增：添加里程碑 ★★★
+				addCareerMilestone('first_nature', '首次发表Nature', '学术巅峰！');
 			}
 
 			// 首次发表Nature子刊（科研+1）
@@ -605,6 +607,8 @@
 				gameState.firstNatureSubAccepted = true;
 				totalResearchBonus += firstResearchBonus;
 				bonusResearchDetails.push({ label: '首次发表Nature子刊', value: firstResearchBonus });
+				// ★★★ 新增：添加里程碑 ★★★
+				addCareerMilestone('first_nature_sub', '首次发表Nature子刊', '向顶刊迈进！');
 			}
 
 			if (totalResearchBonus > 0) {
@@ -866,6 +870,12 @@
 			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 			gameState.workCount = nextWorkCount;
 
+			// ★★★ 新增：记录第一次打工 ★★★
+			if (nextWorkCount === 1) {
+				gameState.firstWorkMonth = gameState.totalMonths;
+				addCareerMilestone('first_work', '第一次打工', '开始赚取生活费');
+			}
+
 			// ★★★ 计算下次提升的阈值（9, 17, 25...）★★★
 			const nextMilestone = (currentTier + 1) * 8 + 1;
 			const nextGold = goldReward + 1;
@@ -882,8 +892,15 @@
 				result += `（行动${gameState.actionCount}/${gameState.actionLimit}）`;
 			}
 
+			// ★★★ 新增：白手起家术 - 打工金钱翻倍 ★★★
+			let finalGoldReward = goldReward;
+			if (gameState.incomeDoubled) {
+				finalGoldReward = goldReward * 2;
+				result += `，白手起家术翻倍！`;
+			}
+
 			addLog('打工', '辛苦工作赚取生活费', result);
-			changeStats({ san: -baseSanCost, gold: goldReward });
+			changeStats({ san: -baseSanCost, gold: finalGoldReward });
 		}
 
 
@@ -1528,15 +1545,18 @@
 		 * 处理队列中的下一个开会事件
 		 */
 		function processNextConferenceInQueue() {
+			// ★★★ 新增：如果游戏已结束，停止处理 ★★★
+			if (gameState.gameEnded) return;
+
 			const state = gameState._reviewProcessing;
 			if (!state) return;
-			
+
 			if (!state.pendingConferences || state.pendingConferences.length === 0) {
 				// 所有开会事件已处理，完成审稿流程
 				finishReviewProcessing();
 				return;
 			}
-			
+
 			const conf = state.pendingConferences.shift();
 			// 显示合并后的开会选择弹窗
 			showConferenceModalMerged(conf);
@@ -1546,14 +1566,17 @@
 		 * 完成审稿处理流程
 		 */
 		function finishReviewProcessing() {
+			// ★★★ 新增：如果游戏已结束，停止处理 ★★★
+			if (gameState.gameEnded) return;
+
 			const state = gameState._reviewProcessing;
 			const onComplete = state ? state.onComplete : null;
-			
+
 			// 清理处理状态
 			delete gameState._reviewProcessing;
-			
-			// 执行完成回调（触发月末事件）
-			if (onComplete) {
+
+			// ★★★ 修改：只有游戏未结束时才执行完成回调 ★★★
+			if (onComplete && !gameState.gameEnded) {
 				setTimeout(onComplete, 100);
 			}
 		}
@@ -1627,13 +1650,19 @@
 				{ text: proxyText, class: 'btn-primary', action: () => {
 					if (gameState.social >= 6) {
 						addLog('开会', `请同学代为参加 ${confInfo.name} ${confInfo.year}`, '同学义气帮忙，免费');
+						closeModal();
+						// 代参加不触发开会事件，直接处理下一个
+						processNextConferenceInQueue();
 					} else {
 						addLog('开会', `请人代为参加 ${confInfo.name} ${confInfo.year}`, '金钱-1');
-						changeGold(-proxyCost);
+						closeModal();
+						// ★★★ 修改：检查changeGold返回值，如果触发结局则不继续处理 ★★★
+						if (changeGold(-proxyCost)) {
+							// 代参加不触发开会事件，直接处理下一个
+							processNextConferenceInQueue();
+						}
+						// 如果changeGold返回false，说明已触发结局，不再继续处理
 					}
-					closeModal();
-					// 代参加不触发开会事件，直接处理下一个
-					processNextConferenceInQueue();
 				}}
 			]);
 		}
@@ -1642,6 +1671,14 @@
 		 * 显示合并后的开会事件弹窗（支持同一会议多篇论文）
 		 */
 		function showConferenceEventModalMerged(confInfo, confLocation, papers) {
+			// ★★★ 新增：记录开会次数 ★★★
+			gameState.meetingCount = (gameState.meetingCount || 0) + 1;
+
+			// ★★★ 新增：首次开会里程碑 ★★★
+			if (gameState.meetingCount === 1) {
+				addCareerMilestone('first_conference', '第一次参加学术会议', `${confInfo.name} @ ${confLocation.city}`);
+			}
+
 			const isMultiple = papers.length >= 2;
 			const confString = `${confInfo.name} ${confInfo.year} @ ${confLocation.city}, ${confLocation.country}`;
 			

@@ -3633,3 +3633,175 @@ body {
         padding: 2px 8px;
     }
 }
+
+/* ==================== 玩家统计显示样式 ==================== */
+
+/* 开始页面的统计区块 */
+.player-stats-section {
+    margin: 0 15px 15px;
+}
+
+/* 默认样式（开始页面和结局弹窗）- 真大多数淡金色配色 */
+.player-stats-box {
+    background: linear-gradient(145deg, #fffef5 0%, #fff8dc 30%, #ffefc0 60%, #ffe4a0 100%);
+    border: 2px solid #d4af37;
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.player-stats-box .ps-row {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.player-stats-box .ps-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: #8b6914;
+}
+
+.player-stats-box .ps-item i {
+    color: #b8860b;
+    font-size: 0.85rem;
+}
+
+.player-stats-box .ps-item strong {
+    color: #6b5210;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* 海报样式（分享页毕业纪念卡内）*/
+.player-stats-poster {
+    background: linear-gradient(145deg, rgba(255, 254, 245, 0.95), rgba(255, 239, 192, 0.9));
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+.player-stats-poster .psp-title {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #8b6914;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.player-stats-poster .psp-row {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.player-stats-poster .psp-item {
+    font-size: 0.7rem;
+    color: #6b5210;
+    font-weight: 500;
+}
+
+/* 紧凑样式（已弃用，保留兼容）*/
+.player-stats-compact {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.player-stats-compact .ps-item {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.12);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+}
+
+/* 横幅样式（已弃用，保留兼容）*/
+.player-stats-banner {
+    width: 100%;
+    max-width: 340px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.player-stats-banner .psb-title {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.player-stats-banner .psb-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.player-stats-banner .psb-item {
+    text-align: center;
+    padding: 8px 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.player-stats-banner .psb-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.player-stats-banner .psb-label {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .player-stats-box .ps-row {
+        gap: 6px;
+    }
+
+    .player-stats-box .ps-item {
+        font-size: 0.75rem;
+    }
+
+    .player-stats-poster .psp-row {
+        gap: 4px;
+    }
+
+    .player-stats-poster .psp-item {
+        font-size: 0.65rem;
+    }
+
+    .player-stats-compact .ps-item {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .player-stats-banner .psb-items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .player-stats-banner .psb-value {
+        font-size: 1.1rem;
+    }
+}

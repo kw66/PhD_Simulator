@@ -814,10 +814,13 @@
 				ideaDecay,
 				expDecay,
 				personality,  // ★★★ 新增：传递会议性格信息 ★★★
-				badReviewerCount: results.filter(r => 
+				badReviewerCount: results.filter(r =>
 					r.reviewer.type === 'hostile' || r.reviewer.type === 'questions'
 				).length,
-				hasExpert: results.some(r => r.reviewer.type === 'expert')
+				hasExpert: results.some(r => r.reviewer.type === 'expert'),
+				// ★★★ 新增：分别统计恶意审稿人和39个问题审稿人 ★★★
+				hostileCount: results.filter(r => r.reviewer.type === 'hostile').length,
+				questionsCount: results.filter(r => r.reviewer.type === 'questions').length
 			};
 			
 			showReviewResultModalV2(
@@ -1104,7 +1107,15 @@
 							}
 							addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
 						}
-						
+
+						// ★★★ 新增：记录恶意审稿人和39个问题审稿人统计 ★★★
+						if (extraInfo.hostileCount > 0) {
+							gameState.maliciousReviewerCount = (gameState.maliciousReviewerCount || 0) + extraInfo.hostileCount;
+						}
+						if (extraInfo.questionsCount > 0) {
+							gameState.thirtyNineQuestionsCount = (gameState.thirtyNineQuestionsCount || 0) + extraInfo.questionsCount;
+						}
+
 						if (accepted) {
 							if (totalReviewScore === -1) {
 								gameState.achievementConditions = gameState.achievementConditions || {};

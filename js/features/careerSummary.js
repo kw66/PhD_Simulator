@@ -1,7 +1,7 @@
 		// ==================== 生涯总结滑动卡片 ====================
 
 		let currentSlide = 0;
-		let totalSlides = 8;
+		let totalSlides = 9;
 		let touchStartX = 0;
 		let touchEndX = 0;
 
@@ -174,6 +174,11 @@
 				setTimeout(() => {
 					container.remove();
 					document.removeEventListener('keydown', handleKeyDown);
+					// ★★★ 移除生涯总结样式，防止影响主游戏 ★★★
+					const styles = document.getElementById('career-summary-styles');
+					if (styles) {
+						styles.remove();
+					}
 					// 返回结局弹窗
 					if (currentEndingData) {
 						showEndingModal(currentEndingData.title, currentEndingData.desc, currentEndingData.emoji, currentEndingData.endingType);
@@ -189,10 +194,11 @@
 				generateSlide2_Stats(),
 				generateSlide3_Highlights(),
 				generateSlide4_Lowlights(),
-				generateSlide5_FirstTimes(),
-				generateSlide6_Relationships(),
-				generateSlide7_Achievements(),
-				generateSlide8_Share()
+				generateSlide5_Leisure(),
+				generateSlide6_FirstTimes(),
+				generateSlide7_Relationships(),
+				generateSlide8_Achievements(),
+				generateSlide9_Share()
 			];
 
 			return `
@@ -239,9 +245,21 @@
 			const months = gameState.totalMonths % 12;
 			const durationText = years > 0 ? `${years}年${months > 0 ? months + '个月' : ''}` : `${months}个月`;
 
+			// ★★★ 新增：计算入学年份和结束年份 ★★★
+			const baseYear = 2030;  // 游戏基准年份（2030年9月入学）
+			const entryYear = baseYear;
+			const endYear = baseYear + years + (months > 0 ? 1 : 0);
+			const entryYearText = `${entryYear}年9月`;
+			const endYearText = `${endYear}年${((gameState.month - 1 + 8) % 12) + 1}月`;
+
+			// ★★★ 判断是否为毕业结局 ★★★
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+			const isGraduated = graduationEndings.includes(currentEndingData?.endingType);
+			const endActionText = isGraduated ? '毕业' : '结束';
+
 			// 获取角色自述
 			const charQuotes = CHARACTER_QUOTES[gameState.character] || CHARACTER_QUOTES['normal'];
-			const isPositiveEnding = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life', 'nobel_start'].includes(currentEndingData?.endingType);
+			const isPositiveEnding = graduationEndings.includes(currentEndingData?.endingType);
 			const characterQuote = isPositiveEnding ? charQuotes.positive : charQuotes.negative;
 
 			return `
@@ -259,6 +277,7 @@
 								<div class="journey-icon bounce-in">${icon}</div>
 								<div class="journey-label">${gameState.characterName}</div>
 								<div class="journey-sublabel">${gameState.isReversed ? '逆位' : '正位'}</div>
+								<div class="journey-year">${entryYearText} 入学</div>
 							</div>
 							<div class="journey-arrow">
 								<div class="arrow-line animated-line"></div>
@@ -268,6 +287,7 @@
 								<div class="journey-icon bounce-in delay-1">${endingEmoji}</div>
 								<div class="journey-label">${endingTitle}</div>
 								<div class="journey-sublabel">${gameState.degree === 'phd' ? '博士' : '硕士'}</div>
+								<div class="journey-year">${endYearText} ${endActionText}</div>
 							</div>
 						</div>
 						<div class="character-quote animate-fade-up delay-2">
@@ -325,31 +345,13 @@
 								<div class="stat-ring" style="--percent: ${acceptRate}"></div>
 							</div>
 						</div>
-						<div class="paper-breakdown animate-fade-up delay-2">
-							<div class="breakdown-title">论文分布</div>
-							<div class="breakdown-bars">
-								<div class="breakdown-item">
-									<span class="breakdown-label">A类</span>
-									<div class="breakdown-bar a-bar"><div class="bar-fill" style="width: ${gameState.paperA * 20}%"></div></div>
-									<span class="breakdown-value">${gameState.paperA}</span>
-								</div>
-								<div class="breakdown-item">
-									<span class="breakdown-label">B类</span>
-									<div class="breakdown-bar b-bar"><div class="bar-fill" style="width: ${gameState.paperB * 20}%"></div></div>
-									<span class="breakdown-value">${gameState.paperB}</span>
-								</div>
-								<div class="breakdown-item">
-									<span class="breakdown-label">C类</span>
-									<div class="breakdown-bar c-bar"><div class="bar-fill" style="width: ${gameState.paperC * 20}%"></div></div>
-									<span class="breakdown-value">${gameState.paperC}</span>
-								</div>
-							</div>
-						</div>
-						<div class="stats-extra animate-fade-up delay-3">
+						<div class="stats-extra animate-fade-up delay-2">
 							<div class="extra-item"><span class="extra-icon">💡</span><span>想idea ${gameState.ideaClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">🔬</span><span>做实验 ${gameState.expClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">✍️</span><span>写论文 ${gameState.writeClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">📚</span><span>看论文 ${gameState.readCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">☕</span><span>喝咖啡 ${gameState.coffeeCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">💼</span><span>打工 ${gameState.workCount || 0}次</span></div>
 						</div>
 					</div>
 				</div>
@@ -404,9 +406,9 @@
 									<span class="peak-value">${gameState.peakStats.maxSocial}</span>
 								</div>
 								<div class="peak-item glow-effect">
-									<span class="peak-icon">⚡</span>
-									<span class="peak-label">最高SAN</span>
-									<span class="peak-value">${gameState.peakStats.maxSan}</span>
+									<span class="peak-icon">💰</span>
+									<span class="peak-label">最高金币</span>
+									<span class="peak-value">${gameState.peakStats.maxGold}</span>
 								</div>
 							</div>
 						` : ''}
@@ -459,7 +461,45 @@
 								</div>
 							` : ''}
 						</div>
-						<div class="encouragement animate-fade-up delay-3">
+						<div class="lowlight-extra animate-fade-up delay-3">
+							${(gameState.hostileReviewerCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">😈</span>
+									<span>遇到恶意小同行 ${gameState.hostileReviewerCount}次</span>
+								</div>
+							` : ''}
+							${(gameState.questionsReviewerCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">❓</span>
+									<span>遇到39问审稿人 ${gameState.questionsReviewerCount}次</span>
+								</div>
+							` : ''}
+							${(gameState.coldCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">🤧</span>
+									<span>感冒 ${gameState.coldCount}次</span>
+								</div>
+							` : ''}
+							${(gameState.serverCrashCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">💥</span>
+									<span>服务器崩溃 ${gameState.serverCrashCount}次</span>
+								</div>
+							` : ''}
+							${(gameState.dataLossCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">💾</span>
+									<span>数据丢失 ${gameState.dataLossCount}次</span>
+								</div>
+							` : ''}
+							${(gameState.ideaStolenCount || 0) > 0 ? `
+								<div class="lowlight-extra-item">
+									<span class="lowlight-extra-icon">🦊</span>
+									<span>idea被偷 ${gameState.ideaStolenCount}次</span>
+								</div>
+							` : ''}
+						</div>
+						<div class="encouragement animate-fade-up delay-4">
 							<div class="encourage-text">"低谷是为了让你更好地起跳"</div>
 						</div>
 					</div>
@@ -467,8 +507,88 @@
 			`;
 		}
 
-		// 卡片5：重要的第一次
-		function generateSlide5_FirstTimes() {
+		// 卡片5：科研之余（生活点滴）
+		function generateSlide5_Leisure() {
+			const tourCount = gameState.tourCount || 0;
+			const teaBreakCount = gameState.teaBreakCount || 0;
+			const badmintonCount = gameState.badmintonCount || 0;
+			const dinnerCount = gameState.dinnerCount || 0;
+			const meetingCount = gameState.meetingCount || 0;
+			const enterpriseCount = gameState.enterpriseCount || 0;
+
+			// 计算总活动次数
+			const totalActivities = tourCount + teaBreakCount + badmintonCount + dinnerCount;
+
+			// 生成活动卡片
+			const activities = [
+				{ icon: '🏖️', name: '会议旅游', count: tourCount, desc: '会议结束后的放松时光' },
+				{ icon: '☕', name: '茶歇晚宴', count: teaBreakCount, desc: '学术社交的好机会' },
+				{ icon: '🏸', name: '羽毛球', count: badmintonCount, desc: '实验室的运动时光' },
+				{ icon: '🍜', name: '聚餐', count: dinnerCount, desc: '和同门一起吃饭' },
+				{ icon: '🎓', name: '学术会议', count: meetingCount, desc: '展示研究成果' },
+				{ icon: '🏢', name: '企业交流', count: enterpriseCount, desc: '探索产业界机会' }
+			].filter(a => a.count > 0);
+
+			// 生成生活感悟
+			let lifeQuote = '';
+			if (totalActivities >= 10) {
+				lifeQuote = '科研之路也有诗和远方';
+			} else if (totalActivities >= 5) {
+				lifeQuote = '劳逸结合，方能行稳致远';
+			} else if (totalActivities >= 1) {
+				lifeQuote = '偶尔的放松让科研更有动力';
+			} else {
+				lifeQuote = '专注科研的日子里，生活也别忘了精彩';
+			}
+
+			return `
+				<div class="slide-content leisure-slide">
+					<div class="slide-bg leisure-bg"></div>
+					<div class="leisure-bubbles">
+						<div class="bubble b1">🎮</div>
+						<div class="bubble b2">🎵</div>
+						<div class="bubble b3">📸</div>
+						<div class="bubble b4">🌈</div>
+					</div>
+					<div class="slide-inner">
+						<h2 class="slide-title animate-title">科研之余</h2>
+						${activities.length > 0 ? `
+							<div class="leisure-grid animate-fade-up">
+								${activities.map((a, i) => `
+									<div class="leisure-card animate-pop-in" style="--delay: ${i * 0.1}s">
+										<div class="leisure-icon">${a.icon}</div>
+										<div class="leisure-count">${a.count}</div>
+										<div class="leisure-name">${a.name}</div>
+										<div class="leisure-desc">${a.desc}</div>
+									</div>
+								`).join('')}
+							</div>
+							<div class="leisure-summary animate-fade-up delay-2">
+								<div class="summary-icon">🌟</div>
+								<div class="summary-stat">
+									<span class="stat-number">${totalActivities}</span>
+									<span class="stat-label">次课余活动</span>
+								</div>
+							</div>
+						` : `
+							<div class="empty-message animate-fade-up">
+								<div class="empty-icon pulse">📚</div>
+								<div class="empty-text">专心科研</div>
+								<div class="empty-sub">一心扑在学术上的日子</div>
+							</div>
+						`}
+						<div class="leisure-quote animate-fade-up delay-3">
+							<div class="quote-decoration">❝</div>
+							<div class="quote-content">${lifeQuote}</div>
+							<div class="quote-decoration">❞</div>
+						</div>
+					</div>
+				</div>
+			`;
+		}
+
+		// 卡片6：重要的第一次
+		function generateSlide6_FirstTimes() {
 			const firstTimes = getFirstTimeMilestones();
 
 			return `
@@ -501,12 +621,66 @@
 			`;
 		}
 
-		// 卡片6：人际关系（增强版）
-		function generateSlide6_Relationships() {
+		// 卡片7：人际关系（增强版 - 动态分页）
+		function generateSlide7_Relationships() {
 			const relationships = gameState.relationships || [];
 			const advisor = relationships.find(r => r.type === 'advisor');
 			const lover = relationships.find(r => r.type === 'lover');
-			const others = relationships.filter(r => r.type !== 'advisor' && r.type !== 'lover');
+			const bigbull = relationships.find(r => r.type === 'bigbull');
+			const others = relationships.filter(r => r.type !== 'advisor' && r.type !== 'lover' && r.type !== 'bigbull');
+
+			// ★★★ 按类型分组：师兄师姐、同门、师弟师妹 ★★★
+			const seniors = others.filter(r => r.type === 'senior');
+			const classmates = others.filter(r => r.type === 'classmate' || r.type === 'peer');
+			const juniors = others.filter(r => r.type === 'junior');
+			const otherFriends = others.filter(r => !['senior', 'classmate', 'peer', 'junior'].includes(r.type));
+
+			// 生成VIP区域（导师、恋人、大牛）
+			let vipSection = '';
+			if (advisor || lover || bigbull) {
+				vipSection = `
+					<div class="relation-vip-section animate-fade-up">
+						<div class="section-label">💎 重要人物</div>
+						<div class="vip-cards">
+							${advisor ? generateRelationCardCompact(advisor, 'advisor', 0) : ''}
+							${lover ? generateRelationCardCompact(lover, 'lover', 1) : generateSingleCard()}
+							${bigbull ? generateRelationCardCompact(bigbull, 'bigbull', 2) : ''}
+						</div>
+					</div>
+				`;
+			}
+
+			// 生成同门区域
+			let labSection = '';
+			const labMembers = [...seniors, ...classmates, ...juniors];
+			if (labMembers.length > 0) {
+				labSection = `
+					<div class="relation-lab-section animate-fade-up delay-1">
+						<div class="section-label">🔬 实验室成员</div>
+						<div class="lab-member-grid">
+							${labMembers.map((r, i) => generateRelationCardMini(r, r.type, i)).join('')}
+						</div>
+					</div>
+				`;
+			}
+
+			// 生成其他朋友区域
+			let friendSection = '';
+			if (otherFriends.length > 0) {
+				friendSection = `
+					<div class="relation-friend-section animate-fade-up delay-2">
+						<div class="section-label">🤝 其他朋友</div>
+						<div class="friend-tags">
+							${otherFriends.map((r, i) => `
+								<div class="friend-tag animate-pop-in" style="--delay: ${i * 0.05}s">
+									<span class="friend-icon">${RELATION_DESCRIPTIONS[r.type]?.icon || '👤'}</span>
+									<span class="friend-name">${r.name}</span>
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				`;
+			}
 
 			return `
 				<div class="slide-content relationships-slide">
@@ -514,16 +688,59 @@
 					<div class="heart-particles"></div>
 					<div class="slide-inner">
 						<h2 class="slide-title animate-title">人际关系</h2>
-						<div class="relations-list">
-							${advisor ? generateRelationCard(advisor, 'advisor', 0) : ''}
-							${lover ? generateRelationCard(lover, 'lover', 1) : generateSingleCard()}
-							${others.slice(0, 3).map((r, i) => generateRelationCard(r, r.type, i + 2)).join('')}
+						<div class="relations-container">
+							${vipSection}
+							${labSection}
+							${friendSection}
 						</div>
 						<div class="relation-summary animate-fade-up delay-3">
 							<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
-							${gameState.hasLover ? '<div class="summary-badge love-badge">❤️ 有情人终成眷属</div>' : ''}
-							${gameState.bigBullCooperation ? '<div class="summary-badge collab-badge">🌟 大牛联培</div>' : ''}
+							<div class="summary-badges">
+								${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
+								${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
+								${seniors.length >= 2 ? '<span class="summary-badge senior-badge">👨‍🎓 师门人脉</span>' : ''}
+								${juniors.length >= 2 ? '<span class="summary-badge junior-badge">👶 桃李满门</span>' : ''}
+							</div>
 						</div>
+					</div>
+				</div>
+			`;
+		}
+
+		// ★★★ 新增：紧凑版关系卡片（VIP区域用）★★★
+		function generateRelationCardCompact(relation, type, index) {
+			const desc = RELATION_DESCRIPTIONS[type] || RELATION_DESCRIPTIONS['default'];
+			const relationQuote = typeof desc.getQuote === 'function' ? desc.getQuote(relation) : '';
+
+			return `
+				<div class="relation-card-compact animate-slide-in" style="--delay: ${index * 0.1}s">
+					<div class="compact-avatar">${desc.icon}</div>
+					<div class="compact-info">
+						<div class="compact-type">${desc.typeName}</div>
+						<div class="compact-name">${relation.name}</div>
+					</div>
+					<div class="compact-quote">${relationQuote}</div>
+				</div>
+			`;
+		}
+
+		// ★★★ 新增：迷你版关系卡片（实验室成员用）★★★
+		function generateRelationCardMini(relation, type, index) {
+			const desc = RELATION_DESCRIPTIONS[type] || RELATION_DESCRIPTIONS['default'];
+			const stats = relation.stats || {};
+			const helpCount = stats.helpReceivedCount || 0;
+			const interactCount = stats.interactCount || 0;
+
+			return `
+				<div class="relation-card-mini animate-pop-in" style="--delay: ${index * 0.05}s">
+					<div class="mini-header">
+						<span class="mini-icon">${desc.icon}</span>
+						<span class="mini-name">${relation.name}</span>
+					</div>
+					<div class="mini-type">${desc.typeName}</div>
+					<div class="mini-stats">
+						${helpCount > 0 ? `<span class="mini-stat">🎁${helpCount}</span>` : ''}
+						${interactCount > 0 ? `<span class="mini-stat">💬${interactCount}</span>` : ''}
 					</div>
 				</div>
 			`;
@@ -632,8 +849,8 @@
 			`;
 		}
 
-		// 卡片7：成就墙
-		function generateSlide7_Achievements() {
+		// 卡片8：成就墙
+		function generateSlide8_Achievements() {
 			const achievements = currentEndingData ? collectAchievements(currentEndingData.endingType) : [];
 
 			return `
@@ -670,8 +887,8 @@
 			`;
 		}
 
-		// 卡片8：分享页（增强版）
-		function generateSlide8_Share() {
+		// 卡片9：分享页（增强版）
+		function generateSlide9_Share() {
 			const charData = characters.find(c => c.id === gameState.character);
 			const displayData = gameState.isReversed && charData?.reversed ? charData.reversed : charData;
 			const icon = displayData?.icon || '👤';
@@ -681,6 +898,48 @@
 
 			const paperNature = gameState.paperNature || 0;
 			const paperNatureSub = gameState.paperNatureSub || 0;
+
+			// ★★★ 新增：计算入学和毕业年份 ★★★
+			const baseYear = 2030;  // 2030年9月入学
+			const years = Math.floor(gameState.totalMonths / 12);
+			const months = gameState.totalMonths % 12;
+			const gradYear = baseYear + years + (months > 0 ? 1 : 0);
+			const gradMonth = ((gameState.month - 1 + 8) % 12) + 1;
+
+			// ★★★ 判断是否为毕业结局 ★★★
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+			const isGraduated = graduationEndings.includes(currentEndingData?.endingType);
+
+			// ★★★ 新增：计算中稿率 ★★★
+			const acceptRate = gameState.totalSubmissions > 0
+				? Math.round((gameState.totalAccepts / gameState.totalSubmissions) * 100)
+				: 0;
+
+			// ★★★ 新增：计算人际关系数量 ★★★
+			const relationCount = (gameState.relationships || []).length;
+
+			// ★★★ 新增：计算活动总次数 ★★★
+			const tourCount = gameState.tourCount || 0;
+			const teaBreakCount = gameState.teaBreakCount || 0;
+			const badmintonCount = gameState.badmintonCount || 0;
+			const meetingCount = gameState.meetingCount || 0;
+
+			// ★★★ 新增：计算里程碑数量 ★★★
+			const milestoneCount = (gameState.careerMilestones || []).length;
+
+			// ★★★ 新增：生成标签 ★★★
+			const tags = [];
+			if (gameState.degree === 'phd') tags.push('博士');
+			else tags.push('硕士');
+			if (gameState.isReversed) tags.push('逆位');
+			if (gameState.reversedAwakened) tags.push('觉醒');
+			if (gameState.hiddenAwakened) tags.push('隐藏觉醒');
+			if (gameState.hasLover) tags.push('脱单');
+			if (gameState.bigBullCooperation) tags.push('大牛联培');
+			if (paperNature > 0) tags.push('Nature作者');
+			if (gameState.paperA >= 3) tags.push('高产学者');
+			if (gameState.totalCitations >= 100) tags.push('百引学者');
+			if (gameState.totalCitations >= 1000) tags.push('千引大佬');
 
 			return `
 				<div class="slide-content share-slide">
@@ -696,10 +955,14 @@
 								<div class="poster-subtitle">毕业纪念卡</div>
 							</div>
 							<div class="poster-main">
+								<!-- 玩家游戏统计 -->
+								${renderPlayerStatsHTML('poster')}
+
 								<div class="poster-journey">
 									<div class="journey-from">
 										<span class="p-icon">${icon}</span>
 										<span class="p-name">${gameState.characterName}</span>
+										<span class="p-year">${baseYear}.9入学</span>
 									</div>
 									<div class="journey-arrow-p">
 										<span class="arrow-text">${gameState.totalMonths}个月</span>
@@ -708,8 +971,11 @@
 									<div class="journey-to">
 										<span class="p-icon">${endingEmoji}</span>
 										<span class="p-name">${endingTitle}</span>
+										<span class="p-year">${gradYear}.${gradMonth}${isGraduated ? '毕业' : '结束'}</span>
 									</div>
 								</div>
+
+								<!-- 核心数据 -->
 								<div class="poster-stats-grid">
 									<div class="p-stat">
 										<div class="p-stat-value">${gameState.publishedPapers.length}</div>
@@ -720,20 +986,32 @@
 										<div class="p-stat-label">引用</div>
 									</div>
 									<div class="p-stat">
-										<div class="p-stat-value">${gameState.paperA}</div>
-										<div class="p-stat-label">A类</div>
+										<div class="p-stat-value">${acceptRate}%</div>
+										<div class="p-stat-label">中稿率</div>
 									</div>
 									<div class="p-stat">
 										<div class="p-stat-value">${achievements.length}</div>
 										<div class="p-stat-label">成就</div>
 									</div>
 								</div>
-								${(paperNature > 0 || paperNatureSub > 0) ? `
-									<div class="poster-special">
-										${paperNature > 0 ? `<span class="special-badge nature">🏆 Nature ×${paperNature}</span>` : ''}
-										${paperNatureSub > 0 ? `<span class="special-badge naturesub">🌟 子刊 ×${paperNatureSub}</span>` : ''}
+
+								<!-- 论文分布（精简：合并ABC和Nature） -->
+								<div class="poster-paper-row">
+									<span class="paper-item a-item">A×${gameState.paperA || 0}</span>
+									<span class="paper-item b-item">B×${gameState.paperB || 0}</span>
+									<span class="paper-item c-item">C×${gameState.paperC || 0}</span>
+									${paperNature > 0 ? `<span class="paper-item nature-item">🏆N×${paperNature}</span>` : ''}
+									${paperNatureSub > 0 ? `<span class="paper-item naturesub-item">🌟子×${paperNatureSub}</span>` : ''}
+								</div>
+
+								<!-- 标签（限制最多4个） -->
+								${tags.length > 0 ? `
+									<div class="poster-tags">
+										${tags.slice(0, 4).map(tag => `<span class="poster-tag">${tag}</span>`).join('')}
 									</div>
 								` : ''}
+
+								<!-- 成就（限制最多4个） -->
 								${achievements.length > 0 ? `
 									<div class="poster-achievements">
 										${achievements.slice(0, 4).map(a => `<span class="p-ach">${a.split(' ')[0]}</span>`).join('')}
@@ -770,18 +1048,27 @@
 			const classes = {
 				'first_submit': 'dot-submit',
 				'first_accept': 'dot-accept',
-				'first_A': 'dot-a',
-				'first_best_paper': 'dot-best',
 				'first_reject': 'dot-reject',
+				'first_A': 'dot-a',
+				'first_B': 'dot-b',
+				'first_C': 'dot-c',
+				'first_oral': 'dot-oral',
+				'first_best_paper': 'dot-best',
+				'first_nature': 'dot-nature',
+				'first_nature_sub': 'dot-nature-sub',
+				'first_work': 'dot-work',
+				'first_conference': 'dot-conference',
+				'first_mentoring': 'dot-mentoring',
 				'phd_convert': 'dot-phd',
-				'lover': 'dot-lover'
+				'lover': 'dot-lover',
+				'awaken': 'dot-awaken'
 			};
 			return classes[type] || 'dot-default';
 		}
 
 		function getHighlightMilestones() {
 			const milestones = gameState.careerMilestones || [];
-			const highlightTypes = ['first_accept', 'first_A', 'first_best_paper', 'first_A_best_paper', 'phd_convert', 'lover', 'awaken'];
+			const highlightTypes = ['first_accept', 'first_A', 'first_oral', 'first_best_paper', 'first_A_best_paper', 'first_nature', 'first_nature_sub', 'phd_convert', 'lover', 'awaken', 'scholarship', 'citations_100', 'citations_1000'];
 			return milestones.filter(m => highlightTypes.includes(m.type));
 		}
 
@@ -793,7 +1080,25 @@
 
 		function getFirstTimeMilestones() {
 			const milestones = gameState.careerMilestones || [];
-			const firstTypes = ['first_submit', 'first_accept', 'first_A', 'first_best_paper', 'first_reject', 'phd_convert', 'lover'];
+			// ★★★ 扩展更多第一次事件类型 ★★★
+			const firstTypes = [
+				'first_submit',      // 第一次投稿
+				'first_accept',      // 第一次中稿
+				'first_reject',      // 第一次被拒
+				'first_A',           // 第一次A类
+				'first_B',           // 第一次B类
+				'first_C',           // 第一次C类
+				'first_oral',        // 第一次Oral
+				'first_best_paper',  // 第一次Best Paper
+				'first_nature',      // 第一次Nature
+				'first_nature_sub',  // 第一次Nature子刊
+				'first_work',        // 第一次打工
+				'first_conference',  // 第一次开会
+				'first_mentoring',   // 第一次指导师弟师妹
+				'phd_convert',       // 硕转博
+				'lover',             // 恋人
+				'awaken'             // 觉醒
+			];
 			return milestones.filter(m => firstTypes.includes(m.type));
 		}
 
@@ -1168,6 +1473,16 @@
 					font-size: 0.75rem;
 					color: rgba(255,255,255,0.7);
 					margin-top: 4px;
+				}
+
+				.journey-year {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.6);
+					margin-top: 6px;
+					padding: 3px 8px;
+					background: rgba(255,255,255,0.1);
+					border-radius: 10px;
+					display: inline-block;
 				}
 
 				.journey-arrow {
@@ -1583,6 +1898,30 @@
 					color: #fff;
 				}
 
+				.lowlight-extra {
+					margin-top: 20px;
+					display: flex;
+					flex-wrap: wrap;
+					gap: 8px;
+					justify-content: center;
+					max-width: 340px;
+				}
+
+				.lowlight-extra-item {
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					background: rgba(255,255,255,0.1);
+					padding: 8px 12px;
+					border-radius: 20px;
+					font-size: 0.75rem;
+					color: rgba(255,255,255,0.85);
+				}
+
+				.lowlight-extra-icon {
+					font-size: 0.9rem;
+				}
+
 				.encouragement {
 					margin-top: 25px;
 					padding: 15px 20px;
@@ -1597,7 +1936,121 @@
 					font-style: italic;
 				}
 
-				/* ==================== 卡片5：重要的第一次 ==================== */
+				/* ==================== 卡片5：科研之余 ==================== */
+				.leisure-bg {
+					background: linear-gradient(135deg, #00b894 0%, #55efc4 50%, #81ecec 100%);
+				}
+
+				.leisure-bubbles {
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					pointer-events: none;
+					overflow: hidden;
+				}
+
+				.bubble {
+					position: absolute;
+					font-size: 1.8rem;
+					opacity: 0.25;
+					animation: float 5s ease-in-out infinite;
+				}
+
+				.b1 { top: 12%; left: 8%; animation-delay: 0s; }
+				.b2 { top: 22%; right: 12%; animation-delay: 1.2s; }
+				.b3 { bottom: 28%; left: 15%; animation-delay: 2.4s; }
+				.b4 { bottom: 18%; right: 10%; animation-delay: 3.6s; }
+
+				.leisure-grid {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 10px;
+					max-width: 320px;
+					width: 100%;
+				}
+
+				.leisure-card {
+					background: rgba(255,255,255,0.18);
+					border-radius: 14px;
+					padding: 14px;
+					text-align: center;
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(255,255,255,0.2);
+				}
+
+				.leisure-icon {
+					font-size: 2rem;
+					margin-bottom: 6px;
+				}
+
+				.leisure-count {
+					font-size: 1.6rem;
+					font-weight: 700;
+					color: #fff;
+				}
+
+				.leisure-name {
+					font-size: 0.85rem;
+					font-weight: 600;
+					color: rgba(255,255,255,0.95);
+					margin-top: 2px;
+				}
+
+				.leisure-desc {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.7);
+					margin-top: 4px;
+				}
+
+				.leisure-summary {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 12px 18px;
+					background: rgba(255,255,255,0.15);
+					border-radius: 20px;
+					margin-top: 18px;
+				}
+
+				.summary-icon {
+					font-size: 1.5rem;
+				}
+
+				.summary-stat {
+					display: flex;
+					align-items: baseline;
+					gap: 6px;
+				}
+
+				.stat-number {
+					font-size: 1.8rem;
+					font-weight: 700;
+					color: #fff;
+				}
+
+				.leisure-quote {
+					margin-top: 20px;
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					font-size: 0.9rem;
+					color: rgba(255,255,255,0.9);
+					font-style: italic;
+				}
+
+				.quote-decoration {
+					font-size: 1.2rem;
+					color: rgba(255,255,255,0.6);
+				}
+
+				.quote-content {
+					flex: 1;
+					text-align: center;
+				}
+
+				/* ==================== 卡片6：重要的第一次 ==================== */
 				.firsttimes-bg {
 					background: linear-gradient(135deg, #d4a0a0 0%, #e0b8b8 50%, #ecd0d0 100%);
 				}
@@ -1636,11 +2089,20 @@
 
 				.dot-submit { border-color: #3498db; background: #3498db; }
 				.dot-accept { border-color: #2ecc71; background: #2ecc71; }
-				.dot-a { border-color: #e74c3c; background: #e74c3c; }
-				.dot-best { border-color: #f1c40f; background: #f1c40f; }
 				.dot-reject { border-color: #95a5a6; background: #95a5a6; }
+				.dot-a { border-color: #e74c3c; background: #e74c3c; }
+				.dot-b { border-color: #3498db; background: #3498db; }
+				.dot-c { border-color: #27ae60; background: #27ae60; }
+				.dot-oral { border-color: #e67e22; background: #e67e22; }
+				.dot-best { border-color: #f1c40f; background: #f1c40f; }
+				.dot-nature { border-color: #9b59b6; background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+				.dot-nature-sub { border-color: #3498db; background: linear-gradient(135deg, #3498db, #2980b9); }
+				.dot-work { border-color: #f39c12; background: #f39c12; }
+				.dot-conference { border-color: #1abc9c; background: #1abc9c; }
+				.dot-mentoring { border-color: #fd79a8; background: #fd79a8; }
 				.dot-phd { border-color: #9b59b6; background: #9b59b6; }
 				.dot-lover { border-color: #e91e63; background: #e91e63; }
+				.dot-awaken { border-color: #ff6b6b; background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
 
 				.timeline-card {
 					background: rgba(255,255,255,0.35);
@@ -1805,6 +2267,200 @@
 					border-radius: 15px;
 					font-size: 0.75rem;
 					color: #fff;
+				}
+
+				/* ★★★ 新增：人际关系动态布局 ★★★ */
+				.relations-container {
+					width: 100%;
+					max-width: 340px;
+					display: flex;
+					flex-direction: column;
+					gap: 15px;
+				}
+
+				.section-label {
+					font-size: 0.75rem;
+					color: rgba(255,255,255,0.7);
+					margin-bottom: 10px;
+					padding-left: 5px;
+					border-left: 2px solid rgba(255,255,255,0.4);
+				}
+
+				.relation-vip-section {
+					background: rgba(255,255,255,0.08);
+					border-radius: 14px;
+					padding: 12px;
+					border: 1px solid rgba(255,255,255,0.15);
+				}
+
+				.vip-cards {
+					display: flex;
+					flex-direction: column;
+					gap: 10px;
+				}
+
+				.relation-card-compact {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 12px;
+					background: rgba(255,255,255,0.12);
+					border-radius: 12px;
+					backdrop-filter: blur(10px);
+				}
+
+				.compact-avatar {
+					font-size: 1.8rem;
+					width: 45px;
+					height: 45px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					background: rgba(255,255,255,0.15);
+					border-radius: 50%;
+					flex-shrink: 0;
+				}
+
+				.compact-info {
+					flex: 1;
+					min-width: 0;
+				}
+
+				.compact-type {
+					font-size: 0.65rem;
+					color: rgba(255,255,255,0.6);
+					background: rgba(255,255,255,0.1);
+					padding: 2px 6px;
+					border-radius: 8px;
+					display: inline-block;
+				}
+
+				.compact-name {
+					font-size: 0.9rem;
+					font-weight: 600;
+					color: #fff;
+					margin-top: 3px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.compact-quote {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.5);
+					font-style: italic;
+					max-width: 100px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.relation-lab-section {
+					background: rgba(255,255,255,0.05);
+					border-radius: 12px;
+					padding: 12px;
+				}
+
+				.lab-member-grid {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 8px;
+				}
+
+				.relation-card-mini {
+					background: rgba(255,255,255,0.12);
+					border-radius: 10px;
+					padding: 10px;
+					text-align: center;
+				}
+
+				.mini-header {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 6px;
+					margin-bottom: 4px;
+				}
+
+				.mini-icon {
+					font-size: 1.2rem;
+				}
+
+				.mini-name {
+					font-size: 0.8rem;
+					font-weight: 600;
+					color: #fff;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.mini-type {
+					font-size: 0.6rem;
+					color: rgba(255,255,255,0.6);
+					margin-bottom: 4px;
+				}
+
+				.mini-stats {
+					display: flex;
+					justify-content: center;
+					gap: 8px;
+				}
+
+				.mini-stat {
+					font-size: 0.65rem;
+					color: rgba(255,255,255,0.7);
+					background: rgba(255,255,255,0.1);
+					padding: 2px 6px;
+					border-radius: 8px;
+				}
+
+				.relation-friend-section {
+					background: rgba(255,255,255,0.03);
+					border-radius: 10px;
+					padding: 10px;
+				}
+
+				.friend-tags {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 6px;
+					justify-content: center;
+				}
+
+				.friend-tag {
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					background: rgba(255,255,255,0.12);
+					padding: 5px 10px;
+					border-radius: 15px;
+					font-size: 0.75rem;
+					color: #fff;
+				}
+
+				.friend-icon {
+					font-size: 0.85rem;
+				}
+
+				.friend-name {
+					color: rgba(255,255,255,0.9);
+				}
+
+				.summary-badges {
+					display: flex;
+					flex-wrap: wrap;
+					justify-content: center;
+					gap: 6px;
+					margin-top: 10px;
+				}
+
+				.summary-badge.senior-badge {
+					background: rgba(52, 152, 219, 0.3);
+				}
+
+				.summary-badge.junior-badge {
+					background: rgba(253, 121, 168, 0.3);
 				}
 
 				/* ==================== 卡片7：成就墙 ==================== */
@@ -1985,6 +2641,13 @@
 					color: #666;
 				}
 
+				.p-year {
+					display: block;
+					font-size: 0.55rem;
+					color: #999;
+					margin-top: 2px;
+				}
+
 				.journey-arrow-p {
 					display: flex;
 					flex-direction: column;
@@ -2017,7 +2680,7 @@
 					display: grid;
 					grid-template-columns: repeat(4, 1fr);
 					gap: 8px;
-					margin-bottom: 15px;
+					margin-bottom: 10px;
 				}
 
 				.p-stat {
@@ -2038,11 +2701,87 @@
 					color: #999;
 				}
 
+				/* ★★★ 新增：论文分布行 ★★★ */
+				.poster-paper-row {
+					display: flex;
+					justify-content: center;
+					gap: 6px;
+					margin-bottom: 8px;
+					flex-wrap: wrap;
+				}
+
+				.paper-item {
+					font-size: 0.65rem;
+					padding: 3px 8px;
+					border-radius: 10px;
+					font-weight: 600;
+				}
+
+				.paper-item.a-item {
+					background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+					color: white;
+				}
+
+				.paper-item.b-item {
+					background: linear-gradient(135deg, #feca57, #f39c12);
+					color: #333;
+				}
+
+				.paper-item.c-item {
+					background: linear-gradient(135deg, #48dbfb, #0abde3);
+					color: white;
+				}
+
+				.paper-item.nature-item {
+					background: linear-gradient(135deg, #ffd700, #ff8c00);
+					color: #333;
+				}
+
+				.paper-item.naturesub-item {
+					background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+					color: white;
+				}
+
+				/* ★★★ 新增：社交活动行 ★★★ */
+				.poster-social-row {
+					display: flex;
+					justify-content: center;
+					gap: 8px;
+					margin-bottom: 10px;
+					flex-wrap: wrap;
+				}
+
+				.social-item {
+					font-size: 0.6rem;
+					color: #666;
+					background: #f0f0f0;
+					padding: 3px 8px;
+					border-radius: 8px;
+				}
+
+				/* ★★★ 新增：标签行 ★★★ */
+				.poster-tags {
+					display: flex;
+					justify-content: center;
+					gap: 5px;
+					margin-bottom: 10px;
+					flex-wrap: wrap;
+				}
+
+				.poster-tag {
+					font-size: 0.55rem;
+					padding: 2px 6px;
+					border-radius: 8px;
+					background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+					color: #667eea;
+					border: 1px solid rgba(102,126,234,0.3);
+				}
+
 				.poster-special {
 					display: flex;
 					justify-content: center;
 					gap: 8px;
-					margin-bottom: 12px;
+					margin-bottom: 10px;
 				}
 
 				.special-badge {
@@ -2136,7 +2875,7 @@
 					margin-top: 18px;
 				}
 
-				.action-btn {
+				#career-summary-container .action-btn {
 					display: inline-flex;
 					align-items: center;
 					gap: 6px;
@@ -2151,7 +2890,7 @@
 					font-family: inherit;
 				}
 
-				.action-btn:hover {
+				#career-summary-container .action-btn:hover {
 					background: rgba(255,255,255,0.15);
 					border-color: rgba(255,255,255,0.6);
 				}
