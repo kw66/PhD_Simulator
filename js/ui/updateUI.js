@@ -17,6 +17,7 @@
 			const timeYearEl = document.getElementById('time-year');
 			const timeMonthEl = document.getElementById('time-month');
 			const timeRemainingEl = document.getElementById('time-remaining');
+			const timeSeasonEl = document.getElementById('time-season');
 
 			// ★★★ 根据逆位模式切换时间栏颜色 ★★★
 			if (timePanelEl) {
@@ -37,6 +38,16 @@
 				const maxMonths = gameState.maxYears * 12;
 				const remaining = maxMonths - gameState.totalMonths;
 				timeRemainingEl.textContent = `剩余${remaining}月`;
+			}
+			// ★★★ 新增：更新季节显示（只显示单个汉字）★★★
+			if (timeSeasonEl) {
+				const season = getCurrentSeason();
+				if (season) {
+					// 只取季节名的第一个字（春夏秋冬）
+					const seasonChar = season.name.charAt(0);
+					timeSeasonEl.textContent = seasonChar;
+					timeSeasonEl.title = `${season.icon}${season.name} - ${season.buff}：${season.desc}`;
+				}
 			}
 		}
 
@@ -511,7 +522,26 @@
 				</span>`;
 				list.innerHTML += skillHtml;
 			}
-			
+
+			// ★★★ 新增：季节buff单独显示（不合并，突出四季变换）★★★
+			const season = getCurrentSeason();
+			if (season) {
+				const seasonColors = {
+					spring: { bg: 'linear-gradient(135deg,rgba(255,182,193,0.3),rgba(144,238,144,0.3))', border: '#ff69b4', icon: 'fa-seedling' },
+					summer: { bg: 'linear-gradient(135deg,rgba(255,215,0,0.3),rgba(255,140,0,0.3))', border: '#ff8c00', icon: 'fa-sun' },
+					autumn: { bg: 'linear-gradient(135deg,rgba(210,105,30,0.3),rgba(255,165,0,0.3))', border: '#d2691e', icon: 'fa-leaf' },
+					winter: { bg: 'linear-gradient(135deg,rgba(173,216,230,0.3),rgba(135,206,250,0.3))', border: '#00bfff', icon: 'fa-snowflake' }
+				};
+				const seasonKey = Object.keys(SEASONS).find(k => SEASONS[k].name === season.name) || 'autumn';
+				const colors = seasonColors[seasonKey] || seasonColors.autumn;
+
+				const seasonHtml = `<span class="buff-tag season-buff" style="background:${colors.bg};border-color:${colors.border};border-width:2px;" title="${season.buff}：${season.desc}">
+					<i class="fas ${colors.icon}"></i>
+					${season.icon} ${season.buff}
+				</span>`;
+				list.innerHTML += seasonHtml;
+			}
+
 			// ★★★ 修复：最后检查是否完全没有内容 ★★★
 			if (list.innerHTML.trim() === '') {
 				list.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;">暂无效果</span>';

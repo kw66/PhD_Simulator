@@ -987,11 +987,12 @@
 			// ★★★ 第一年第一月固定事件：选择导师 ★★★
 			setTimeout(() => {
 				// ★★★ 添加事件日志，让导师选择在日志中显示为正式事件 ★★★
-				addLog('📅 月度事件', '导师选择', '恭喜入学！请选择你的导师');
+				addLog('📅 月度事件', '恭喜入学！请选择你的导师');
 				showAdvisorSelectionModal((selectedAdvisor) => {
 					// 选择导师后显示毕业目标
 					const requirements = getAdvisorRequirements();
-					addLog('游戏目标', `硕士≥${requirements.masterGrad}分，博士≥${requirements.phdGrad}分`, '论文：C=1,B=2,A=4,子刊=10,Nature=25');
+					// ★★★ 修改：添加转博分数要求信息 ★★★
+					addLog('游戏目标', `硕士≥${requirements.masterGrad}分，博士≥${requirements.phdGrad}分`, `转博：Y2≥${requirements.phdYear2}分，Y3≥${requirements.phdYear3}分`);
 					addLog('游戏提示', '先专注自己论文，再完成关系任务。属性≥6解锁更多选项。发表A类后论文槽可升级投Nature系列');
 					renderRelationshipPanel();
 					updateAllUI();
@@ -1090,4 +1091,12 @@
 			resetRandomEventPool();
 			addLog('事件轮换', '新的一年开始', '随机事件池已重置');
 		}
+
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.selectCharacterFromRune = selectCharacterFromRune;
+		window.toggleTrueNormalMode = toggleTrueNormalMode;
+		window.renderCharacterSelection = renderCharacterSelection;
+		window.startGame = startGame;
+		window.resetRandomEventPool = resetRandomEventPool;
+		window.yearlyResetRandomEventPool = yearlyResetRandomEventPool;
 

@@ -5,7 +5,7 @@
 			if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
 
 			const confInfo = getConferenceInfo(gameState.month, grade, gameState.year);
-			const location = getConferenceLocation(paper.title);
+			const location = getConferenceLocationByHash(paper.title);
 
 			paper.reviewing = true;
 			paper.reviewMonths = 4;
@@ -981,4 +981,4 @@
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.submitPaper = submitPaper;
 		window.abandonPaper = abandonPaper;
-		window.showPaperSelectModal = showPaperSelectModal;
+		// showPaperSelectModal 在 modals.js 中定义和导出，不在此处重复导出

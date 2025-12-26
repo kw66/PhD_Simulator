@@ -1040,12 +1040,16 @@
 				{ id: 'chair', name: '人体工学椅', sellPrice: 5 },
 				{ id: 'monitor', name: '4K显示器', sellPrice: 4 },
 				{ id: 'keyboard', name: '机械键盘', sellPrice: 4 },
-				{ id: 'gpu_buy', name: 'GPU服务器', sellPrice: 6 }
+				{ id: 'gpu_buy', name: 'GPU服务器', sellPrice: 6 },
+				{ id: 'bike', name: '平把公路车', sellPrice: 5 }
 			];
 			// 检查是否有可出售的物品
 			const ownedSellable = sellableItems.filter(si => {
 				if (si.id === 'gpu_buy') {
 					return (gameState.gpuServersBought || 0) > 0;
+				}
+				if (si.id === 'bike') {
+					return gameState.hasBike;
 				}
 				return gameState.furnitureBought && gameState.furnitureBought[si.id.replace('_buy', '')];
 			});			
@@ -1054,7 +1058,7 @@
 				html += `<div style="margin-bottom:15px;padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:8px;border:1px solid rgba(243,156,18,0.4);">
 					<div style="font-weight:600;color:#d68910;margin-bottom:8px;"><i class="fas fa-store"></i> 出售物品（半价回收）</div>`;
 				
-				ownedSellable.forEach(si => {
+					ownedSellable.forEach(si => {
 					let ownedCount = 1;
 					if (si.id === 'gpu_buy') {
 						ownedCount = gameState.gpuServersBought || 0;
@@ -1071,9 +1075,19 @@
 						upgradeBtn = `<button class="btn btn-success" onclick="showChairUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
 					}
 
+					// ★★★ 自行车升级信息 ★★★
+					let bikeInfo = '';
+					if (si.id === 'bike') {
+						const bikeUpgrade = gameState.bikeUpgrade;
+						if (bikeUpgrade && typeof BIKE_UPGRADES !== 'undefined' && BIKE_UPGRADES[bikeUpgrade]) {
+							bikeInfo = ` → ${BIKE_UPGRADES[bikeUpgrade].icon} ${BIKE_UPGRADES[bikeUpgrade].name}`;
+						}
+						upgradeBtn = `<button class="btn btn-success" onclick="showBikeUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+					}
+
 					html += `<div class="shop-item" style="background:var(--card-bg);">
 						<div class="shop-item-info">
-							<div class="shop-item-name">${si.name}${chairInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
+							<div class="shop-item-name">${si.name}${chairInfo}${bikeInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
 							<div class="shop-item-desc">出售获得 ${si.sellPrice} 金币</div>
 						</div>
 						<div class="shop-item-action">
@@ -1268,6 +1282,90 @@
 			updateBuffs();
 		}
 
+		// ==================== 自行车升级系统 ====================
+		// 显示自行车升级选项
+		function showBikeUpgradeModal() {
+			const currentUpgrade = gameState.bikeUpgrade;
+
+			// 如果已经升级过，不能再选择其他方向
+			if (currentUpgrade) {
+				const upgrade = BIKE_UPGRADES[currentUpgrade];
+				showModal('🚲 自行车升级',
+					`<div style="text-align:center;">
+						<div style="font-size:3rem;margin-bottom:10px;">${upgrade.icon}</div>
+						<div style="font-weight:600;font-size:1.1rem;">${upgrade.name}</div>
+						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;">效果：${upgrade.desc}</div>
+						<div style="margin-top:15px;padding:12px;background:var(--light-bg);border-radius:8px;">
+							<p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+								<i class="fas fa-info-circle"></i> 自行车已升级完成<br>
+								如需更换升级方向，请先卖出后重新购买
+							</p>
+						</div>
+					</div>`,
+					[{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }]
+				);
+				return;
+			}
+
+			let html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">🚲</div>
+					<div style="font-weight:600;">当前：平把公路车</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：每月SAN-1，每累计减少6后SAN上限+1</div>
+					<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">累计骑行消耗：${gameState.bikeSanSpent || 0} SAN</div>
+				</div>
+				<div style="font-weight:600;margin-bottom:10px;">选择升级方向（只能选择一次）：</div>
+			`;
+
+			Object.entries(BIKE_UPGRADES).forEach(([key, upgrade]) => {
+				const canAfford = gameState.gold >= upgrade.price;
+
+				html += `
+					<div class="shop-item ${!canAfford ? 'disabled' : ''}" style="margin-bottom:8px;">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${upgrade.icon} ${upgrade.name}</div>
+							<div class="shop-item-desc">${upgrade.desc}</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price">💰${upgrade.price}</span>
+							<button class="btn btn-primary" onclick="upgradeBike('${key}')" ${!canAfford ? 'disabled' : ''}>
+								${canAfford ? '升级' : '金币不足'}
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			showModal('🚲 自行车升级', html, [
+				{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }
+			]);
+		}
+
+		// 执行自行车升级
+		function upgradeBike(upgradeKey) {
+			const upgrade = BIKE_UPGRADES[upgradeKey];
+			if (!upgrade) return;
+
+			if (gameState.gold < upgrade.price) {
+				showModal('❌ 升级失败', `<p>金币不足！升级到${upgrade.name}需要${upgrade.price}金币，当前只有${gameState.gold}金币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除金币
+			gameState.gold -= upgrade.price;
+
+			// 记录升级状态（保留累计骑行消耗）
+			gameState.bikeUpgrade = upgradeKey;
+
+			addLog('升级', `自行车升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
+
+			closeModal();
+			openShop();
+			updateAllUI();
+			updateBuffs();
+		}
+
 		// ★★★ 新增：出售物品函数 ★★★
 		function sellItem(id) {
 			// ★★★ 修复：椅子卖出价格根据升级状态计算 ★★★
@@ -1281,11 +1379,23 @@
 				return basePrice;
 			};
 
+			// ★★★ 新增：自行车卖出价格根据升级状态计算 ★★★
+			const getBikeSellPrice = () => {
+				let basePrice = 5;
+				if (gameState.bikeUpgrade) {
+					const upgrade = BIKE_UPGRADES[gameState.bikeUpgrade];
+					// 升级后卖出价格 = 基础价格 + 升级价格的一半（下取整）
+					basePrice += Math.floor(upgrade.price / 2);
+				}
+				return basePrice;
+			};
+
 			const sellPrices = {
 				'chair': getChairSellPrice(),
 				'monitor': 4,
 				'keyboard': 4,
-				'gpu_buy': 6
+				'gpu_buy': 6,
+				'bike': getBikeSellPrice()
 			};
 
 			const sellPrice = sellPrices[id];
@@ -1315,6 +1425,15 @@
 				case 'gpu_buy':
 					canSell = (gameState.gpuServersBought || 0) > 0;
 					itemName = 'GPU服务器';
+					break;
+				case 'bike':
+					canSell = gameState.hasBike;
+					// 显示升级后的名称
+					if (gameState.bikeUpgrade) {
+						itemName = BIKE_UPGRADES[gameState.bikeUpgrade].name;
+					} else {
+						itemName = '平把公路车';
+					}
 					break;
 			}
 			
@@ -1376,6 +1495,15 @@
 								if (gpuBonusIndex !== -1) {
 									gameState.buffs.permanent.splice(gpuBonusIndex, 1);
 								}
+								break;
+							case 'bike':
+								gameState.hasBike = false;
+								// 重置升级状态，再次购买可重新选择升级方向
+								gameState.bikeUpgrade = null;
+								// 注意：累计骑行消耗（bikeSanSpent）保留，不重置
+								// 恢复商店状态
+								const bikeItem = shopItems.find(i => i.id === 'bike');
+								if (bikeItem) bikeItem.bought = false;
 								break;
 						}
 						
@@ -1573,6 +1701,13 @@
 					});
 					result += '，获得本月buff-做实验多做1次且分数+1';
 					break;
+
+				case 'bike':
+					item.bought = true;
+					gameState.hasBike = true;
+					gameState.bikeUpgrade = null;  // 未升级
+					result += '，获得永久效果-每月SAN-1，每累计减少6后SAN上限+1';
+					break;
             }
 
             addLog('购买', `购买了${item.name}`, result);
@@ -1645,3 +1780,20 @@
                 }
             });
         }
+
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.renderShop = renderShop;
+		window.buyItem = buyItem;
+		window.sellItem = sellItem;
+		window.toggleSubscription = toggleSubscription;
+		window.showChairUpgradeModal = showChairUpgradeModal;
+		window.upgradeChair = upgradeChair;
+		window.showBikeUpgradeModal = showBikeUpgradeModal;
+		window.upgradeBike = upgradeBike;
+		window.renderBlackMarket = renderBlackMarket;
+		window.manualRefreshBlackMarket = manualRefreshBlackMarket;
+		window.toggleItemLock = toggleItemLock;
+		window.buyBlackMarketItem = buyBlackMarketItem;
+		window.showCurrentAchievements = showCurrentAchievements;
+		window.showAllAchievements = showAllAchievements;
+		window.showAchievementDetail = showAchievementDetail;

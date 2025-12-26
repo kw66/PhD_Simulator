@@ -1,19 +1,37 @@
 ﻿        // ==================== 通用属性修改函数（支持逆位）====================
-        // 计算实际SAN变化值（考虑怠惰之大多数的翻倍效果）
+        // 计算实际SAN变化值（考虑怠惰之大多数的翻倍效果和季节buff）
         function getActualSanChange(delta) {
-            if (gameState.isReversed && gameState.character === 'normal' && delta < 0) {
-                const multiplier = gameState.reversedAwakened ? 3 : 2;
-                return delta * multiplier;
+            if (delta < 0) {
+                // 怠惰之大多数效果
+                if (gameState.isReversed && gameState.character === 'normal') {
+                    const multiplier = gameState.reversedAwakened ? 3 : 2;
+                    delta = delta * multiplier;
+                }
+                // ★★★ 新增：季节buff（对扣SAN操作生效）★★★
+                const seasonMod = getSeasonSanModifier();
+                if (seasonMod !== 0) {
+                    delta = delta + seasonMod;  // 春季-1（减少扣除），夏季+1（增加扣除）
+                    if (delta > 0) delta = 0;  // 最低扣0
+                }
             }
             return delta;
         }
-        
+
         function changeSan(delta) {
-            if (gameState.isReversed && gameState.character === 'normal' && delta < 0) {
-                const multiplier = gameState.reversedAwakened ? 3 : 2;
-                delta = delta * multiplier;
+            if (delta < 0) {
+                // 怠惰之大多数效果
+                if (gameState.isReversed && gameState.character === 'normal') {
+                    const multiplier = gameState.reversedAwakened ? 3 : 2;
+                    delta = delta * multiplier;
+                }
+                // ★★★ 新增：季节buff（对扣SAN操作生效）★★★
+                const seasonMod = getSeasonSanModifier();
+                if (seasonMod !== 0) {
+                    delta = delta + seasonMod;  // 春季-1（减少扣除），夏季+1（增加扣除）
+                    if (delta > 0) delta = 0;  // 最低扣0
+                }
             }
-            
+
             if (delta > 0) {
                 gameState.san = Math.min(gameState.sanMax, gameState.san + delta);
             } else {

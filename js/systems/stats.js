@@ -1136,11 +1136,15 @@
 			// ★★★ 修复：计算总通关角色数（正位6个+逆位6个+真大多数1个=13个）★★★
 			const totalClearedCharacters = getTotalClearedCharacterSlots();
 
+			// 获取游戏总成就数
+			const maxAchievements = (typeof ALL_ACHIEVEMENTS !== 'undefined') ? ALL_ACHIEVEMENTS.length : 67;
+
 			return {
 				totalGames,
 				clearCount,
 				totalAchievements,
-				totalClearedCharacters
+				totalClearedCharacters,
+				maxAchievements
 			};
 		}
 
@@ -1215,10 +1219,9 @@
 				// 紧凑样式（已弃用）
 				return `
 					<div class="player-stats-compact">
-						<span class="ps-item">🎮 ${stats.totalGames}局</span>
-						<span class="ps-item">✅ ${stats.clearCount}通关</span>
-						<span class="ps-item">🏆 ${stats.totalAchievements}成就</span>
-						<span class="ps-item">👤 ${stats.totalClearedCharacters}角色</span>
+						<span class="ps-item">✅ ${stats.clearCount}/${stats.totalGames}通关</span>
+						<span class="ps-item">🏆 ${stats.totalAchievements}/${stats.maxAchievements}成就</span>
+						<span class="ps-item">👤 ${stats.totalClearedCharacters}/13角色</span>
 					</div>
 				`;
 			} else if (style === 'poster') {
@@ -1227,9 +1230,8 @@
 					<div class="player-stats-poster">
 						<div class="psp-title">📊 我的游戏记录</div>
 						<div class="psp-row">
-							<span class="psp-item">🎮 ${stats.totalGames}局</span>
-							<span class="psp-item">✅ ${stats.clearCount}通关</span>
-							<span class="psp-item">🏆 ${stats.totalAchievements}成就</span>
+							<span class="psp-item">✅ ${stats.clearCount}/${stats.totalGames}通关</span>
+							<span class="psp-item">🏆 ${stats.totalAchievements}/${stats.maxAchievements}成就</span>
 							<span class="psp-item">👤 ${stats.totalClearedCharacters}/13角色</span>
 						</div>
 					</div>
@@ -1241,19 +1243,15 @@
 						<div class="psb-title">📊 我的游戏记录</div>
 						<div class="psb-items">
 							<div class="psb-item">
-								<div class="psb-value">${stats.totalGames}</div>
-								<div class="psb-label">总局数</div>
-							</div>
-							<div class="psb-item">
-								<div class="psb-value">${stats.clearCount}</div>
+								<div class="psb-value">${stats.clearCount}/${stats.totalGames}</div>
 								<div class="psb-label">通关数</div>
 							</div>
 							<div class="psb-item">
-								<div class="psb-value">${stats.totalAchievements}</div>
+								<div class="psb-value">${stats.totalAchievements}/${stats.maxAchievements}</div>
 								<div class="psb-label">总成就</div>
 							</div>
 							<div class="psb-item">
-								<div class="psb-value">${stats.totalClearedCharacters}</div>
+								<div class="psb-value">${stats.totalClearedCharacters}/13</div>
 								<div class="psb-label">通关角色</div>
 							</div>
 						</div>
@@ -1264,9 +1262,8 @@
 				return `
 					<div class="player-stats-box">
 						<div class="ps-row">
-							<span class="ps-item"><i class="fas fa-gamepad"></i> 总局数 <strong>${stats.totalGames}</strong></span>
-							<span class="ps-item"><i class="fas fa-check-circle"></i> 通关数 <strong>${stats.clearCount}</strong></span>
-							<span class="ps-item"><i class="fas fa-trophy"></i> 总成就 <strong>${stats.totalAchievements}</strong></span>
+							<span class="ps-item"><i class="fas fa-check-circle"></i> 通关数 <strong>${stats.clearCount}/${stats.totalGames}</strong></span>
+							<span class="ps-item"><i class="fas fa-trophy"></i> 总成就 <strong>${stats.totalAchievements}/${stats.maxAchievements}</strong></span>
 							<span class="ps-item"><i class="fas fa-user-check"></i> 通关角色 <strong>${stats.totalClearedCharacters}/13</strong></span>
 						</div>
 					</div>

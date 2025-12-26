@@ -374,6 +374,10 @@
 			// 琴瑟和鸣：完成恋人恋爱任务12次
 			const loverForTask_check = gameState.relationships && gameState.relationships.find(r => r.type === 'lover');
 			if (loverForTask_check && (loverForTask_check.stats?.completedCount || 0) >= 12) achievementsToCheck.push('💕 琴瑟和鸣');
+			// ★★★ 新增：自然风干 - 论文的idea和实验分由于时间流逝都衰减为1 ★★★
+			if (gameState.naturallyDried) achievementsToCheck.push('🍂 自然风干');
+			// ★★★ 新增：骑行大佬 - 累计骑自行车减少30SAN ★★★
+			if ((gameState.bikeSanSpent || 0) >= 30) achievementsToCheck.push('🚴 骑行大佬');
 
 			// 检查哪些是新获得的
 			achievementsToCheck.forEach(ach => {

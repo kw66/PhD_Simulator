@@ -1345,3 +1345,13 @@
 			}
 		}
 
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.saveGame = saveGame;
+		window.loadGame = loadGame;
+		window.deleteSave = deleteSave;
+		window.loadAutoSave = loadAutoSave;
+		window.openLoadModalFromStart = openLoadModalFromStart;
+		window.openAutoSaveModal = openAutoSaveModal;
+		window.showSaveModal = showSaveModal;
+		window.showLoadModal = showLoadModal;
+

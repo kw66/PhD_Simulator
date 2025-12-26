@@ -1147,7 +1147,10 @@
             gameState.selectedAdvisor = selectedAdvisor;
 
             const advisorType = ADVISOR_TYPES[selectedAdvisor.advisorType];
-            addLog('选择导师', `拜入${selectedAdvisor.name}门下`, `${advisorType.name}（${selectedAdvisor.title}）`);
+            // ★★★ 修改：合并导师头衔信息到第一行，添加工资信息 ★★★
+            const masterSalary = advisorType.salary.master;
+            const phdSalary = advisorType.salary.phd;
+            addLog('选择导师', `拜入${selectedAdvisor.name}（${advisorType.name}，${selectedAdvisor.title}）门下`, `工资：硕${masterSalary}/月，博${phdSalary}/月`);
 
             window._advisorOptions = null;
             window._advisorOnSelected = null;

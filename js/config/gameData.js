@@ -197,6 +197,10 @@
 			// ★★★ 新增6个成就 ★★★
 			'💪 超级体魄', '🧠 超级大脑', '✨ 画龙点睛',
 			'🤝 人情练达', '🎖️ 得力干将', '💕 琴瑟和鸣',
+			// ★★★ 新增成就 ★★★
+			'🍂 自然风干',
+			// ★★★ 新增：骑行成就 ★★★
+			'🚴 骑行大佬',
 		];
 
         // 结局名称映射
@@ -322,6 +326,10 @@
 			'🤝 人情练达': '和关系栏的所有角色共计交流50次',
 			'🎖️ 得力干将': '完成导师任务12次',
 			'💕 琴瑟和鸣': '完成恋人恋爱任务12次',
+			// ★★★ 新增成就要求 ★★★
+			'🍂 自然风干': '一篇论文的idea分和实验分由于时间流逝都衰减为1',
+			// ★★★ 新增：骑行成就要求 ★★★
+			'🚴 骑行大佬': '累计骑自行车减少30SAN',
 		};
 
         // 商店物品
@@ -334,7 +342,8 @@
 			{ id: 'gpu_buy', name: '购买GPU服务器', desc: '永久buff-每次做实验多做1次且分数+1', price: 10, once: false },  // ★★★ 修改：价格12→10，增加分数+1 ★★★
 			{ id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
 			{ id: 'keyboard', name: '机械键盘', desc: '永久buff-写论文变为SAN-3', price: 8, once: true, bought: false },
-			{ id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false }
+			{ id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false },
+			{ id: 'bike', name: '平把公路车', desc: '每月SAN-1，每累计减少6后SAN上限+1', price: 10, once: true, bought: false }
 		];
 		
 		// ==================== 会议配置 ====================
@@ -591,3 +600,73 @@
 			// 兜底：返回随机地点
 			return getRandomConferenceLocation();
 		}
+
+		// ==================== 四季系统 ====================
+		// 游戏月份换算：游戏第1月 = 现实9月
+		// 春季（现实3-5月）= 游戏月份 7, 8, 9
+		// 夏季（现实6-8月）= 游戏月份 10, 11, 12
+		// 秋季（现实9-11月）= 游戏月份 1, 2, 3
+		// 冬季（现实12-2月）= 游戏月份 4, 5, 6
+		const SEASONS = {
+			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '万物复苏', desc: '所有SAN扣除的操作减少1（最低为0）' },
+			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '骄阳似火', desc: '有SAN扣除的操作增加1' },
+			autumn: { name: '秋季', icon: '🍂', months: [1, 2, 3], buff: '秋高气爽', desc: '每月回复SAN+1' },
+			winter: { name: '冬季', icon: '❄️', months: [4, 5, 6], buff: '寒风刺骨', desc: '每月回复SAN-1' }
+		};
+
+		// 获取当前季节
+		function getCurrentSeason() {
+			// ★★★ 安全检查：游戏未初始化时返回默认秋季 ★★★
+			if (!gameState || gameState.month === undefined || gameState.month === null) {
+				return { key: 'autumn', ...SEASONS.autumn };
+			}
+			const month = gameState.month;
+			for (const [key, season] of Object.entries(SEASONS)) {
+				if (season.months.includes(month)) {
+					return { key, ...season };
+				}
+			}
+			return { key: 'autumn', ...SEASONS.autumn };  // 默认秋季
+		}
+
+		// 获取季节SAN修正值（用于SAN扣除操作）
+		function getSeasonSanModifier() {
+			// ★★★ 安全检查：游戏未初始化时返回0 ★★★
+			if (!gameState || gameState.month === undefined || gameState.month === null) {
+				return 0;
+			}
+			const season = getCurrentSeason();
+			if (season.key === 'spring') return -1;  // 春季减少扣除
+			if (season.key === 'summer') return 1;   // 夏季增加扣除
+			return 0;  // 秋冬无修正
+		}
+
+		// ==================== 自行车升级系统 ====================
+		const BIKE_UPGRADES = {
+			road: {
+				name: '弯把公路车',
+				icon: '🚴',
+				desc: '每月SAN-2，每累计减少5后SAN上限+1',
+				price: 20,
+				monthlySanCost: 2,
+				sanThreshold: 5  // 每累计减少5后SAN上限+1
+			},
+			ebike: {
+				name: '小电驴',
+				icon: '🛵',
+				desc: '春季和秋季每月SAN+1',
+				price: 12,
+				monthlySanCost: 0,  // 小电驴不消耗SAN
+				seasonBonus: true  // 春秋季节加成
+			}
+		};
+
+		// ==================== 全局函数导出 ====================
+		window.getRegionInfo = getRegionInfo;
+		window.getConferenceCostByRegion = getConferenceCostByRegion;
+		window.getLocationsByRegion = getLocationsByRegion;
+		window.getRandomConferenceLocation = getRandomConferenceLocation;
+		window.generateMonthlyConferenceLocations = generateMonthlyConferenceLocations;
+		window.getConferenceLocation = getConferenceLocation;
+		window.getCurrentSeason = getCurrentSeason;
+		window.getSeasonSanModifier = getSeasonSanModifier;

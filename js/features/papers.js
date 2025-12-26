@@ -187,6 +187,10 @@
 			const gradeColors = { 'A': '#e74c3c', 'B': '#3498db', 'C': '#2ecc71' };
 			const gradeColor = gradeColors[grade] || 'var(--primary-color)';
 
+			// ★★★ 新增：获取会议地点信息 ★★★
+			const location = getConferenceLocation(month, grade);
+			const regionInfo = getRegionInfo(location.region);
+
 			let personalityHtml = '';
 			if (typeof getBaseConferencePersonality === 'function') {
 				const personality = getBaseConferencePersonality(month, grade);
@@ -237,6 +241,13 @@
 					<div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);">${info.fullName}</div>
 					<div style="font-size:0.85rem;color:var(--text-secondary);">${info.year}</div>
 				</div>
+				<div style="margin-bottom:12px;padding:10px 12px;background:${regionInfo.color}15;border-radius:8px;border-left:3px solid ${regionInfo.color};">
+					<div style="font-size:0.9rem;">
+						<span style="margin-right:6px;">${regionInfo.icon}</span>
+						<strong>开会地点:</strong> ${location.city}, ${location.country}
+						<span style="margin-left:8px;padding:2px 8px;background:${regionInfo.color}22;color:${regionInfo.color};border-radius:10px;font-size:0.75rem;font-weight:600;">${regionInfo.name}</span>
+					</div>
+				</div>
 				${personalityHtml}
 				${statsHtml}
 			`;
@@ -269,21 +280,35 @@
 			const regionB = getRegionInfo(locB.region);
 			const regionC = getRegionInfo(locC.region);
 
+			// ★★★ 获取会议统计数据（用于显示中稿均分）★★★
+			const statsA = getConferenceStatsForDisplay(gameState.month, 'A', gameState.isReversed);
+			const statsB = getConferenceStatsForDisplay(gameState.month, 'B', gameState.isReversed);
+			const statsC = getConferenceStatsForDisplay(gameState.month, 'C', gameState.isReversed);
+
 			// 在所有槽之前添加统一的会议信息栏（点击显示弹窗）
 			html += `<div class="conference-info-bar">
 				<div class="conference-info-title"><i class="fas fa-calendar-alt"></i> 本月可投会议（4个月后开会）</div>
 				<div class="conference-info-list" style="flex-direction:column;gap:4px;">
 					<div class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
 						<span>A: ${confA.name}</span>
-						<span style="font-size:0.7rem;color:${regionA.color};background:${regionA.color}15;padding:2px 6px;border-radius:10px;">${regionA.icon} ${locA.city}</span>
+						<span style="display:flex;align-items:center;gap:6px;">
+							<span style="font-size:0.65rem;color:#e74c3c;background:rgba(231,76,60,0.1);padding:2px 5px;border-radius:8px;">均分${statsA.hasEnoughData ? statsA.avgAcceptedScore : '?'}</span>
+							<span style="font-size:0.7rem;color:${regionA.color};background:${regionA.color}15;padding:2px 6px;border-radius:10px;">${regionA.icon} ${locA.city}</span>
+						</span>
 					</div>
 					<div class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
 						<span>B: ${confB.name}</span>
-						<span style="font-size:0.7rem;color:${regionB.color};background:${regionB.color}15;padding:2px 6px;border-radius:10px;">${regionB.icon} ${locB.city}</span>
+						<span style="display:flex;align-items:center;gap:6px;">
+							<span style="font-size:0.65rem;color:#3498db;background:rgba(52,152,219,0.1);padding:2px 5px;border-radius:8px;">均分${statsB.hasEnoughData ? statsB.avgAcceptedScore : '?'}</span>
+							<span style="font-size:0.7rem;color:${regionB.color};background:${regionB.color}15;padding:2px 6px;border-radius:10px;">${regionB.icon} ${locB.city}</span>
+						</span>
 					</div>
 					<div class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
 						<span>C: ${confC.name}</span>
-						<span style="font-size:0.7rem;color:${regionC.color};background:${regionC.color}15;padding:2px 6px;border-radius:10px;">${regionC.icon} ${locC.city}</span>
+						<span style="display:flex;align-items:center;gap:6px;">
+							<span style="font-size:0.65rem;color:#2ecc71;background:rgba(46,204,113,0.1);padding:2px 5px;border-radius:8px;">均分${statsC.hasEnoughData ? statsC.avgAcceptedScore : '?'}</span>
+							<span style="font-size:0.7rem;color:${regionC.color};background:${regionC.color}15;padding:2px 6px;border-radius:10px;">${regionC.icon} ${locC.city}</span>
+						</span>
 					</div>
 				</div>
 			</div>`;
@@ -1712,7 +1737,7 @@
 			if (!state) return;
 			
 			const confInfo = paper.conferenceInfo || getConferenceInfo(paper.submittedMonth || gameState.month, grade, gameState.year);
-			const confLocation = paper.conferenceLocation || getConferenceLocation(paper.title);
+			const confLocation = paper.conferenceLocation || getConferenceLocationByHash(paper.title);
 			
 			// 生成会议唯一标识
 			const confKey = `${confInfo.name}_${confInfo.year}`;
@@ -2144,6 +2169,7 @@
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.createNewPaper = createNewPaper;
 		window.submitToJournal = submitToJournal;
+		window.acceptJournalPaper = acceptJournalPaper;
 		window.upgradeSlot = upgradeSlot;
 		window.promotePaper = promotePaper;
 		window.showConferenceInfoModal = showConferenceInfoModal;

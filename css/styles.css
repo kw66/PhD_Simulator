@@ -3589,6 +3589,15 @@ body {
     opacity: 0.95;
 }
 
+.time-season {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    cursor: help;
+}
+
 .time-remaining {
     font-size: 0.8rem;
     padding: 3px 10px;
@@ -3626,6 +3635,11 @@ body {
 
     .time-month {
         font-size: 0.85rem;
+    }
+
+    .time-season {
+        font-size: 0.75rem;
+        padding: 1px 6px;
     }
 
     .time-remaining {

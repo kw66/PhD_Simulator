@@ -176,6 +176,23 @@
 				gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
 			}
 
+			// ★★★ 新增：季节效果（+SAN类）★★★
+			const currentSeason = getCurrentSeason();
+			if (currentSeason.key === 'autumn') {
+				// 秋季：秋高气爽，每月回复SAN+1
+				gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
+			} else if (currentSeason.key === 'winter') {
+				// 冬季：寒风刺骨，每月回复SAN-1
+				gameState.san = Math.max(0, gameState.san - 1);
+			}
+
+			// ★★★ 新增：小电驴季节加成（+SAN类）★★★
+			if (gameState.bikeUpgrade === 'ebike') {
+				if (currentSeason.key === 'spring' || currentSeason.key === 'autumn') {
+					gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
+				}
+			}
+
 			// ============================================
 			// ★★★ 金币结算：-金币类 ★★★
 			// ============================================
@@ -257,6 +274,41 @@
 				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
 			}
 
+			// ★★★ 新增：自行车每月效果（-SAN类）★★★
+			if (gameState.hasBike && gameState.bikeUpgrade !== 'ebike') {
+				// 平把公路车或弯把公路车
+				let bikeSanCost = 1;  // 平把公路车每月-1
+				let sanThreshold = 6;  // 平把公路车每累计6后SAN上限+1
+
+				if (gameState.bikeUpgrade === 'road') {
+					bikeSanCost = 2;  // 弯把公路车每月-2
+					sanThreshold = 5;  // 弯把公路车每累计5后SAN上限+1
+				}
+
+				// 扣除SAN
+				gameState.san = Math.max(0, gameState.san - bikeSanCost);
+
+				// 累计骑行消耗
+				gameState.bikeSanSpent = (gameState.bikeSanSpent || 0) + bikeSanCost;
+
+				// 检查是否达到SAN上限提升阈值
+				const prevThresholdCount = Math.floor((gameState.bikeSanSpent - bikeSanCost) / sanThreshold);
+				const newThresholdCount = Math.floor(gameState.bikeSanSpent / sanThreshold);
+				if (newThresholdCount > prevThresholdCount) {
+					gameState.sanMax = (gameState.sanMax || 20) + 1;
+					addLog('骑行效果', gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车',
+						`累计骑行消耗${gameState.bikeSanSpent}SAN，SAN上限+1 → ${gameState.sanMax}`);
+				}
+
+				// ★★★ 黑市：理智护身符检查 ★★★
+				checkAmuletEffects();
+
+				if (gameState.san < 0) {
+					triggerEnding('burnout');
+					return;
+				}
+			}
+
 			// ============================================
 			// ★★★ 连续低SAN月数统计（用于感冒概率）★★★
 			// ============================================
@@ -288,7 +340,11 @@
 						// 不衰减（预见未来热点 或 期刊送审修改阶段）
 					} else {
 						let decayInfo = [];
-						
+
+						// ★★★ 记录衰减前的分数，用于成就检测 ★★★
+						const prevIdeaScore = paper.ideaScore;
+						const prevExpScore = paper.expScore;
+
 						// ★★★ 修改：基于当前分数的10%衰减，最少1 ★★★
 						if (paper.ideaScore > 1) {
 							const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
@@ -300,7 +356,12 @@
 							paper.expScore = Math.max(1, paper.expScore - expDecay);
 							decayInfo.push(`实验-${expDecay}`);
 						}
-						
+
+						// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
+						if ((prevIdeaScore > 1 || prevExpScore > 1) && paper.ideaScore === 1 && paper.expScore === 1) {
+							gameState.naturallyDried = true;
+						}
+
 						if (decayInfo.length > 0) {
 							decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
 						}
@@ -313,19 +374,28 @@
 			gameState.papers.forEach((paper, idx) => {
 				if (paper && paper.reviewing) {
 					paper.reviewMonths--;
-					
+
 					// ★★★ 新增：每月时效性衰减 ★★★
 					if (!gameState.noDecay) {
+						// ★★★ 记录衰减前的分数，用于成就检测 ★★★
+						const prevIdeaScore = paper.ideaScore;
+						const prevExpScore = paper.expScore;
+
 						// 基于当前分数的10%衰减，最少1
 						const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
 						const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
-						
+
 						paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
 						paper.expScore = Math.max(1, paper.expScore - expDecay);
-						
+
 						// 记录累计衰减（用于显示）
 						paper.totalIdeaDecay = (paper.totalIdeaDecay || 0) + ideaDecay;
 						paper.totalExpDecay = (paper.totalExpDecay || 0) + expDecay;
+
+						// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
+						if ((prevIdeaScore > 1 || prevExpScore > 1) && paper.ideaScore === 1 && paper.expScore === 1) {
+							gameState.naturallyDried = true;
+						}
 					}
 					if (paper.reviewMonths <= 0) {
 						paper.reviewMonths = 0;
@@ -362,7 +432,22 @@
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
 				logResult += '，工学椅SAN+1';
 			}
-			addLog('进入下一月', `第${gameState.year}年第${gameState.month}月`, logResult);
+			// ★★★ 新增：季节SAN效果日志 ★★★
+			if (currentSeason.key === 'autumn') {
+				logResult += '，秋高气爽SAN+1';
+			} else if (currentSeason.key === 'winter') {
+				logResult += '，寒风刺骨SAN-1';
+			}
+			// ★★★ 新增：小电驴季节加成日志 ★★★
+			if (gameState.bikeUpgrade === 'ebike' && (currentSeason.key === 'spring' || currentSeason.key === 'autumn')) {
+				logResult += '，小电驴SAN+1';
+			}
+			// ★★★ 新增：自行车骑行消耗日志 ★★★
+			if (gameState.hasBike && gameState.bikeUpgrade !== 'ebike') {
+				const bikeCost = gameState.bikeUpgrade === 'road' ? 2 : 1;
+				logResult += `，骑行SAN-${bikeCost}`;
+			}
+			addLog('进入下一月', `第${gameState.year}年第${gameState.month}月 ${currentSeason.icon}${currentSeason.buff}`, logResult);
 
 			// ★★★ 修改：衰减日志（预见未来热点时显示不同信息）★★★
 			if (gameState.noDecay) {

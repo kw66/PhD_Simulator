@@ -108,7 +108,11 @@
         }
 
         // 获取会议地点（基于论文标题hash，保证同一论文地点固定）
-        function getConferenceLocation(paperTitle) {
+        // ★★★ 重命名避免与 gameData.js 中的 getConferenceLocation 冲突 ★★★
+        function getConferenceLocationByHash(paperTitle) {
+            if (!paperTitle || typeof paperTitle !== 'string') {
+                return CONFERENCE_LOCATIONS[0];  // 安全返回默认值
+            }
             const hash = paperTitle.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
             return CONFERENCE_LOCATIONS[hash % CONFERENCE_LOCATIONS.length];
         }
@@ -269,7 +273,7 @@
 		window.scrollToPanel = scrollToPanel;
 		window.getRealYear = getRealYear;
 		window.getConferenceInfo = getConferenceInfo;
-		window.getConferenceLocation = getConferenceLocation;
+		window.getConferenceLocationByHash = getConferenceLocationByHash;
 		window.formatConferenceString = formatConferenceString;
 		window.getMonthStats = getMonthStats;
 		window.loadSubmissionStats = loadSubmissionStats;
