@@ -977,3 +977,8 @@
 				]
 			);
 		}
+
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.submitPaper = submitPaper;
+		window.abandonPaper = abandonPaper;
+		window.showPaperSelectModal = showPaperSelectModal;

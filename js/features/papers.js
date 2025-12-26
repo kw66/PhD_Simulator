@@ -376,7 +376,7 @@
 								<span class="score-box-inline"><span class="score-label">idea</span><span class="score-value">${paper.ideaScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">实验</span><span class="score-value">${paper.expScore}</span></span>
 								<span class="score-box-inline"><span class="score-label">写作</span><span class="score-value">${paper.writeScore}</span></span>
-								<span class="score-box-inline total"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
+								<span class="score-box-inline total"><span class="score-label">总分</span><span class="score-value">${simpleTotal}</span></span>
 							</div>
 							<div class="paper-actions-compact">
 								<button class="submit-btn grade-a" onclick="submitPaper(${i},'A')" ${!canSubmit?'disabled':''}>
@@ -1950,5 +1950,17 @@
 					}
 				}))
 			);
-		}		
-		
+		}
+
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.createNewPaper = createNewPaper;
+		window.submitToJournal = submitToJournal;
+		window.upgradeSlot = upgradeSlot;
+		window.promotePaper = promotePaper;
+		window.showConferenceInfoModal = showConferenceInfoModal;
+		window.renderPaperSlots = renderPaperSlots;
+		window.readPaper = readPaper;
+		window.partTimeJob = partTimeJob;
+		window.thinkIdea = thinkIdea;
+		window.doExperiment = doExperiment;
+		window.writePaper = writePaper;

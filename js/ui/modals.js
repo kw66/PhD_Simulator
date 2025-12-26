@@ -255,7 +255,23 @@
             if (!gameState.submissionStats) {
                 return getDefaultSubmissionStats()[`${gameMonth}_${grade}_${isReversed}`];
             }
-            return gameState.submissionStats[`${gameMonth}_${grade}_${isReversed}`] || 
+            return gameState.submissionStats[`${gameMonth}_${grade}_${isReversed}`] ||
                    getDefaultSubmissionStats()[`${gameMonth}_${grade}_${isReversed}`];
         }
+
+		// ==================== 全局函数暴露（供onclick调用）====================
+		window.showModal = showModal;
+		window.closeModal = closeModal;
+		window.showPaperSelectModal = showPaperSelectModal;
+		window.addLog = addLog;
+		window.rand = rand;
+		window.shuffle = shuffle;
+		window.scrollToPanel = scrollToPanel;
+		window.getRealYear = getRealYear;
+		window.getConferenceInfo = getConferenceInfo;
+		window.getConferenceLocation = getConferenceLocation;
+		window.formatConferenceString = formatConferenceString;
+		window.getMonthStats = getMonthStats;
+		window.loadSubmissionStats = loadSubmissionStats;
+		window.getDefaultSubmissionStats = getDefaultSubmissionStats;
 
