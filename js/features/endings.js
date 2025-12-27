@@ -250,7 +250,8 @@
 			if (gameState.research >= 20) achievementsToCheck.push('🏆 诺奖选手');
 			if (gameState.social >= 20) achievementsToCheck.push('🌸 交际花');
 			if (gameState.favor >= 20) achievementsToCheck.push('🤝 铁杆师生');
-			if (gameState.san > 20) achievementsToCheck.push('⚡ 精力满满');
+			// ★★★ 修复：精力满满是"结局时"成就，不应在游戏中途检测 ★★★
+			// if (gameState.san > 20) achievementsToCheck.push('⚡ 精力满满');
 			const stats = [gameState.research, gameState.favor, gameState.social];
 			const maxStat = Math.max(...stats);
 			const minStat = Math.min(...stats);
