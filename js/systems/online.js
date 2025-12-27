@@ -404,12 +404,17 @@
 		function renderMessage(msg, replies = []) {
 			const time = formatMessageTime(msg.created_at);
 			const replyCount = replies.length;
-			
+
 			let repliesHtml = '';
 			if (replyCount > 0) {
+				// 只显示前1条回复
+				const visibleReplies = replies.slice(0, 1);
+				const hiddenReplies = replies.slice(1);
+				const hasMore = hiddenReplies.length > 0;
+
 				repliesHtml = `
 					<div class="message-replies">
-						${replies.map(reply => `
+						${visibleReplies.map(reply => `
 							<div class="message-item reply">
 								<div class="message-header">
 									<span class="message-nickname">${escapeHtml(reply.nickname)}</span>
@@ -418,10 +423,26 @@
 								<div class="message-content">${escapeHtml(reply.content)}</div>
 							</div>
 						`).join('')}
+						${hasMore ? `
+							<div class="hidden-replies" id="hidden-replies-${msg.id}" style="display:none;">
+								${hiddenReplies.map(reply => `
+									<div class="message-item reply">
+										<div class="message-header">
+											<span class="message-nickname">${escapeHtml(reply.nickname)}</span>
+											<span class="message-time">${formatMessageTime(reply.created_at)}</span>
+										</div>
+										<div class="message-content">${escapeHtml(reply.content)}</div>
+									</div>
+								`).join('')}
+							</div>
+							<button class="expand-replies-btn" id="expand-btn-${msg.id}" onclick="toggleReplies(${msg.id}, ${hiddenReplies.length})" style="background:none;border:none;color:var(--primary-color);cursor:pointer;font-size:0.75rem;padding:4px 0;width:100%;text-align:left;">
+								<i class="fas fa-chevron-down"></i> 展开更多回复 (${hiddenReplies.length}条)
+							</button>
+						` : ''}
 					</div>
 				`;
 			}
-			
+
 			return `
 				<div class="message-item" data-id="${msg.id}">
 					<div class="message-header">
@@ -438,6 +459,21 @@
 					${repliesHtml}
 				</div>
 			`;
+		}
+
+		// 展开/收起回复
+		function toggleReplies(msgId, hiddenCount) {
+			const hiddenEl = document.getElementById(`hidden-replies-${msgId}`);
+			const btnEl = document.getElementById(`expand-btn-${msgId}`);
+			if (!hiddenEl || !btnEl) return;
+
+			if (hiddenEl.style.display === 'none') {
+				hiddenEl.style.display = 'block';
+				btnEl.innerHTML = `<i class="fas fa-chevron-up"></i> 收起回复`;
+			} else {
+				hiddenEl.style.display = 'none';
+				btnEl.innerHTML = `<i class="fas fa-chevron-down"></i> 展开更多回复 (${hiddenCount}条)`;
+			}
 		}
 
 		// 格式化时间
@@ -510,13 +546,13 @@
 				return;
 			}
 			
-			if (nickname.length > 20) {
-				showModal('❌ 提示', '<p>昵称不能超过20个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+			if (nickname.length > 10) {
+				showModal('❌ 提示', '<p>昵称不能超过10个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
-			if (content.length > 500) {
-				showModal('❌ 提示', '<p>留言内容不能超过500个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+
+			if (content.length > 100) {
+				showModal('❌ 提示', '<p>留言内容不能超过100个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
 			
@@ -580,11 +616,92 @@
 			if (savedNickname) {
 				document.getElementById('msg-nickname').value = savedNickname;
 			}
-			
+
 			// 加载留言
 			loadMessages(1);
 		}
 
+		// ==================== 游戏内留言事件 ====================
+		function triggerFeedbackEvent() {
+			if (gameState.feedbackEventTriggered) return;
+			gameState.feedbackEventTriggered = true;
 
+			const yearsText = gameState.feedbackEventYear === 3 ? '2' : '4';
+			const savedNickname = localStorage.getItem('graduateSimulator_nickname') || '';
 
+			const content = `
+				<p style="margin-bottom:15px;">研究生生涯已经${yearsText}年多了，你有什么想分享的吗？可以是本局感想、bug提交、游戏建议、攻略心得等。</p>
+				<div style="margin-bottom:10px;">
+					<input type="text" id="feedback-nickname" placeholder="昵称（最多10字符）" maxlength="10"
+						value="${escapeHtml(savedNickname)}"
+						style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--card-bg);color:var(--text-color);font-size:0.9rem;box-sizing:border-box;">
+				</div>
+				<div>
+					<textarea id="feedback-content" placeholder="写点什么吧...（最多100字符）" maxlength="100"
+						style="width:100%;height:80px;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--card-bg);color:var(--text-color);font-size:0.9rem;resize:none;box-sizing:border-box;"></textarea>
+				</div>
+			`;
 
+			showModal('💬 分享时刻', content, [
+				{ text: '暂时没有呢', class: 'btn-secondary', action: closeModal },
+				{ text: '我要提交', class: 'btn-primary', action: submitFeedback }
+			]);
+		}
+
+		// 提交游戏内反馈
+		async function submitFeedback() {
+			const nicknameInput = document.getElementById('feedback-nickname');
+			const contentInput = document.getElementById('feedback-content');
+
+			const nickname = nicknameInput.value.trim();
+			const content = contentInput.value.trim();
+
+			if (!nickname) {
+				showModal('❌ 提示', '<p>请输入昵称！</p>', [{ text: '确定', class: 'btn-primary', action: () => { closeModal(); triggerFeedbackEvent(); } }]);
+				return;
+			}
+
+			if (!content) {
+				showModal('❌ 提示', '<p>请输入留言内容！</p>', [{ text: '确定', class: 'btn-primary', action: () => { closeModal(); triggerFeedbackEvent(); } }]);
+				return;
+			}
+
+			if (nickname.length > 10) {
+				showModal('❌ 提示', '<p>昵称不能超过10个字符！</p>', [{ text: '确定', class: 'btn-primary', action: () => { closeModal(); triggerFeedbackEvent(); } }]);
+				return;
+			}
+
+			if (content.length > 100) {
+				showModal('❌ 提示', '<p>留言内容不能超过100个字符！</p>', [{ text: '确定', class: 'btn-primary', action: () => { closeModal(); triggerFeedbackEvent(); } }]);
+				return;
+			}
+
+			if (!supabase) {
+				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			try {
+				const messageData = {
+					nickname: nickname,
+					content: `[游戏内反馈] ${content}`,
+					parent_id: null
+				};
+
+				const { error } = await supabase.from('messages').insert(messageData);
+
+				if (error) throw error;
+
+				// 保存昵称到本地
+				localStorage.setItem('graduateSimulator_nickname', nickname);
+
+				// 清除缓存以便下次加载时能看到新留言
+				messagesCache = null;
+
+				showModal('✅ 感谢反馈', '<p>你的留言已提交，感谢分享！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+
+			} catch (e) {
+				console.error('提交反馈失败:', e);
+				showModal('❌ 错误', '<p>提交失败，请稍后重试</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+			}
+		}

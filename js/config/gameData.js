@@ -661,6 +661,99 @@
 			}
 		};
 
+		// ==================== 学校系统 ====================
+		const UNIVERSITY_TYPES = {
+			tech: {
+				name: '理工大学',
+				icon: '🔧',
+				bonus: { researchMax: 1 },
+				desc: '科研上限+1'
+			},
+			science: {
+				name: '科技大学',
+				icon: '🔬',
+				bonus: { research: 1, researchMax: 1 },
+				desc: '科研能力+1，科研上限+1'
+			},
+			industry: {
+				name: '工业大学',
+				icon: '🏭',
+				bonus: { research: 1 },
+				desc: '科研能力+1'
+			},
+			transport: {
+				name: '交通大学',
+				icon: '🚄',
+				bonus: { social: 1 },
+				desc: '社交能力+1'
+			},
+			normal: {
+				name: '师范大学',
+				icon: '📚',
+				bonus: { favor: 1 },
+				desc: '导师好感度+1'
+			},
+			agriculture: {
+				name: '农业大学',
+				icon: '🌾',
+				bonus: { sanMax: 2 },
+				desc: 'SAN上限+2'
+			},
+			finance: {
+				name: '财经大学',
+				icon: '💹',
+				bonus: { gold: 1 },
+				desc: '金钱+1'
+			}
+		};
+
+		// 获取随机学校
+		function getRandomUniversity() {
+			const types = Object.keys(UNIVERSITY_TYPES);
+			const randomType = types[Math.floor(Math.random() * types.length)];
+			return { type: randomType, ...UNIVERSITY_TYPES[randomType] };
+		}
+
+		// 应用学校加成
+		function applyUniversityBonus(universityType) {
+			const uni = UNIVERSITY_TYPES[universityType];
+			if (!uni || !uni.bonus) return;
+
+			const bonus = uni.bonus;
+			const changes = [];
+
+			if (bonus.research) {
+				gameState.research = Math.min(gameState.researchMax || 20, gameState.research + bonus.research);
+				changes.push(`科研能力+${bonus.research}`);
+			}
+			if (bonus.researchMax) {
+				gameState.researchMax = (gameState.researchMax || 20) + bonus.researchMax;
+				changes.push(`科研上限+${bonus.researchMax}`);
+			}
+			if (bonus.social) {
+				gameState.social = Math.min(gameState.socialMax || 20, gameState.social + bonus.social);
+				changes.push(`社交能力+${bonus.social}`);
+			}
+			if (bonus.favor) {
+				gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + bonus.favor);
+				changes.push(`导师好感度+${bonus.favor}`);
+			}
+			if (bonus.sanMax) {
+				gameState.sanMax = (gameState.sanMax || 20) + bonus.sanMax;
+				changes.push(`SAN上限+${bonus.sanMax}`);
+			}
+			if (bonus.gold) {
+				gameState.gold += bonus.gold;
+				changes.push(`金钱+${bonus.gold}`);
+			}
+
+			return changes;
+		}
+
+		window.UNIVERSITY_TYPES = UNIVERSITY_TYPES;
+		window.getRandomUniversity = getRandomUniversity;
+		window.applyUniversityBonus = applyUniversityBonus;
+
 		// ==================== 全局函数导出 ====================
 		window.getRegionInfo = getRegionInfo;
 		window.getConferenceCostByRegion = getConferenceCostByRegion;

@@ -491,6 +491,8 @@
 						}
 					} else if (gameState.month === 7) {
 						triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+					} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
+						triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
 					} else if (gameState.month === 9) {
 						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 					} else if (gameState.month === 11) {
@@ -552,6 +554,8 @@
 				}
 			} else if (gameState.month === 7) {
 				triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+			} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
+				triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
 			} else if (gameState.month === 9) {
 				triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 			} else if (gameState.month === 11) {

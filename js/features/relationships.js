@@ -199,12 +199,16 @@
             const taskMax = researchResource * taskMultiplier + 20;  // 任务条上限 = 科研资源*随机6-10+20
             const relationMax = 40;  // 关系条上限固定40
 
+            // ★★★ 修复：随机学校 ★★★
+            const university = getRandomUniversity();
+
             return {
                 id: `advisor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 type: 'advisor',
                 advisorType: selectedType.id,
                 name: generateRandomName(),
                 title: title,
+                university: university,  // ★★★ 修复：添加学校信息 ★★★
                 researchResource: researchResource,
                 affinity: affinity,
                 papers: papers,
@@ -256,12 +260,16 @@
             const taskMax = researchResource * taskMultiplier + 20;
             const relationMax = 40;
 
+            // ★★★ 新增：随机学校 ★★★
+            const university = getRandomUniversity();
+
             return {
                 id: `advisor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 type: 'advisor',
                 advisorType: selectedType.id,
                 name: generateRandomName(),
                 title: title,
+                university: university,  // ★★★ 新增：学校信息 ★★★
                 researchResource: researchResource,
                 affinity: affinity,
                 papers: papers,
@@ -1025,6 +1033,8 @@
                 const personTitle = person.title || advisorType.title || '';
                 // 如果头衔和名称相同（如教授、副教授），显示"无"
                 const displayTitle = (personTitle === advisorType.name || personTitle === '教授' || personTitle === '副教授') ? '无' : personTitle;
+                // ★★★ 新增：学校信息 ★★★
+                const uni = person.university || gameState.university || { name: '理工大学', icon: '🔧', desc: '科研上限+1' };
                 advisorInfo = `
                     <div style="background:linear-gradient(135deg,${advisorType.color}22,${advisorType.color}11);border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid ${advisorType.color}44;">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -1035,6 +1045,7 @@
                             </div>
                         </div>
                         <div style="font-size:0.75rem;color:var(--text-secondary);">
+                            <div>${uni.icon} 学校: ${uni.name}（${uni.desc}）</div>
                             <div>📋 硕士毕业要求: ${req.masterGrad}分 | 博士毕业要求: ${req.phdGrad}分</div>
                             <div>📋 转博要求: 第2年≥${req.phdYear2}分 | 第3年≥${req.phdYear3}分</div>
                             <div>💰 硕士工资: ${advisorType.salary.master}/月 | 博士工资: ${advisorType.salary.phd}/月</div>
@@ -1097,6 +1108,8 @@
                 const masterSalary = advisorType.salary.master;
                 const phdSalary = advisorType.salary.phd;
                 const masterSalaryText = masterSalary === 1.5 ? '1.5' : (masterSalary === 1.25 ? '1.25' : masterSalary);
+                // ★★★ 新增：学校信息 ★★★
+                const uni = advisor.university || { name: '理工大学', icon: '🔧', desc: '科研上限+1' };
                 return `
                     <div class="advisor-option" onclick="selectAdvisor(${idx})"
                          style="padding:8px 10px;background:var(--light-bg);border-radius:8px;margin-bottom:6px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;"
@@ -1108,9 +1121,11 @@
                                 <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
                                     <span style="font-weight:700;font-size:0.9rem;color:${advisorType.color};">${advisor.name}</span>
                                     <span style="font-size:0.6rem;padding:1px 6px;background:${advisorType.color}22;color:${advisorType.color};border-radius:3px;font-weight:600;">${advisor.title}</span>
+                                    <span style="font-size:0.55rem;padding:1px 5px;background:rgba(100,100,100,0.15);color:var(--text-secondary);border-radius:3px;">${uni.icon} ${uni.name}</span>
                                 </div>
                                 <div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px;">
                                     🔬<strong>${advisor.researchResource}</strong> 💖<strong>${advisor.affinity}</strong> 📄<strong>${advisor.papers}</strong>篇 📊<strong>${advisor.citations}</strong>引用
+                                    <span style="margin-left:4px;color:var(--success-color);">[${uni.desc}]</span>
                                 </div>
                             </div>
                         </div>
@@ -1147,10 +1162,23 @@
             gameState.selectedAdvisor = selectedAdvisor;
 
             const advisorType = ADVISOR_TYPES[selectedAdvisor.advisorType];
-            // ★★★ 修改：合并导师头衔信息到第一行，添加工资信息 ★★★
+            // ★★★ 新增：学校信息 ★★★
+            const uni = selectedAdvisor.university || { name: '理工大学', type: 'tech', desc: '科研上限+1' };
+            gameState.university = uni;  // 保存学校信息到游戏状态
+
+            // ★★★ 应用学校加成 ★★★
+            const bonusChanges = applyUniversityBonus(uni.type);
+
+            // ★★★ 修改：日志显示学校信息（合并学校加成） ★★★
             const masterSalary = advisorType.salary.master;
             const phdSalary = advisorType.salary.phd;
-            addLog('选择导师', `拜入${selectedAdvisor.name}（${advisorType.name}，${selectedAdvisor.title}）门下`, `工资：硕${masterSalary}/月，博${phdSalary}/月`);
+            // 判断是否有有意义的头衔（教授、副教授不是真正的头衔）
+            const personTitle = selectedAdvisor.title || '';
+            const hasRealTitle = personTitle && personTitle !== '教授' && personTitle !== '副教授' && personTitle !== advisorType.name;
+            const titleDisplay = hasRealTitle ? `，${personTitle}` : '';
+            // 合并学校加成到日志
+            const bonusText = bonusChanges && bonusChanges.length > 0 ? `，${bonusChanges.join('，')}（学校加成）` : '';
+            addLog('选择导师', `拜入${uni.icon}${uni.name}${selectedAdvisor.name}（${advisorType.name}${titleDisplay}）门下`, `工资：硕${masterSalary}/月，博${phdSalary}/月${bonusText}`);
 
             window._advisorOptions = null;
             window._advisorOnSelected = null;

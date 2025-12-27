@@ -1290,3 +1290,122 @@
 			]);
 		}
 
+		// ==================== 第三年第三月留言事件 ====================
+		function triggerMidtermMessageEvent() {
+			// 检查是否已经触发过
+			if (gameState.hasTriggeredMidtermMessage) return;
+			gameState.hasTriggeredMidtermMessage = true;
+
+			// 获取保存的昵称
+			const savedNickname = localStorage.getItem('graduateSimulator_nickname') || '';
+
+			showModal('📝 研究生生涯过半',
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2.5rem;margin-bottom:10px;">📝</div>
+					<div style="font-size:1rem;color:var(--text-primary);">研究生生涯已经过半了...</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:5px;">你有什么想说的吗？</div>
+				</div>
+				<div style="background:var(--light-bg);border-radius:8px;padding:12px;margin-bottom:15px;">
+					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;">
+						可以是本局吐槽、游戏心得攻略、bug反馈、游戏建议...
+					</div>
+					<div style="margin-bottom:10px;">
+						<input type="text" id="midterm-nickname" placeholder="昵称（最多10字）" maxlength="10" value="${savedNickname}"
+							style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text-primary);box-sizing:border-box;">
+					</div>
+					<div>
+						<textarea id="midterm-content" placeholder="写下你的留言...（最多150字）" maxlength="150" rows="3"
+							style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text-primary);resize:vertical;box-sizing:border-box;"></textarea>
+					</div>
+				</div>`,
+				[
+					{ text: '暂时没有呢', class: 'btn-info', action: () => {
+						closeModal();
+					}},
+					{ text: '我要提交', class: 'btn-primary', action: () => {
+						submitMidtermMessage();
+					}}
+				]
+			);
+		}
+
+		// 提交留言
+		async function submitMidtermMessage() {
+			const nicknameInput = document.getElementById('midterm-nickname');
+			const contentInput = document.getElementById('midterm-content');
+
+			if (!nicknameInput || !contentInput) {
+				closeModal();
+				return;
+			}
+
+			const nickname = nicknameInput.value.trim();
+			const content = contentInput.value.trim();
+
+			// 验证
+			if (!nickname) {
+				showModal('❌ 提示', '<p>请输入昵称！</p>', [{ text: '确定', class: 'btn-primary', action: () => {
+					triggerMidtermMessageEvent();  // 重新显示留言弹窗
+				}}]);
+				return;
+			}
+
+			if (!content) {
+				showModal('❌ 提示', '<p>请输入留言内容！</p>', [{ text: '确定', class: 'btn-primary', action: () => {
+					triggerMidtermMessageEvent();  // 重新显示留言弹窗
+				}}]);
+				return;
+			}
+
+			if (nickname.length > 10) {
+				showModal('❌ 提示', '<p>昵称不能超过10个字符！</p>', [{ text: '确定', class: 'btn-primary', action: () => {
+					triggerMidtermMessageEvent();
+				}}]);
+				return;
+			}
+
+			if (content.length > 150) {
+				showModal('❌ 提示', '<p>留言内容不能超过150个字符！</p>', [{ text: '确定', class: 'btn-primary', action: () => {
+					triggerMidtermMessageEvent();
+				}}]);
+				return;
+			}
+
+			if (!supabase) {
+				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			try {
+				const messageData = {
+					nickname: nickname,
+					content: content,
+					parent_id: null
+				};
+
+				const { error } = await supabase.from('messages').insert(messageData);
+
+				if (error) throw error;
+
+				// 保存昵称到本地
+				localStorage.setItem('graduateSimulator_nickname', nickname);
+
+				// 显示成功提示
+				showModal('✅ 感谢分享',
+					`<div style="text-align:center;">
+						<div style="font-size:2rem;margin-bottom:10px;">💝</div>
+						<p>感谢你的分享！</p>
+						<p style="font-size:0.85rem;color:var(--text-secondary);">你的留言已同步到留言板</p>
+					</div>`,
+					[{ text: '继续游戏', class: 'btn-primary', action: closeModal }]
+				);
+
+			} catch (e) {
+				console.error('发表留言失败:', e);
+				showModal('❌ 错误', '<p>发表失败，请稍后重试</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
+			}
+		}
+
+		// 导出函数
+		window.triggerMidtermMessageEvent = triggerMidtermMessageEvent;
+		window.submitMidtermMessage = submitMidtermMessage;

@@ -69,6 +69,8 @@
 				firstBestPaperAccepted: false,
 				firstABestPaperAccepted: false,
 				badmintonYear: -1,
+				feedbackEventYear: Math.random() < 0.5 ? 3 : 5,  // 随机决定留言事件在第3年或第5年触发
+				feedbackEventTriggered: false,  // 留言事件是否已触发
 				
 				lastResetMonth: 0,
 				socialAwakened: false,
