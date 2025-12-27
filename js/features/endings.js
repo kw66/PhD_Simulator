@@ -204,7 +204,7 @@
 
 			// ★★★ 新增5个成就 ★★★
 			if ((gameState.paperNature || 0) >= 1) a.push('📰 Nature在手');
-			if (gameState.achievementConditions && gameState.achievementConditions.upgradedChair) a.push('🪑 高级家具');
+			if (gameState.achievementConditions && gameState.achievementConditions.upgradedEquipment) a.push('🪑 高级装备');
 			// ★★★ 修复：人脉广阔需要5个角色且每个角色的亲和度或亲密度>=12 ★★★
 			const hasWideConnections = gameState.relationships &&
 				gameState.relationships.length >= 5 &&
@@ -224,6 +224,12 @@
 			const advisor = gameState.relationships && gameState.relationships.find(r => r.type === 'advisor');
 			const advisorCitations = advisor ? (advisor.citations || 0) : 0;
 			if (advisorCitations > 0 && gameState.totalCitations > advisorCitations) a.push('📖 青出于蓝');
+			// ★★★ 新增：好事成双 - 发表2篇Nature ★★★
+			if ((gameState.paperNature || 0) >= 2) a.push('📰📰 好事成双');
+			// ★★★ 新增：倒买倒卖 - 卖东西累计超过20金币 ★★★
+			if ((gameState.totalSoldCoins || 0) > 20) a.push('💸 倒买倒卖');
+			// ★★★ 新增：整装待发 - 同时拥有电动车+遮阳伞+羽绒服 ★★★
+			if (gameState.bikeUpgrade === 'ebike' && gameState.hasParasol && gameState.hasDownJacket) a.push('🎒 整装待发');
 
 			// ★★★ 以下成就仍然需要顺利毕业 ★★★
 			if (!isGraduated) {
@@ -337,7 +343,7 @@
 
 			// ★★★ 新增5个成就检测 ★★★
 			if ((gameState.paperNature || 0) >= 1) achievementsToCheck.push('📰 Nature在手');
-			if (gameState.achievementConditions && gameState.achievementConditions.upgradedChair) achievementsToCheck.push('🪑 高级家具');
+			if (gameState.achievementConditions && gameState.achievementConditions.upgradedEquipment) achievementsToCheck.push('🪑 高级装备');
 			// ★★★ 修复：人脉广阔需要5个角色且每个角色的亲和度或亲密度>=12 ★★★
 			const hasWideConnections_check = gameState.relationships &&
 				gameState.relationships.length >= 5 &&
@@ -379,6 +385,12 @@
 			if (gameState.naturallyDried) achievementsToCheck.push('🍂 自然风干');
 			// ★★★ 新增：骑行大佬 - 累计骑自行车减少30SAN ★★★
 			if ((gameState.bikeSanSpent || 0) >= 30) achievementsToCheck.push('🚴 骑行大佬');
+			// ★★★ 新增：好事成双 - 发表2篇Nature ★★★
+			if ((gameState.paperNature || 0) >= 2) achievementsToCheck.push('📰📰 好事成双');
+			// ★★★ 新增：倒买倒卖 - 卖东西累计超过20金币 ★★★
+			if ((gameState.totalSoldCoins || 0) > 20) achievementsToCheck.push('💸 倒买倒卖');
+			// ★★★ 新增：整装待发 - 同时拥有电动车+遮阳伞+羽绒服 ★★★
+			if (gameState.bikeUpgrade === 'ebike' && gameState.hasParasol && gameState.hasDownJacket) achievementsToCheck.push('🎒 整装待发');
 
 			// 检查哪些是新获得的
 			achievementsToCheck.forEach(ach => {

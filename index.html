@@ -264,9 +264,6 @@
 					<div class="panel-title">
 						<span class="char-icon" id="char-icon">👤</span>
 						<span id="char-name">角色名称</span>
-						<button class="btn btn-info ability-btn" onclick="showCharacterDetail()" style="margin-left:auto;padding:2px 8px;font-size:0.7rem;">
-							<i class="fas fa-user"></i> 能力
-						</button>
 					</div>
 					<div id="attributes-panel-content">
 						<div class="attribute-bar">
@@ -360,6 +357,9 @@
 				<div class="panel" id="buff-panel">
 					<div class="panel-title collapsible" onclick="toggleCollapse('buff-panel')">
 						<i class="fas fa-magic"></i> 增益/减益效果
+						<button class="btn btn-info" style="padding:3px 8px;font-size:0.7rem;margin-left:auto;margin-right:8px;" onclick="event.stopPropagation();showTalentTree()" title="查看天赋和装备">
+							<i class="fas fa-star"></i> 天赋和装备
+						</button>
 						<i class="fas fa-chevron-down collapse-icon" id="buff-panel-collapse-icon"></i>
 					</div>
 					<div class="collapsible-content" id="buff-panel-content">

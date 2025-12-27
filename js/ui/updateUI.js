@@ -146,121 +146,496 @@
 		}
 
 		function showCharacterDetail() {
-			// ★★★ 修复：真·大多数特殊处理 ★★★
-			if (gameState.character === 'true-normal' || gameState.isTrueNormal) {
-				const isAwakened = gameState.trueNormalAwakened;
-				const awakenStatus = isAwakened
-					? `<div style="margin-top:6px;"><span style="padding:3px 10px;background:linear-gradient(135deg,#ffd700,#ff8c00);color:white;border-radius:12px;font-size:0.75rem;">✨ 已觉醒</span></div>`
-					: '';
-				const awakenActivatedText = isAwakened
-					? `<div style="margin-top:6px;font-size:0.7rem;color:var(--success-color);">✅ 已激活 - 成就币已翻倍，商店2月刷新</div>`
-					: `<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发</div>`;
+			// 兼容旧调用，转到新的天赋树
+			showTalentTree();
+		}
 
-				const html = `
-					<div style="text-align:center;margin-bottom:15px;">
-						<div style="font-size:3rem;margin-bottom:8px;"><span class="gold-icon">👤</span></div>
-						<div style="font-size:1.2rem;font-weight:700;color:#d68910;">真·大多数</div>
-						<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;">✨ 真实模式</div>
-						${awakenStatus}
+		// ==================== 天赋和装备系统 ====================
+		function showTalentTree() {
+			// 获取角色数据
+			const isTrueNormal = gameState.character === 'true-normal' || gameState.isTrueNormal;
+			const charData = isTrueNormal ? null : characters.find(c => c.id === gameState.character);
+			const isReversed = gameState.isReversed;
+			const displayData = charData && isReversed && charData.reversed ? charData.reversed : charData;
+
+			// 判断觉醒状态
+			const hasHiddenAwaken = gameState.hiddenAwakened && !isReversed;
+			const hasNormalAwaken = gameState.degree === 'phd' && !isReversed;
+			const reversedAwakened = isReversed && gameState.reversedAwakened;
+			const isTrueNormalAwakened = isTrueNormal && gameState.trueNormalAwakened;
+
+			// 获取装备信息
+			const amulets = gameState.amulets || {};
+			const furniture = gameState.furnitureBought || {};
+			const chairUpgrade = gameState.chairUpgrade;
+			const bikeUpgrade = gameState.bikeUpgrade;
+
+			// 构建HTML
+			let html = `
+			<style>
+				.talent-container {
+					max-height: 75vh;
+					overflow-y: auto;
+					padding: 5px;
+				}
+				.talent-section {
+					margin-bottom: 12px;
+					padding: 10px;
+					background: rgba(102,126,234,0.08);
+					border-radius: 10px;
+					border: 1px solid rgba(102,126,234,0.15);
+				}
+				.talent-section-title {
+					font-size: 0.85rem;
+					color: var(--primary-color, #667eea);
+					margin-bottom: 8px;
+					padding: 6px 10px;
+					background: rgba(102,126,234,0.15);
+					border-radius: 6px;
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					font-weight: 600;
+				}
+
+				/* 天赋节点 - 圆形 */
+				.talent-row {
+					display: flex;
+					justify-content: center;
+					gap: 20px;
+					flex-wrap: wrap;
+					padding: 6px 0 8px 0;
+				}
+				.talent-node {
+					width: 60px;
+					height: 60px;
+					border-radius: 50%;
+					background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.1) 100%);
+					border: 3px solid transparent;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					position: relative;
+					cursor: pointer;
+					transition: all 0.25s ease;
+				}
+				.talent-node:hover {
+					transform: scale(1.15) translateY(-3px);
+					background: linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.2) 100%);
+				}
+				.talent-node.active {
+					border-color: #4ecdc4;
+					box-shadow: 0 0 15px rgba(78,205,196,0.4);
+				}
+				.talent-node.active:hover {
+					transform: scale(1.15) translateY(-3px);
+				}
+				.talent-node.active.color-blue { border-color: #3498db; box-shadow: 0 0 15px rgba(52,152,219,0.4); }
+				.talent-node.active.color-purple { border-color: #9b59b6; box-shadow: 0 0 15px rgba(155,89,182,0.4); }
+				.talent-node.active.color-orange { border-color: #f39c12; box-shadow: 0 0 15px rgba(243,156,18,0.4); }
+				.talent-node.active.color-green { border-color: #2ecc71; box-shadow: 0 0 15px rgba(46,204,113,0.4); }
+				.talent-node .node-icon {
+					font-size: 1.6rem;
+				}
+				.talent-node .node-label {
+					display: none;  /* 隐藏图标下方的文字说明 */
+				}
+
+				/* 装备节点 - 方形 */
+				.equip-row {
+					display: flex;
+					justify-content: center;
+					gap: 12px;
+					flex-wrap: wrap;
+					margin-bottom: 12px;
+				}
+				.equip-row:last-child {
+					margin-bottom: 5px;
+				}
+				.equip-node {
+					width: 52px;
+					height: 52px;
+					border-radius: 8px;
+					background: linear-gradient(135deg, rgba(230,126,34,0.1) 0%, rgba(211,84,0,0.08) 100%);
+					border: 2px solid transparent;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					position: relative;
+					cursor: pointer;
+					transition: all 0.25s ease;
+				}
+				.equip-node:hover {
+					transform: scale(1.12) translateY(-2px);
+					background: linear-gradient(135deg, rgba(230,126,34,0.2) 0%, rgba(211,84,0,0.15) 100%);
+				}
+				.equip-node.active {
+					border-color: #e67e22;
+					box-shadow: 0 0 12px rgba(230,126,34,0.35);
+				}
+				.equip-node.active:hover {
+					transform: scale(1.12) translateY(-2px);
+				}
+				.equip-node .node-icon {
+					font-size: 1.4rem;
+				}
+				.equip-node .node-label {
+					display: none;  /* 隐藏图标下方的文字说明 */
+				}
+				.equip-node .equip-count {
+					position: absolute;
+					top: -4px;
+					right: -4px;
+					background: linear-gradient(135deg, #e74c3c, #c0392b);
+					color: white;
+					font-size: 0.55rem;
+					font-weight: 600;
+					min-width: 16px;
+					height: 16px;
+					padding: 0 3px;
+					border-radius: 8px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+
+				/* Tooltip - 圆角边框方框 */
+				.talent-tip {
+					position: fixed;
+					background: rgba(15,15,20,0.98);
+					border: 2px solid #4ecdc4;
+					border-radius: 10px;
+					padding: 10px 14px;
+					max-width: 240px;
+					z-index: 10000;
+					pointer-events: none;
+					display: none;
+					box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+				}
+				.talent-tip.color-blue { border-color: #3498db; }
+				.talent-tip.color-purple { border-color: #9b59b6; }
+				.talent-tip.color-orange { border-color: #f39c12; }
+				.talent-tip.color-green { border-color: #2ecc71; }
+				.talent-tip.color-equip { border-color: #e67e22; }
+				.talent-tip-title {
+					font-weight: 600;
+					font-size: 0.85rem;
+					color: #4ecdc4;
+					margin-bottom: 5px;
+				}
+				.talent-tip.color-blue .talent-tip-title { color: #3498db; }
+				.talent-tip.color-purple .talent-tip-title { color: #9b59b6; }
+				.talent-tip.color-orange .talent-tip-title { color: #f39c12; }
+				.talent-tip.color-green .talent-tip-title { color: #2ecc71; }
+				.talent-tip.color-equip .talent-tip-title { color: #e67e22; }
+				.talent-tip-effect {
+					font-size: 0.8rem;
+					color: rgba(255,255,255,0.9);
+					margin-bottom: 6px;
+					line-height: 1.4;
+				}
+				.talent-tip-how {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.55);
+					font-style: italic;
+				}
+			</style>
+			<div class="talent-container">
+			`;
+
+			// ========== 角色天赋区 ==========
+			html += `<div class="talent-section">
+				<div class="talent-section-title"><i class="fas fa-user-circle"></i> 角色天赋</div>
+				<div class="talent-row">`;
+
+			if (isTrueNormal) {
+				// 真大多数：只有2个天赋（横向）
+				html += `
+					<div class="talent-node active" data-tip="真·大多数|经历过所有角色的洗礼，回归本真|使用6个角色各通关一次" data-color="">
+						<div class="node-icon">👤</div>
+						<div class="node-label">真·大多数</div>
 					</div>
-
-					<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
-						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">📜 角色描述</div>
-						<div style="font-size:0.85rem;">经历过所有角色的洗礼，回归本真</div>
+					<div class="talent-node ${isTrueNormalAwakened ? 'active color-orange' : ''}" data-tip="往昔荣光|成就币翻倍，成就商店刷新间隔变为2个月|真·大多数转博时触发" data-color="orange">
+						<div class="node-icon">✨</div>
+						<div class="node-label">往昔荣光</div>
 					</div>
-
-					<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
-						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">✨ 初始效果</div>
-						<div style="font-size:0.85rem;color:var(--text-secondary);font-weight:500;">无特殊能力，一切靠自己</div>
-					</div>
-
-					<div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,140,0,0.15));border-radius:10px;padding:12px;border:1px dashed #d68910;">
-						<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">⚡ 转博觉醒</div>
-						<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-							<span style="font-size:1.2rem;">✨</span>
-							<span style="font-size:0.9rem;font-weight:600;color:#d68910;">往昔荣光</span>
-						</div>
-						<div style="font-size:0.85rem;">成就币翻倍，成就商店刷新间隔变为2个月</div>
-						${awakenActivatedText}
+				`;
+			} else if (charData) {
+				// 初始天赋（角色头像）
+				const charIcon = isReversed ? charData.reversed.icon : charData.icon;
+				const charName = isReversed ? charData.reversed.name : charData.name;
+				const charBonus = isReversed ? charData.reversed.bonus : charData.bonus;
+				html += `
+					<div class="talent-node active" data-tip="${charName}|${charBonus}|选择角色时获得" data-color="">
+						<div class="node-icon">${charIcon}</div>
+						<div class="node-label">${charName.length > 4 ? charName.substring(0,4) : charName}</div>
 					</div>
 				`;
 
-				showModal('👤 角色详情', html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
-				return;
+				if (isReversed) {
+					// 逆位角色：只显示逆位觉醒
+					const awakenName = charData.reversed.awakenName;
+					const awakenDesc = charData.reversed.awakenDesc;
+					html += `
+						<div class="talent-node ${reversedAwakened ? 'active color-purple' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|逆位角色转博时触发" data-color="purple">
+							<div class="node-icon">⚡</div>
+							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
+						</div>
+					`;
+				} else {
+					// 正位角色：显示转博觉醒 + 隐藏觉醒
+					const awakenName = charData.awakenName;
+					const awakenDesc = charData.awakenDesc;
+					html += `
+						<div class="talent-node ${hasNormalAwaken ? 'active color-blue' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|正位角色转博时触发" data-color="blue">
+							<div class="node-icon">⚡</div>
+							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
+						</div>
+					`;
+
+					// 隐藏觉醒
+					if (charData.hiddenAwakenName) {
+						const hiddenName = charData.hiddenAwakenName;
+						const hiddenDesc = charData.hiddenAwakenDesc;
+						html += `
+							<div class="talent-node ${hasHiddenAwaken ? 'active color-orange' : ''}" data-tip="⚙️ ${hiddenName}|${hiddenDesc}|满足特定条件时触发（替代转博觉醒）" data-color="orange">
+								<div class="node-icon">⚙️</div>
+								<div class="node-label">${hiddenName.length > 5 ? hiddenName.substring(0,5) : hiddenName}</div>
+							</div>
+						`;
+					}
+				}
 			}
-			
-			const charData = characters.find(c => c.id === gameState.character);
-			if (!charData) {
-				console.error('无法找到角色数据:', gameState.character);
-				showModal('❌ 错误', '<p>角色数据加载失败</p>', 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			const isReversed = gameState.isReversed;
-			const displayData = isReversed && charData.reversed ? charData.reversed : charData;
-			
-			// ★★★ 新增：判断是否触发了隐藏觉醒 ★★★
-			const hasHiddenAwaken = gameState.hiddenAwakened && !isReversed;
-			const isAwakened = gameState.reversedAwakened || (gameState.degree === 'phd' && !isReversed) || hasHiddenAwaken;
-			
-			// ★★★ 修改：根据觉醒类型显示不同图标 ★★★
-			let currentIcon;
-			if (hasHiddenAwaken) {
-				currentIcon = charData.hiddenAwakenIcon;
-			} else if (isAwakened) {
-				currentIcon = isReversed ? displayData.awakenIcon : charData.awakenIcon;
-			} else {
-				currentIcon = displayData.icon;
-			}
-			
-			const modeColor = isReversed ? '#9b59b6' : '#6c5ce7';
-			const modeText = isReversed ? '🌑 逆位模式' : '☀️ 正位模式';
-			
-			// ★★★ 新增：根据觉醒类型显示不同的觉醒信息 ★★★
-			let awakenIcon, awakenName, awakenDesc, awakenActivated;
-			if (hasHiddenAwaken) {
-				awakenIcon = charData.hiddenAwakenIcon;
-				awakenName = charData.hiddenAwakenName;
-				awakenDesc = charData.hiddenAwakenDesc;
-				awakenActivated = true;
-			} else {
-				awakenIcon = isReversed ? displayData.awakenIcon : charData.awakenIcon;
-				awakenName = isReversed ? displayData.awakenName : charData.awakenName;
-				awakenDesc = isReversed ? displayData.awakenDesc : charData.awakenDesc;
-				awakenActivated = gameState.reversedAwakened || (gameState.degree === 'phd' && !isReversed);
-			}
-			
-			let html = `
-				<div style="text-align:center;margin-bottom:15px;">
-					<div style="font-size:3rem;margin-bottom:8px;">${currentIcon}</div>
-					<div style="font-size:1.2rem;font-weight:700;color:${modeColor};">${displayData.name}</div>
-					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;">${modeText}</div>
-					${isAwakened ? `<div style="margin-top:6px;"><span style="padding:3px 10px;background:linear-gradient(135deg,${hasHiddenAwaken ? '#f39c12,#e67e22' : '#f39c12,#e74c3c'});color:white;border-radius:12px;font-size:0.75rem;">⚡ ${hasHiddenAwaken ? '隐藏觉醒' : '已觉醒'}</span></div>` : ''}
-				</div>
-				
-				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">📜 角色描述</div>
-					<div style="font-size:0.85rem;">${displayData.desc}</div>
-				</div>
-				
-				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:10px;">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">✨ 初始效果</div>
-					<div style="font-size:0.85rem;color:var(--success-color);font-weight:500;">${displayData.bonus}</div>
-				</div>
-				
-				<div style="background:${hasHiddenAwaken ? 'linear-gradient(135deg,rgba(243,156,18,0.15),rgba(230,126,34,0.15))' : (isReversed ? 'rgba(155,89,182,0.1)' : 'rgba(102,126,234,0.1)')};border-radius:10px;padding:12px;border:1px dashed ${hasHiddenAwaken ? '#f39c12' : modeColor};">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;">⚡ ${hasHiddenAwaken ? '隐藏觉醒' : '转博觉醒'}: ${awakenName}</div>
-					<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-						<span style="font-size:1.2rem;">${awakenIcon}</span>
-						<span style="font-size:0.9rem;font-weight:600;color:${hasHiddenAwaken ? '#f39c12' : modeColor};">${awakenName}</span>
-					</div>
-					<div style="font-size:0.85rem;">${awakenDesc}</div>
-					${awakenActivated ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--success-color);">✓ 已激活</div>' : '<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">未激活 - 转博时触发</div>'}
+			html += `</div></div>`;
+
+			// ========== 通用天赋区（4个一行）==========
+			html += `<div class="talent-section">
+				<div class="talent-section-title"><i class="fas fa-star"></i> 通用天赋</div>
+				<div class="talent-row">`;
+
+			// 大牛联培
+			const hasBigBull = gameState.bigBullCooperation;
+			html += `
+				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|论文分数+5|在开会时与大牛深入交流2次后触发" data-color="green">
+					<div class="node-icon">🎓</div>
+					<div class="node-label">大牛联培</div>
 				</div>
 			`;
-			
-			showModal('👤 角色详情', html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
+
+			// 企业实习
+			const hasInternship = gameState.ailabInternship;
+			html += `
+				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+2，SAN-2|在随机事件中选择接受企业实习" data-color="green">
+					<div class="node-icon">💼</div>
+					<div class="node-label">企业实习</div>
+				</div>
+			`;
+
+			// 聪慧恋人
+			const hasSmartLover = gameState.hasLover && gameState.loverType === 'smart';
+			html += `
+				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|恋人帮助科研工作|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+					<div class="node-icon">💕</div>
+					<div class="node-label">聪慧恋人</div>
+				</div>
+			`;
+
+			// 活泼恋人
+			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
+			html += `
+				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|每月SAN+3|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+					<div class="node-icon">💕</div>
+					<div class="node-label">活泼恋人</div>
+				</div>
+			`;
+
+			html += `</div></div>`;
+
+			// ========== 装备栏 ==========
+			html += `<div class="talent-section">
+				<div class="talent-section-title"><i class="fas fa-box"></i> 装备栏</div>`;
+
+			// 第一行：椅子及其3种升级（4个）
+			const hasChair = furniture.chair;
+			html += `<div class="equip-row">`;
+			html += `<div class="equip-node ${hasChair && !chairUpgrade ? 'active' : ''}" data-tip="人体工学椅|每月SAN+1|金币商店购买（10金币）" data-color="equip">
+				<div class="node-icon">🪑</div>
+				<div class="node-label">工学椅</div>
+			</div>`;
+			html += `<div class="equip-node ${chairUpgrade === 'advanced' ? 'active' : ''}" data-tip="高级人体工学椅|每月SAN+2|购买工学椅后升级（18金币）" data-color="equip">
+				<div class="node-icon">💺</div>
+				<div class="node-label">高级椅</div>
+			</div>`;
+			html += `<div class="equip-node ${chairUpgrade === 'massage' ? 'active' : ''}" data-tip="电动沙发按摩椅|每月恢复10%已损失SAN|购买工学椅后升级（20金币）" data-color="equip">
+				<div class="node-icon">🛋️</div>
+				<div class="node-label">按摩椅</div>
+			</div>`;
+			html += `<div class="equip-node ${chairUpgrade === 'torture' ? 'active' : ''}" data-tip="头悬梁锥刺股椅|每月恢复当前SAN的20%|购买工学椅后升级（20金币）" data-color="equip">
+				<div class="node-icon">⚔️</div>
+				<div class="node-label">刺股椅</div>
+			</div>`;
+			html += `</div>`;
+
+			// 第二行：自行车及其2种升级（3个）
+			const hasBike = gameState.hasBike;
+			html += `<div class="equip-row">`;
+			html += `<div class="equip-node ${hasBike && !bikeUpgrade ? 'active' : ''}" data-tip="平把公路车|每月SAN-1，每累计6点换SAN上限+1|金币商店购买（10金币）" data-color="equip">
+				<div class="node-icon">🚲</div>
+				<div class="node-label">平把车</div>
+			</div>`;
+			html += `<div class="equip-node ${bikeUpgrade === 'road' ? 'active' : ''}" data-tip="弯把公路车|每月SAN-2，每累计5点换SAN上限+1|购买自行车后升级（20金币）" data-color="equip">
+				<div class="node-icon">🚴</div>
+				<div class="node-label">弯把车</div>
+			</div>`;
+			html += `<div class="equip-node ${bikeUpgrade === 'ebike' ? 'active' : ''}" data-tip="小电驴|春季和秋季每月SAN+1|购买自行车后升级（12金币）" data-color="equip">
+				<div class="node-icon">🛵</div>
+				<div class="node-label">小电驴</div>
+			</div>`;
+			html += `</div>`;
+
+			// 第三行：GPU、键盘、显示器、遮阳伞、羽绒服（5个）
+			const gpuCount = gameState.gpuServersBought || 0;
+			html += `<div class="equip-row">`;
+			html += `<div class="equip-node ${gpuCount > 0 ? 'active' : ''}" data-tip="GPU服务器|每次做实验多做${gpuCount || 1}次，分数+${gpuCount || 1}|金币商店购买（10金币/台）" data-color="equip">
+				<div class="node-icon">🖳</div>
+				<div class="node-label">GPU</div>
+				${gpuCount > 0 ? `<div class="equip-count">${gpuCount}</div>` : ''}
+			</div>`;
+			html += `<div class="equip-node ${furniture.keyboard ? 'active' : ''}" data-tip="机械键盘|写论文SAN消耗-1（变为SAN-3）|金币商店购买（8金币）" data-color="equip">
+				<div class="node-icon">⌨️</div>
+				<div class="node-label">键盘</div>
+			</div>`;
+			html += `<div class="equip-node ${furniture.monitor ? 'active' : ''}" data-tip="4K显示器|读论文SAN消耗-1（变为SAN-1）|金币商店购买（8金币）" data-color="equip">
+				<div class="node-icon">🖥️</div>
+				<div class="node-label">显示器</div>
+			</div>`;
+			html += `<div class="equip-node ${gameState.hasParasol ? 'active' : ''}" data-tip="遮阳伞|抵御夏季\"烈日当空\"debuff|金币商店购买（8金币）" data-color="equip">
+				<div class="node-icon">☂️</div>
+				<div class="node-label">遮阳伞</div>
+			</div>`;
+			html += `<div class="equip-node ${gameState.hasDownJacket ? 'active' : ''}" data-tip="羽绒服|抵御冬季\"寒风刺骨\"debuff|金币商店购买（8金币）" data-color="equip">
+				<div class="node-icon">🧥</div>
+				<div class="node-label">羽绒服</div>
+			</div>`;
+			html += `</div>`;
+
+			// 第四行：4种护身符
+			html += `<div class="equip-row">`;
+			html += `<div class="equip-node ${amulets.san > 0 ? 'active' : ''}" data-tip="理智护身符|SAN降为0时自动+${amulets.san || 1}|成就商店购买" data-color="equip">
+				<div class="node-icon">🛡️</div>
+				<div class="node-label">SAN护符</div>
+				${amulets.san > 0 ? `<div class="equip-count">${amulets.san}</div>` : ''}
+			</div>`;
+			html += `<div class="equip-node ${amulets.gold > 0 ? 'active' : ''}" data-tip="零钱护身符|金币降为0时自动+${amulets.gold || 1}|成就商店购买" data-color="equip">
+				<div class="node-icon">💰</div>
+				<div class="node-label">金币护符</div>
+				${amulets.gold > 0 ? `<div class="equip-count">${amulets.gold}</div>` : ''}
+			</div>`;
+			html += `<div class="equip-node ${amulets.favor > 0 ? 'active' : ''}" data-tip="好感护身符|好感降为0时自动+${amulets.favor || 1}|成就商店购买" data-color="equip">
+				<div class="node-icon">🎁</div>
+				<div class="node-label">好感护符</div>
+				${amulets.favor > 0 ? `<div class="equip-count">${amulets.favor}</div>` : ''}
+			</div>`;
+			html += `<div class="equip-node ${amulets.social > 0 ? 'active' : ''}" data-tip="社交护身符|社交降为0时自动+${amulets.social || 1}|成就商店购买" data-color="equip">
+				<div class="node-icon">🤝</div>
+				<div class="node-label">社交护符</div>
+				${amulets.social > 0 ? `<div class="equip-count">${amulets.social}</div>` : ''}
+			</div>`;
+			html += `</div>`;
+
+			html += `</div>`; // 装备栏结束
+			html += `</div>`; // talent-container结束
+
+			showModal('⭐ 天赋和装备', html, [{ text: '关闭', class: 'btn-primary', action: () => {
+				// 关闭时移除tooltip
+				const existingTip = document.getElementById('talent-tip');
+				if (existingTip) existingTip.remove();
+				closeModal();
+			}}]);
+
+			// 创建tooltip到body层级（避免被modal的overflow裁剪）
+			setTimeout(() => {
+				// 移除可能存在的旧tooltip
+				const existingTip = document.getElementById('talent-tip');
+				if (existingTip) existingTip.remove();
+
+				// 创建新的tooltip元素
+				const tooltip = document.createElement('div');
+				tooltip.id = 'talent-tip';
+				tooltip.className = 'talent-tip';
+				tooltip.innerHTML = `
+					<div class="talent-tip-title"></div>
+					<div class="talent-tip-effect"></div>
+					<div class="talent-tip-how"></div>
+				`;
+				tooltip.style.cssText = `
+					position: fixed;
+					background: rgba(15,15,20,0.98);
+					border: 2px solid #4ecdc4;
+					border-radius: 10px;
+					padding: 10px 14px;
+					max-width: 240px;
+					z-index: 100000;
+					pointer-events: none;
+					display: none;
+					box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+				`;
+				document.body.appendChild(tooltip);
+
+				// 绑定tooltip事件
+				document.querySelectorAll('[data-tip]').forEach(el => {
+					el.addEventListener('mouseenter', (e) => {
+						const tipData = e.currentTarget.dataset.tip.split('|');
+						const color = e.currentTarget.dataset.color || '';
+						tooltip.querySelector('.talent-tip-title').textContent = tipData[0] || '';
+						tooltip.querySelector('.talent-tip-effect').textContent = tipData[1] || '';
+						tooltip.querySelector('.talent-tip-how').textContent = tipData[2] ? '获取：' + tipData[2] : '';
+
+						// 设置边框和标题颜色
+						const colors = {
+							'blue': '#3498db',
+							'purple': '#9b59b6',
+							'orange': '#f39c12',
+							'green': '#2ecc71',
+							'equip': '#e67e22'
+						};
+						const borderColor = colors[color] || '#4ecdc4';
+						tooltip.style.borderColor = borderColor;
+						tooltip.querySelector('.talent-tip-title').style.color = borderColor;
+						tooltip.querySelector('.talent-tip-effect').style.color = 'rgba(255,255,255,0.9)';
+						tooltip.querySelector('.talent-tip-how').style.color = 'rgba(255,255,255,0.55)';
+						tooltip.querySelector('.talent-tip-how').style.fontStyle = 'italic';
+						tooltip.querySelector('.talent-tip-how').style.fontSize = '0.7rem';
+						tooltip.querySelector('.talent-tip-title').style.fontWeight = '600';
+						tooltip.querySelector('.talent-tip-title').style.fontSize = '0.85rem';
+						tooltip.querySelector('.talent-tip-title').style.marginBottom = '5px';
+						tooltip.querySelector('.talent-tip-effect').style.fontSize = '0.8rem';
+						tooltip.querySelector('.talent-tip-effect').style.marginBottom = '6px';
+						tooltip.querySelector('.talent-tip-effect').style.lineHeight = '1.4';
+
+						tooltip.style.display = 'block';
+					});
+					el.addEventListener('mousemove', (e) => {
+						const tipWidth = tooltip.offsetWidth;
+						const tipHeight = tooltip.offsetHeight;
+						let x = e.clientX + 15;
+						let y = e.clientY + 15;
+						// 防止超出右边界
+						if (x + tipWidth > window.innerWidth - 10) {
+							x = e.clientX - tipWidth - 15;
+						}
+						// 防止超出下边界
+						if (y + tipHeight > window.innerHeight - 10) {
+							y = e.clientY - tipHeight - 15;
+						}
+						tooltip.style.left = x + 'px';
+						tooltip.style.top = y + 'px';
+					});
+					el.addEventListener('mouseleave', () => {
+						tooltip.style.display = 'none';
+					});
+				});
+			}, 150);
 		}
 
         function updateGraduation() {

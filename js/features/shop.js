@@ -1040,22 +1040,142 @@
 		function openShop(page = shopCurrentPage) {
 			shopCurrentPage = page;
 
-			// ★★★ 分页：第一页是可重复购买的，第二页是只能买一件的 ★★★
-			const page1Items = shopItems.filter(item => !item.once);  // 可重复购买
-			const page2Items = shopItems.filter(item => item.once);   // 只能买一件
-			const currentPageItems = page === 1 ? page1Items : page2Items;
+			// ★★★ 分页：第一页是消耗品，第二页是永久物品，第三页是出售和升级 ★★★
+			const page1Items = shopItems.filter(item => !item.once && item.id !== 'gpu_buy');  // 消耗品
+			const page2Items = shopItems.filter(item => item.once || item.id === 'gpu_buy');   // 永久物品（含GPU）
+			const currentPageItems = page === 1 ? page1Items : page === 2 ? page2Items : [];
 
 			let html = '<div>';
-			// ★★★ 新增：可出售物品列表 ★★★
+
+			// ★★★ 第三页：出售和升级 ★★★
+			if (page === 3) {
+				html += renderSellAndUpgradePage();
+			} else {
+				// 原有购买区域
+				html += `<div style="font-weight:600;margin-bottom:8px;">
+					<i class="fas fa-shopping-cart"></i> 购买物品
+					<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第${shopCurrentPage}页/共3页)</span>
+				</div>`;
+
+				// ★★★ 分页按钮 ★★★
+				html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
+					<button class="btn ${shopCurrentPage === 1 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(1)" style="flex:1;padding:6px;">
+						消耗品
+					</button>
+					<button class="btn ${shopCurrentPage === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(2)" style="flex:1;padding:6px;">
+						永久物品
+					</button>
+					<button class="btn ${shopCurrentPage === 3 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(3)" style="flex:1;padding:6px;">
+						出售/升级
+					</button>
+				</div>`;
+
+				// ★★★ 可预购订阅的物品列表 ★★★
+				const subscribableItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
+
+				currentPageItems.forEach(item => {
+					const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
+					const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
+
+					// ★★★ 修改：冰美式动态描述（前15杯不变，第16杯开始提升）★★★
+					let itemDesc = item.desc;
+					if (item.id === 'coffee') {
+						const count = gameState.coffeeBoughtCount || 0;
+						const currentBonus = 3 + Math.floor(count / 15);
+						const currentTier = Math.floor(count / 15);
+						const nextMilestone = (currentTier + 1) * 15 + 1;  // 16, 31, 46...
+						const nextBonus = currentBonus + 1;
+
+						itemDesc = `SAN值+${currentBonus}`;
+						itemDesc += ` (${count}/${nextMilestone}杯时+${nextBonus})`;
+					}
+
+					// ★★★ 商品图标 ★★★
+					const itemIcons = {
+						'coffee': '☕',
+						'gemini': '🤖',
+						'gpt': '🧠',
+						'claude': '💭',
+						'gpu_rent': '💻',
+						'gpu_buy': '🖳',
+						'chair': '🪑',
+						'keyboard': '⌨️',
+						'monitor': '🖥️',
+						'bike': '🚲',
+						'down_jacket': '🧥',
+						'parasol': '☂️'
+					};
+					const itemIcon = itemIcons[item.id] || '📦';
+
+					// ★★★ 新增：订阅按钮 ★★★
+					let subscribeBtn = '';
+					if (subscribableItems.includes(item.id)) {
+						const isSubscribed = gameState.subscriptions && gameState.subscriptions[item.id];
+						const btnClass = isSubscribed ? 'btn-success' : 'btn-secondary';
+						const btnText = isSubscribed ? '🔔' : '🔕';
+						const btnTitle = isSubscribed ? '点击取消预购' : '点击开启预购';
+						subscribeBtn = `<button class="btn ${btnClass}" onclick="toggleSubscription('${item.id}')" title="${btnTitle}" style="padding:4px 8px;font-size:0.75rem;margin-right:4px;">${btnText}</button>`;
+					}
+
+					html += `<div class="shop-item ${!canBuy ? 'disabled' : ''}">
+						<div class="shop-item-info">
+							<div class="shop-item-name"><span style="font-size:1.2rem;margin-right:6px;">${itemIcon}</span>${item.name}</div>
+							<div class="shop-item-desc">${itemDesc}</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price">💰${item.price}</span>
+							${subscribeBtn}
+							<button class="btn btn-primary" onclick="buyItem('${item.id}')" ${!canBuy ? 'disabled' : ''}>${reason || '购买'}</button>
+						</div>
+					</div>`;
+				});
+
+				// ★★★ 新增：预购说明 ★★★
+				if (page === 1) {
+					html += `<div style="margin-top:10px;padding:8px;background:rgba(52,152,219,0.1);border-radius:6px;font-size:0.75rem;color:var(--text-secondary);">
+						<strong>🔔 预购功能：</strong>开启后，在进入下月/点击相关操作按钮时，若金钱足够会自动购买对应物品。
+					</div>`;
+				}
+			}
+
+			html += '</div>';
+
+			showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
+		}
+
+		// ★★★ 新增：渲染出售和升级页面 ★★★
+		function renderSellAndUpgradePage() {
+			let html = '';
+
+			html += `<div style="font-weight:600;margin-bottom:8px;">
+				<i class="fas fa-store"></i> 出售和升级
+				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第3页/共3页)</span>
+			</div>`;
+
+			// ★★★ 分页按钮 ★★★
+			html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
+				<button class="btn btn-secondary" onclick="openShop(1)" style="flex:1;padding:6px;">
+					消耗品
+				</button>
+				<button class="btn btn-secondary" onclick="openShop(2)" style="flex:1;padding:6px;">
+					永久物品
+				</button>
+				<button class="btn btn-primary" onclick="openShop(3)" style="flex:1;padding:6px;">
+					出售/升级
+				</button>
+			</div>`;
+
+			// ★★★ 可出售物品列表 ★★★
 			const sellableItems = [
-				{ id: 'chair', name: '人体工学椅', sellPrice: 5 },
-				{ id: 'monitor', name: '4K显示器', sellPrice: 4 },
-				{ id: 'keyboard', name: '机械键盘', sellPrice: 4 },
-				{ id: 'gpu_buy', name: 'GPU服务器', sellPrice: 6 },
-				{ id: 'bike', name: '平把公路车', sellPrice: 5 },
-				{ id: 'down_jacket', name: '羽绒服', sellPrice: 4 },
-				{ id: 'parasol', name: '遮阳伞', sellPrice: 4 }
+				{ id: 'chair', name: '人体工学椅', icon: '🪑', sellPrice: 5 },
+				{ id: 'monitor', name: '4K显示器', icon: '🖥️', sellPrice: 4 },
+				{ id: 'keyboard', name: '机械键盘', icon: '⌨️', sellPrice: 4 },
+				{ id: 'gpu_buy', name: 'GPU服务器', icon: '🖳', sellPrice: 6 },
+				{ id: 'bike', name: '平把公路车', icon: '🚲', sellPrice: 5 },
+				{ id: 'down_jacket', name: '羽绒服', icon: '🧥', sellPrice: 4 },
+				{ id: 'parasol', name: '遮阳伞', icon: '☂️', sellPrice: 4 }
 			];
+
 			// 检查是否有可出售的物品
 			const ownedSellable = sellableItems.filter(si => {
 				if (si.id === 'gpu_buy') {
@@ -1071,13 +1191,20 @@
 					return gameState.hasParasol;
 				}
 				return gameState.furnitureBought && gameState.furnitureBought[si.id.replace('_buy', '')];
-			});			
-			// 显示出售区域
-			if (ownedSellable.length > 0) {
+			});
+
+			if (ownedSellable.length === 0) {
+				html += `<div style="padding:20px;text-align:center;color:var(--text-secondary);background:var(--light-bg);border-radius:8px;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">📦</div>
+					<div>暂无可出售或可升级的物品</div>
+					<div style="font-size:0.8rem;margin-top:5px;">请先在永久物品页购买装备</div>
+				</div>`;
+			} else {
+				// 出售区域
 				html += `<div style="margin-bottom:15px;padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.2),rgba(243,156,18,0.2));border-radius:8px;border:1px solid rgba(243,156,18,0.4);">
-					<div style="font-weight:600;color:#d68910;margin-bottom:8px;"><i class="fas fa-store"></i> 出售物品（半价回收）</div>`;
-				
-					ownedSellable.forEach(si => {
+					<div style="font-weight:600;color:#d68910;margin-bottom:8px;"><i class="fas fa-coins"></i> 出售物品（半价回收）</div>`;
+
+				ownedSellable.forEach(si => {
 					let ownedCount = 1;
 					if (si.id === 'gpu_buy') {
 						ownedCount = gameState.gpuServersBought || 0;
@@ -1106,7 +1233,7 @@
 
 					html += `<div class="shop-item" style="background:var(--card-bg);">
 						<div class="shop-item-info">
-							<div class="shop-item-name">${si.name}${chairInfo}${bikeInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
+							<div class="shop-item-name"><span style="font-size:1.2rem;margin-right:6px;">${si.icon}</span>${si.name}${chairInfo}${bikeInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
 							<div class="shop-item-desc">出售获得 ${si.sellPrice} 金币</div>
 						</div>
 						<div class="shop-item-action">
@@ -1116,82 +1243,25 @@
 						</div>
 					</div>`;
 				});
-				
+
 				html += '</div>';
 			}
-			
-			// 原有购买区域
-			html += `<div style="font-weight:600;margin-bottom:8px;">
-				<i class="fas fa-shopping-cart"></i> 购买物品
-				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第${shopCurrentPage}页/共2页)</span>
+
+			// ★★★ 升级说明 ★★★
+			html += `<div style="padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.75rem;color:var(--text-secondary);">
+				<div style="font-weight:600;margin-bottom:5px;">💡 升级说明</div>
+				<div>• 人体工学椅和自行车购买后可以进行升级</div>
+				<div>• 升级后效果增强，卖出价格也会提高</div>
+				<div>• 卖出后重新购买可以选择新的升级方向</div>
 			</div>`;
 
-			// ★★★ 分页按钮 ★★★
-			html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
-				<button class="btn ${shopCurrentPage === 1 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(1)" style="flex:1;padding:6px;">
-					消耗品
-				</button>
-				<button class="btn ${shopCurrentPage === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(2)" style="flex:1;padding:6px;">
-					永久物品
-				</button>
-			</div>`;
-
-			// ★★★ 可预购订阅的物品列表 ★★★
-			const subscribableItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
-
-			currentPageItems.forEach(item => {
-				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
-				const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
-
-				// ★★★ 修改：冰美式动态描述（前15杯不变，第16杯开始提升）★★★
-				let itemDesc = item.desc;
-				if (item.id === 'coffee') {
-					const count = gameState.coffeeBoughtCount || 0;
-					const currentBonus = 3 + Math.floor(count / 15);
-					const currentTier = Math.floor(count / 15);
-					const nextMilestone = (currentTier + 1) * 15 + 1;  // 16, 31, 46...
-					const nextBonus = currentBonus + 1;
-
-					itemDesc = `SAN值+${currentBonus}`;
-					itemDesc += ` (${count}/${nextMilestone}杯时+${nextBonus})`;
-				}
-
-				// ★★★ 新增：订阅按钮 ★★★
-				let subscribeBtn = '';
-				if (subscribableItems.includes(item.id)) {
-					const isSubscribed = gameState.subscriptions && gameState.subscriptions[item.id];
-					const btnClass = isSubscribed ? 'btn-success' : 'btn-secondary';
-					const btnText = isSubscribed ? '🔔' : '🔕';
-					const btnTitle = isSubscribed ? '点击取消预购' : '点击开启预购';
-					subscribeBtn = `<button class="btn ${btnClass}" onclick="toggleSubscription('${item.id}')" title="${btnTitle}" style="padding:4px 8px;font-size:0.75rem;margin-right:4px;">${btnText}</button>`;
-				}
-
-				html += `<div class="shop-item ${!canBuy ? 'disabled' : ''}">
-					<div class="shop-item-info">
-						<div class="shop-item-name">${item.name}</div>
-						<div class="shop-item-desc">${itemDesc}</div>
-					</div>
-					<div class="shop-item-action">
-						<span class="shop-item-price">💰${item.price}</span>
-						${subscribeBtn}
-						<button class="btn btn-primary" onclick="buyItem('${item.id}')" ${!canBuy ? 'disabled' : ''}>${reason || '购买'}</button>
-					</div>
-				</div>`;
-			});
-			html += '</div>';
-
-			// ★★★ 新增：预购说明 ★★★
-			html += `<div style="margin-top:10px;padding:8px;background:rgba(52,152,219,0.1);border-radius:6px;font-size:0.75rem;color:var(--text-secondary);">
-				<strong>🔔 预购功能：</strong>开启后，在进入下月/点击相关操作按钮时，若金钱足够会自动购买对应物品。
-			</div>`;
-
-			showModal('🛒 商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
+			return html;
 		}
 		// ==================== 人体工学椅升级系统 ====================
 		const CHAIR_UPGRADES = {
 			advanced: {
 				name: '高级人体工学椅',
-				icon: '🪑✨',
+				icon: '💺',
 				desc: '每月SAN+2',
 				price: 18,
 				effect: 'monthly_san_2'  // 每月固定+2
@@ -1302,9 +1372,9 @@
 			// 记录升级状态
 			gameState.chairUpgrade = upgradeKey;
 
-			// ★★★ 新增：触发高级家具成就条件 ★★★
+			// ★★★ 新增：触发高级装备成就条件 ★★★
 			gameState.achievementConditions = gameState.achievementConditions || {};
-			gameState.achievementConditions.upgradedChair = true;
+			gameState.achievementConditions.upgradedEquipment = true;
 
 			addLog('升级', `椅子升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
 
@@ -1389,6 +1459,12 @@
 
 			// 记录升级状态（保留累计骑行消耗）
 			gameState.bikeUpgrade = upgradeKey;
+
+			// ★★★ 新增：升级弯把公路车时触发高级装备成就条件 ★★★
+			if (upgradeKey === 'road') {
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.upgradedEquipment = true;
+			}
 
 			addLog('升级', `自行车升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
 
@@ -1561,15 +1637,18 @@
 						
 						// 检查全套家具成就条件
 						if (gameState.furnitureBought) {
-							const hasAll = gameState.furnitureBought.chair && 
-										   gameState.furnitureBought.monitor && 
-										   gameState.furnitureBought.keyboard;
+							const hasAll = gameState.furnitureBought.chair &&
+										   gameState.furnitureBought.monitor &&
+										   gameState.furnitureBought.keyboard &&
+										   (gameState.gpuServersBought || 0) >= 1;
 							if (!hasAll && gameState.achievementConditions) {
 								gameState.achievementConditions.fullFurnitureSet = false;
 							}
 						}
 						
 						gameState.gold += sellPrice;
+						// ★★★ 新增：追踪累计卖出金币（倒买倒卖成就）★★★
+						gameState.totalSoldCoins = (gameState.totalSoldCoins || 0) + sellPrice;
 						addLog('出售', `出售了${itemName}`, `金币+${sellPrice}`);
 						
 						closeModal();
@@ -1654,11 +1733,12 @@
                     break;
             }
             
-            // 检查全套家具成就
-            if (gameState.furnitureBought && 
-                gameState.furnitureBought.chair && 
-                gameState.furnitureBought.monitor && 
-                gameState.furnitureBought.keyboard) {
+            // 检查全套家具成就（需要工学椅或其升级+显示器+键盘+GPU服务器）
+            if (gameState.furnitureBought &&
+                gameState.furnitureBought.chair &&
+                gameState.furnitureBought.monitor &&
+                gameState.furnitureBought.keyboard &&
+                (gameState.gpuServersBought || 0) >= 1) {
                 gameState.achievementConditions = gameState.achievementConditions || {};
                 gameState.achievementConditions.fullFurnitureSet = true;
             }
@@ -1674,6 +1754,15 @@
                     // ★★★ 新增：购买GPU服务器增加实验分数+1 ★★★
                     gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
                     result += '，获得永久buff-每次做实验多做1次且分数+1';
+                    // ★★★ 购买GPU后也检查全套家具成就 ★★★
+                    if (gameState.furnitureBought &&
+                        gameState.furnitureBought.chair &&
+                        gameState.furnitureBought.monitor &&
+                        gameState.furnitureBought.keyboard &&
+                        (gameState.gpuServersBought || 0) >= 1) {
+                        gameState.achievementConditions = gameState.achievementConditions || {};
+                        gameState.achievementConditions.fullFurnitureSet = true;
+                    }
                     break;
                 case 'keyboard':
                     item.bought = true;
