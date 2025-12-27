@@ -268,7 +268,7 @@
 				});
 
 				let sanText = `SAN-${actualSanCost}`;
-				if (actualSanCost !== baseSanCost) {
+				if (gameState.isReversed && gameState.character === 'normal') {
 					sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
 				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);

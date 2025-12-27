@@ -382,7 +382,7 @@
                     closeModal();
                     const baseSanCost = -3;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
 
                     const becomesJunior = Math.random() < 0.5;
                     if (becomesJunior) {
@@ -430,7 +430,7 @@
                     closeModal();
                     const baseSanCost = -2;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     
                     if (Math.random() < 0.5) {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+4', value: 4, permanent: false });
@@ -471,7 +471,7 @@
 					if (gameState.san>=8) {
 						const baseSanCost = -8;
 						const actualSanCost = getActualSanChange(baseSanCost);
-						const sanText = actualSanCost !== baseSanCost
+						const sanText = (gameState.isReversed && gameState.character === 'normal')
 							? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 							: `SAN值${actualSanCost}`;
 						addLog('随机事件', '突然感冒了 - 强撑', `【SAN>=8】身体透支了，${sanText}`);
@@ -524,7 +524,7 @@
                     }
                     const baseSanCost = -7;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     addLog('随机事件', '导师安排你做项目 - 横向项目', `成功结项，${sanText}，导师好感度+1，金钱+5`);
                     closeModal();
                     gameState.favor = Math.min(20, gameState.favor + 1);
@@ -540,7 +540,7 @@
                     }
                     const baseSanCost = -5;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     addLog('随机事件', '导师安排你做项目 - 纵向项目', `成功结项，${sanText}，导师好感度+1，科研能力+1`);
                     closeModal();
                     gameState.favor = Math.min(20, gameState.favor + 1);
@@ -568,14 +568,14 @@
                     if (gameState.social < 6) {
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `【社交<6】师弟师妹对你颇有微词，${sanText}，社交能力-1`);
                         changeSocial(-1);
                         changeSan(baseSanCost);
                     } else if (gameState.social < 12) {
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         addLog('随机事件', '导师安排你做项目 - 让师弟师妹分担一部分', `【社交>=6】师弟师妹成功为你分忧，${sanText}`);
                         changeSan(baseSanCost);
                     } else {
@@ -623,7 +623,7 @@
                     if (gameState.favor >= 6) {
                         const baseSanCost = -6;
                         const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
                         gameState.gold += 5;
                         addLog('随机事件', '导师找你谈话 - 告诉导师想要去短期实习', `【好感>=6】导师居然同意了但要兼顾科研，${sanText}，临时buff-下次做实验分数+5，金钱+5`);
@@ -653,7 +653,7 @@
                     closeModal();
                     const baseSanCost = -3;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师大力夸赞了你的见解，${sanText}，导师好感度+2`);
@@ -874,7 +874,7 @@
 					// ★★★ 新增：SAN-2 ★★★
 					const baseSanCost = -2;
 					const actualSanCost = getActualSanChange(baseSanCost);
-					const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+					const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
 
 					if (Math.random() < 0.5) {
 						gameState.buffs.temporary.push({ type: 'citation_multiply', name: '下一篇中稿论文引用速度+100%', value: 2, permanent: false });
@@ -894,7 +894,7 @@
                     if (gameState.social < 6) {
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         gameState.buffs.temporary.push(
                             { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
                             { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
@@ -934,7 +934,7 @@
                     // ★★★ 新增：SAN-2 ★★★
                     const baseSanCost = -2;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+10', value: 10, permanent: false });
                     addLog('随机事件', '师兄师姐找你合作论文 - 浅浅合作', `师兄师姐给了你一个idea，${sanText}，临时buff-下次想idea分数+10`);
                     changeSan(baseSanCost);
@@ -945,7 +945,7 @@
                     // ★★★ 修改：新增SAN-2，删除idea buff ★★★
                     const baseSanCost = -2;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     addLog('随机事件', '师兄师姐找你合作论文 - 深入合作', `遇到靠谱的师兄师姐，${sanText}，科研能力+1`);
                     changeResearch(1);
                     changeSan(baseSanCost);
@@ -963,7 +963,7 @@
                     // ★★★ 修改：不增加科研，buff+5，新增SAN-2 ★★★
                     const baseSanCost = -2;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+5', value: 5, permanent: true });
                     addLog('随机事件', '师兄师姐找你合作论文 - 拜入门下', `你收获了第二导师，${sanText}，永久buff-每次写论文分数+5`);
                     changeSan(baseSanCost);
@@ -1033,7 +1033,7 @@
 					} else {
 						const baseSanCost = -2;
 						const actualSanCost = getActualSanChange(baseSanCost);
-						const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+						const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
 						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', `【好感<6】导师艰难被你说服，${sanText}`);
 						changeSan(baseSanCost);
 					}
@@ -1068,7 +1068,7 @@
                     closeModal();
                     const baseSanCost = -3;
                     const actualSanCost = getActualSanChange(baseSanCost);
-                    const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                    const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室服务器突然坏了 - 自己尝试重装系统', `运气好，费劲周折修好了，${sanText}`);
@@ -1088,7 +1088,7 @@
                     } else {
                         const baseSanCost = -2;
                         const actualSanCost = getActualSanChange(baseSanCost);
-                        const sanText = actualSanCost !== baseSanCost ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
+                        const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', `遇到无良商家修了很久，金币-4，${sanText}`);
                         gameState.san += actualSanCost;
                         changeGold(-4);
@@ -1100,8 +1100,8 @@
         function showRandomEvent14() {
             const baseSanCost = 1;
             const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            const sanDescText = actualSanCost !== baseSanCost 
-                ? `每月SAN-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+            const sanDescText = (gameState.isReversed && gameState.character === 'normal')
+                ? `每月SAN-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
                 : `每月SAN-${baseSanCost}`;
             
             showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
@@ -1119,7 +1119,7 @@
 					const actualCost = Math.abs(getActualSanChange(-baseCost));
 
 					let sanText = `SAN-${actualCost}`;
-					if (actualCost !== baseCost) {
+					if (gameState.isReversed && gameState.character === 'normal') {
 						sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 					}
 					addLog('随机事件', '指导师弟师妹 - 合作一个idea', `${sanText}，社交+1`);
@@ -1175,7 +1175,7 @@
 					}
 					const baseSanCost = 4;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					const sanText = actualSanCost !== baseSanCost
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					addLog('随机事件', '玩游戏放松 - 玩泰拉瑞亚', `你和同学废寝忘食的联机，${sanText}，社交能力+1`);
@@ -1192,7 +1192,7 @@
 					}
 					const baseSanCost = 6;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					const sanText = actualSanCost !== baseSanCost
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					addLog('随机事件', '玩游戏放松 - 玩魔塔50层', `你绞尽脑汁终于击败了骑士队长，${sanText}，科研能力+1`);
@@ -1214,7 +1214,7 @@
 				{ text: '👑 玩王者荣耀', class: 'btn-warning', action: () => {
 					const baseSanCost = 5;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					const sanText = actualSanCost !== baseSanCost
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
 						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					addLog('随机事件', '玩游戏放松 - 玩王者荣耀', `成为小代，${sanText}，金币+2`);
@@ -1247,7 +1247,7 @@
 				{ text: '😤 熬夜补数据', class: 'btn-danger', action: () => {
 					const baseSanCost = -6;
 					const actualSanCost = getActualSanChange(baseSanCost);
-					const sanText = actualSanCost !== baseSanCost
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
 						? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值${actualSanCost}`;
 					addLog('随机事件', '数据丢失 - 熬夜补数据', `通宵重做实验，${sanText}`);
@@ -1299,30 +1299,65 @@
 			// 获取保存的昵称
 			const savedNickname = localStorage.getItem('graduateSimulator_nickname') || '';
 
-			showModal('📝 研究生生涯过半',
-				`<div style="text-align:center;margin-bottom:15px;">
-					<div style="font-size:2.5rem;margin-bottom:10px;">📝</div>
-					<div style="font-size:1rem;color:var(--text-primary);">研究生生涯已经过半了...</div>
-					<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:5px;">你有什么想说的吗？</div>
-				</div>
-				<div style="background:var(--light-bg);border-radius:8px;padding:12px;margin-bottom:15px;">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;">
-						可以是本局吐槽、游戏心得攻略、bug反馈、游戏建议...
+			showModal('',
+				`<div style="position:relative;padding:20px 15px 10px;">
+					<!-- 装饰性书签角 -->
+					<div style="position:absolute;top:0;right:0;width:0;height:0;border-left:40px solid transparent;border-top:40px solid var(--primary-color);opacity:0.15;"></div>
+
+					<!-- 标题区域 -->
+					<div style="text-align:center;margin-bottom:20px;">
+						<div style="display:inline-block;background:linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.5rem;font-weight:700;letter-spacing:2px;">
+							研究生生涯过半
+						</div>
+						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;font-style:italic;">
+							"时光荏苒，转眼已是第三年..."
+						</div>
 					</div>
-					<div style="margin-bottom:10px;">
-						<input type="text" id="midterm-nickname" placeholder="昵称（最多10字）" maxlength="10" value="${savedNickname}"
-							style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text-primary);box-sizing:border-box;">
+
+					<!-- 便签风格的留言区 -->
+					<div style="background:linear-gradient(180deg, #fffef0 0%, #fefcf3 100%);border-radius:12px;padding:16px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.05);position:relative;">
+						<!-- 便签顶部装饰条 -->
+						<div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:60px;height:4px;background:linear-gradient(90deg, var(--primary-color), var(--accent-color));border-radius:0 0 2px 2px;"></div>
+
+						<div style="font-size:0.8rem;color:#888;margin-bottom:12px;text-align:center;padding-top:5px;">
+							分享你的感想、吐槽、建议或发现的bug...
+						</div>
+
+						<!-- 昵称输入 -->
+						<div style="margin-bottom:12px;">
+							<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+								<span style="font-size:0.75rem;color:#666;font-weight:500;">昵称</span>
+								<span style="font-size:0.7rem;color:#aaa;">最多10字</span>
+							</div>
+							<input type="text" id="midterm-nickname" placeholder="你的昵称" maxlength="10" value="${savedNickname}"
+								style="width:100%;padding:10px 14px;border:2px solid #e8e4d9;border-radius:8px;font-size:0.9rem;background:#fff;color:#333;box-sizing:border-box;transition:border-color 0.2s,box-shadow 0.2s;outline:none;"
+								onfocus="this.style.borderColor='var(--primary-color)';this.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb),0.1)';"
+								onblur="this.style.borderColor='#e8e4d9';this.style.boxShadow='none';">
+						</div>
+
+						<!-- 留言内容 -->
+						<div>
+							<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+								<span style="font-size:0.75rem;color:#666;font-weight:500;">留言内容</span>
+								<span style="font-size:0.7rem;color:#aaa;">最多150字</span>
+							</div>
+							<textarea id="midterm-content" placeholder="写下你想说的话..." maxlength="150" rows="4"
+								style="width:100%;padding:10px 14px;border:2px solid #e8e4d9;border-radius:8px;font-size:0.9rem;background:#fff;color:#333;resize:vertical;box-sizing:border-box;transition:border-color 0.2s,box-shadow 0.2s;outline:none;min-height:80px;line-height:1.5;"
+								onfocus="this.style.borderColor='var(--primary-color)';this.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb),0.1)';"
+								onblur="this.style.borderColor='#e8e4d9';this.style.boxShadow='none';"></textarea>
+						</div>
 					</div>
-					<div>
-						<textarea id="midterm-content" placeholder="写下你的留言...（最多150字）" maxlength="150" rows="3"
-							style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text-primary);resize:vertical;box-sizing:border-box;"></textarea>
+
+					<!-- 底部提示 -->
+					<div style="text-align:center;font-size:0.7rem;color:var(--text-secondary);opacity:0.7;">
+						留言将同步到游戏留言板，与其他玩家分享
 					</div>
 				</div>`,
 				[
-					{ text: '暂时没有呢', class: 'btn-info', action: () => {
+					{ text: '下次再说', class: 'btn-info', action: () => {
 						closeModal();
 					}},
-					{ text: '我要提交', class: 'btn-primary', action: () => {
+					{ text: '提交留言', class: 'btn-primary', action: () => {
 						submitMidtermMessage();
 					}}
 				]

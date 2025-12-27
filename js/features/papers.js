@@ -26,8 +26,8 @@
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					
 					if (gameState.san < actualSanCost) {
-						const tipText = actualSanCost !== baseSanCost 
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+						const tipText = (gameState.isReversed && gameState.character === 'normal')
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -36,8 +36,8 @@
 					paper.promotions.arxiv = true;
 					// ★★★ 改为加法：+0.25 ★★★
 					paper.citationMultiplier += 0.25;
-					const sanText = actualSanCost !== baseSanCost 
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度+25%`;
 					canProceed = changeSan(-baseSanCost);
@@ -48,8 +48,8 @@
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					
 					if (gameState.san < actualSanCost) {
-						const tipText = actualSanCost !== baseSanCost 
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+						const tipText = (gameState.isReversed && gameState.character === 'normal')
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -58,8 +58,8 @@
 					paper.promotions.github = true;
 					// ★★★ 改为加法：+0.5 ★★★
 					paper.citationMultiplier += 0.5;
-					const sanText = actualSanCost !== baseSanCost 
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度+50%`;
 					canProceed = changeSan(-baseSanCost);
@@ -70,8 +70,8 @@
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					
 					if (gameState.san < actualSanCost) {
-						const tipText = actualSanCost !== baseSanCost 
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+						const tipText = (gameState.isReversed && gameState.character === 'normal')
+							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 						showModal('❌ 操作失败', tipText, 
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -80,8 +80,8 @@
 					paper.promotions.xiaohongshu = true;
 					// ★★★ 改为加法：+0.25 ★★★
 					paper.citationMultiplier += 0.25;
-					const sanText = actualSanCost !== baseSanCost 
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` 
+					const sanText = (gameState.isReversed && gameState.character === 'normal')
+						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
 						: `SAN值-${baseSanCost}`;
 					result = `${sanText}，论文引用速度+25%`;
 					canProceed = changeSan(-baseSanCost);
@@ -958,8 +958,8 @@
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost 
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+				const tipText = (gameState.isReversed && gameState.character === 'normal')
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 				showModal('❌ 操作失败', tipText, 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -982,7 +982,7 @@
 
 			let result = `SAN值-${actualSanCost}`;
 			if (has4K) result += '（4K显示器生效）';
-			if (actualSanCost !== baseSanCost) {
+			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
 			result += `，获得临时buff：下次想idea分数+${ideaBonus}（${gameState.readCount}/${nextMilestone}次时+${nextBonus}）`;
@@ -1019,7 +1019,7 @@
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost
+				const tipText = (gameState.isReversed && gameState.character === 'normal')
 					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 				showModal('❌ 操作失败', tipText,
@@ -1044,7 +1044,7 @@
 			const nextSan = baseSanCost + 1;
 
 			let result = `SAN值-${actualSanCost}`;
-			if (actualSanCost !== baseSanCost) {
+			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
 			result += `，金钱+${goldReward}（${gameState.workCount}/${nextMilestone}次时：SAN-${nextSan},金+${nextGold}）`;
@@ -1095,8 +1095,8 @@
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost 
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+				const tipText = (gameState.isReversed && gameState.character === 'normal')
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 				showModal('❌ 操作失败', tipText, 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -1220,7 +1220,7 @@
 				
 				// 构建日志
 				let result = `SAN值-${actualSanCost}`;
-				if (actualSanCost !== baseSanCost) {
+				if (gameState.isReversed && gameState.character === 'normal') {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
 				if (skillUsed) {
@@ -1283,8 +1283,8 @@
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost 
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+				const tipText = (gameState.isReversed && gameState.character === 'normal')
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 				showModal('❌ 操作失败', tipText, 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -1398,7 +1398,7 @@
 				
 				// 构建日志
 				let result = `SAN值-${actualSanCost}`;
-				if (actualSanCost !== baseSanCost) {
+				if (gameState.isReversed && gameState.character === 'normal') {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
 				if (skillUsed) {
@@ -1461,8 +1461,8 @@
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			if (gameState.san < actualSanCost) {
-				const tipText = actualSanCost !== baseSanCost 
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>` 
+				const tipText = (gameState.isReversed && gameState.character === 'normal')
+					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
 					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
 				showModal('❌ 操作失败', tipText, 
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -1576,7 +1576,7 @@
 				
 				// 构建日志
 				let result = `SAN值-${actualSanCost}`;
-				if (actualSanCost !== baseSanCost) {
+				if (gameState.isReversed && gameState.character === 'normal') {
 					result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 				}
 				if (skillUsed) {
