@@ -1032,8 +1032,19 @@
 		function openAchievementShop() {
 			openBlackMarket();
 		}
+
+		// ★★★ 商店分页状态 ★★★
+		let shopCurrentPage = 1;
+
         // ==================== 商店系统 ====================
-		function openShop() {
+		function openShop(page = shopCurrentPage) {
+			shopCurrentPage = page;
+
+			// ★★★ 分页：第一页是可重复购买的，第二页是只能买一件的 ★★★
+			const page1Items = shopItems.filter(item => !item.once);  // 可重复购买
+			const page2Items = shopItems.filter(item => item.once);   // 只能买一件
+			const currentPageItems = page === 1 ? page1Items : page2Items;
+
 			let html = '<div>';
 			// ★★★ 新增：可出售物品列表 ★★★
 			const sellableItems = [
@@ -1041,7 +1052,9 @@
 				{ id: 'monitor', name: '4K显示器', sellPrice: 4 },
 				{ id: 'keyboard', name: '机械键盘', sellPrice: 4 },
 				{ id: 'gpu_buy', name: 'GPU服务器', sellPrice: 6 },
-				{ id: 'bike', name: '平把公路车', sellPrice: 5 }
+				{ id: 'bike', name: '平把公路车', sellPrice: 5 },
+				{ id: 'down_jacket', name: '羽绒服', sellPrice: 4 },
+				{ id: 'parasol', name: '遮阳伞', sellPrice: 4 }
 			];
 			// 检查是否有可出售的物品
 			const ownedSellable = sellableItems.filter(si => {
@@ -1050,6 +1063,12 @@
 				}
 				if (si.id === 'bike') {
 					return gameState.hasBike;
+				}
+				if (si.id === 'down_jacket') {
+					return gameState.hasDownJacket;
+				}
+				if (si.id === 'parasol') {
+					return gameState.hasParasol;
 				}
 				return gameState.furnitureBought && gameState.furnitureBought[si.id.replace('_buy', '')];
 			});			
@@ -1102,12 +1121,25 @@
 			}
 			
 			// 原有购买区域
-			html += '<div style="font-weight:600;margin-bottom:8px;"><i class="fas fa-shopping-cart"></i> 购买物品</div>';
+			html += `<div style="font-weight:600;margin-bottom:8px;">
+				<i class="fas fa-shopping-cart"></i> 购买物品
+				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第${shopCurrentPage}页/共2页)</span>
+			</div>`;
+
+			// ★★★ 分页按钮 ★★★
+			html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
+				<button class="btn ${shopCurrentPage === 1 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(1)" style="flex:1;padding:6px;">
+					消耗品
+				</button>
+				<button class="btn ${shopCurrentPage === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(2)" style="flex:1;padding:6px;">
+					永久物品
+				</button>
+			</div>`;
 
 			// ★★★ 可预购订阅的物品列表 ★★★
 			const subscribableItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
 
-			shopItems.forEach(item => {
+			currentPageItems.forEach(item => {
 				const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
 				const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
 
@@ -1395,11 +1427,13 @@
 				'monitor': 4,
 				'keyboard': 4,
 				'gpu_buy': 6,
-				'bike': getBikeSellPrice()
+				'bike': getBikeSellPrice(),
+				'down_jacket': 4,
+				'parasol': 4
 			};
 
 			const sellPrice = sellPrices[id];
-			if (!sellPrice) return;
+			if (sellPrice === undefined) return;
 
 			let canSell = false;
 			let itemName = '';
@@ -1434,6 +1468,14 @@
 					} else {
 						itemName = '平把公路车';
 					}
+					break;
+				case 'down_jacket':
+					canSell = gameState.hasDownJacket;
+					itemName = '羽绒服';
+					break;
+				case 'parasol':
+					canSell = gameState.hasParasol;
+					itemName = '遮阳伞';
 					break;
 			}
 			
@@ -1504,6 +1546,16 @@
 								// 恢复商店状态
 								const bikeItem = shopItems.find(i => i.id === 'bike');
 								if (bikeItem) bikeItem.bought = false;
+								break;
+							case 'down_jacket':
+								gameState.hasDownJacket = false;
+								const downJacketItem = shopItems.find(i => i.id === 'down_jacket');
+								if (downJacketItem) downJacketItem.bought = false;
+								break;
+							case 'parasol':
+								gameState.hasParasol = false;
+								const parasolItem = shopItems.find(i => i.id === 'parasol');
+								if (parasolItem) parasolItem.bought = false;
 								break;
 						}
 						
@@ -1708,6 +1760,18 @@
 					gameState.bikeUpgrade = null;  // 未升级
 					result += '，获得永久效果-每月SAN-1，每累计减少6后SAN上限+1';
 					break;
+
+				case 'down_jacket':
+					item.bought = true;
+					gameState.hasDownJacket = true;
+					result += '，获得永久效果-使冬季"寒风刺骨"debuff无效';
+					break;
+
+				case 'parasol':
+					item.bought = true;
+					gameState.hasParasol = true;
+					result += '，获得永久效果-使夏季"烈日当空"debuff无效';
+					break;
             }
 
             addLog('购买', `购买了${item.name}`, result);
@@ -1782,6 +1846,7 @@
         }
 
 		// ==================== 全局函数暴露（供onclick调用）====================
+		window.openShop = openShop;
 		window.renderShop = renderShop;
 		window.buyItem = buyItem;
 		window.sellItem = sellItem;

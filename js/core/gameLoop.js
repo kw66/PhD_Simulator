@@ -182,8 +182,10 @@
 				// 秋季：秋高气爽，每月回复SAN+1
 				gameState.san = Math.min(gameState.sanMax, gameState.san + 1);
 			} else if (currentSeason.key === 'winter') {
-				// 冬季：寒风刺骨，每月回复SAN-1
-				gameState.san = Math.max(0, gameState.san - 1);
+				// 冬季：寒风刺骨，每月回复SAN-1（羽绒服可使其无效）
+				if (!gameState.hasDownJacket) {
+					gameState.san = Math.max(0, gameState.san - 1);
+				}
 			}
 
 			// ★★★ 新增：小电驴季节加成（+SAN类）★★★
@@ -436,7 +438,11 @@
 			if (currentSeason.key === 'autumn') {
 				logResult += '，秋高气爽SAN+1';
 			} else if (currentSeason.key === 'winter') {
-				logResult += '，寒风刺骨SAN-1';
+				if (gameState.hasDownJacket) {
+					logResult += '，羽绒服抵御寒风';
+				} else {
+					logResult += '，寒风刺骨SAN-1';
+				}
 			}
 			// ★★★ 新增：小电驴季节加成日志 ★★★
 			if (gameState.bikeUpgrade === 'ebike' && (currentSeason.key === 'spring' || currentSeason.key === 'autumn')) {

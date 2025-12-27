@@ -343,7 +343,9 @@
 			{ id: 'chair', name: '人体工学椅', desc: '永久buff-每月SAN值+1', price: 10, once: true, bought: false },
 			{ id: 'keyboard', name: '机械键盘', desc: '永久buff-写论文变为SAN-3', price: 8, once: true, bought: false },
 			{ id: 'monitor', name: '4K显示器', desc: '永久buff-读论文变为SAN-1', price: 8, once: true, bought: false },
-			{ id: 'bike', name: '平把公路车', desc: '每月SAN-1，每累计减少6后SAN上限+1', price: 10, once: true, bought: false }
+			{ id: 'bike', name: '平把公路车', desc: '每月SAN-1，每累计减少6后SAN上限+1', price: 10, once: true, bought: false },
+			{ id: 'down_jacket', name: '羽绒服', desc: '使冬季"寒风刺骨"debuff无效', price: 8, once: true, bought: false },
+			{ id: 'parasol', name: '遮阳伞', desc: '使夏季"烈日当空"debuff无效', price: 8, once: true, bought: false }
 		];
 		
 		// ==================== 会议配置 ====================
@@ -609,7 +611,7 @@
 		// 冬季（现实12-2月）= 游戏月份 4, 5, 6
 		const SEASONS = {
 			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '万物复苏', desc: '所有SAN扣除的操作减少1（最低为0）' },
-			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '骄阳似火', desc: '有SAN扣除的操作增加1' },
+			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '烈日当空', desc: '有SAN扣除的操作增加1' },
 			autumn: { name: '秋季', icon: '🍂', months: [1, 2, 3], buff: '秋高气爽', desc: '每月回复SAN+1' },
 			winter: { name: '冬季', icon: '❄️', months: [4, 5, 6], buff: '寒风刺骨', desc: '每月回复SAN-1' }
 		};
@@ -636,8 +638,12 @@
 				return 0;
 			}
 			const season = getCurrentSeason();
-			if (season.key === 'spring') return -1;  // 春季减少扣除
-			if (season.key === 'summer') return 1;   // 夏季增加扣除
+			if (season.key === 'spring') return 1;   // 春季减少扣除（delta + 1，如-3变-2）
+			if (season.key === 'summer') {
+				// 夏季增加扣除（delta - 1，如-3变-4），遮阳伞可使其无效
+				if (gameState.hasParasol) return 0;
+				return -1;
+			}
 			return 0;  // 秋冬无修正
 		}
 
@@ -723,8 +729,38 @@
 			const changes = [];
 
 			if (bonus.research) {
-				gameState.research = Math.min(gameState.researchMax || 20, gameState.research + bonus.research);
-				changes.push(`科研能力+${bonus.research}`);
+				// ★★★ 愚钝之院士转世：科研能力固定为0，转化为其他属性 ★★★
+				if (gameState.isReversed && gameState.character === 'genius') {
+					const delta = bonus.research;
+					gameState.blockedResearchGains = (gameState.blockedResearchGains || 0) + delta;
+					if (gameState.reversedAwakened === true) {
+						// 觉醒后金+8，SAN+8，社交+2，好感+2
+						const sanGain = delta * 8;
+						const goldGain = delta * 8;
+						const favorGain = delta * 2;
+						const socialGain = delta * 2;
+						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+						gameState.gold += goldGain;
+						gameState.favor = Math.min(20, gameState.favor + favorGain);
+						gameState.social = Math.min(20, gameState.social + socialGain);
+						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
+					} else {
+						// 未觉醒时金+4，SAN+4，社交+1，好感+1
+						const sanGain = delta * 4;
+						const goldGain = delta * 4;
+						const socialGain = delta * 1;
+						const favorGain = delta * 1;
+						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
+						gameState.gold += goldGain;
+						gameState.social = Math.min(20, gameState.social + socialGain);
+						gameState.favor = Math.min(20, gameState.favor + favorGain);
+						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 社交+${socialGain}, 好感+${favorGain}`);
+					}
+					gameState.research = 0;
+				} else {
+					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + bonus.research);
+					changes.push(`科研能力+${bonus.research}`);
+				}
 			}
 			if (bonus.researchMax) {
 				gameState.researchMax = (gameState.researchMax || 20) + bonus.researchMax;
