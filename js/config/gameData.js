@@ -791,6 +791,8 @@
 					gameState.research = 0;
 				} else {
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + bonus.research);
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					changes.push(`科研能力+${bonus.research}`);
 				}
 			}

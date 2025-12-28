@@ -17,16 +17,22 @@
 							gs.gold += 8;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
 						}
 					}
 					gs.research++;
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					return '科研能力+1';
 				}
 			},
@@ -45,16 +51,22 @@
 							gs.gold += 8;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
 						}
 					}
 					gs.research++;
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					return '科研能力+1';
 				}
 			},
@@ -73,16 +85,22 @@
 							gs.gold += 8;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return '愚钝转化：SAN+4, 金+4, 好感+1, 社交+1';
 						}
 					}
 					gs.research++;
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					return '科研能力+1';
 				}
 			},
@@ -102,16 +120,22 @@
 							gs.gold += 8;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return `上限降至${gs.researchMax}，愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2`;
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
 							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
 							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+							// ★★★ 修复：社交增加时检查解锁 ★★★
+							checkSocialUnlock();
 							return `上限降至${gs.researchMax}，愚钝转化：SAN+4, 金+4, 好感+1, 社交+1`;
 						}
 					}
 					gs.research = Math.min(gs.researchMax, gs.research + 1);
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					return `科研能力+1，上限降至${gs.researchMax}`;
 				}
 			},
@@ -220,6 +244,8 @@
 				condition: (gs) => gs.social <= 3,
 				effect: (gs) => {
 					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					return '社交能力+1';
 				}
 			},
@@ -231,6 +257,8 @@
 				condition: (gs) => gs.social <= 6,
 				effect: (gs) => {
 					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					return '社交能力+1';
 				}
 			},
@@ -242,6 +270,8 @@
 				condition: (gs) => gs.social <= 10,
 				effect: (gs) => {
 					gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					return '社交能力+1';
 				}
 			},
@@ -357,6 +387,8 @@
 				effect: (gs) => {
 					gs.socialMax = (gs.socialMax || 20) - 3;
 					gs.social = Math.min(gs.socialMax, gs.social + 1);
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					return `社交能力+1，上限降至${gs.socialMax}`;
 				}
 			},
@@ -385,6 +417,8 @@
 						return '对愚钝之院士转世不生效，无事发生';
 					}
 					gs.research = Math.min(gs.researchMax || 20, gs.research + 3);
+					// ★★★ 修复：科研增加时检查解锁 ★★★
+					checkResearchUnlock();
 					gs.buffs.temporary.push({
 						type: 'flash_research_penalty',
 						name: '刹那灵光后遗',
@@ -421,6 +455,8 @@
 				condition: () => true,
 				effect: (gs) => {
 					gs.social = Math.min(gs.socialMax || 20, gs.social + 3);
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					gs.buffs.temporary.push({
 						type: 'flash_social_penalty',
 						name: '刹那魅力后遗',
@@ -1707,7 +1743,8 @@
                     gameState.social = Math.min(20, gameState.social + newGains);
                     gameState.favor = Math.min(20, gameState.favor + newGains);
                     result += `，金钱觉醒(累计${gameState.goldSpentTotal}金)：SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`;
-                    // ★★★ 修复：社交增加时检查解锁 ★★★
+                    // ★★★ 修复：科研和社交增加时检查解锁 ★★★
+                    checkResearchUnlock();
                     checkSocialUnlock();
                 }
             }

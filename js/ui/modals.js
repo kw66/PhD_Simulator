@@ -52,6 +52,14 @@
             entry.innerHTML = `<div class="date">[${dateStr}] ${event}</div><div class="event">${detail}</div>${result ? `<div class="result">→ ${result}</div>` : ''}`;
             logContent.insertBefore(entry, logContent.firstChild);
             while (logContent.children.length > 100) logContent.removeChild(logContent.lastChild);
+
+            // ★★★ 新增：保存最后一条日志信息（用于失败结局显示）★★★
+            gameState.lastLog = {
+                dateStr: dateStr,
+                event: event,
+                detail: detail,
+                result: result
+            };
         }
 
         // ==================== 工具函数 ====================

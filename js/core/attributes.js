@@ -65,6 +65,9 @@
 					gameState.social = Math.min(20, gameState.social + newGains);
 					gameState.favor = Math.min(20, gameState.favor + newGains);
 					addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
+					// ★★★ 修复：科研和社交增加时检查解锁 ★★★
+					checkResearchUnlock();
+					checkSocialUnlock();
 				}
 			}
 			

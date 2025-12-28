@@ -1228,7 +1228,6 @@
 				// 海报样式（用于分享页毕业纪念卡内）
 				return `
 					<div class="player-stats-poster">
-						<div class="psp-title">📊 我的游戏记录</div>
 						<div class="psp-row">
 							<span class="psp-item">✅ ${stats.clearCount}/${stats.totalGames}通关</span>
 							<span class="psp-item">🏆 ${stats.totalAchievements}/${stats.maxAchievements}成就</span>

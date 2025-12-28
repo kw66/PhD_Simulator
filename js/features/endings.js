@@ -425,6 +425,21 @@
 			const isSuccess = successEndings.includes(endingType);
 			const isTrueNormalSuccess = trueNormalSuccessEndings.includes(endingType);
 
+			// ★★★ 新增：生成失败原因信息 ★★★
+			let failReasonHtml = '';
+			if (isFailed && endingType !== 'quit' && endingType !== 'delay' && gameState.lastLog) {
+				const log = gameState.lastLog;
+				const resultText = log.result ? ` → ${log.result}` : '';
+				failReasonHtml = `
+				<div style="background:linear-gradient(135deg,rgba(254,202,202,0.5),rgba(254,178,178,0.5));border-radius:12px;padding:12px;margin-bottom:15px;border:1px solid rgba(239,68,68,0.3);">
+					<div style="font-size:0.75rem;color:#b91c1c;font-weight:600;margin-bottom:6px;">💔 压垮骆驼的最后一根稻草</div>
+					<div style="font-size:0.85rem;color:#7f1d1d;line-height:1.4;">
+						<div style="opacity:0.7;">[${log.dateStr}] ${log.event}</div>
+						<div style="font-weight:500;">${log.detail}${resultText}</div>
+					</div>
+				</div>`;
+			}
+
 			// ★★★ 移除顶部玩家统计 ★★★
 		let html = `
 			<div style="text-align:center;margin-bottom:15px;">
@@ -437,6 +452,9 @@
 
 			// ★★★ 玩家统计放到作者广告栏上方 ★★★
 			html += renderPlayerStatsHTML('default');
+
+			// ★★★ 新增：显示失败原因（放在统计栏下方）★★★
+			html += failReasonHtml;
 
 			if (isFailed) {
 				html += `

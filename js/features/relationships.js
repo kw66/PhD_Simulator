@@ -1377,6 +1377,8 @@
                 rewardText = '横向项目，金币+5';
             } else {
                 gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+                // ★★★ 修复：科研增加时检查解锁 ★★★
+                checkResearchUnlock();
                 rewardText = '纵向项目，科研能力+1';
             }
 
@@ -1858,6 +1860,8 @@
                 rewardText = '横向项目，金币+5';
             } else {
                 gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+                // ★★★ 修复：科研增加时检查解锁 ★★★
+                checkResearchUnlock();
                 rewardText = '纵向项目，科研能力+1';
             }
 
