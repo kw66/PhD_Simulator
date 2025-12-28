@@ -447,28 +447,37 @@
 
 		async function recordEnding(endingType, endingTitle) {
 			// ★★★ 移除数据验证，直接上传 ★★★
-			
+
 			// 计算成就数量
 			const achievements = collectAchievements(endingType);
 			const achievementCount = achievements.length;
-			
+
 			// 更新本地记录
 			updateLocalMeta(
-				gameState.character, 
-				gameState.isReversed, 
-				gameState.totalScore, 
-				gameState.totalCitations, 
+				gameState.character,
+				gameState.isReversed,
+				gameState.totalScore,
+				gameState.totalCitations,
 				achievementCount,
 				endingType,  // ★★★ 新增参数 ★★★
 			);
-			
+
 			if (!window.supabaseClient) return;
 
 			try {
 				// 获取难度信息
-				const difficultyPoints = getSavedDifficultyPoints ? getSavedDifficultyPoints() : 0;
-				const difficultyInfo = getDifficultySettings ? getDifficultySettings() : null;
-				const cursesData = difficultyInfo && difficultyInfo.selectedCurses ? JSON.stringify(difficultyInfo.selectedCurses) : null;
+				const difficultyPoints = typeof getSavedDifficultyPoints === 'function' ? getSavedDifficultyPoints() : 0;
+				// ★★★ 优化：只存储激活的诅咒（过滤掉值为0的）★★★
+				let cursesData = null;
+				if (gameState.activeCurses) {
+					const activeCurses = {};
+					for (const [key, value] of Object.entries(gameState.activeCurses)) {
+						if (value > 0) activeCurses[key] = value;
+					}
+					if (Object.keys(activeCurses).length > 0) {
+						cursesData = JSON.stringify(activeCurses);
+					}
+				}
 
 				const { error } = await window.supabaseClient.from('game_endings').insert({
 					ending_type: endingType,
@@ -480,17 +489,18 @@
 					paper_a: gameState.paperA,
 					paper_b: gameState.paperB,
 					paper_c: gameState.paperC,
-					paper_nature: gameState.paperNature || 0,        // ★★★ 新增：Nature正刊数量 ★★★
-					paper_nature_sub: gameState.paperNatureSub || 0, // ★★★ 新增：Nature子刊数量 ★★★
+					paper_nature: gameState.paperNature || 0,
+					paper_nature_sub: gameState.paperNatureSub || 0,
 					total_citations: gameState.totalCitations,
 					achievements_count: achievementCount,
-					difficulty_points: difficultyPoints,             // ★★★ 新增：难度分 ★★★
-					curses: cursesData                               // ★★★ 新增：诅咒信息 ★★★
+					difficulty_points: difficultyPoints,
+					curses: cursesData,
+					created_at: new Date().toISOString()
 				});
-				
+
 				if (error) throw error;
 				console.log('✅ 结局已记录:', endingTitle);
-				
+
 				// 清除缓存
 				globalCharacterRecords = null;
 			} catch (e) {
@@ -1278,6 +1288,34 @@
 			}
 		}
 
+		// ★★★ 新增：仅更新首页顶部的总数统计（不触发懒加载部分）★★★
+		async function updateHeaderTotalStats() {
+			try {
+				// 获取总访问统计
+				const visitStats = await getVisitStats();
+				const totalGames = await getTotalGamesCount();
+
+				const pvEl = document.getElementById('busuanzi_value_site_pv');
+				const uvEl = document.getElementById('busuanzi_value_site_uv');
+				const gamesEl = document.getElementById('total-games-value');
+
+				if (pvEl) pvEl.textContent = visitStats.pv || 0;
+				if (uvEl) uvEl.textContent = visitStats.uv || 0;
+				if (gamesEl) gamesEl.textContent = totalGames || 0;
+
+				console.log('✅ 首页顶部总数统计已更新');
+			} catch (e) {
+				console.error('更新首页统计失败:', e);
+				// 失败时显示0而不是-
+				const pvEl = document.getElementById('busuanzi_value_site_pv');
+				const uvEl = document.getElementById('busuanzi_value_site_uv');
+				const gamesEl = document.getElementById('total-games-value');
+				if (pvEl) pvEl.textContent = '0';
+				if (uvEl) uvEl.textContent = '0';
+				if (gamesEl) gamesEl.textContent = '0';
+			}
+		}
+
 		// ==================== 全局函数暴露（供onclick和其他模块调用）====================
 		window.initStats = initStats;
 		window.recordVisit = recordVisit;
@@ -1285,6 +1323,7 @@
 		window.recordAchievements = recordAchievements;
 		window.getGlobalStats = getGlobalStats;
 		window.loadGlobalStatsDisplay = loadGlobalStatsDisplay;
+		window.updateHeaderTotalStats = updateHeaderTotalStats;
 		window.retryLoadStats = retryLoadStats;
 		window.getPlayerStats = getPlayerStats;
 		window.renderPlayerStatsHTML = renderPlayerStatsHTML;

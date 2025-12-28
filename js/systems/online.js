@@ -296,11 +296,7 @@
 
 		// 更新统计显示
 		async function updateAllStatsDisplay() {
-			console.log('正在更新统计显示...');
-
 			const stats = await getAllStats();
-
-			console.log('获取到的统计:', stats);
 
 			// 即使 stats 为 null 也显示默认值 0
 			const displayStats = stats || { online: 0, maxOnline: 0, todayPv: 0, todayUv: 0, todayGames: 0 };

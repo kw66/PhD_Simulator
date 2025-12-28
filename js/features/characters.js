@@ -110,6 +110,11 @@
 				updateAllStatsDisplay();
 			}
 
+			// ★★★ 新增：加载首页顶部总数统计（不等待懒加载）★★★
+			if (typeof updateHeaderTotalStats === 'function') {
+				updateHeaderTotalStats();
+			}
+
 			setTimeout(() => {
 				const messageSection = document.getElementById('message-section');
 				if (messageSection) {
