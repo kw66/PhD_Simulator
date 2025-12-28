@@ -949,25 +949,33 @@
 			// ★★★ 修复：技能显示放在这里，不受allBuffs.length影响 ★★★
 			
 			// 师兄师姐救我技能
-			if (gameState.hasSeniorHelpSkill && gameState.seniorHelpUses > 0) {
+			if (gameState.hasSeniorHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'senior' && gameState.nextActionBonusType
 					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
 					: '';
+				// 显示剩余免费次数或当前社交值
+				const statusText = gameState.seniorHelpUses > 0
+					? `免费${gameState.seniorHelpUses}/3`
+					: `消耗社交${gameState.social}`;
 				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(243,156,18,0.3),rgba(230,126,34,0.3));border-color:#f39c12;" onclick="useSeniorHelpSkill()">
 					<i class="fas fa-hands-helping"></i>
-					🆘 师兄师姐救我 (${gameState.seniorHelpUses}/3) ${pendingText}
+					🆘 师兄师姐救我 (${statusText}) ${pendingText}
 				</span>`;
 				list.innerHTML += skillHtml;
 			}
 
 			// 导师救我技能
-			if (gameState.hasTeacherHelpSkill && gameState.teacherHelpUses > 0) {
+			if (gameState.hasTeacherHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'teacher' && gameState.nextActionBonusType
 					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
 					: '';
+				// 显示剩余免费次数或当前好感度
+				const statusText = gameState.teacherHelpUses > 0
+					? `免费${gameState.teacherHelpUses}/3`
+					: `消耗好感${gameState.favor}`;
 				const skillHtml = `<span class="buff-tag permanent" style="cursor:pointer;background:linear-gradient(135deg,rgba(253,121,168,0.3),rgba(232,67,147,0.3));border-color:#fd79a8;" onclick="useTeacherHelpSkill()">
 					<i class="fas fa-user-shield"></i>
-					🛡️ 导师救我 (${gameState.teacherHelpUses}/3) ${pendingText}
+					🛡️ 导师救我 (${statusText}) ${pendingText}
 				</span>`;
 				list.innerHTML += skillHtml;
 			}
@@ -998,31 +1006,41 @@
 		}			
 
 		function useSeniorHelpSkill() {
-			if (!gameState.hasSeniorHelpSkill || gameState.seniorHelpUses <= 0) {
-				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
+			if (!gameState.hasSeniorHelpSkill) {
+				showModal('❌ 无法使用', '<p>你没有此技能。</p>',
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
+			// 如果免费次数用完，检查社交是否足够
+			if (gameState.seniorHelpUses <= 0 && gameState.social < 1) {
+				showModal('❌ 无法使用', '<p>社交值不足，无法使用技能。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'senior') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
+				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
 					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
-				showModal('⚠️ 技能待生效', 
+				const statusText = gameState.seniorHelpUses > 0 ? `免费${gameState.seniorHelpUses}/3` : `当前社交${gameState.social}`;
+				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用师兄师姐救我。</p>
 					 <p style="color:var(--warning-color);">请先执行该操作后，才能再次使用技能。</p>
-					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.seniorHelpUses}/3</p>`, 
+					 <p style="font-size:0.8rem;color:var(--text-secondary);">${statusText}</p>`,
 					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			const bonusValue = gameState.social;
-			
-			showModal('🆘 师兄师姐救我', 
+			const isFree = gameState.seniorHelpUses > 0;
+			const costText = isFree ? `（免费次数剩余 ${gameState.seniorHelpUses}/3）` : `<span style="color:#e74c3c;">使用后社交-1</span>`;
+
+			showModal('🆘 师兄师姐救我',
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">🆘</div>
 					<div style="font-size:1.1rem;font-weight:600;color:#f39c12;">师兄师姐救我</div>
-					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">剩余使用次数：${gameState.seniorHelpUses}/3</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">${costText}</div>
 				</div>
 				<p>选择要加成的操作类型，下次执行该操作时科研能力将视为：</p>
 				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
@@ -1046,31 +1064,41 @@
 		}
 
 		function useTeacherHelpSkill() {
-			if (!gameState.hasTeacherHelpSkill || gameState.teacherHelpUses <= 0) {
-				showModal('❌ 无法使用', '<p>技能不可用或已用完所有次数。</p>', 
+			if (!gameState.hasTeacherHelpSkill) {
+				showModal('❌ 无法使用', '<p>你没有此技能。</p>',
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
+			// 如果免费次数用完，检查好感度是否足够
+			if (gameState.teacherHelpUses <= 0 && gameState.favor < 1) {
+				showModal('❌ 无法使用', '<p>好感度不足，无法使用技能。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'teacher') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea' 
+				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
 					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
-				showModal('⚠️ 技能待生效', 
+				const statusText = gameState.teacherHelpUses > 0 ? `免费${gameState.teacherHelpUses}/3` : `当前好感度${gameState.favor}`;
+				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用导师救我。</p>
 					 <p style="color:var(--warning-color);">请先执行该操作后，才能再次使用技能。</p>
-					 <p style="font-size:0.8rem;color:var(--text-secondary);">剩余次数：${gameState.teacherHelpUses}/3</p>`, 
+					 <p style="font-size:0.8rem;color:var(--text-secondary);">${statusText}</p>`,
 					[{ text: '知道了', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			const bonusValue = gameState.favor;
-			
-			showModal('🛡️ 导师救我', 
+			const isFree = gameState.teacherHelpUses > 0;
+			const costText = isFree ? `（免费次数剩余 ${gameState.teacherHelpUses}/3）` : `<span style="color:#e74c3c;">使用后好感度-1</span>`;
+
+			showModal('🛡️ 导师救我',
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">🛡️</div>
 					<div style="font-size:1.1rem;font-weight:600;color:#fd79a8;">导师救我</div>
-					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">剩余使用次数：${gameState.teacherHelpUses}/3</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:5px;">${costText}</div>
 				</div>
 				<p>选择要加成的操作类型，下次执行该操作时科研能力将视为：</p>
 				<div style="text-align:center;padding:15px;background:var(--light-bg);border-radius:10px;margin:15px 0;">
@@ -1095,21 +1123,37 @@
 
 		// ★★★ 新增：应用技能加成的通用函数 ★★★
 		function applySkillBonus(source, actionType, bonusValue) {
+			let costInfo = '';
 			if (source === 'senior') {
-				gameState.seniorHelpUses--;
+				if (gameState.seniorHelpUses > 0) {
+					// 免费次数内，扣免费次数
+					gameState.seniorHelpUses--;
+					costInfo = `免费${gameState.seniorHelpUses + 1}/3→${gameState.seniorHelpUses}/3`;
+				} else {
+					// 免费次数用完，扣社交
+					gameState.social--;
+					costInfo = `社交-1（当前${gameState.social}）`;
+				}
 			} else {
-				gameState.teacherHelpUses--;
+				if (gameState.teacherHelpUses > 0) {
+					// 免费次数内，扣免费次数
+					gameState.teacherHelpUses--;
+					costInfo = `免费${gameState.teacherHelpUses + 1}/3→${gameState.teacherHelpUses}/3`;
+				} else {
+					// 免费次数用完，扣好感度
+					gameState.favor--;
+					costInfo = `好感度-1（当前${gameState.favor}）`;
+				}
 			}
-			
+
 			gameState.nextActionBonus = bonusValue;
 			gameState.nextActionBonusSource = source;
 			gameState.nextActionBonusType = actionType;
-			
+
 			const sourceName = source === 'senior' ? '师兄师姐救我' : '导师救我';
 			const actionName = actionType === 'idea' ? '想idea' : actionType === 'exp' ? '做实验' : '写论文';
-			const remainingUses = source === 'senior' ? gameState.seniorHelpUses : gameState.teacherHelpUses;
-			
-			addLog('主动技能', sourceName, `下次${actionName}时科研能力+${bonusValue}（剩余${remainingUses}次）`);
+
+			addLog('主动技能', sourceName, `下次${actionName}时科研能力+${bonusValue}，${costInfo}`);
 			closeModal();
 			updateBuffs();
 			updateAllUI();

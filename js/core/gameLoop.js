@@ -1466,7 +1466,7 @@
 					bonusDetails.push(`社交能力 ${oldSocialHidden} → 6`);
 					bonusDetails.push('获得主动技能【师兄师姐救我】');
 					bonusDetails.push('使用后：下次生产论文时科研能力视为 科研+社交');
-					bonusDetails.push('⚠️ 此技能可使用3次');
+					bonusDetails.push('⚠️ 前3次免费，之后每次使用社交-1');
 					break;
 
 				case 'rich': // 白手起家术
@@ -1486,7 +1486,7 @@
 					bonusDetails.push(`导师好感度 ${oldFavorHidden} → 6`);
 					bonusDetails.push('获得主动技能【导师救我】');
 					bonusDetails.push('使用后：下次生产论文时科研能力视为 科研+好感度');
-					bonusDetails.push('⚠️ 此技能可使用3次');
+					bonusDetails.push('⚠️ 前3次免费，之后每次使用好感度-1');
 					break;
 					
 				case 'chosen': // 孤注一掷
