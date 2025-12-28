@@ -10,7 +10,7 @@
         let statsCacheTime = 0;
         let visitStatsCache = null;
         let visitStatsCacheTime = 0;
-        const CACHE_DURATION = 30 * 60 * 1000;  // 30分钟缓存（优化：延长以减少查询）
+        const CACHE_DURATION = 24 * 60 * 60 * 1000;  // 24小时缓存（优化：大幅减少Egress流量）
 
 		// ==================== 持久化缓存系统 ====================
 		const CACHE_KEYS = {
@@ -462,8 +462,13 @@
 			);
 			
 			if (!supabase) return;
-			
+
 			try {
+				// 获取难度信息
+				const difficultyPoints = getSavedDifficultyPoints ? getSavedDifficultyPoints() : 0;
+				const difficultyInfo = getDifficultySettings ? getDifficultySettings() : null;
+				const cursesData = difficultyInfo && difficultyInfo.selectedCurses ? JSON.stringify(difficultyInfo.selectedCurses) : null;
+
 				const { error } = await supabase.from('game_endings').insert({
 					ending_type: endingType,
 					ending_title: endingTitle,
@@ -477,7 +482,9 @@
 					paper_nature: gameState.paperNature || 0,        // ★★★ 新增：Nature正刊数量 ★★★
 					paper_nature_sub: gameState.paperNatureSub || 0, // ★★★ 新增：Nature子刊数量 ★★★
 					total_citations: gameState.totalCitations,
-					achievements_count: achievementCount
+					achievements_count: achievementCount,
+					difficulty_points: difficultyPoints,             // ★★★ 新增：难度分 ★★★
+					curses: cursesData                               // ★★★ 新增：诅咒信息 ★★★
 				});
 				
 				if (error) throw error;
@@ -597,9 +604,9 @@
 			try {
 				// 尝试从缓存表读取（优化后的方式）
 				const [endingsRes, achievementsRes, difficultyRes] = await Promise.all([
-					supabase.from('stats_endings_cache').select('*'),
-					supabase.from('stats_achievements_cache').select('*'),
-					supabase.from('stats_character_difficulty_cache').select('*')
+					supabase.from('stats_endings_cache').select('mode, ending_type, count'),
+					supabase.from('stats_achievements_cache').select('mode, achievement_name, count'),
+					supabase.from('stats_character_difficulty_cache').select('is_reversed, character_id, total_games, hard_games')
 				]);
 				
 				// 检查缓存表是否存在且有数据

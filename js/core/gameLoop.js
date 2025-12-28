@@ -325,6 +325,30 @@
 			}
 
 			// ============================================
+			// ★★★ 难度诅咒效果（月度结算）★★★
+			// ============================================
+			if (typeof applyMonthlyCurseEffects === 'function') {
+				applyMonthlyCurseEffects();
+			}
+
+			// ★★★ 诅咒效果后护身符检查 ★★★
+			checkAmuletEffects();
+
+			// ★★★ 诅咒效果后检查游戏结局 ★★★
+			if (gameState.san < 0) {
+				triggerEnding('burnout');
+				return;
+			}
+			if (gameState.gold < 0) {
+				triggerEnding('poor');
+				return;
+			}
+			if (gameState.favor < 0) {
+				triggerEnding('expelled');
+				return;
+			}
+
+			// ============================================
 			// ★★★ 连续低SAN月数统计（用于感冒概率）★★★
 			// ============================================
 			if (gameState.san <= 3) {
@@ -435,12 +459,19 @@
 			logResult += `，休息SAN+${sanRecovery}`;
 			if (gameState.hasLover) {
 				if (gameState.loverType === 'beautiful') {
-					logResult += '，恋人SAN+3';
+					const lostSanBeautiful = gameState.sanMax - gameState.san;
+					const baseRecoveryRate = 0.10;
+					const extraRecoveryRate = (gameState.beautifulLoverExtraRecoveryRate || 0) / 100;
+					const totalRecoveryRate = baseRecoveryRate + extraRecoveryRate;
+					const beautifulRecovery = Math.ceil(lostSanBeautiful * totalRecoveryRate);
+					if (beautifulRecovery > 0) {
+						logResult += `，恋人SAN+${beautifulRecovery}(${Math.round(totalRecoveryRate*100)}%已损)`;
+					}
 				}
-				logResult += '，约会-1金';
+				logResult += '，约会-2金';
 			}
 			if (gameState.ailabInternship) {
-				const actualSanCost = Math.abs(getActualSanChange(-3));
+				const actualSanCost = Math.abs(getActualSanChange(-2));
 				logResult += `，实习+2金，实习SAN-${actualSanCost}`;
 			}
 			

@@ -150,6 +150,10 @@
 			// 不再保存状态，每次进入都折叠
 		}
 
+		// 懒加载标记
+		let statsLoaded = false;
+		let messageBoardTriggered = false;
+
 		function toggleStartSection(sectionId) {
 			const body = document.getElementById(`${sectionId}-body`);
 			const icon = document.getElementById(`${sectionId}-collapse-icon`);
@@ -169,6 +173,24 @@
 
 			if (icon) {
 				icon.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+			}
+
+			// ★★★ 懒加载：展开时才加载数据 ★★★
+			if (!isCollapsed) {
+				if (sectionId === 'stats' && !statsLoaded) {
+					statsLoaded = true;
+					console.log('📊 懒加载全球统计...');
+					if (typeof loadGlobalStatsDisplay === 'function') {
+						loadGlobalStatsDisplay();
+					}
+				}
+				if (sectionId === 'message' && !messageBoardTriggered) {
+					messageBoardTriggered = true;
+					console.log('💬 懒加载留言板...');
+					if (typeof loadMessagesOnDemand === 'function') {
+						loadMessagesOnDemand();
+					}
+				}
 			}
 		}
 

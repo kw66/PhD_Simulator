@@ -453,6 +453,30 @@
 			// ★★★ 玩家统计放到作者广告栏上方 ★★★
 			html += renderPlayerStatsHTML('default');
 
+			// ★★★ 新增：显示难度信息 ★★★
+			const diffPoints = gameState.difficultyPoints || 0;
+			if (diffPoints > 0) {
+				const activeCurses = gameState.activeCurses || {};
+				let curseList = [];
+				Object.keys(activeCurses).forEach(curseId => {
+					const count = activeCurses[curseId];
+					if (count > 0 && typeof CURSES !== 'undefined' && CURSES[curseId]) {
+						const curse = CURSES[curseId];
+						curseList.push(count > 1 ? `${curse.icon}${curse.name}×${count}` : `${curse.icon}${curse.name}`);
+					}
+				});
+				html += `
+				<div style="background:linear-gradient(135deg,rgba(74,25,66,0.15),rgba(139,0,0,0.1));border-radius:12px;padding:10px 14px;margin-bottom:12px;border:1px solid rgba(231,76,60,0.3);">
+					<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+						<div style="display:flex;align-items:center;gap:8px;">
+							<span style="font-size:1.2rem;">💀</span>
+							<span style="font-size:0.85rem;font-weight:600;color:#c0392b;">难度 ${diffPoints}</span>
+						</div>
+						<div style="font-size:0.75rem;color:#8b0000;">${curseList.join(' ')}</div>
+					</div>
+				</div>`;
+			}
+
 			// ★★★ 新增：显示失败原因（放在统计栏下方）★★★
 			html += failReasonHtml;
 
@@ -883,7 +907,7 @@
 		function getCharacterLocalRecord(characterId, isReversed) {
 			const meta = getLocalMeta();
 			const mode = isReversed ? 'reversed' : 'normal';
-			return meta[mode]?.[characterId] || { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
+			return meta[mode]?.[characterId] || { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 };
 		}
 
 		function updateLocalMeta(character, isReversed, score, citations, achievementCount, endingType) {
@@ -893,20 +917,23 @@
 				console.log('非毕业结局，不更新本地最高记录');
 				return null;
 			}
-			
+
 			const meta = getLocalMeta();
 			const mode = isReversed ? 'reversed' : 'normal';
-			
+
 			if (!meta[mode]) meta[mode] = {};
 			if (!meta[mode][character]) {
-				meta[mode][character] = { maxScore: 0, maxCitations: 0, maxAchievements: 0 };
+				meta[mode][character] = { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 };
 			}
-			
+
 			const record = meta[mode][character];
+			const difficultyPoints = gameState.difficultyPoints || 0;
+
 			if (score > record.maxScore) record.maxScore = score;
 			if (citations > record.maxCitations) record.maxCitations = citations;
 			if (achievementCount > record.maxAchievements) record.maxAchievements = achievementCount;
-			
+			if (difficultyPoints > (record.maxDifficulty || 0)) record.maxDifficulty = difficultyPoints;
+
 			saveLocalMeta(meta);
 			return record;
 		}
@@ -933,7 +960,7 @@
 				
 				const { data, error } = await supabase
 					.from('stats_character_records_cache')
-					.select('*');
+					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements');
 				
 				if (error) throw error;
 				

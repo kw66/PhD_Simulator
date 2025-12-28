@@ -547,10 +547,10 @@
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">⌨️ 机械键盘（8金）</td><td style="padding:6px;">写论文SAN消耗-1</td></tr>
 					<tr><td style="padding:6px;">🖥️ 4K显示器（8金）</td><td style="padding:6px;">看论文SAN消耗-1</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">🖥️ GPU服务器（12金）</td><td style="padding:6px;">每次做实验多做1次</td></tr>
-					<tr><td style="padding:6px;">🌟 联合培养（大牛深入合作）</td><td style="padding:6px;">每次写论文+8分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">🏢 AI Lab实习（企业交流3次）</td><td style="padding:6px;">做实验×1.25，每月金+2，SAN-3</td></tr>
-					<tr><td style="padding:6px;">💕 恋人-活泼型</td><td style="padding:6px;">每月SAN+3，金-1</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">💕 恋人-聪慧型</td><td style="padding:6px;">每次想idea/实验/写论文+1次，金-1</td></tr>
+					<tr><td style="padding:6px;">🌟 联合培养（大牛深入合作）</td><td style="padding:6px;">想idea+5分，做实验+5分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">🏢 AI Lab实习（企业交流3次）</td><td style="padding:6px;">做实验×1.25，每月金+2，SAN-2</td></tr>
+					<tr><td style="padding:6px;">💕 恋人-活泼型</td><td style="padding:6px;">SAN回满，SAN上限+4，每月回复10%已损SAN，金-2</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">💕 恋人-聪慧型</td><td style="padding:6px;">SAN+1，科研+1，每次想idea/实验/写论文+1次，金-2</td></tr>
 					<tr><td style="padding:6px;">📖 指点迷津（大牛拒稿）</td><td style="padding:6px;">每次想idea+1分</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">📚 学习新知识</td><td style="padding:6px;">对应操作+1分</td></tr>
 				</table>

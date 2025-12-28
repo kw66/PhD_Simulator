@@ -66,7 +66,7 @@
 			document.getElementById('start-btn').addEventListener('click', startGame);
 			
 			initStats();
-			loadGlobalStatsDisplay();
+			// 全球统计改为懒加载，展开时才请求（见 panels.js toggleStartSection）
 
 			// 加载今日统计和在线人数（只在页面加载时查询一次，游戏结束返回时会再次刷新）
 			updateAllStatsDisplay();
@@ -291,8 +291,9 @@
 								<tr>
 									<th style="text-align:left;padding:2px 4px;font-weight:700;"></th>
 									<th style="text-align:center;padding:2px 4px;font-weight:700;">科研分</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">引用数</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">成就数</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">引用</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">成就</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">难度</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -301,18 +302,21 @@
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? '💀' + localRecord.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">今日全球</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? '💀' + globalRecord.today.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">历史全球</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? '💀' + globalRecord.history.maxDifficulty : '-'}</td>
 								</tr>
 							</tbody>
 						</table>
@@ -530,15 +534,22 @@
 							${footerHtml}
 						</div>
 						<div class="constellation-buttons">
-							<button class="btn btn-primary start-btn" id="start-btn" disabled>
-								<i class="fas fa-play"></i> 我要入学
-							</button>
-							<button class="btn btn-warning start-btn" onclick="openLoadModalFromStart()">
-								<i class="fas fa-folder-open"></i> 读档
-							</button>
-							<button class="btn btn-info start-btn" onclick="openAutoSaveModal()">
-								<i class="fas fa-history"></i> 回溯
-							</button>
+							<div class="button-row">
+								<button class="btn btn-primary start-btn-small" id="start-btn" disabled>
+									<i class="fas fa-play"></i> 我要入学
+								</button>
+								<button class="btn btn-warning start-btn-small" onclick="openLoadModalFromStart()">
+									<i class="fas fa-folder-open"></i> 读档
+								</button>
+							</div>
+							<div class="button-row">
+								<button class="btn btn-secondary start-btn-small difficulty-btn" onclick="openDifficultyModal()">
+									<i class="fas fa-skull"></i> 难度
+								</button>
+								<button class="btn btn-info start-btn-small" onclick="openAutoSaveModal()">
+									<i class="fas fa-history"></i> 回溯
+								</button>
+							</div>
 						</div>
 					</div>
 					<div class="constellation-panel constellation-preview-panel">
@@ -556,6 +567,11 @@
 			`;
 
 			progressContainer.style.display = 'block';
+
+			// 更新难度按钮显示
+			if (typeof updateDifficultyButton === 'function') {
+				updateDifficultyButton();
+			}
 		}
 			
 			// 渲染角色卡片
@@ -668,8 +684,9 @@
 								<tr style="font-size:0.65rem;">
 									<th style="text-align:left;padding:2px 4px;font-weight:700;"></th>
 									<th style="text-align:center;padding:2px 4px;font-weight:700;">科研分</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">引用数</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">成就数</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">引用</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">成就</th>
+									<th style="text-align:center;padding:2px 4px;font-weight:700;">难度</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -678,18 +695,21 @@
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? '💀' + localRecord.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">今日全球</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? '💀' + globalRecord.today.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">历史全球</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? '💀' + globalRecord.history.maxDifficulty : '-'}</td>
 								</tr>
 							</tbody>
 						</table>
@@ -938,6 +958,11 @@
 
 			resetRandomEventPool();
 
+			// ★★★ 应用难度诅咒效果 ★★★
+			if (typeof applyDifficultyEffects === 'function') {
+				applyDifficultyEffects();
+			}
+
 			if(gameState.publishedPapers.length === 0) {
 				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 14);
 			}
@@ -971,10 +996,26 @@
 			renderPaperSlots();
 			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★
 
-			addLog('游戏开始', `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`);
-
+			// ★★★ 修改：合并游戏开始日志和难度诅咒日志 ★★★
+			let startLogDetail = `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`;
 			if (gameState.isReversed) {
-				addLog('⚠️ 逆位模式', '命运的阴暗面已开启，规则将有所不同...');
+				startLogDetail += ' 🌑逆位模式';
+			}
+			if (gameState.difficultyPoints > 0 && gameState.activeCurses) {
+				const curseNames = [];
+				if (typeof CURSES !== 'undefined') {
+					Object.keys(gameState.activeCurses).forEach(curseId => {
+						const count = gameState.activeCurses[curseId];
+						if (count > 0 && CURSES[curseId]) {
+							const curse = CURSES[curseId];
+							curseNames.push(count > 1 ? `${curse.icon}${curse.name}×${count}` : `${curse.icon}${curse.name}`);
+						}
+					});
+				}
+				startLogDetail += ` 💀难度${gameState.difficultyPoints}`;
+				addLog('游戏开始', startLogDetail, `诅咒: ${curseNames.join(' ')}`);
+			} else {
+				addLog('游戏开始', startLogDetail);
 			}
 
 			setTimeout(() => {
@@ -986,8 +1027,6 @@
 
 			// ★★★ 第一年第一月固定事件：选择导师 ★★★
 			setTimeout(() => {
-				// ★★★ 添加事件日志，让导师选择在日志中显示为正式事件 ★★★
-				addLog('📅 月度事件', '恭喜入学！请选择你的导师');
 				showAdvisorSelectionModal((selectedAdvisor) => {
 					// 选择导师后显示毕业目标
 					const requirements = getAdvisorRequirements();

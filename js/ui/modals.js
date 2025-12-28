@@ -134,7 +134,7 @@
 
 		let submissionStatsCache = null;
 		let submissionStatsCacheTime = 0;
-		const SUBMISSION_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
+		const SUBMISSION_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 
 		// 加载投稿统计数据（从缓存表读取）
 		async function loadSubmissionStats() {
@@ -167,7 +167,7 @@
 				
 				const { data, error } = await supabase
 					.from('stats_submissions_cache')
-					.select('*');
+					.select('game_month, grade, is_reversed, submissions, accepted, poster, oral, best_paper, avg_score_rejected, avg_score_poster, avg_score_oral, avg_score_best_paper, p90_accepted_score, p99_accepted_score');
 				
 				if (error) throw error;
 				

@@ -15,18 +15,18 @@
 		// 启动在线追踪
 		function startOnlineTracking() {
 			if (!supabase) return;
-			
+
 			onlineSessionId = getOnlineSessionId();
-			
+
 			// 立即发送一次心跳并检查历史在线
 			sendOnlineHeartbeat();
 			checkAndRecordMaxOnline();
-			
-			// 每180秒发送心跳（优化：减少数据库调用）
+
+			// 每300秒发送心跳（优化：减少数据库调用和流量）
 			onlineHeartbeatTimer = setInterval(() => {
 				sendOnlineHeartbeat();
-			}, 180 * 1000);
-			
+			}, 300 * 1000);
+
 			// 页面关闭时清理
 			window.addEventListener('beforeunload', () => {
 				if (onlineSessionId && supabase) {
@@ -80,10 +80,10 @@
 		// ★★★ 核心函数：检查并记录历史最高在线 ★★★
 		async function checkAndRecordMaxOnline() {
 			if (!supabase) return null;
-			
+
 			// 使用重试机制确保写入
 			const maxRetries = 3;
-			
+
 			for (let attempt = 1; attempt <= maxRetries; attempt++) {
 				try {
 					// 1. 获取当前在线人数
@@ -92,27 +92,27 @@
 						.from('online_users')
 						.select('*', { count: 'exact', head: true })
 						.gte('last_seen', threeMinutesAgo);
-					
+
 					if (countError) throw countError;
-					
+
 					const onlineCount = currentOnline || 0;
-					
+
 					if (onlineCount === 0) {
 						return { current: 0, max: await getHistoryMaxOnline() };
 					}
-					
+
 					// 2. 查询历史最大在线人数（从 online_records 表）
 					const historyMax = await getHistoryMaxOnline();
-					
+
 					// 3. 如果当前在线大于历史最大，追加新记录
 					if (onlineCount > historyMax) {
 						const { error: insertError } = await supabase
 							.from('online_records')
-							.insert({ 
+							.insert({
 								online_count: onlineCount,
 								recorded_at: new Date().toISOString()
 							});
-						
+
 						if (insertError) {
 							console.error(`记录在线人数失败 (尝试 ${attempt}/${maxRetries}):`, insertError);
 							if (attempt < maxRetries) {
@@ -124,9 +124,9 @@
 							return { current: onlineCount, max: onlineCount };
 						}
 					}
-					
+
 					return { current: onlineCount, max: Math.max(onlineCount, historyMax) };
-					
+
 				} catch (e) {
 					console.error(`检查在线记录失败 (尝试 ${attempt}/${maxRetries}):`, e);
 					if (attempt < maxRetries) {
@@ -134,14 +134,14 @@
 					} // 关闭 if
 				} // 关闭 catch
 			} // <--- 在这里添加一个大括号，关闭 for 循环
-			
+
 			return null;
 		}
 
 		// ★★★ 获取历史最高在线人数（从追加记录表中查询最大值）★★★
 		async function getHistoryMaxOnline() {
 			if (!supabase) return 0;
-			
+
 			try {
 				// 查询 online_records 表中的最大值
 				const { data, error } = await supabase
@@ -150,12 +150,12 @@
 					.order('online_count', { ascending: false })
 					.limit(1)
 					.maybeSingle();  // 使用 maybeSingle 避免无数据时报错
-				
+
 				if (error) {
 					console.error('获取历史最高在线失败:', error);
 					return 0;
 				}
-				
+
 				return data?.online_count || 0;
 			} catch (e) {
 				console.error('获取历史最高在线异常:', e);
@@ -167,15 +167,15 @@
 		function getTodayStartUTC() {
 			// 当前UTC时间 + 8小时 = 北京时间
 			const beijingNow = new Date(Date.now() + 8 * 60 * 60 * 1000);
-			
+
 			// 取北京时间的年月日
 			const yyyy = beijingNow.getUTCFullYear();
 			const mm = String(beijingNow.getUTCMonth() + 1).padStart(2, '0');
 			const dd = String(beijingNow.getUTCDate()).padStart(2, '0');
-			
+
 			// 北京时间今日0点的ISO格式
 			const beijingMidnight = `${yyyy}-${mm}-${dd}T00:00:00+08:00`;
-			
+
 			// 转为UTC ISO字符串返回
 			return new Date(beijingMidnight).toISOString();
 		}
@@ -192,17 +192,17 @@
 		// ★★★ 修改后的获取所有统计数据函数 ★★★
 		async function getAllStats() {
 			if (!supabase) return null;
-			
+
 			try {
 				const todayStart = getTodayStartUTC();
 				const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-				
+
 				// 并行查询所有统计
 				const [
-					onlineResult, 
+					onlineResult,
 					maxOnlineResult,
-					todayPvResult, 
-					todayUvResult, 
+					todayPvResult,
+					todayUvResult,
 					todayGamesResult
 				] = await Promise.all([
 					// 当前在线
@@ -235,16 +235,16 @@
 						.select('*', { count: 'exact', head: true })
 						.gte('created_at', todayStart)
 				]);
-				
+
 				const currentOnline = onlineResult.count || 0;
 				const historyMax = maxOnlineResult.data?.online_count || 0;
-				
+
 				// 如果当前在线大于历史最高，记录新纪录
 				if (currentOnline > historyMax && currentOnline > 0) {
 					// 异步写入，不阻塞返回
 					supabase
 						.from('online_records')
-						.insert({ 
+						.insert({
 							online_count: currentOnline,
 							recorded_at: new Date().toISOString()
 						})
@@ -256,7 +256,7 @@
 							}
 						});
 				}
-				
+
 				return {
 					online: currentOnline,
 					maxOnline: Math.max(currentOnline, historyMax),
@@ -273,11 +273,11 @@
 		// 更新统计显示
 		async function updateAllStatsDisplay() {
 			console.log('正在更新统计显示...');  // 添加调试日志
-			
+
 			const stats = await getAllStats();
-			
+
 			console.log('获取到的统计:', stats);  // 添加调试日志
-			
+
 			if (stats) {
 				const el = (id) => document.getElementById(id);
 				if (el('online-count-value')) el('online-count-value').textContent = stats.online;
@@ -298,7 +298,7 @@
 		let replyToMessage = null;
 		let messagesCache = null;
 		let messagesCacheTime = 0;
-		const MESSAGES_CACHE_DURATION = 60 * 1000;  // 留言缓存1分钟
+		const MESSAGES_CACHE_DURATION = 5 * 60 * 1000;  // 留言缓存5分钟（优化：减少重复请求）
 
 		// 加载留言（优化：添加短期缓存减少重复请求）
 		async function loadMessages(page = 1, forceRefresh = false) {
@@ -332,11 +332,11 @@
 				totalMessagePages = Math.max(1, Math.ceil(totalCount / MESSAGES_PER_PAGE));
 				currentMessagePage = Math.min(page, totalMessagePages);
 
-				// 获取当前页的主留言
+				// 获取当前页的主留言（优化：只选择需要的字段减少流量）
 				const offset = (currentMessagePage - 1) * MESSAGES_PER_PAGE;
 				const { data: mainMessages, error: mainError } = await supabase
 					.from('messages')
-					.select('*')
+					.select('id, nickname, content, created_at, parent_id')
 					.is('parent_id', null)
 					.order('created_at', { ascending: false })
 					.range(offset, offset + MESSAGES_PER_PAGE - 1);
@@ -349,11 +349,11 @@
 					return;
 				}
 
-				// 获取这些主留言的所有回复
+				// 获取这些主留言的所有回复（优化：只选择需要的字段减少流量）
 				const mainIds = mainMessages.map(m => m.id);
 				const { data: replies, error: repliesError } = await supabase
 					.from('messages')
-					.select('*')
+					.select('id, nickname, content, created_at, parent_id')
 					.in('parent_id', mainIds)
 					.order('created_at', { ascending: true });
 
@@ -481,7 +481,7 @@
 			const date = new Date(dateStr);
 			const now = new Date();
 			const diff = now - date;
-			
+
 			// 1分钟内
 			if (diff < 60 * 1000) {
 				return '刚刚';
@@ -530,22 +530,22 @@
 		async function postMessage() {
 			const nicknameInput = document.getElementById('msg-nickname');
 			const contentInput = document.getElementById('msg-content');
-			
+
 			const nickname = nicknameInput.value.trim();
 			const content = contentInput.value.trim();
-			
+
 			if (!nickname) {
 				showModal('❌ 提示', '<p>请输入昵称！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				nicknameInput.focus();
 				return;
 			}
-			
+
 			if (!content) {
 				showModal('❌ 提示', '<p>请输入留言内容！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				contentInput.focus();
 				return;
 			}
-			
+
 			if (nickname.length > 10) {
 				showModal('❌ 提示', '<p>昵称不能超过10个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
@@ -555,39 +555,39 @@
 				showModal('❌ 提示', '<p>留言内容不能超过100个字符！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			if (!supabase) {
 				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			try {
 				const messageData = {
 					nickname: nickname,
 					content: content,
 					parent_id: replyToMessage ? replyToMessage.id : null
 				};
-				
+
 				const { error } = await supabase.from('messages').insert(messageData);
-				
+
 				if (error) throw error;
-				
+
 				// 清空输入
 				contentInput.value = '';
 				cancelReply();
-				
+
 				// 保存昵称到本地
 				localStorage.setItem('graduateSimulator_nickname', nickname);
-				
+
 				// 如果是回复，刷新当前页；如果是新留言，跳转到第一页（强制刷新缓存）
 				if (replyToMessage) {
 					await loadMessages(currentMessagePage, true);
 				} else {
 					await loadMessages(1, true);
 				}
-				
+
 				showModal('✅ 成功', '<p>留言发表成功！</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				
+
 			} catch (e) {
 				console.error('发表留言失败:', e);
 				showModal('❌ 错误', '<p>发表失败，请稍后重试</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -609,15 +609,22 @@
 			document.getElementById('next-page-btn').disabled = currentMessagePage >= totalMessagePages;
 		}
 
-		// 初始化留言板
+		// 初始化留言板（懒加载：不自动加载，等用户展开时才请求）
+		let messageBoardLoaded = false;
+
 		function initMessageBoard() {
 			// 恢复保存的昵称
 			const savedNickname = localStorage.getItem('graduateSimulator_nickname');
 			if (savedNickname) {
 				document.getElementById('msg-nickname').value = savedNickname;
 			}
+			// 留言数据在用户展开留言板时由 panels.js 触发加载
+		}
 
-			// 加载留言
+		// 按需加载留言（用户展开时触发）
+		function loadMessagesOnDemand() {
+			if (messageBoardLoaded) return;
+			messageBoardLoaded = true;
 			loadMessages(1);
 		}
 

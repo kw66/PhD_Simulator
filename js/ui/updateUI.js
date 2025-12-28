@@ -376,9 +376,10 @@
 					// 逆位角色：只显示逆位觉醒
 					const awakenName = charData.reversed.awakenName;
 					const awakenDesc = charData.reversed.awakenDesc;
+					const awakenIcon = charData.reversed.awakenIcon || '⚡';
 					html += `
 						<div class="talent-node ${reversedAwakened ? 'active color-purple' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|逆位角色转博时触发" data-color="purple">
-							<div class="node-icon">⚡</div>
+							<div class="node-icon">${awakenIcon}</div>
 							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
 						</div>
 					`;
@@ -386,9 +387,10 @@
 					// 正位角色：显示转博觉醒 + 隐藏觉醒
 					const awakenName = charData.awakenName;
 					const awakenDesc = charData.awakenDesc;
+					const awakenIcon = charData.awakenIcon || '⚡';
 					html += `
 						<div class="talent-node ${hasNormalAwaken ? 'active color-blue' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|正位角色转博时触发" data-color="blue">
-							<div class="node-icon">⚡</div>
+							<div class="node-icon">${awakenIcon}</div>
 							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
 						</div>
 					`;
@@ -397,9 +399,10 @@
 					if (charData.hiddenAwakenName) {
 						const hiddenName = charData.hiddenAwakenName;
 						const hiddenDesc = charData.hiddenAwakenDesc;
+						const hiddenIcon = charData.hiddenAwakenIcon || '⚙️';
 						html += `
 							<div class="talent-node ${hasHiddenAwaken ? 'active color-orange' : ''}" data-tip="⚙️ ${hiddenName}|${hiddenDesc}|满足特定条件时触发（替代转博觉醒）" data-color="orange">
-								<div class="node-icon">⚙️</div>
+								<div class="node-icon">${hiddenIcon}</div>
 								<div class="node-label">${hiddenName.length > 5 ? hiddenName.substring(0,5) : hiddenName}</div>
 							</div>
 						`;
@@ -416,7 +419,7 @@
 			// 大牛联培
 			const hasBigBull = gameState.bigBullCooperation;
 			html += `
-				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|论文分数+5|在开会时与大牛深入交流2次后触发" data-color="green">
+				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|科研上限+2，想idea分数+5，做实验分数+5|在开会时与大牛深入交流2次后触发" data-color="green">
 					<div class="node-icon">🎓</div>
 					<div class="node-label">大牛联培</div>
 				</div>
@@ -425,7 +428,7 @@
 			// 企业实习
 			const hasInternship = gameState.ailabInternship;
 			html += `
-				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+2，SAN-2|在随机事件中选择接受企业实习" data-color="green">
+				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+2，每月SAN-2（逆位大多数为-4/-6），做实验分数×1.25|在随机事件中选择接受企业实习" data-color="green">
 					<div class="node-icon">💼</div>
 					<div class="node-label">企业实习</div>
 				</div>
@@ -434,7 +437,7 @@
 			// 聪慧恋人
 			const hasSmartLover = gameState.hasLover && gameState.loverType === 'smart';
 			html += `
-				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|恋人帮助科研工作|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|成为恋人时：SAN+1，科研+1，永久buff每次想idea/做实验/写论文多一次。每月金币-2。完成任务循环：想idea多一次→做实验多一次→写论文多一次|社交≥12后在开会时多次交流同一异性学者" data-color="green">
 					<div class="node-icon">💕</div>
 					<div class="node-label">聪慧恋人</div>
 				</div>
@@ -443,7 +446,7 @@
 			// 活泼恋人
 			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
 			html += `
-				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|每月SAN+3|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|成为恋人时：SAN回满，SAN上限+4。每月金币-2，回复10%已损SAN。完成任务循环：回复10%已损SAN→SAN上限+1→月回复+2%|社交≥12后在开会时多次交流同一异性学者" data-color="green">
 					<div class="node-icon">💕</div>
 					<div class="node-label">活泼恋人</div>
 				</div>
@@ -509,11 +512,11 @@
 				<div class="node-icon">🖥️</div>
 				<div class="node-label">显示器</div>
 			</div>`;
-			html += `<div class="equip-node ${gameState.hasParasol ? 'active' : ''}" data-tip="遮阳伞|抵御夏季\"烈日当空\"debuff|金币商店购买（8金币）" data-color="equip">
+			html += `<div class="equip-node ${gameState.hasParasol ? 'active' : ''}" data-tip="遮阳伞|夏季(6-8月)\"烈日当空\"debuff无效：原本夏季SAN减少会额外-1，遮阳伞可抵消|金币商店购买（8金币）" data-color="equip">
 				<div class="node-icon">☂️</div>
 				<div class="node-label">遮阳伞</div>
 			</div>`;
-			html += `<div class="equip-node ${gameState.hasDownJacket ? 'active' : ''}" data-tip="羽绒服|抵御冬季\"寒风刺骨\"debuff|金币商店购买（8金币）" data-color="equip">
+			html += `<div class="equip-node ${gameState.hasDownJacket ? 'active' : ''}" data-tip="羽绒服|冬季(12-2月)\"寒风刺骨\"debuff无效：原本冬季每月SAN回复-1，羽绒服可抵消|金币商店购买（8金币）" data-color="equip">
 				<div class="node-icon">🧥</div>
 				<div class="node-label">羽绒服</div>
 			</div>`;
@@ -624,9 +627,17 @@
 						if (x + tipWidth > window.innerWidth - 10) {
 							x = e.clientX - tipWidth - 15;
 						}
+						// 防止超出左边界
+						if (x < 10) {
+							x = 10;
+						}
 						// 防止超出下边界
 						if (y + tipHeight > window.innerHeight - 10) {
 							y = e.clientY - tipHeight - 15;
+						}
+						// 防止超出上边界
+						if (y < 10) {
+							y = 10;
 						}
 						tooltip.style.left = x + 'px';
 						tooltip.style.top = y + 'px';
@@ -634,6 +645,69 @@
 					el.addEventListener('mouseleave', () => {
 						tooltip.style.display = 'none';
 					});
+
+					// 移动端点击支持
+					el.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const tipData = e.currentTarget.dataset.tip.split('|');
+						const color = e.currentTarget.dataset.color || '';
+						tooltip.querySelector('.talent-tip-title').textContent = tipData[0] || '';
+						tooltip.querySelector('.talent-tip-effect').textContent = tipData[1] || '';
+						tooltip.querySelector('.talent-tip-how').textContent = tipData[2] ? '获取：' + tipData[2] : '';
+
+						const colors = {
+							'blue': '#3498db',
+							'purple': '#9b59b6',
+							'orange': '#f39c12',
+							'green': '#2ecc71',
+							'equip': '#e67e22'
+						};
+						const borderColor = colors[color] || '#4ecdc4';
+						tooltip.style.borderColor = borderColor;
+						tooltip.querySelector('.talent-tip-title').style.color = borderColor;
+						tooltip.querySelector('.talent-tip-effect').style.color = 'rgba(255,255,255,0.9)';
+						tooltip.querySelector('.talent-tip-how').style.color = 'rgba(255,255,255,0.55)';
+						tooltip.querySelector('.talent-tip-how').style.fontStyle = 'italic';
+						tooltip.querySelector('.talent-tip-how').style.fontSize = '0.7rem';
+						tooltip.querySelector('.talent-tip-title').style.fontWeight = '600';
+						tooltip.querySelector('.talent-tip-title').style.fontSize = '0.85rem';
+						tooltip.querySelector('.talent-tip-title').style.marginBottom = '5px';
+						tooltip.querySelector('.talent-tip-effect').style.fontSize = '0.8rem';
+						tooltip.querySelector('.talent-tip-effect').style.marginBottom = '6px';
+						tooltip.querySelector('.talent-tip-effect').style.lineHeight = '1.4';
+
+						tooltip.style.display = 'block';
+
+						// 计算位置（移动端居中显示）
+						const tipWidth = tooltip.offsetWidth;
+						const tipHeight = tooltip.offsetHeight;
+						let x = (window.innerWidth - tipWidth) / 2;
+						let y = e.clientY + 20;
+
+						// 防止超出下边界
+						if (y + tipHeight > window.innerHeight - 10) {
+							y = e.clientY - tipHeight - 20;
+						}
+						// 防止超出上边界
+						if (y < 10) {
+							y = 10;
+						}
+
+						tooltip.style.left = x + 'px';
+						tooltip.style.top = y + 'px';
+
+						// 3秒后自动隐藏
+						setTimeout(() => {
+							tooltip.style.display = 'none';
+						}, 3000);
+					});
+				});
+
+				// 点击其他区域关闭tooltip
+				document.addEventListener('click', (e) => {
+					if (!e.target.closest('[data-tip]')) {
+						tooltip.style.display = 'none';
+					}
 				});
 			}, 150);
 		}
@@ -656,21 +730,21 @@
 			});
 			
 			if (gameState.hasLover) {
-				const loverBuffName = gameState.loverType === 'beautiful' 
-					? '💕恋人(SAN+3,金-1)' 
-					: '💕聪慧恋人(金-1)';
+				const loverBuffName = gameState.loverType === 'beautiful'
+					? '💕恋人(SAN+3,金-2)'
+					: '💕聪慧恋人(金-2)';
 				allBuffs.push({ type: 'lover', name: loverBuffName, permanent: true, isLove: true });
 			}
 			
 			if (gameState.ailabInternship) {
-				const sanCost = gameState.isReversed && gameState.character === 'normal' 
-					? (gameState.reversedAwakened ? 9 : 6) 
-					: 3;
-				allBuffs.push({ 
-					type: 'internship', 
-					name: `🏢AILab实习(金+2,SAN-${sanCost})`, 
-					permanent: true, 
-					isInternship: true 
+				const sanCost = gameState.isReversed && gameState.character === 'normal'
+					? (gameState.reversedAwakened ? 6 : 4)
+					: 2;
+				allBuffs.push({
+					type: 'internship',
+					name: `🏢AILab实习(金+2,SAN-${sanCost},实验×1.25)`,
+					permanent: true,
+					isInternship: true
 				});
 			}
 			

@@ -1,7 +1,7 @@
 		// ==================== 生涯总结滑动卡片 ====================
 
 		let currentSlide = 0;
-		let totalSlides = 9;
+		let totalSlides = 10;  // ★★★ 修改：增加到10页 ★★★
 		let touchStartX = 0;
 		let touchEndX = 0;
 
@@ -196,9 +196,10 @@
 				generateSlide4_Lowlights(),
 				generateSlide5_Leisure(),
 				generateSlide6_FirstTimes(),
-				generateSlide7_Relationships(),
-				generateSlide8_Achievements(),
-				generateSlide9_Share()
+				generateSlide7_BlessingsCurses(),  // ★★★ 新增：祝福与诅咒页 ★★★
+				generateSlide8_Relationships(),
+				generateSlide9_Achievements(),
+				generateSlide10_Share()
 			];
 
 			return `
@@ -621,8 +622,92 @@
 			`;
 		}
 
-		// 卡片7：人际关系（增强版 - 动态分页）
-		function generateSlide7_Relationships() {
+		// ★★★ 新增：卡片7：祝福与诅咒 ★★★
+		function generateSlide7_BlessingsCurses() {
+			const diffPoints = gameState.difficultyPoints || 0;
+			const activeCurses = gameState.activeCurses || {};
+
+			// 获取选择的诅咒列表
+			const cursesList = [];
+			if (typeof CURSES !== 'undefined') {
+				Object.keys(activeCurses).forEach(curseId => {
+					const count = activeCurses[curseId];
+					if (count > 0 && CURSES[curseId]) {
+						const curse = CURSES[curseId];
+						cursesList.push({
+							icon: curse.icon,
+							name: curse.name,
+							count: count,
+							desc: curse.desc,
+							points: curse.pointCosts[count - 1] || 0
+						});
+					}
+				});
+			}
+
+			return `
+				<div class="slide-content curses-slide">
+					<div class="slide-bg curses-bg"></div>
+					<div class="skull-particles">
+						<div class="skull-float s1">💀</div>
+						<div class="skull-float s2">🦴</div>
+						<div class="skull-float s3">☠️</div>
+					</div>
+					<div class="slide-inner">
+						<h2 class="slide-title animate-title">祝福与诅咒</h2>
+
+						<!-- 祝福区域（暂无） -->
+						<div class="blessings-section animate-fade-up">
+							<div class="section-header">
+								<span class="section-icon">✨</span>
+								<span class="section-title">祝福</span>
+							</div>
+							<div class="blessings-empty">
+								<div class="empty-icon">🔮</div>
+								<div class="empty-text">暂无祝福系统</div>
+								<div class="empty-sub">敬请期待后续版本...</div>
+							</div>
+						</div>
+
+						<!-- 诅咒区域 -->
+						<div class="curses-section animate-fade-up delay-1">
+							<div class="section-header">
+								<span class="section-icon">💀</span>
+								<span class="section-title">诅咒</span>
+								${diffPoints > 0 ? `<span class="difficulty-badge-slide">${diffPoints}分</span>` : ''}
+							</div>
+							${cursesList.length > 0 ? `
+								<div class="curses-list-slide">
+									${cursesList.map((curse, i) => `
+										<div class="curse-card animate-pop-in" style="--delay: ${i * 0.1}s">
+											<div class="curse-card-icon">${curse.icon}</div>
+											<div class="curse-card-info">
+												<div class="curse-card-name">${curse.name}${curse.count > 1 ? ` ×${curse.count}` : ''}</div>
+												<div class="curse-card-desc">${curse.desc}</div>
+											</div>
+											<div class="curse-card-points">+${curse.points}</div>
+										</div>
+									`).join('')}
+								</div>
+								<div class="curses-summary animate-fade-up delay-2">
+									<span class="summary-icon">☠️</span>
+									<span class="summary-text">共承受 <strong>${cursesList.length}</strong> 项诅咒</span>
+								</div>
+							` : `
+								<div class="curses-empty">
+									<div class="empty-icon">😇</div>
+									<div class="empty-text">无诅咒加成</div>
+									<div class="empty-sub">轻松模式通关</div>
+								</div>
+							`}
+						</div>
+					</div>
+				</div>
+			`;
+		}
+
+		// 卡片8：人际关系（增强版 - 动态分页）
+		function generateSlide8_Relationships() {
 			const relationships = gameState.relationships || [];
 			const advisor = relationships.find(r => r.type === 'advisor');
 			const lover = relationships.find(r => r.type === 'lover');
@@ -923,8 +1008,8 @@
 			`;
 		}
 
-		// 卡片8：成就墙
-		function generateSlide8_Achievements() {
+		// 卡片9：成就墙
+		function generateSlide9_Achievements() {
 			const achievements = currentEndingData ? collectAchievements(currentEndingData.endingType) : [];
 
 			return `
@@ -961,8 +1046,8 @@
 			`;
 		}
 
-		// 卡片9：分享页（增强版）
-		function generateSlide9_Share() {
+		// 卡片10：分享页（增强版）
+		function generateSlide10_Share() {
 			const charData = characters.find(c => c.id === gameState.character);
 			const displayData = gameState.isReversed && charData?.reversed ? charData.reversed : charData;
 			const icon = displayData?.icon || '👤';
@@ -1010,6 +1095,9 @@
 			if (gameState.hiddenAwakened) tags.push('隐藏觉醒');
 			if (paperNature > 0) tags.push('Nature作者');
 			if (gameState.paperA >= 3) tags.push('高产学者');
+
+			// ★★★ 新增：获取难度分 ★★★
+			const difficultyPoints = gameState.difficultyPoints || 0;
 
 			// ★★★ 新增：获取人际关系信息 ★★★
 			const relationships = gameState.relationships || [];
@@ -1064,12 +1152,12 @@
 										<div class="p-stat-label">引用</div>
 									</div>
 									<div class="p-stat">
-										<div class="p-stat-value">${acceptRate}%</div>
-										<div class="p-stat-label">中稿率</div>
-									</div>
-									<div class="p-stat">
 										<div class="p-stat-value">${achievements.length}</div>
 										<div class="p-stat-label">成就</div>
+									</div>
+									<div class="p-stat ${difficultyPoints > 0 ? 'p-stat-difficulty' : ''}">
+										<div class="p-stat-value">${difficultyPoints > 0 ? '💀' + difficultyPoints : '0'}</div>
+										<div class="p-stat-label">难度</div>
 									</div>
 								</div>
 
@@ -3221,6 +3309,171 @@
 
 				.close-summary-btn:hover {
 					background: rgba(255,255,255,0.35);
+				}
+
+				/* ==================== 卡片7：祝福与诅咒 ==================== */
+				.curses-bg {
+					background: linear-gradient(135deg, #2d1f3d 0%, #4a2c4a 50%, #5d3a5d 100%);
+				}
+
+				.skull-particles {
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					pointer-events: none;
+					overflow: hidden;
+				}
+
+				.skull-float {
+					position: absolute;
+					font-size: 2rem;
+					opacity: 0.15;
+					animation: float 5s ease-in-out infinite;
+				}
+
+				.skull-float.s1 { top: 15%; left: 12%; animation-delay: 0s; }
+				.skull-float.s2 { top: 28%; right: 15%; animation-delay: 1.5s; }
+				.skull-float.s3 { bottom: 25%; left: 18%; animation-delay: 3s; }
+
+				.blessings-section, .curses-section {
+					width: 100%;
+					max-width: 340px;
+					background: rgba(255,255,255,0.08);
+					border-radius: 14px;
+					padding: 15px;
+					margin-bottom: 15px;
+				}
+
+				.section-header {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					margin-bottom: 12px;
+					padding-bottom: 8px;
+					border-bottom: 1px solid rgba(255,255,255,0.15);
+				}
+
+				.section-icon {
+					font-size: 1.2rem;
+				}
+
+				.section-title {
+					font-size: 1rem;
+					font-weight: 600;
+					color: #fff;
+				}
+
+				.difficulty-badge-slide {
+					margin-left: auto;
+					padding: 3px 10px;
+					background: linear-gradient(135deg, #e74c3c, #c0392b);
+					color: white;
+					border-radius: 12px;
+					font-size: 0.75rem;
+					font-weight: 600;
+				}
+
+				.blessings-empty, .curses-empty {
+					text-align: center;
+					padding: 20px;
+					color: rgba(255,255,255,0.6);
+				}
+
+				.blessings-empty .empty-icon, .curses-empty .empty-icon {
+					font-size: 2.5rem;
+					margin-bottom: 8px;
+				}
+
+				.blessings-empty .empty-text, .curses-empty .empty-text {
+					font-size: 0.9rem;
+					color: rgba(255,255,255,0.8);
+				}
+
+				.blessings-empty .empty-sub, .curses-empty .empty-sub {
+					font-size: 0.75rem;
+					color: rgba(255,255,255,0.5);
+					margin-top: 4px;
+				}
+
+				.curses-list-slide {
+					display: flex;
+					flex-direction: column;
+					gap: 10px;
+				}
+
+				.curse-card {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 12px;
+					background: rgba(231, 76, 60, 0.15);
+					border-radius: 10px;
+					border: 1px solid rgba(231, 76, 60, 0.3);
+				}
+
+				.curse-card-icon {
+					font-size: 1.5rem;
+				}
+
+				.curse-card-info {
+					flex: 1;
+				}
+
+				.curse-card-name {
+					font-size: 0.9rem;
+					font-weight: 600;
+					color: #fff;
+				}
+
+				.curse-card-desc {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.6);
+					margin-top: 2px;
+				}
+
+				.curse-card-points {
+					font-size: 0.85rem;
+					font-weight: 600;
+					color: #e74c3c;
+					padding: 4px 10px;
+					background: rgba(231, 76, 60, 0.2);
+					border-radius: 10px;
+				}
+
+				.curses-summary {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 8px;
+					margin-top: 12px;
+					padding: 10px;
+					background: rgba(255,255,255,0.08);
+					border-radius: 10px;
+				}
+
+				.curses-summary .summary-icon {
+					font-size: 1.2rem;
+				}
+
+				.curses-summary .summary-text {
+					font-size: 0.85rem;
+					color: rgba(255,255,255,0.85);
+				}
+
+				.curses-summary .summary-text strong {
+					color: #e74c3c;
+				}
+
+				/* 难度统计样式 */
+				.p-stat-difficulty {
+					background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15)) !important;
+					border: 1px solid rgba(231, 76, 60, 0.3);
+				}
+
+				.p-stat-difficulty .p-stat-value {
+					color: #c0392b;
 				}
 
 				/* ==================== 移动端适配 ==================== */

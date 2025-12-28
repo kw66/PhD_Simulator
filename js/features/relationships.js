@@ -304,14 +304,27 @@
             return options;
         }
 
-        // 获取当前导师的要求
+        // 获取当前导师的要求（已应用难度诅咒修正）
         function getAdvisorRequirements() {
             const advisor = gameState.relationships.find(r => r.type === 'advisor');
+            let baseRequirements;
             if (!advisor || !advisor.advisorType) {
                 // 默认使用副教授的要求（向后兼容）
-                return ADVISOR_TYPES.level5.requirements;
+                baseRequirements = ADVISOR_TYPES.level5.requirements;
+            } else {
+                baseRequirements = ADVISOR_TYPES[advisor.advisorType].requirements;
             }
-            return ADVISOR_TYPES[advisor.advisorType].requirements;
+
+            // ★★★ 应用难度诅咒修正 ★★★
+            const phdBonus = gameState.phdRequirementBonus || 0;
+            const gradBonus = gameState.graduationRequirementBonus || 0;
+
+            return {
+                phdYear2: baseRequirements.phdYear2 + phdBonus,
+                phdYear3: baseRequirements.phdYear3 + phdBonus,
+                masterGrad: baseRequirements.masterGrad + gradBonus,
+                phdGrad: baseRequirements.phdGrad + gradBonus
+            };
         }
 
         // 获取当前导师的工资

@@ -772,8 +772,8 @@
 				: '你和那个聪慧的异性学者越来越默契了';
 			
 			const bonusDesc = type === 'beautiful'
-				? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月SAN+3<br>💸 每月金钱-1（约会开销）</div>'
-				: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 每次想idea/做实验/写论文多一次<br>💸 每月金钱-1（约会开销）</div>';
+				? '<div style="margin-top:10px;padding:8px;background:rgba(253,121,168,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN值立即回满<br>✨ SAN上限+4<br>✨ 每月回复10%已损SAN<br>💸 每月金钱-2（约会开销）<br>📋 完成任务循环：回复10%已损SAN→SAN上限+1→月回复+2%</div>'
+				: '<div style="margin-top:10px;padding:8px;background:rgba(116,185,255,0.1);border-radius:8px;font-size:0.8rem;"><strong>恋人效果：</strong><br>✨ SAN+1，科研能力+1<br>✨ 永久buff：每次想idea/做实验/写论文多一次<br>💸 每月金钱-2（约会开销）</div>';
 			
 			// 获取对应类型的拒绝次数
 			const rejectCount = type === 'beautiful' 
@@ -823,7 +823,7 @@
 					if (type === 'beautiful') {
 						gameState.san = gameState.sanMax;
 						gameState.sanMax += 4;
-						addLog('💕 恋爱', '和活泼的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月SAN+3，每月金钱-1');
+						addLog('💕 恋爱', '和活泼的异性学者成为恋人', 'SAN值回满，SAN上限+4，每月回复10%已损SAN，每月金钱-2');
 					} else {
 						changeResearch(1);
 						gameState.buffs.permanent.push(
@@ -831,7 +831,7 @@
 							{ type: 'exp_times', name: '每次做实验多做1次', value: 1, permanent: true },
 							{ type: 'write_times', name: '每次写论文多写1次', value: 1, permanent: true }
 						);
-						addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-1');
+						addLog('💕 恋爱', '和聪慧的异性学者成为恋人', 'SAN+1，科研能力+1，永久buff-每次想idea/做实验/写论文多一次，每月金钱-2');
 						changeSan(1);
 					}
 					closeModal();
@@ -915,14 +915,14 @@
 					}},
 					{ text: '🚀 接受实习', class: 'btn-primary', action: () => {
 						gameState.ailabInternship = true;
-						gameState.buffs.permanent.push({ 
-							type: 'exp_bonus', 
-							name: '实习加成：做实验分数×1.25', 
-							value: 1.25, 
-							multiply: true, 
-							permanent: true 
+						gameState.buffs.permanent.push({
+							type: 'exp_bonus',
+							name: '实习加成：做实验分数×1.25',
+							value: 1.25,
+							multiply: true,
+							permanent: true
 						});
-						addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-3');
+						addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-2');
 						closeModal();
 						updateBuffs();
 						updateAllUI();
@@ -946,11 +946,12 @@
 				warningText = '<p style="font-size:0.8rem;color:#e74c3c;margin-top:10px;"><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>这是最后一次联培机会！再次拒绝将永久错过</p>';
 			}
 			
-			showModal('🌟 联合培养', 
+			showModal('🌟 联合培养',
 				`<p>大牛对你的科研能力印象深刻，提议与你的导师联合培养你，是否接受？</p>
 				<div style="margin-top:10px;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
 					<strong>联合培养效果：</strong><br>
-					✨ 永久buff：每次写论文分数+8<br>
+					✨ 科研上限+2<br>
+					✨ 永久buff：想idea分数+5，做实验分数+5<br>
 					✨ 解锁"学术之星"等高级结局条件
 				</div>
 				${warningText}`, 
@@ -969,8 +970,10 @@
 					}},
 					{ text: '✨ 接受联合培养', class: 'btn-primary', action: () => {
 						gameState.bigBullCooperation = true;
-						gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+8', value: 8, permanent: true });
-						addLog('联合培养', '导师与大牛联合培养', '永久buff-每次写论文分数+8');
+						gameState.researchMax = (gameState.researchMax || 20) + 2;
+						gameState.buffs.permanent.push({ type: 'idea_bonus', name: '联培加成：想idea分数+5', value: 5, permanent: true });
+						gameState.buffs.permanent.push({ type: 'exp_bonus', name: '联培加成：做实验分数+5', value: 5, permanent: true });
+						addLog('联合培养', '导师与大牛联合培养', '科研上限+2，永久buff-想idea分数+5，做实验分数+5');
 						closeModal();
 						updateBuffs();
 					}}
