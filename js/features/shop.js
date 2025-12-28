@@ -1977,7 +1977,6 @@
 
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.openShop = openShop;
-		window.renderShop = renderShop;
 		window.buyItem = buyItem;
 		window.sellItem = sellItem;
 		window.toggleSubscription = toggleSubscription;
@@ -1985,7 +1984,6 @@
 		window.upgradeChair = upgradeChair;
 		window.showBikeUpgradeModal = showBikeUpgradeModal;
 		window.upgradeBike = upgradeBike;
-		window.renderBlackMarket = renderBlackMarket;
 		window.manualRefreshBlackMarket = manualRefreshBlackMarket;
 		window.toggleItemLock = toggleItemLock;
 		window.buyBlackMarketItem = buyBlackMarketItem;

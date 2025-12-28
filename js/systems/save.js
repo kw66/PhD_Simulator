@@ -1352,6 +1352,4 @@
 		window.loadAutoSave = loadAutoSave;
 		window.openLoadModalFromStart = openLoadModalFromStart;
 		window.openAutoSaveModal = openAutoSaveModal;
-		window.showSaveModal = showSaveModal;
-		window.showLoadModal = showLoadModal;
 

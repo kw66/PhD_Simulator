@@ -4,7 +4,8 @@
         //const SUPABASE_URL = 'https://orzejzmyzugxtyrzfcse.supabase.co';
         //const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yemVqem15enVneHR5cnpmY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDYyMTUsImV4cCI6MjA4MDg4MjIxNX0.lx9W0v9KpRPmQR0kdxCSWVks_az5rLCr7D3JI2efeM4';
 
-        // supabase 客户端变量（在 initStats 中初始化，使用隐式全局变量避免与 SDK 冲突）
+        // supabase 客户端变量（使用 window 确保全局可访问）
+        window.supabaseClient = null;
         let statsInitialized = false;
         let statsCache = null;
         let statsCacheTime = 0;
@@ -313,35 +314,35 @@
 
 		function initStats() {
 			if (statsInitialized) return;
-			
+
 			try {
 				if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
 					console.warn('⚠️ Supabase SDK 未加载');
 					return;
 				}
-				
-				supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+				window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 				statsInitialized = true;
 				console.log('✅ Supabase 初始化成功');
 				recordVisit();
-				startOnlineTracking();  // ★ 启动
-				
+				// startOnlineTracking 移到 init() 中调用，因为它在 online.js 中定义
+
 			} catch (e) {
 				console.error('❌ 初始化失败:', e);
-				supabase = null;
+				window.supabaseClient = null;
 			}
 		}
 
 		// ★★★ 修复：同时插入site_visits（用于今日统计）和更新counters（用于总计）★★★
 		async function recordVisit() {
-			console.log('📊 recordVisit() 开始执行, supabase:', !!supabase);
-			if (!supabase) {
-				console.warn('⚠️ recordVisit: supabase 未初始化，跳过记录');
+			console.log('📊 recordVisit() 开始执行, window.supabaseClient:', !!window.supabaseClient);
+			if (!window.supabaseClient) {
+				console.warn('⚠️ recordVisit: window.supabaseClient 未初始化，跳过记录');
 				return;
 			}
 			try {
 				// ★★★ 1. 插入PV记录到site_visits ★★★
-				const { error: pvError } = await supabase.from('site_visits').insert({ type: 'pv' });
+				const { error: pvError } = await window.supabaseClient.from('site_visits').insert({ type: 'pv' });
 
 				if (pvError) {
 					console.error('❌ PV插入失败:', pvError);
@@ -350,7 +351,7 @@
 				}
 
 				// ★★★ 2. 尝试更新计数器（非致命，忽略错误） ★★★
-				try { await supabase.rpc('increment_counter', { counter_id: 'pv_total' }); } catch(e) {}
+				try { await window.supabaseClient.rpc('increment_counter', { counter_id: 'pv_total' }); } catch(e) {}
 
 				// UV：每天每个用户只记录一次
 				const todayStr = getTodayDateString();
@@ -363,7 +364,7 @@
 
 				if (isNewVisitor || isNewDay) {
 					// ★★★ 插入UV记录到site_visits ★★★
-					const { error: uvError } = await supabase.from('site_visits').insert({ type: 'uv' });
+					const { error: uvError } = await window.supabaseClient.from('site_visits').insert({ type: 'uv' });
 
 					if (uvError) {
 						console.error('❌ UV插入失败:', uvError);
@@ -374,7 +375,7 @@
 					}
 
 					// 尝试更新计数器（非致命，忽略错误）
-					try { await supabase.rpc('increment_counter', { counter_id: 'uv_total' }); } catch(e) {}
+					try { await window.supabaseClient.rpc('increment_counter', { counter_id: 'uv_total' }); } catch(e) {}
 				}
 			} catch (e) {
 				console.error('❌ 记录访问异常:', e);
@@ -392,11 +393,11 @@
 				return cached;
 			}
 
-			if (!supabase) return { pv: 0, uv: 0 };
+			if (!window.supabaseClient) return { pv: 0, uv: 0 };
 
 			try {
 				// 优先使用 RPC 函数一次获取多个计数器
-				const { data, error } = await supabase.rpc('get_counters', {
+				const { data, error } = await window.supabaseClient.rpc('get_counters', {
 					counter_ids: ['pv_total', 'uv_total']
 				});
 
@@ -417,14 +418,14 @@
 
 				// RPC 不可用时回退到原有方式
 				console.warn('计数器RPC失败，回退到原有方式');
-				const { count: pvCount, error: pvError } = await supabase
+				const { count: pvCount, error: pvError } = await window.supabaseClient
 					.from('site_visits')
 					.select('*', { count: 'exact', head: true })
 					.eq('type', 'pv');
 
 				if (pvError) throw pvError;
 
-				const { count: uvCount, error: uvError } = await supabase
+				const { count: uvCount, error: uvError } = await window.supabaseClient
 					.from('site_visits')
 					.select('*', { count: 'exact', head: true })
 					.eq('type', 'uv');
@@ -461,7 +462,7 @@
 				endingType,  // ★★★ 新增参数 ★★★
 			);
 			
-			if (!supabase) return;
+			if (!window.supabaseClient) return;
 
 			try {
 				// 获取难度信息
@@ -469,7 +470,7 @@
 				const difficultyInfo = getDifficultySettings ? getDifficultySettings() : null;
 				const cursesData = difficultyInfo && difficultyInfo.selectedCurses ? JSON.stringify(difficultyInfo.selectedCurses) : null;
 
-				const { error } = await supabase.from('game_endings').insert({
+				const { error } = await window.supabaseClient.from('game_endings').insert({
 					ending_type: endingType,
 					ending_title: endingTitle,
 					character: gameState.character,
@@ -498,7 +499,7 @@
 		}
 
         async function recordAchievements(achievements) {
-            if (!supabase || achievements.length === 0) return;
+            if (!window.supabaseClient || achievements.length === 0) return;
             try {
                 const records = achievements.map(ach => ({
                     achievement_name: ach,
@@ -506,7 +507,7 @@
                     is_reversed: gameState.isReversed
                 }));
                 
-                const { error } = await supabase.from('game_achievements').insert(records);
+                const { error } = await window.supabaseClient.from('game_achievements').insert(records);
                 
                 if (error) throw error;
                 console.log('✅ 成就已记录:', achievements);
@@ -525,10 +526,10 @@
 				return cached;
 			}
 			
-			if (!supabase) return 0;
-			
+			if (!window.supabaseClient) return 0;
+
 			try {
-				const { count, error } = await supabase
+				const { count, error } = await window.supabaseClient
 					.from('game_endings')
 					.select('*', { count: 'exact', head: true });
 				
@@ -596,17 +597,17 @@
 				return cached;
 			}
 			
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				console.warn('Supabase未初始化');
 				return null;
 			}
-			
+
 			try {
 				// 尝试从缓存表读取（优化后的方式）
 				const [endingsRes, achievementsRes, difficultyRes] = await Promise.all([
-					supabase.from('stats_endings_cache').select('mode, ending_type, count'),
-					supabase.from('stats_achievements_cache').select('mode, achievement_name, count'),
-					supabase.from('stats_character_difficulty_cache').select('is_reversed, character_id, total_games, hard_games')
+					window.supabaseClient.from('stats_endings_cache').select('mode, ending_type, count'),
+					window.supabaseClient.from('stats_achievements_cache').select('mode, achievement_name, count'),
+					window.supabaseClient.from('stats_character_difficulty_cache').select('is_reversed, character_id, total_games, hard_games')
 				]);
 				
 				// 检查缓存表是否存在且有数据
@@ -1004,7 +1005,7 @@
 			// 第2步：加载详细统计
 			setTimeout(async () => {
 				try {
-					if (!supabase) {
+					if (!window.supabaseClient) {
 						loading.innerHTML = `
 							<span style="color:var(--text-secondary);font-size:0.8rem;">📊 统计服务暂不可用</span>
 							<button class="btn btn-info" style="margin-left:10px;padding:3px 8px;font-size:0.7rem;" onclick="retryLoadStats()">
@@ -1277,4 +1278,24 @@
 			}
 		}
 
-
+		// ==================== 全局函数暴露（供onclick和其他模块调用）====================
+		window.initStats = initStats;
+		window.recordVisit = recordVisit;
+		window.recordEnding = recordEnding;
+		window.recordAchievements = recordAchievements;
+		window.getGlobalStats = getGlobalStats;
+		window.loadGlobalStatsDisplay = loadGlobalStatsDisplay;
+		window.retryLoadStats = retryLoadStats;
+		window.getPlayerStats = getPlayerStats;
+		window.renderPlayerStatsHTML = renderPlayerStatsHTML;
+		window.getPlayerAchievements = getPlayerAchievements;
+		window.savePlayerRecord = savePlayerRecord;
+		window.incrementGamesPlayed = incrementGamesPlayed;
+		window.migrateGamesPlayedCount = migrateGamesPlayedCount;
+		window.isTrueNormalUnlocked = isTrueNormalUnlocked;
+		window.getTrueNormalUnlockProgress = getTrueNormalUnlockProgress;
+		window.recordCharacterPhdUnlock = recordCharacterPhdUnlock;
+		window.getCharacterPhdUnlocks = getCharacterPhdUnlocks;
+		window.getUniqueCharacterPhdCount = getUniqueCharacterPhdCount;
+		window.renderDifficultyStars = renderDifficultyStars;
+		window.getDifficultyBadge = getDifficultyBadge;

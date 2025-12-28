@@ -61,24 +61,32 @@
 			// 初始化折叠状态
 			initCollapseStates();
 			initStartSectionStates();
-			
+
 			renderCharacterGrid();
 			document.getElementById('start-btn').addEventListener('click', startGame);
-			
-			initStats();
-			// 全球统计改为懒加载，展开时才请求（见 panels.js toggleStartSection）
 
-			// 加载今日统计和在线人数（只在页面加载时查询一次，游戏结束返回时会再次刷新）
-			updateAllStatsDisplay();
+			initStats();
+
+			// 启动在线追踪（在 online.js 加载后调用）
+			if (typeof startOnlineTracking === 'function') {
+				startOnlineTracking();
+			}
+
+			// 加载今日统计和在线人数
+			if (typeof updateAllStatsDisplay === 'function') {
+				updateAllStatsDisplay();
+			}
 
 			setTimeout(() => {
 				const messageSection = document.getElementById('message-section');
 				if (messageSection) {
 					messageSection.style.display = 'block';
-					initMessageBoard();
+					if (typeof initMessageBoard === 'function') {
+						initMessageBoard();
+					}
 				}
 			}, 500);
-			
+
 			// 应用保存的开始页面折叠状态
 			applyStartSectionStates();
 		}
@@ -1134,7 +1142,6 @@
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.selectCharacterFromRune = selectCharacterFromRune;
 		window.toggleTrueNormalMode = toggleTrueNormalMode;
-		window.renderCharacterSelection = renderCharacterSelection;
 		window.startGame = startGame;
 		window.resetRandomEventPool = resetRandomEventPool;
 		window.yearlyResetRandomEventPool = yearlyResetRandomEventPool;

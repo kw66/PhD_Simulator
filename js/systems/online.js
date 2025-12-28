@@ -14,7 +14,7 @@
 
 		// 启动在线追踪
 		function startOnlineTracking() {
-			if (!supabase) return;
+			if (!window.supabaseClient) return;
 
 			onlineSessionId = getOnlineSessionId();
 
@@ -29,7 +29,7 @@
 
 			// 页面关闭时清理
 			window.addEventListener('beforeunload', () => {
-				if (onlineSessionId && supabase) {
+				if (onlineSessionId && window.supabaseClient) {
 					// 使用 sendBeacon 确保请求发送
 					const url = `${SUPABASE_URL}/rest/v1/online_users?session_id=eq.${onlineSessionId}`;
 					navigator.sendBeacon(url, '');
@@ -39,11 +39,11 @@
 
 		// 发送心跳（优化：使用 RPC 合并多个数据库操作为一次调用）
 		async function sendOnlineHeartbeat() {
-			if (!supabase || !onlineSessionId) return;
+			if (!window.supabaseClient || !onlineSessionId) return;
 
 			try {
 				// 使用 RPC 函数：一次调用完成 upsert + 清理 + 计数
-				const { data, error } = await supabase.rpc('heartbeat', {
+				const { data, error } = await window.supabaseClient.rpc('heartbeat', {
 					p_session_id: onlineSessionId
 				});
 
@@ -60,7 +60,7 @@
 		// 心跳回退方法（RPC不可用时使用）
 		async function sendOnlineHeartbeatFallback() {
 			try {
-				await supabase
+				await window.supabaseClient
 					.from('online_users')
 					.upsert({
 						session_id: onlineSessionId,
@@ -68,7 +68,7 @@
 					});
 
 				const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-				await supabase
+				await window.supabaseClient
 					.from('online_users')
 					.delete()
 					.lt('last_seen', fiveMinutesAgo);
@@ -79,7 +79,7 @@
 
 		// ★★★ 核心函数：检查并记录历史最高在线 ★★★
 		async function checkAndRecordMaxOnline() {
-			if (!supabase) return null;
+			if (!window.supabaseClient) return null;
 
 			// 使用重试机制确保写入
 			const maxRetries = 3;
@@ -88,7 +88,7 @@
 				try {
 					// 1. 获取当前在线人数
 					const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-					const { count: currentOnline, error: countError } = await supabase
+					const { count: currentOnline, error: countError } = await window.supabaseClient
 						.from('online_users')
 						.select('*', { count: 'exact', head: true })
 						.gte('last_seen', threeMinutesAgo);
@@ -106,7 +106,7 @@
 
 					// 3. 如果当前在线大于历史最大，追加新记录
 					if (onlineCount > historyMax) {
-						const { error: insertError } = await supabase
+						const { error: insertError } = await window.supabaseClient
 							.from('online_records')
 							.insert({
 								online_count: onlineCount,
@@ -140,11 +140,11 @@
 
 		// ★★★ 获取历史最高在线人数（从追加记录表中查询最大值）★★★
 		async function getHistoryMaxOnline() {
-			if (!supabase) return 0;
+			if (!window.supabaseClient) return 0;
 
 			try {
 				// 查询 online_records 表中的最大值
-				const { data, error } = await supabase
+				const { data, error } = await window.supabaseClient
 					.from('online_records')
 					.select('online_count')
 					.order('online_count', { ascending: false })
@@ -189,60 +189,77 @@
 			return `${yyyy}-${mm}-${dd}`;
 		}
 
-		// ★★★ 修改后的获取所有统计数据函数 ★★★
+		// ★★★ 修改后的获取所有统计数据函数（使用 allSettled 确保部分失败不影响其他统计）★★★
 		async function getAllStats() {
-			if (!supabase) return null;
+			if (!window.supabaseClient) {
+				console.warn('getAllStats: window.supabaseClient 未初始化');
+				return null;
+			}
 
 			try {
 				const todayStart = getTodayStartUTC();
 				const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 
-				// 并行查询所有统计
-				const [
-					onlineResult,
-					maxOnlineResult,
-					todayPvResult,
-					todayUvResult,
-					todayGamesResult
-				] = await Promise.all([
+				// 使用 allSettled 确保即使某个查询失败，其他查询仍能返回结果
+				const results = await Promise.allSettled([
 					// 当前在线
-					supabase
+					window.supabaseClient
 						.from('online_users')
 						.select('*', { count: 'exact', head: true })
 						.gte('last_seen', threeMinutesAgo),
 					// 历史最高在线（从追加记录表查询）
-					supabase
+					window.supabaseClient
 						.from('online_records')
 						.select('online_count')
 						.order('online_count', { ascending: false })
 						.limit(1)
 						.maybeSingle(),
 					// 今日PV
-					supabase
+					window.supabaseClient
 						.from('site_visits')
 						.select('*', { count: 'exact', head: true })
 						.eq('type', 'pv')
 						.gte('created_at', todayStart),
 					// 今日UV
-					supabase
+					window.supabaseClient
 						.from('site_visits')
 						.select('*', { count: 'exact', head: true })
 						.eq('type', 'uv')
 						.gte('created_at', todayStart),
 					// 今日游戏数
-					supabase
+					window.supabaseClient
 						.from('game_endings')
 						.select('*', { count: 'exact', head: true })
 						.gte('created_at', todayStart)
 				]);
 
-				const currentOnline = onlineResult.count || 0;
-				const historyMax = maxOnlineResult.data?.online_count || 0;
+				// 安全提取结果，失败的查询返回默认值
+				const getResult = (index, defaultVal = null) => {
+					const r = results[index];
+					if (r.status === 'fulfilled' && !r.value.error) {
+						return r.value;
+					}
+					if (r.status === 'rejected') {
+						console.warn(`统计查询 ${index} 失败:`, r.reason);
+					} else if (r.value?.error) {
+						console.warn(`统计查询 ${index} 错误:`, r.value.error);
+					}
+					return defaultVal;
+				};
+
+				const onlineResult = getResult(0, { count: 0 });
+				const maxOnlineResult = getResult(1, { data: null });
+				const todayPvResult = getResult(2, { count: 0 });
+				const todayUvResult = getResult(3, { count: 0 });
+				const todayGamesResult = getResult(4, { count: 0 });
+
+				const currentOnline = onlineResult?.count || 0;
+				const historyMax = maxOnlineResult?.data?.online_count || 0;
 
 				// 如果当前在线大于历史最高，记录新纪录
 				if (currentOnline > historyMax && currentOnline > 0) {
 					// 异步写入，不阻塞返回
-					supabase
+					window.supabaseClient
 						.from('online_records')
 						.insert({
 							online_count: currentOnline,
@@ -260,34 +277,45 @@
 				return {
 					online: currentOnline,
 					maxOnline: Math.max(currentOnline, historyMax),
-					todayPv: todayPvResult.count || 0,
-					todayUv: todayUvResult.count || 0,
-					todayGames: todayGamesResult.count || 0
+					todayPv: todayPvResult?.count || 0,
+					todayUv: todayUvResult?.count || 0,
+					todayGames: todayGamesResult?.count || 0
 				};
 			} catch (e) {
 				console.error('获取统计失败:', e);
-				return null;
+				// 返回默认值而不是 null，确保 UI 能显示 0
+				return {
+					online: 0,
+					maxOnline: 0,
+					todayPv: 0,
+					todayUv: 0,
+					todayGames: 0
+				};
 			}
 		}
 
 		// 更新统计显示
 		async function updateAllStatsDisplay() {
-			console.log('正在更新统计显示...');  // 添加调试日志
+			console.log('正在更新统计显示...');
 
 			const stats = await getAllStats();
 
-			console.log('获取到的统计:', stats);  // 添加调试日志
+			console.log('获取到的统计:', stats);
+
+			// 即使 stats 为 null 也显示默认值 0
+			const displayStats = stats || { online: 0, maxOnline: 0, todayPv: 0, todayUv: 0, todayGames: 0 };
+
+			const el = (id) => document.getElementById(id);
+			if (el('online-count-value')) el('online-count-value').textContent = displayStats.online;
+			if (el('max-online-value')) el('max-online-value').textContent = displayStats.maxOnline;
+			if (el('today-pv-value')) el('today-pv-value').textContent = displayStats.todayPv;
+			if (el('today-uv-value')) el('today-uv-value').textContent = displayStats.todayUv;
+			if (el('today-games-value')) el('today-games-value').textContent = displayStats.todayGames;
 
 			if (stats) {
-				const el = (id) => document.getElementById(id);
-				if (el('online-count-value')) el('online-count-value').textContent = stats.online;
-				if (el('max-online-value')) el('max-online-value').textContent = stats.maxOnline;
-				if (el('today-pv-value')) el('today-pv-value').textContent = stats.todayPv;
-				if (el('today-uv-value')) el('today-uv-value').textContent = stats.todayUv;
-				if (el('today-games-value')) el('today-games-value').textContent = stats.todayGames;
 				console.log('✅ 统计显示已更新');
 			} else {
-				console.error('❌ getAllStats 返回 null');
+				console.warn('⚠️ 统计数据获取失败，显示默认值 0');
 			}
 		}
 
@@ -305,7 +333,7 @@
 			const listEl = document.getElementById('message-list');
 			const paginationEl = document.getElementById('message-pagination');
 
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				listEl.innerHTML = '<div class="no-messages"><i class="fas fa-database"></i><div>留言服务暂不可用</div></div>';
 				return;
 			}
@@ -322,7 +350,7 @@
 
 			try {
 				// 获取主留言总数
-				const { count: totalCount, error: countError } = await supabase
+				const { count: totalCount, error: countError } = await window.supabaseClient
 					.from('messages')
 					.select('*', { count: 'exact', head: true })
 					.is('parent_id', null);
@@ -334,7 +362,7 @@
 
 				// 获取当前页的主留言（优化：只选择需要的字段减少流量）
 				const offset = (currentMessagePage - 1) * MESSAGES_PER_PAGE;
-				const { data: mainMessages, error: mainError } = await supabase
+				const { data: mainMessages, error: mainError } = await window.supabaseClient
 					.from('messages')
 					.select('id, nickname, content, created_at, parent_id')
 					.is('parent_id', null)
@@ -351,7 +379,7 @@
 
 				// 获取这些主留言的所有回复（优化：只选择需要的字段减少流量）
 				const mainIds = mainMessages.map(m => m.id);
-				const { data: replies, error: repliesError } = await supabase
+				const { data: replies, error: repliesError } = await window.supabaseClient
 					.from('messages')
 					.select('id, nickname, content, created_at, parent_id')
 					.in('parent_id', mainIds)
@@ -556,7 +584,7 @@
 				return;
 			}
 
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -568,7 +596,7 @@
 					parent_id: replyToMessage ? replyToMessage.id : null
 				};
 
-				const { error } = await supabase.from('messages').insert(messageData);
+				const { error } = await window.supabaseClient.from('messages').insert(messageData);
 
 				if (error) throw error;
 
@@ -683,7 +711,7 @@
 				return;
 			}
 
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -695,7 +723,7 @@
 					parent_id: null
 				};
 
-				const { error } = await supabase.from('messages').insert(messageData);
+				const { error } = await window.supabaseClient.from('messages').insert(messageData);
 
 				if (error) throw error;
 
@@ -712,3 +740,17 @@
 				showModal('❌ 错误', '<p>提交失败，请稍后重试</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 			}
 		}
+
+		// ==================== 全局函数暴露（供onclick和其他模块调用）====================
+		window.startOnlineTracking = startOnlineTracking;
+		window.updateAllStatsDisplay = updateAllStatsDisplay;
+		window.getAllStats = getAllStats;
+		window.loadMessages = loadMessages;
+		window.loadMessagesOnDemand = loadMessagesOnDemand;
+		window.postMessage = postMessage;
+		window.setReplyTo = setReplyTo;
+		window.cancelReply = cancelReply;
+		window.changeMessagePage = changeMessagePage;
+		window.toggleReplies = toggleReplies;
+		window.initMessageBoard = initMessageBoard;
+		window.triggerFeedbackEvent = triggerFeedbackEvent;
