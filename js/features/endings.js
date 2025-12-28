@@ -185,6 +185,8 @@
 			if (rejectedLoverTwice && !gameState.hasLover) { a.push('💔 不入爱河');}
 			// 强身健体：打羽毛球后成功规避了感冒事件
 			if (gameState.achievementConditions && gameState.achievementConditions.badmintonAvoidedCold) a.push('💪 强身健体');
+			// 躲过一劫：数据丢失时没有正在进行的论文
+			if (gameState.achievementConditions && gameState.achievementConditions.narrowEscape) a.push('🎲 躲过一劫');
 
 			// ★★★ 新增9个成就 ★★★
 			if (gameState.badmintonChampionCount >= 1) a.push('🏸 羽球冠军');
@@ -307,6 +309,8 @@
 				if (gameState.achievementConditions.twoInOneConference) achievementsToCheck.push('🏹 一箭双雕');
 				if (gameState.achievementConditions.savedByPC) achievementsToCheck.push('🎣 力挽狂澜');
 				if (gameState.achievementConditions.badmintonAvoidedCold) achievementsToCheck.push('💪 强身健体');
+				// 躲过一劫：数据丢失时没有正在进行的论文
+				if (gameState.achievementConditions.narrowEscape) achievementsToCheck.push('🎲 躲过一劫');
 				// ★★★ 新增9个成就检测 ★★★
 				if (gameState.achievementConditions.magicTowerMaster) achievementsToCheck.push('🗼 穞堵臸猭畍');
 				if (gameState.achievementConditions.terraria300) achievementsToCheck.push('🌲 300颗够吗');
@@ -480,39 +484,7 @@
 			// ★★★ 新增：显示失败原因（放在统计栏下方）★★★
 			html += failReasonHtml;
 
-			if (isFailed) {
-				html += `
-				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
-					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">💪 不要灰心！科研之路漫漫，来日方长~</div>
-					<a href="http://xhslink.com/o/8czcPQfNziK" target="_blank" 
-					   style="display:inline-block;padding:10px 24px;
-							  background:linear-gradient(135deg,#ec4899,#a855f7);
-							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
-							  box-shadow:0 4px 15px rgba(236,72,153,0.35);transition:all 0.3s ease;"
-					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(236,72,153,0.45)'"
-					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(236,72,153,0.35)'">
-						<i class="fas fa-palette"></i> 作者向你传授科研绘图心得
-					</a>
-				</div>`;
-			}
-			
-			// ★★★ 修改：真·大多数成功结局不显示AI Lab推广 ★★★
-			if (isSuccess && !isTrueNormalSuccess) {
-				html += `
-				<div style="background:linear-gradient(135deg,rgba(254,249,195,0.7),rgba(254,240,138,0.7));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
-					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">🎉 恭喜毕业！新的征程即将开始~</div>
-					<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank" 
-					   style="display:inline-block;padding:10px 24px;
-							  background:linear-gradient(135deg,#10b981,#059669);
-							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
-							  box-shadow:0 4px 15px rgba(16,185,129,0.35);transition:all 0.3s ease;"
-					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
-					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(16,185,129,0.35)'">
-						<i class="fas fa-building"></i> 作者诚邀你来上海AI Lab实习
-					</a>
-				</div>`;
-			}
-
+			// ★★★ 真实结局信息 ★★★
 			const isTrueEnding = endingType === 'true_phd' || endingType === 'true_devotion';
 			if (isTrueEnding) {
 				html += `
@@ -592,7 +564,40 @@
 					</div>`;
 			}
 
-			// ★★★ 重开按钮放在成就框之后 ★★★
+			// ★★★ 作者广告（在成就下方）★★★
+			if (isFailed) {
+				html += `
+				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
+					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">💪 不要灰心！科研之路漫漫，来日方长~</div>
+					<a href="http://xhslink.com/o/8czcPQfNziK" target="_blank"
+					   style="display:inline-block;padding:10px 24px;
+							  background:linear-gradient(135deg,#ec4899,#a855f7);
+							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
+							  box-shadow:0 4px 15px rgba(236,72,153,0.35);transition:all 0.3s ease;"
+					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(236,72,153,0.45)'"
+					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(236,72,153,0.35)'">
+						<i class="fas fa-palette"></i> 作者向你传授科研绘图心得
+					</a>
+				</div>`;
+			}
+
+			if (isSuccess && !isTrueNormalSuccess) {
+				html += `
+				<div style="background:linear-gradient(135deg,rgba(254,249,195,0.7),rgba(254,240,138,0.7));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
+					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">🎉 恭喜毕业！新的征程即将开始~</div>
+					<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank"
+					   style="display:inline-block;padding:10px 24px;
+							  background:linear-gradient(135deg,#10b981,#059669);
+							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
+							  box-shadow:0 4px 15px rgba(16,185,129,0.35);transition:all 0.3s ease;"
+					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
+					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(16,185,129,0.35)'">
+						<i class="fas fa-building"></i> 作者诚邀你来上海AI Lab实习
+					</a>
+				</div>`;
+			}
+
+			// ★★★ 重开按钮（在最后）★★★
 			html += `
 			<div style="text-align:center;margin-top:8px;">
 				<button onclick="restartGame()"

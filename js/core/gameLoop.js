@@ -1,5 +1,25 @@
 ﻿        // ==================== 下一个月 ====================
+		let isNextMonthProcessing = false;  // ★★★ 新增：防止重复点击 ★★★
+
 		function nextMonth() {
+			// ★★★ 新增：防止重复点击导致月份跳跃或不刷新 ★★★
+			if (isNextMonthProcessing) {
+				console.log('⚠️ nextMonth 正在处理中，忽略重复点击');
+				return;
+			}
+			isNextMonthProcessing = true;
+
+			try {
+				nextMonthInternal();
+			} catch (e) {
+				console.error('❌ nextMonth 执行错误:', e);
+			} finally {
+				// ★★★ 确保标志总是被重置 ★★★
+				isNextMonthProcessing = false;
+			}
+		}
+
+		function nextMonthInternal() {
 			// ★★★ 新增：重置行动次数 ★★★
 			gameState.actionCount = 0;
 			gameState.actionUsed = false;
@@ -131,6 +151,8 @@
 			// 先加金币（+金币类）
 			const wageBonus = gameState.monthlyWageBonus || 0;  // 隐藏觉醒：不求暴富但求稳定
 			gameState.gold += salary + extraGold + wageBonus;
+			// ★★★ 新增：赤贫学子诅咒 - 金币上限检查 ★★★
+			clampGold();
 
 			// ============================================
 			// ★★★ SAN结算：先+SAN类 ★★★
@@ -240,6 +262,15 @@
 				checkAmuletEffects();
 
 				if (gameState.gold < 0) {
+					// ★★★ 修复：记录月度开销日志（用于失败结局显示）★★★
+					addLog('月度结算', '生活开销', `基础开销-1，恋人约会-2，金币不足`);
+					triggerEnding('poor');
+					return;
+				}
+			} else {
+				// ★★★ 修复：没有恋人时也检查基础开销是否导致金币不足 ★★★
+				if (gameState.gold < 0) {
+					addLog('月度结算', '生活开销', `基础开销-1，金币不足`);
 					triggerEnding('poor');
 					return;
 				}
@@ -254,10 +285,14 @@
 				// ★★★ 修改：白手起家术 - 实习收入翻倍 ★★★
 				const internshipIncome = gameState.incomeDoubled ? 4 : 2;
 				gameState.gold += internshipIncome;  // 实习收入
+				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
-				const baseSanCost = 2;  // ★★★ 修改：实习SAN消耗从3改为2 ★★★
-				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-				gameState.san -= actualSanCost;
+				// ★★★ 修改：被动效果不受季节buff影响，固定扣2 SAN ★★★
+				const sanCost = 2;
+				gameState.san -= sanCost;
+
+				// ★★★ 修复：记录实习效果日志（用于失败结局显示）★★★
+				addLog('月度结算', 'AILab实习', `金币+${internshipIncome}，SAN-${sanCost}`);
 
 				// ★★★ 黑市：理智护身符检查 ★★★
 				checkAmuletEffects();
@@ -271,10 +306,9 @@
 			// ★★★ 指导师弟师妹效果（-SAN类）★★★
 			const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
 			if(mentorshipBuff) {
-				const baseSanCost = 1;
-				const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-
-				changeSan(-baseSanCost);
+				// ★★★ 修改：被动效果不受季节buff影响，固定扣1 SAN ★★★
+				const sanCost = 1;
+				gameState.san -= sanCost;
 
 				const researchBonus = gameState.research;
 				gameState.totalCitations += researchBonus;
@@ -282,11 +316,7 @@
 					paper.citations += Math.floor(researchBonus / gameState.publishedPapers.length);
 				});
 
-				let sanText = `SAN-${actualSanCost}`;
-				if (gameState.isReversed && gameState.character === 'normal') {
-					sanText += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
-				}
-				addLog('长期合作', '指导师弟师妹的成果', `${sanText}，总引用+${researchBonus}`);
+				addLog('长期合作', '指导师弟师妹的成果', `SAN-${sanCost}，总引用+${researchBonus}`);
 			}
 
 			// ★★★ 新增：自行车每月效果（-SAN类）★★★
@@ -319,6 +349,9 @@
 				checkAmuletEffects();
 
 				if (gameState.san < 0) {
+					// ★★★ 修复：记录骑行效果日志（用于失败结局显示）★★★
+					const bikeType = gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车';
+					addLog('月度结算', '骑行消耗', `${bikeType}每月消耗SAN-${bikeSanCost}，精力透支`);
 					triggerEnding('burnout');
 					return;
 				}
@@ -336,14 +369,20 @@
 
 			// ★★★ 诅咒效果后检查游戏结局 ★★★
 			if (gameState.san < 0) {
+				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
+				addLog('月度结算', '难度诅咒', '诅咒效果累积导致精力透支');
 				triggerEnding('burnout');
 				return;
 			}
 			if (gameState.gold < 0) {
+				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
+				addLog('月度结算', '难度诅咒', '诅咒效果累积导致金币耗尽');
 				triggerEnding('poor');
 				return;
 			}
 			if (gameState.favor < 0) {
+				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
+				addLog('月度结算', '难度诅咒', '诅咒效果累积导致导师好感度归零');
 				triggerEnding('expelled');
 				return;
 			}
@@ -471,10 +510,10 @@
 				logResult += '，约会-2金';
 			}
 			if (gameState.ailabInternship) {
-				const actualSanCost = Math.abs(getActualSanChange(-2));
-				logResult += `，实习+2金，实习SAN-${actualSanCost}`;
+				// ★★★ 修改：被动效果固定值，不受季节buff影响 ★★★
+				logResult += `，实习+${gameState.incomeDoubled ? 4 : 2}金，实习SAN-2`;
 			}
-			
+
 			if (gameState.buffs.permanent.some(b => b.type === 'monthly_san')) {
 				logResult += '，工学椅SAN+1';
 			}
@@ -570,7 +609,7 @@
 				
 				// 开始审稿事件处理流程，完成后触发月末事件
 				startReviewProcessing(pendingReviewSlots, triggerMonthlyEvents);
-				
+
 				updateAllUI();
 				renderPaperSlots();
 				return;  // ★★★ 提前返回，等待审稿流程完成 ★★★
@@ -1241,13 +1280,10 @@
 						bonusDetails.push(`好感 ${oldF1} → ${gameState.favor}`);
 						bonusDetails.push(`SAN上限 ${oldSanMax1} → ${gameState.sanMax}（+50%上取整）`);
 						bonusDetails.push('💰 金币不翻倍');
-						bonusDetails.push('⚠️ SAN减少变为3倍');
+						bonusDetails.push('⚠️ 主动操作SAN减少变为3倍');
 						bonusDetails.push('✨ 每月SAN+已损SAN的10%（上取整）');
 
-						const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
-						if (mentorshipBuff) {
-							mentorshipBuff.desc = '每月SAN-3（怠惰×3），总引用+科研能力值';
-						}
+						// ★★★ 修改：被动效果不受怠惰倍率影响，不再更新mentorship描述 ★★★
 						// ★★★ 修复：社交增加时检查解锁 ★★★
 						checkSocialUnlock();
 						break;
@@ -1273,6 +1309,7 @@
 							const increase = 5 - oldSocialVal;
 							gameState.san = Math.min(gameState.sanMax, gameState.san + increase);
 							gameState.gold += increase;
+							clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
 							bonusDetails.push(`触发嫉妒反馈：SAN+${increase}, 金钱+${increase}`);
 						} else {

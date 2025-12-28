@@ -67,15 +67,38 @@
 
 			initStats();
 
-			// ★★★ 新增：独立加载角色全球记录（与全球统计区解耦）★★★
-			if (typeof getGlobalCharacterRecords === 'function') {
-				getGlobalCharacterRecords().then(() => {
-					console.log('✅ 角色全球记录已加载');
-					renderCharacterGrid(); // 重新渲染以显示全球记录
-				}).catch(e => {
-					console.warn('加载角色全球记录失败:', e);
+			// ★★★ 新增：独立加载角色数据（与全球统计区解耦）★★★
+			// 并行加载：角色全球记录 + 全球统计（用于难度计算）
+			const loadCharacterRecords = typeof getGlobalCharacterRecords === 'function'
+				? getGlobalCharacterRecords()
+				: Promise.resolve(null);
+
+			const loadGlobalStatsForDifficulty = typeof getGlobalStats === 'function'
+				? getGlobalStats()
+				: Promise.resolve(null);
+
+			Promise.all([loadCharacterRecords, loadGlobalStatsForDifficulty])
+				.then(([records, stats]) => {
+					let needRerender = false;
+
+					if (records) {
+						console.log('✅ 角色全球记录已加载');
+						needRerender = true;
+					}
+
+					if (stats && typeof calculateCharacterDifficulty === 'function') {
+						characterDifficultyData = calculateCharacterDifficulty(stats);
+						console.log('✅ 角色难度数据已计算');
+						needRerender = true;
+					}
+
+					if (needRerender) {
+						renderCharacterGrid();
+					}
+				})
+				.catch(e => {
+					console.warn('加载角色数据失败:', e);
 				});
-			}
 
 			// 启动在线追踪（在 online.js 加载后调用）
 			if (typeof startOnlineTracking === 'function') {
@@ -960,7 +983,10 @@
 				if (charData.stats.research) gameState.research += charData.stats.research;
 				if (charData.stats.social) gameState.social += charData.stats.social;
 				if (charData.stats.favor) gameState.favor += charData.stats.favor;
-				if (charData.stats.gold) gameState.gold += charData.stats.gold;
+				if (charData.stats.gold) {
+					gameState.gold += charData.stats.gold;
+					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
+				}
 
 				if (isReversedMode) {
 					initReversedCharacter();

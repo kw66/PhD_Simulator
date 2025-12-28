@@ -640,8 +640,8 @@
 		// 秋季（现实9-11月）= 游戏月份 1, 2, 3
 		// 冬季（现实12-2月）= 游戏月份 4, 5, 6
 		const SEASONS = {
-			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '万物复苏', desc: '所有SAN扣除的操作减少1（最低为0）' },
-			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '烈日当空', desc: '有SAN扣除的操作增加1' },
+			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '万物复苏', desc: '所有主动操作导致的SAN扣除-1（最低为0）' },
+			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '烈日当空', desc: '所有主动操作导致的SAN扣除+1' },
 			autumn: { name: '秋季', icon: '🍂', months: [1, 2, 3], buff: '秋高气爽', desc: '每月回复SAN+1' },
 			winter: { name: '冬季', icon: '❄️', months: [4, 5, 6], buff: '寒风刺骨', desc: '每月回复SAN-1' }
 		};
@@ -771,6 +771,7 @@
 						const socialGain = delta * 2;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						gameState.social = Math.min(20, gameState.social + socialGain);
 						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
@@ -782,6 +783,7 @@
 						const favorGain = delta * 1;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.social = Math.min(20, gameState.social + socialGain);
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 社交+${socialGain}, 好感+${favorGain}`);
@@ -816,6 +818,7 @@
 			}
 			if (bonus.gold) {
 				gameState.gold += bonus.gold;
+				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 				changes.push(`金钱+${bonus.gold}`);
 			}
 

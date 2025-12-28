@@ -1299,3 +1299,4 @@
 		window.getUniqueCharacterPhdCount = getUniqueCharacterPhdCount;
 		window.renderDifficultyStars = renderDifficultyStars;
 		window.getDifficultyBadge = getDifficultyBadge;
+		window.calculateCharacterDifficulty = calculateCharacterDifficulty;  // ★★★ 新增：暴露难度计算函数 ★★★

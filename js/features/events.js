@@ -14,6 +14,7 @@
                     class: 'btn-accent',
 					action: () => {
 						gameState.gold += 1;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.san = finalSan;
 						addLog('❄️ 寒假', '回家过年', `压岁钱+1，SAN值+${sanRecovery}（恢复已损失的10%）`);
 						closeModal();
@@ -54,6 +55,7 @@
 
 			if (gameState.totalScore >= req) {
 				gameState.gold += reward;
+				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 				// ★★★ 新增：奖学金总计数 ★★★
 				gameState.scholarshipCount = (gameState.scholarshipCount || 0) + 1;
 				// ★★★ 新增：连续获奖计数 ★★★
@@ -529,6 +531,7 @@
                     closeModal();
                     gameState.favor = Math.min(20, gameState.favor + 1);
                     gameState.gold += 5;
+                    clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                     changeSan(baseSanCost);
                 }},
                 { text: '纵向项目', class: 'btn-primary', action: () => {
@@ -626,6 +629,7 @@
                         const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                         gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
                         gameState.gold += 5;
+                        clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                         addLog('随机事件', '导师找你谈话 - 告诉导师想要去短期实习', `【好感>=6】导师居然同意了但要兼顾科研，${sanText}，临时buff-下次做实验分数+5，金钱+5`);
                         updateBuffs();
                         changeSan(baseSanCost);
@@ -1040,6 +1044,7 @@
 				}},
 				{ text: '以死相逼', class: 'btn-danger', action: () => {
 					gameState.gold += 2;
+					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 					gameState.favor = Math.max(0, gameState.favor - 2);
 					addLog('随机事件', '导师想要抢你论文的一作 - 以死相逼', '导师转过来安抚你，金钱+2，导师好感度-2');
 					closeModal();
@@ -1098,12 +1103,9 @@
         }
 
         function showRandomEvent14() {
-            const baseSanCost = 1;
-            const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-            const sanDescText = (gameState.isReversed && gameState.character === 'normal')
-                ? `每月SAN-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
-                : `每月SAN-${baseSanCost}`;
-            
+            // ★★★ 修改：被动效果不受季节buff影响，固定描述 ★★★
+            const sanDescText = '每月SAN-1';
+
             showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
                 { text: '精力有限算了', class: 'btn-info', action: () => {
                     addLog('随机事件', '指导师弟师妹 - 精力有限算了', '无事发生');
@@ -1115,6 +1117,7 @@
 						gameState.firstMentoringMonth = gameState.totalMonths;
 						addCareerMilestone('first_mentoring', '第一次指导师弟师妹', `开始传承学术薪火`);
 					}
+					// ★★★ 主动操作仍然使用季节buff ★★★
 					const baseCost = 5;
 					const actualCost = Math.abs(getActualSanChange(-baseCost));
 
@@ -1236,7 +1239,8 @@
 				// 没有符合条件的论文，跳过此事件
 				addLog('随机事件', '数据丢失', '幸好你没有正在进行的论文，躲过一劫');
 				// ★★★ 达成"躲过一劫"成就 ★★★
-				checkAchievement('🎲 躲过一劫');
+				gameState.achievementConditions = gameState.achievementConditions || {};
+				gameState.achievementConditions.narrowEscape = true;
 				return;
 			}
 

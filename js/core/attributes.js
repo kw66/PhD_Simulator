@@ -53,12 +53,12 @@
 			if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened && delta < 0) {
 				const spent = Math.abs(delta);
 				gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
-				
+
 				// ★★★ 修改：每消费4金币，SAN/科研/社交/好感各+1 ★★★
 				const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
 				const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 4);
 				const newGains = attributeGains - previousGains;
-				
+
 				if (newGains > 0) {
 					gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
 					gameState.research = Math.min(20, gameState.research + newGains);
@@ -70,8 +70,10 @@
 					checkSocialUnlock();
 				}
 			}
-			
+
 			gameState.gold += delta;
+			// ★★★ 新增：赤贫学子诅咒 - 金币上限检查 ★★★
+			clampGold();
 			updateAllUI();
 			// ★★★ 黑市：零钱护身符检查 ★★★
 			checkAmuletEffects();
@@ -80,6 +82,13 @@
 				return false;
 			}
 			return true;
+		}
+
+		// ★★★ 新增：金币上限限制函数（赤贫学子诅咒）★★★
+		function clampGold() {
+			if (gameState.goldMax !== undefined && gameState.gold > gameState.goldMax) {
+				gameState.gold = gameState.goldMax;
+			}
 		}
 
 		function changeFavor(delta) {
@@ -102,6 +111,7 @@
 					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
 					gameState.gold += 2;
+					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
 					if (gameState.reversedAwakened) {
 						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
@@ -145,6 +155,7 @@
 						const socialGain = delta * 2;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						gameState.social = Math.min(20, gameState.social + socialGain);
 						addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
@@ -156,6 +167,7 @@
 						const favorGain = delta * 1;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.social = Math.min(20, gameState.social + socialGain);
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						addLog('逆位效果', '愚钝转化', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 社交+${socialGain}, 好感+${favorGain}`);
@@ -210,6 +222,7 @@
 				} else if (change > 0) {
 					gameState.san = Math.min(gameState.sanMax, gameState.san + change);
 					gameState.gold += change;
+					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 					addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
 				}
 			}
@@ -260,6 +273,7 @@
 					}
 				}
 				gameState.gold += changes.gold;
+				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 				if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
 			}
             
@@ -282,6 +296,7 @@
 						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
 						gameState.gold += 2;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
 						if (gameState.reversedAwakened) {
 							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
@@ -310,6 +325,7 @@
 						const goldGain = changes.research * (gameState.reversedAwakened === true ? 8 : 4);
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						// ★★★ 修改：未觉醒也有社交和好感加成（使用严格布尔比较）★★★
 						if (gameState.reversedAwakened === true) {
 							gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
@@ -352,6 +368,7 @@
 					} else if (change > 0) {
 						gameState.san = Math.min(gameState.sanMax, gameState.san + change);
 						gameState.gold += change;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						addLog('逆位效果', '嫉妒反馈', `社交+${change} → SAN+${change}, 金钱+${change}`);
 					}
 				}

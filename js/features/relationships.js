@@ -1218,13 +1218,15 @@
 
             // 消耗SAN（免费时不消耗）
             if (!isFree) {
-                const sanCost = 3;
-                if (gameState.san < sanCost) {
-                    showModal('❌ SAN不足', `<p>推进导师项目需要<strong>${sanCost}点SAN</strong>，当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
+                const baseSanCost = 3;
+                // ★★★ 修复：使用getActualSanChange计算实际SAN消耗（考虑季节buff等）★★★
+                const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+                if (gameState.san < actualSanCost) {
+                    showModal('❌ SAN不足', `<p>推进导师项目需要<strong>${actualSanCost}点SAN</strong>，当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
                         [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                     return;
                 }
-                changeSan(-sanCost);
+                changeSan(-baseSanCost);
                 person.taskUsedThisMonth = true;
             }
 
@@ -1387,6 +1389,7 @@
             let rewardText = '';
             if (isHorizontal) {
                 gameState.gold += 5;
+                clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                 rewardText = '横向项目，金币+5';
             } else {
                 gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
@@ -1718,12 +1721,14 @@
             }
 
             if (!isFree) {
-                const sanCost = 3;
-                if (gameState.san < sanCost) {
+                const baseSanCost = 3;
+                // ★★★ 修复：使用getActualSanChange计算实际SAN消耗（考虑季节buff等）★★★
+                const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+                if (gameState.san < actualSanCost) {
                     if (onComplete) onComplete();
                     return;
                 }
-                changeSan(-sanCost);
+                changeSan(-baseSanCost);
                 person.taskUsedThisMonth = true;
             }
 
@@ -1870,6 +1875,7 @@
             let rewardText = '';
             if (isHorizontal) {
                 gameState.gold += 5;
+                clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                 rewardText = '横向项目，金币+5';
             } else {
                 gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);

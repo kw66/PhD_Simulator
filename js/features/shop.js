@@ -750,6 +750,7 @@
 			if (gameState.gold <= 0 && gameState.amulets.gold > 0 && !blackMarketState.amuletUsedThisMonth.gold) {
 				const goldGain = gameState.amulets.gold;
 				gameState.gold += goldGain;
+				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 				blackMarketState.amuletUsedThisMonth.gold = true;
 				triggered.push(`零钱护身符×${goldGain}`);
 			}
@@ -1685,6 +1686,7 @@
 						}
 						
 						gameState.gold += sellPrice;
+						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						// ★★★ 新增：追踪累计卖出金币（倒买倒卖成就）★★★
 						gameState.totalSoldCoins = (gameState.totalSoldCoins || 0) + sellPrice;
 						addLog('出售', `出售了${itemName}`, `金币+${sellPrice}`);
