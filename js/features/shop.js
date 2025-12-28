@@ -730,6 +730,8 @@
 			if (gameState.social <= 0 && gameState.amulets.social > 0 && !blackMarketState.amuletUsedThisMonth.social) {
 				const socialGain = gameState.amulets.social;
 				gameState.social += socialGain;
+				// ★★★ 修复：社交增加时检查解锁 ★★★
+				checkSocialUnlock();
 				blackMarketState.amuletUsedThisMonth.social = true;
 				triggered.push(`社交护身符×${socialGain}`);
 			}
@@ -1705,6 +1707,8 @@
                     gameState.social = Math.min(20, gameState.social + newGains);
                     gameState.favor = Math.min(20, gameState.favor + newGains);
                     result += `，金钱觉醒(累计${gameState.goldSpentTotal}金)：SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`;
+                    // ★★★ 修复：社交增加时检查解锁 ★★★
+                    checkSocialUnlock();
                 }
             }
             

@@ -100,7 +100,7 @@
 				desc: '除了钱一无所有',
 				bonus: '每月SAN/科研/社交/好感重置为1，每月金钱+3',
 				awakenName: '金钱的力量',
-				awakenDesc: '半年重置一次，每花费4金币属性各+1，每月金钱+4',
+				awakenDesc: '每月属性降低15%（上取整），每花费4金币属性各+1，每月金钱+6%（上取整）',
 				stats: {}
 			}
 		},
@@ -124,9 +124,9 @@
 				icon: '🎪',
 				awakenIcon: '🃏',
 				desc: '叛逆是我的代名词',
-				bonus: '好感不会低于0，好感归0→重置为5，社交+1，科研+1，金+2',
+				bonus: '好感不会低于0，好感归0→重置为6，社交+1，科研+1，金+2',
 				awakenName: '变本加厉',
-				awakenDesc: '好感归0→重置为3，社交+1，科研+1，金+2',
+				awakenDesc: '好感归0→重置为4，社交+1，科研+1，金+2',
 				stats: { favor: 0 }
 			}
 		},
@@ -708,8 +708,8 @@
 			science: {
 				name: '科技大学',
 				icon: '🔬',
-				bonus: { research: 1, researchMax: 1 },
-				desc: '科研能力+1，科研上限+1'
+				bonus: { research: 1, researchMax: 1, social: -1 },
+				desc: '科研能力+1，科研上限+1，社交能力-1'
 			},
 			industry: {
 				name: '工业大学',
@@ -786,6 +786,8 @@
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 社交+${socialGain}, 好感+${favorGain}`);
 					}
+					// ★★★ 修复：社交增加时检查解锁 ★★★
+					checkSocialUnlock();
 					gameState.research = 0;
 				} else {
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + bonus.research);
@@ -798,6 +800,8 @@
 			}
 			if (bonus.social) {
 				gameState.social = Math.min(gameState.socialMax || 20, gameState.social + bonus.social);
+				// ★★★ 修复：社交增加时检查解锁 ★★★
+				checkSocialUnlock();
 				changes.push(`社交能力+${bonus.social}`);
 			}
 			if (bonus.favor) {

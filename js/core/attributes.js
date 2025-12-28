@@ -93,8 +93,8 @@
 
 				// 好感度归零检测
 				if (gameState.favor <= 0) {
-					// ★★★ 关键修复：未觉醒时重置为5，觉醒后重置为3 ★★★
-					const resetValue = (gameState.reversedAwakened === true) ? 3 : 5;
+					// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4 ★★★
+					const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
 					gameState.favor = resetValue;
 					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
@@ -273,8 +273,8 @@
 
 					// ✅ 添加归零条件判断
 					if (gameState.favor <= 0) {
-						// ★★★ 关键修复：未觉醒时重置为5，觉醒后重置为3 ★★★
-						const resetValue = (gameState.reversedAwakened === true) ? 3 : 5;
+						// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4 ★★★
+						const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
 						gameState.favor = resetValue;
 						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);

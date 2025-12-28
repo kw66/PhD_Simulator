@@ -62,34 +62,40 @@
 			// 移除已处理的刹那惩罚buff
 			gameState.buffs.temporary = gameState.buffs.temporary.filter(b => !b.applyNextMonth);
 
-			// ★★★ 贪求之富可敌国：在月初最先执行重置（属于重置类）★★★
+			// ★★★ 贪求之富可敌国：月初属性变化 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
-				let shouldReset = false;
 				if (gameState.reversedAwakened) {
-					// 觉醒后：半年（6个月）重置一次
-					if (gameState.totalMonths - gameState.lastResetMonth >= 6) {
-						shouldReset = true;
-						gameState.lastResetMonth = gameState.totalMonths;
-					}
-				} else {
-					// 觉醒前：每月重置
-					shouldReset = true;
-				}
-
-				if (shouldReset) {
+					// ★★★ 觉醒后：每月属性降低15%（上取整）★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					// ★★★ 修改：重置为1而不是0 ★★★
+					const sanLoss = Math.ceil(gameState.san * 0.15);
+					const researchLoss = Math.ceil(gameState.research * 0.15);
+					const socialLoss = Math.ceil(gameState.social * 0.15);
+					const favorLoss = Math.ceil(gameState.favor * 0.15);
+
+					gameState.san = Math.max(1, gameState.san - sanLoss);
+					gameState.research = Math.max(1, gameState.research - researchLoss);
+					gameState.social = Math.max(1, gameState.social - socialLoss);
+					gameState.favor = Math.max(1, gameState.favor - favorLoss);
+
+					addLog('逆位效果', '贪求之月度衰减',
+						`SAN ${oldSan}→${gameState.san}(-${sanLoss}), 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})`);
+				} else {
+					// 觉醒前：每月重置为1
+					const oldSan = gameState.san;
+					const oldResearch = gameState.research;
+					const oldSocial = gameState.social;
+					const oldFavor = gameState.favor;
+
 					gameState.san = 1;
 					gameState.research = 1;
 					gameState.social = 1;
 					gameState.favor = 1;
 
-					const resetType = gameState.reversedAwakened ? '半年重置' : '每月重置';
-					addLog('逆位效果', `贪求之${resetType}`,
+					addLog('逆位效果', '贪求之每月重置',
 						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1`);
 				}
 			}
@@ -112,10 +118,14 @@
 			// ★★★ 修改：工资就是导师提供的 ★★★
 			const salary = getAdvisorSalary(gameState.degree);
 
-			// ★★★ 贪求之富可敌国：每月加金（未觉醒+3，觉醒后+4）★★★
+			// ★★★ 贪求之富可敌国：每月加金（未觉醒+3，觉醒后+6%上取整）★★★
 			let extraGold = 0;
 			if (gameState.isReversed && gameState.character === 'rich') {
-				extraGold = gameState.reversedAwakened ? 4 : 3;
+				if (gameState.reversedAwakened) {
+					extraGold = Math.ceil(gameState.gold * 0.06);
+				} else {
+					extraGold = 3;
+				}
 			}
 
 			// 先加金币（+金币类）
@@ -220,6 +230,8 @@
 						gameState.social = Math.min(20, gameState.social + newGains);
 						gameState.favor = Math.min(20, gameState.favor + newGains);
 						addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
+						// ★★★ 修复：社交增加时检查解锁 ★★★
+						checkSocialUnlock();
 					}
 				}
 
@@ -680,7 +692,9 @@
 				const breakthroughText = breakthroughs.length > 0 ? `，✨上限突破：${breakthroughs.join('，')}` : '';
 				addLog('命运轮盘', '属性随机交换', `${oldStats} → ${newStats}${breakthroughText}`);
 			}
-			
+
+			// ★★★ 修复：社交增加时检查解锁 ★★★
+			checkSocialUnlock();
 			checkResearchUnlock();
 		}
 
@@ -1202,6 +1216,8 @@
 						if (mentorshipBuff) {
 							mentorshipBuff.desc = '每月SAN-3（怠惰×3），总引用+科研能力值';
 						}
+						// ★★★ 修复：社交增加时检查解锁 ★★★
+						checkSocialUnlock();
 						break;
 						
 					case 'genius': // 愚钝之院士转世
@@ -1235,18 +1251,18 @@
 						
 					case 'rich':
 						effectName = '💸 金钱的力量';
-						effectDesc = '半年重置一次，消费金币可提升属性';
+						effectDesc = '属性每月衰减，但金钱生金钱，消费金币提升属性';
 						gameState.goldSpentTotal = 0;
-						gameState.lastResetMonth = gameState.totalMonths;
-						bonusDetails.push('✨ 属性重置周期：每月 → 每半年');
-						bonusDetails.push('✨ 每花费6金币 → SAN+1, 科研+1, 社交+1, 好感+1');
-						bonusDetails.push('💰 快去花钱提升属性吧！');
+						bonusDetails.push('✨ 每月SAN/科研/社交/好感降低15%（上取整）');
+						bonusDetails.push('✨ 每花费4金币 → SAN+1, 科研+1, 社交+1, 好感+1');
+						bonusDetails.push('✨ 每月金钱+6%（上取整）');
+						bonusDetails.push('💰 用钱生钱，对抗衰减！');
 						break;
-						
+
 					case 'teacher-child': // 玩世之导师子女
 						effectName = '🃏 变本加厉';
 						effectDesc = '叛逆到底，但收益依旧';
-						bonusDetails.push('好感归零时重置为3（原为5）');
+						bonusDetails.push('好感归零时重置为4（原为6）');
 						bonusDetails.push('重置时仍获得：社交+1，科研+1，金币+2');
 						break;
 						
@@ -1515,6 +1531,8 @@
 				gameState.hiddenAwakenType = 'chosen';
 				
 				closeModal();
+				// ★★★ 修复：社交增加时检查解锁 ★★★
+				checkSocialUnlock();
 				checkResearchUnlock(true);
 				showHiddenAwakenResultModal('🎯 孤注一掷', '将全部力量集中到一点！', bonusDetails);
 			};
@@ -1691,7 +1709,9 @@
 					bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);
 					break;
 			}
-			
+
+			// ★★★ 修复：社交增加时检查解锁 ★★★
+			checkSocialUnlock();
 			checkResearchUnlock(true);
 			
 			const html = `
