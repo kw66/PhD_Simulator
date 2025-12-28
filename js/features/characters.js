@@ -67,6 +67,16 @@
 
 			initStats();
 
+			// ★★★ 新增：独立加载角色全球记录（与全球统计区解耦）★★★
+			if (typeof getGlobalCharacterRecords === 'function') {
+				getGlobalCharacterRecords().then(() => {
+					console.log('✅ 角色全球记录已加载');
+					renderCharacterGrid(); // 重新渲染以显示全球记录
+				}).catch(e => {
+					console.warn('加载角色全球记录失败:', e);
+				});
+			}
+
 			// 启动在线追踪（在 online.js 加载后调用）
 			if (typeof startOnlineTracking === 'function') {
 				startOnlineTracking();
