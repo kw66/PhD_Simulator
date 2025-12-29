@@ -1410,7 +1410,7 @@
 				return;
 			}
 
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				showModal('❌ 错误', '<p>留言服务暂不可用</p>', [{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -1422,7 +1422,7 @@
 					parent_id: null
 				};
 
-				const { error } = await supabase.from('messages').insert(messageData);
+				const { error } = await window.supabaseClient.from('messages').insert(messageData);
 
 				if (error) throw error;
 

@@ -963,12 +963,12 @@
 				return cached;
 			}
 			
-			if (!supabase) return null;
-			
+			if (!window.supabaseClient) return null;
+
 			try {
 				console.log('📊 从缓存表加载角色记录...');
-				
-				const { data, error } = await supabase
+
+				const { data, error } = await window.supabaseClient
 					.from('stats_character_records_cache')
 					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements');
 				

@@ -1439,7 +1439,7 @@
 
         // 批量写入所有缓存的投稿数据（游戏结束时调用）
         async function batchRecordSubmissions() {
-            if (!supabase || !gameState.pendingSubmissions || gameState.pendingSubmissions.length === 0) {
+            if (!window.supabaseClient || !gameState.pendingSubmissions || gameState.pendingSubmissions.length === 0) {
                 return;
             }
 
@@ -1447,7 +1447,7 @@
             gameState.pendingSubmissions = []; // 清空队列
 
             try {
-                const { error } = await supabase.from('paper_submissions').insert(submissions);
+                const { error } = await window.supabaseClient.from('paper_submissions').insert(submissions);
                 if (error) {
                     console.error('❌ 批量写入投稿失败:', error);
                 } else {

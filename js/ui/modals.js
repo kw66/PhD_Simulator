@@ -154,7 +154,7 @@
 				return cached;
 			}
 			
-			if (!supabase) {
+			if (!window.supabaseClient) {
 				console.log('Supabase未初始化，使用默认统计');
 				const defaultStats = getDefaultSubmissionStats();
 				submissionStatsCache = defaultStats;
@@ -165,7 +165,7 @@
 			try {
 				console.log('📊 从缓存表加载投稿统计...');
 				
-				const { data, error } = await supabase
+				const { data, error } = await window.supabaseClient
 					.from('stats_submissions_cache')
 					.select('game_month, grade, is_reversed, submissions, accepted, poster, oral, best_paper, avg_score_rejected, avg_score_poster, avg_score_oral, avg_score_best_paper, p90_accepted_score, p99_accepted_score');
 				
