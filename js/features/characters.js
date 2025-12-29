@@ -605,7 +605,7 @@
 						<div class="preview-content" id="selected-char-preview">
 							<div class="preview-card-placeholder">
 								<div class="placeholder-icon">❓</div>
-								<div class="placeholder-text">请选择一个角色</div>
+								<div class="placeholder-text">请选择一个角色（点击"选择角色"栏的圆形角色按钮）</div>
 							</div>
 						</div>
 					</div>
@@ -1011,6 +1011,10 @@
 			if (typeof applyDifficultyEffects === 'function') {
 				applyDifficultyEffects();
 			}
+			// ★★★ 应用祝福效果 ★★★
+			if (typeof applyBlessingEffects === 'function') {
+				applyBlessingEffects();
+			}
 
 			if(gameState.publishedPapers.length === 0) {
 				gameState.availableRandomEvents = gameState.availableRandomEvents.filter(e => e !== 14);
@@ -1045,24 +1049,52 @@
 			renderPaperSlots();
 			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★
 
-			// ★★★ 修改：合并游戏开始日志和难度诅咒日志 ★★★
+			// ★★★ 修改：合并游戏开始日志和难度诅咒/祝福日志 ★★★
 			let startLogDetail = `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`;
 			if (gameState.isReversed) {
 				startLogDetail += ' 🌑逆位模式';
 			}
-			if (gameState.difficultyPoints > 0 && gameState.activeCurses) {
-				const curseNames = [];
-				if (typeof CURSES !== 'undefined') {
-					Object.keys(gameState.activeCurses).forEach(curseId => {
-						const count = gameState.activeCurses[curseId];
-						if (count > 0 && CURSES[curseId]) {
-							const curse = CURSES[curseId];
-							curseNames.push(count > 1 ? `${curse.icon}${curse.name}×${count}` : `${curse.icon}${curse.name}`);
-						}
-					});
+
+			// 收集诅咒和祝福名称
+			const curseNames = [];
+			const blessingNames = [];
+			if (typeof CURSES !== 'undefined' && gameState.activeCurses) {
+				Object.keys(gameState.activeCurses).forEach(curseId => {
+					const count = gameState.activeCurses[curseId];
+					if (count > 0 && CURSES[curseId]) {
+						const curse = CURSES[curseId];
+						curseNames.push(count > 1 ? `${curse.icon}${curse.name}×${count}` : `${curse.icon}${curse.name}`);
+					}
+				});
+			}
+			if (typeof BLESSINGS !== 'undefined' && gameState.activeBlessings) {
+				Object.keys(gameState.activeBlessings).forEach(blessingId => {
+					const count = gameState.activeBlessings[blessingId];
+					if (count > 0 && BLESSINGS[blessingId]) {
+						const blessing = BLESSINGS[blessingId];
+						blessingNames.push(count > 1 ? `${blessing.icon}${blessing.name}×${count}` : `${blessing.icon}${blessing.name}`);
+					}
+				});
+			}
+
+			// 根据难度分显示
+			const diffPoints = gameState.difficultyPoints || 0;
+			if (diffPoints !== 0 || curseNames.length > 0 || blessingNames.length > 0) {
+				if (diffPoints > 0) {
+					startLogDetail += ` 💀难度+${diffPoints}`;
+				} else if (diffPoints < 0) {
+					startLogDetail += ` ⭐难度${diffPoints}`;
 				}
-				startLogDetail += ` 💀难度${gameState.difficultyPoints}`;
-				addLog('游戏开始', startLogDetail, `诅咒: ${curseNames.join(' ')}`);
+
+				let detailParts = [];
+				if (curseNames.length > 0) {
+					detailParts.push(`诅咒: ${curseNames.join(' ')}`);
+				}
+				if (blessingNames.length > 0) {
+					detailParts.push(`祝福: ${blessingNames.join(' ')}`);
+				}
+
+				addLog('游戏开始', startLogDetail, detailParts.join(' | '));
 			} else {
 				addLog('游戏开始', startLogDetail);
 			}

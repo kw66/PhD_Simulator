@@ -1240,7 +1240,8 @@
 				const guaranteedCount = scoreChanges.filter(c => c.wasGuaranteed).length;
 				result += `，idea分 ${oldScore} → ${currentScore}`;
 				if (guaranteedCount > 0) {
-					result += `（${guaranteedCount}次保底生效）`;
+					// ★★★ 修改：添加明确的保底提示 ★★★
+					result += `（这次想的idea不如原本的好，还好有保底，+${guaranteedCount}）`;
 				}
 
 				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★
@@ -1416,7 +1417,8 @@
 				const guaranteedCount = scoreChanges.filter(c => c.wasGuaranteed).length;
 				result += `，实验分 ${oldScore} → ${currentScore}`;
 				if (guaranteedCount > 0) {
-					result += `（${guaranteedCount}次保底生效）`;
+					// ★★★ 修改：添加明确的保底提示 ★★★
+					result += `（这次实验效果不如预期，还好有保底，+${guaranteedCount}）`;
 				}
 
 				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★
@@ -1595,7 +1597,8 @@
 				const guaranteedCount = scoreChanges.filter(c => c.wasGuaranteed).length;
 				result += `，写作分 ${oldScore} → ${currentScore}`;
 				if (guaranteedCount > 0) {
-					result += `（${guaranteedCount}次保底生效）`;
+					// ★★★ 修改：添加明确的保底提示 ★★★
+					result += `（这次写得不如之前好，还好有保底，+${guaranteedCount}）`;
 				}
 
 				// ★★★ 新增：画龙点睛成就检测 - 保底机制一次性提升20分 ★★★

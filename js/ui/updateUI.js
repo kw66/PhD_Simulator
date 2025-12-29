@@ -354,9 +354,6 @@
 				<button class="btn ${page === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(2)" style="flex:1;padding:6px;font-size:0.8rem;">
 					📦 装备
 				</button>
-				<button class="btn ${page === 3 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(3)" style="flex:1;padding:6px;font-size:0.8rem;">
-					💀 诅咒/祝福
-				</button>
 			</div>
 			`;
 
@@ -591,65 +588,6 @@
 
 			html += `</div>`; // 装备栏结束
 			} // 第二页结束
-
-			// ========== 第三页：诅咒和祝福 ==========
-			if (page === 3) {
-				const diffPoints = gameState.difficultyPoints || 0;
-				const activeCurses = gameState.activeCurses || {};
-
-				// 祝福区域（暂无）
-				html += `<div class="talent-section">
-					<div class="talent-section-title" style="background:linear-gradient(135deg,rgba(46,204,113,0.2),rgba(39,174,96,0.15));">
-						<i class="fas fa-star" style="color:#2ecc71;"></i> 祝福效果
-					</div>
-					<div style="text-align:center;padding:20px;color:var(--text-secondary);">
-						<div style="font-size:2rem;margin-bottom:8px;">🔮</div>
-						<div>暂无祝福系统</div>
-						<div style="font-size:0.8rem;margin-top:5px;">敬请期待后续版本...</div>
-					</div>
-				</div>`;
-
-				// 诅咒区域
-				html += `<div class="talent-section" style="background:linear-gradient(135deg,rgba(231,76,60,0.08),rgba(192,57,43,0.05));">
-					<div class="talent-section-title" style="background:linear-gradient(135deg,rgba(231,76,60,0.2),rgba(192,57,43,0.15));">
-						<i class="fas fa-skull" style="color:#e74c3c;"></i> 诅咒效果
-						${diffPoints > 0 ? `<span style="margin-left:auto;background:#e74c3c;color:white;padding:2px 8px;border-radius:10px;font-size:0.75rem;">难度分 ${diffPoints}</span>` : ''}
-					</div>`;
-
-				// 获取激活的诅咒
-				let curseCount = 0;
-				if (typeof CURSES !== 'undefined') {
-					Object.keys(activeCurses).forEach(curseId => {
-						const count = activeCurses[curseId];
-						if (count > 0 && CURSES[curseId]) {
-							curseCount++;
-							const curse = CURSES[curseId];
-							html += `
-								<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:6px 0;background:rgba(231,76,60,0.1);border-radius:8px;border-left:3px solid #e74c3c;">
-									<div style="font-size:1.5rem;">${curse.icon}</div>
-									<div style="flex:1;">
-										<div style="font-weight:600;font-size:0.9rem;">${curse.name}${count > 1 ? ` ×${count}` : ''}</div>
-										<div style="font-size:0.8rem;color:var(--text-secondary);">${curse.desc}</div>
-									</div>
-									<div style="background:#e74c3c;color:white;padding:2px 6px;border-radius:6px;font-size:0.7rem;">+${curse.pointCosts[count-1]}分</div>
-								</div>
-							`;
-						}
-					});
-				}
-
-				if (curseCount === 0) {
-					html += `
-						<div style="text-align:center;padding:20px;color:var(--text-secondary);">
-							<div style="font-size:2rem;margin-bottom:8px;">😇</div>
-							<div>本局无诅咒加成</div>
-							<div style="font-size:0.8rem;margin-top:5px;">轻松模式通关中~</div>
-						</div>
-					`;
-				}
-
-				html += `</div>`; // 诅咒区域结束
-			} // 第三页结束
 
 			html += `</div>`; // talent-container结束
 
@@ -1104,6 +1042,40 @@
 					${season.icon} ${season.buff}
 				</span>`;
 				list.innerHTML += seasonHtml;
+			}
+
+			// ★★★ 新增：显示持续生效的诅咒（排除开局一次性结算的）★★★
+			// 持续性诅咒：金币上限、转博/毕业要求、每月/周期性效果
+			const ongoingCurses = ['poor_student', 'high_phd_bar', 'graduation_hell', 'spending_trap', 'mental_drain', 'talent_fade', 'social_decay', 'favor_decay'];
+			if (gameState.activeCurses && typeof CURSES !== 'undefined') {
+				Object.entries(gameState.activeCurses).forEach(([curseId, count]) => {
+					if (count > 0 && CURSES[curseId] && ongoingCurses.includes(curseId)) {
+						const curse = CURSES[curseId];
+						const countText = count > 1 ? `×${count}` : '';
+						const curseHtml = `<span class="buff-tag debuff" style="background:linear-gradient(135deg,rgba(231,76,60,0.25),rgba(192,57,43,0.25));border-color:#c0392b;" title="${curse.desc}">
+							<span style="margin-right:3px;">${curse.icon}</span>
+							${curse.name}${countText}
+						</span>`;
+						list.innerHTML += curseHtml;
+					}
+				});
+			}
+
+			// ★★★ 新增：显示持续生效的祝福（排除开局一次性结算的）★★★
+			// 持续性祝福：每月/周期性效果
+			const ongoingBlessings = ['mobile_fountain', 'compound_magic', 'research_growth', 'social_growth', 'favor_growth'];
+			if (gameState.activeBlessings && typeof BLESSINGS !== 'undefined') {
+				Object.entries(gameState.activeBlessings).forEach(([blessingId, count]) => {
+					if (count > 0 && BLESSINGS[blessingId] && ongoingBlessings.includes(blessingId)) {
+						const blessing = BLESSINGS[blessingId];
+						const countText = count > 1 ? `×${count}` : '';
+						const blessingHtml = `<span class="buff-tag permanent" style="background:linear-gradient(135deg,rgba(39,174,96,0.25),rgba(46,204,113,0.25));border-color:#27ae60;" title="${blessing.desc}">
+							<span style="margin-right:3px;">${blessing.icon}</span>
+							${blessing.name}${countText}
+						</span>`;
+						list.innerHTML += blessingHtml;
+					}
+				});
 			}
 
 			// ★★★ 修复：最后检查是否完全没有内容 ★★★
@@ -1743,3 +1715,153 @@
 				{ text: '关闭', class: 'btn-primary', action: closeModal }
 			]);
 		}
+
+		// ==================== 诅咒和祝福弹窗 ====================
+		let curseBlessingPage = 'curses'; // 默认显示诅咒页
+
+		function showCurseBlessingModal(page = curseBlessingPage) {
+			curseBlessingPage = page;
+
+			const diffPoints = gameState.difficultyPoints || 0;
+			const activeCurses = gameState.activeCurses || {};
+			const activeBlessings = gameState.activeBlessings || {};
+
+			// 统计数量
+			let curseCount = 0;
+			let blessingCount = 0;
+			if (typeof CURSES !== 'undefined') {
+				Object.keys(activeCurses).forEach(id => {
+					if (activeCurses[id] > 0 && CURSES[id]) curseCount++;
+				});
+			}
+			if (typeof BLESSINGS !== 'undefined') {
+				Object.keys(activeBlessings).forEach(id => {
+					if (activeBlessings[id] > 0 && BLESSINGS[id]) blessingCount++;
+				});
+			}
+
+			let html = `
+			<style>
+				.cb-container { max-height: 60vh; overflow-y: auto; }
+				.cb-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+				.cb-tab { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+				.cb-tab.curse-tab { background: ${page === 'curses' ? 'linear-gradient(135deg,#e74c3c,#c0392b)' : 'rgba(231,76,60,0.15)'}; color: ${page === 'curses' ? 'white' : '#e74c3c'}; }
+				.cb-tab.blessing-tab { background: ${page === 'blessings' ? 'linear-gradient(135deg,#27ae60,#1e8449)' : 'rgba(39,174,96,0.15)'}; color: ${page === 'blessings' ? 'white' : '#27ae60'}; }
+				.cb-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 8px 0; border-radius: 10px; }
+				.cb-item.curse { background: rgba(231,76,60,0.1); border-left: 4px solid #e74c3c; }
+				.cb-item.blessing { background: rgba(39,174,96,0.1); border-left: 4px solid #27ae60; }
+				.cb-icon { font-size: 1.8rem; }
+				.cb-info { flex: 1; }
+				.cb-name { font-weight: 600; font-size: 0.95rem; }
+				.cb-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+				.cb-points { padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: white; }
+				.cb-points.curse { background: #e74c3c; }
+				.cb-points.blessing { background: #27ae60; }
+				.cb-empty { text-align: center; padding: 30px; color: var(--text-secondary); }
+				.cb-empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+				.cb-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; }
+				.cb-header.curse { background: linear-gradient(135deg,rgba(231,76,60,0.2),rgba(192,57,43,0.15)); }
+				.cb-header.blessing { background: linear-gradient(135deg,rgba(39,174,96,0.2),rgba(30,132,73,0.15)); }
+				.cb-header-title { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+				.cb-header.curse .cb-header-title { color: #e74c3c; }
+				.cb-header.blessing .cb-header-title { color: #27ae60; }
+				.cb-diff-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: white; }
+			</style>
+			<div class="cb-container">
+				<!-- 分页标签 -->
+				<div class="cb-tabs">
+					<button class="cb-tab curse-tab" onclick="showCurseBlessingModal('curses')">
+						💀 诅咒 ${curseCount > 0 ? `(${curseCount})` : ''}
+					</button>
+					<button class="cb-tab blessing-tab" onclick="showCurseBlessingModal('blessings')">
+						⭐ 祝福 ${blessingCount > 0 ? `(${blessingCount})` : ''}
+					</button>
+				</div>
+			`;
+
+			// 诅咒页
+			if (page === 'curses') {
+				html += `<div class="cb-header curse">
+					<div class="cb-header-title"><i class="fas fa-skull"></i> 本局诅咒效果</div>
+					${diffPoints > 0 ? `<span class="cb-diff-badge" style="background:#e74c3c;">难度 +${diffPoints}</span>` : ''}
+				</div>`;
+
+				let hasCurse = false;
+				if (typeof CURSES !== 'undefined') {
+					Object.keys(activeCurses).forEach(curseId => {
+						const count = activeCurses[curseId];
+						if (count > 0 && CURSES[curseId]) {
+							hasCurse = true;
+							const curse = CURSES[curseId];
+							html += `
+								<div class="cb-item curse">
+									<div class="cb-icon">${curse.icon}</div>
+									<div class="cb-info">
+										<div class="cb-name">${curse.name}${count > 1 ? ` ×${count}` : ''}</div>
+										<div class="cb-desc">${curse.desc}</div>
+									</div>
+									<div class="cb-points curse">+${curse.pointCosts[count-1]}</div>
+								</div>
+							`;
+						}
+					});
+				}
+
+				if (!hasCurse) {
+					html += `<div class="cb-empty">
+						<div class="cb-empty-icon">😇</div>
+						<div>本局无诅咒加成</div>
+						<div style="font-size:0.8rem;margin-top:5px;">轻松模式通关中~</div>
+					</div>`;
+				}
+			}
+
+			// 祝福页
+			if (page === 'blessings') {
+				html += `<div class="cb-header blessing">
+					<div class="cb-header-title"><i class="fas fa-star"></i> 本局祝福效果</div>
+					${diffPoints < 0 ? `<span class="cb-diff-badge" style="background:#27ae60;">难度 ${diffPoints}</span>` : ''}
+				</div>`;
+
+				let hasBlessing = false;
+				if (typeof BLESSINGS !== 'undefined') {
+					Object.keys(activeBlessings).forEach(blessingId => {
+						const count = activeBlessings[blessingId];
+						if (count > 0 && BLESSINGS[blessingId]) {
+							hasBlessing = true;
+							const blessing = BLESSINGS[blessingId];
+							html += `
+								<div class="cb-item blessing">
+									<div class="cb-icon">${blessing.icon}</div>
+									<div class="cb-info">
+										<div class="cb-name">${blessing.name}${count > 1 ? ` ×${count}` : ''}</div>
+										<div class="cb-desc">${blessing.desc}</div>
+									</div>
+									<div class="cb-points blessing">${blessing.pointCosts[count-1]}</div>
+								</div>
+							`;
+						}
+					});
+				}
+
+				if (!hasBlessing) {
+					html += `<div class="cb-empty">
+						<div class="cb-empty-icon">🌟</div>
+						<div>本局无祝福加成</div>
+						<div style="font-size:0.8rem;margin-top:5px;">挑战自我模式~</div>
+					</div>`;
+				}
+			}
+
+			html += `</div>`;
+
+			const titleIcon = diffPoints > 0 ? '💀' : (diffPoints < 0 ? '⭐' : '🎴');
+			const titleText = diffPoints !== 0 ? `难度 ${diffPoints > 0 ? '+' : ''}${diffPoints}` : '诅咒与祝福';
+
+			showModal(`${titleIcon} ${titleText}`, html, [
+				{ text: '关闭', class: 'btn-primary', action: closeModal }
+			]);
+		}
+
+		// 全局函数暴露
+		window.showCurseBlessingModal = showCurseBlessingModal;

@@ -1422,6 +1422,12 @@
 
         // 缓存投稿数据（游戏结束时批量写入，节省数据库流量）
         function recordSubmission(gameMonth, grade, submittedScore, result, isReversed) {
+            // ★★★ 新增：负难度分时不记录投稿数据 ★★★
+            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+                console.log('⚠️ 负难度分，投稿数据不计入统计');
+                return;
+            }
+
             // 初始化待上传队列
             if (!gameState.pendingSubmissions) {
                 gameState.pendingSubmissions = [];
@@ -1439,6 +1445,13 @@
 
         // 批量写入所有缓存的投稿数据（游戏结束时调用）
         async function batchRecordSubmissions() {
+            // ★★★ 新增：负难度分时不上传统计数据 ★★★
+            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+                console.log('⚠️ 负难度分，跳过批量写入投稿数据');
+                gameState.pendingSubmissions = [];
+                return;
+            }
+
             if (!window.supabaseClient || !gameState.pendingSubmissions || gameState.pendingSubmissions.length === 0) {
                 return;
             }

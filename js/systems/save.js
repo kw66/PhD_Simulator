@@ -391,7 +391,30 @@
                 peakStats: gameState.peakStats || null,
                 totalSubmissions: gameState.totalSubmissions || 0,
                 totalAccepts: gameState.totalAccepts || 0,
-                totalRejects: gameState.totalRejects || 0
+                totalRejects: gameState.totalRejects || 0,
+                // ★★★ 修复：保存难度诅咒相关状态 ★★★
+                difficultyPoints: gameState.difficultyPoints || 0,
+                activeCurses: gameState.activeCurses ? {...gameState.activeCurses} : {},
+                researchDecay: gameState.researchDecay || 0,
+                researchDecayPeriod: gameState.researchDecayPeriod || 0,
+                socialDecay: gameState.socialDecay || 0,
+                socialDecayPeriod: gameState.socialDecayPeriod || 0,
+                favorDecay: gameState.favorDecay || 0,
+                favorDecayPeriod: gameState.favorDecayPeriod || 0,
+                monthlySanDrain: gameState.monthlySanDrain || 0,
+                monthlyExpenseBonus: gameState.monthlyExpenseBonus || 0,
+                phdRequirementBonus: gameState.phdRequirementBonus || 0,
+                graduationRequirementBonus: gameState.graduationRequirementBonus || 0,
+                // ★★★ 新增：保存祝福相关状态 ★★★
+                activeBlessings: gameState.activeBlessings ? {...gameState.activeBlessings} : {},
+                monthlySanRecoveryPercent: gameState.monthlySanRecoveryPercent || 0,
+                monthlyGoldPercent: gameState.monthlyGoldPercent || 0,
+                researchGrowthPercent: gameState.researchGrowthPercent || 0,
+                researchGrowthPeriod: gameState.researchGrowthPeriod || 0,
+                socialGrowthPercent: gameState.socialGrowthPercent || 0,
+                socialGrowthPeriod: gameState.socialGrowthPeriod || 0,
+                favorGrowthPercent: gameState.favorGrowthPercent || 0,
+                favorGrowthPeriod: gameState.favorGrowthPeriod || 0
             };
             
             saves[slot] = saveData;
@@ -658,6 +681,30 @@
 						gameState.hasAutoRestock = save.hasAutoRestock || false;
 						gameState.hasDisplayStand = save.hasDisplayStand || false;
 
+						// ★★★ 修复：恢复难度诅咒相关状态 ★★★
+						gameState.difficultyPoints = save.difficultyPoints || 0;
+						gameState.activeCurses = save.activeCurses ? {...save.activeCurses} : {};
+						gameState.researchDecay = save.researchDecay || 0;
+						gameState.researchDecayPeriod = save.researchDecayPeriod || 0;
+						gameState.socialDecay = save.socialDecay || 0;
+						gameState.socialDecayPeriod = save.socialDecayPeriod || 0;
+						gameState.favorDecay = save.favorDecay || 0;
+						gameState.favorDecayPeriod = save.favorDecayPeriod || 0;
+						gameState.monthlySanDrain = save.monthlySanDrain || 0;
+						gameState.monthlyExpenseBonus = save.monthlyExpenseBonus || 0;
+						gameState.phdRequirementBonus = save.phdRequirementBonus || 0;
+						gameState.graduationRequirementBonus = save.graduationRequirementBonus || 0;
+
+						// ★★★ 新增：恢复祝福相关状态 ★★★
+						gameState.activeBlessings = save.activeBlessings ? {...save.activeBlessings} : {};
+						gameState.monthlySanRecoveryPercent = save.monthlySanRecoveryPercent || 0;
+						gameState.monthlyGoldPercent = save.monthlyGoldPercent || 0;
+						gameState.researchGrowthPercent = save.researchGrowthPercent || 0;
+						gameState.researchGrowthPeriod = save.researchGrowthPeriod || 0;
+						gameState.socialGrowthPercent = save.socialGrowthPercent || 0;
+						gameState.socialGrowthPeriod = save.socialGrowthPeriod || 0;
+						gameState.favorGrowthPercent = save.favorGrowthPercent || 0;
+						gameState.favorGrowthPeriod = save.favorGrowthPeriod || 0;
 
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
@@ -959,7 +1006,30 @@
 				peakStats: gameState.peakStats || null,
 				totalSubmissions: gameState.totalSubmissions || 0,
 				totalAccepts: gameState.totalAccepts || 0,
-				totalRejects: gameState.totalRejects || 0
+				totalRejects: gameState.totalRejects || 0,
+				// ★★★ 修复：保存难度诅咒相关状态 ★★★
+				difficultyPoints: gameState.difficultyPoints || 0,
+				activeCurses: gameState.activeCurses ? {...gameState.activeCurses} : {},
+				researchDecay: gameState.researchDecay || 0,
+				researchDecayPeriod: gameState.researchDecayPeriod || 0,
+				socialDecay: gameState.socialDecay || 0,
+				socialDecayPeriod: gameState.socialDecayPeriod || 0,
+				favorDecay: gameState.favorDecay || 0,
+				favorDecayPeriod: gameState.favorDecayPeriod || 0,
+				monthlySanDrain: gameState.monthlySanDrain || 0,
+				monthlyExpenseBonus: gameState.monthlyExpenseBonus || 0,
+				phdRequirementBonus: gameState.phdRequirementBonus || 0,
+				graduationRequirementBonus: gameState.graduationRequirementBonus || 0,
+				// ★★★ 新增：保存祝福相关状态 ★★★
+				activeBlessings: gameState.activeBlessings ? {...gameState.activeBlessings} : {},
+				monthlySanRecoveryPercent: gameState.monthlySanRecoveryPercent || 0,
+				monthlyGoldPercent: gameState.monthlyGoldPercent || 0,
+				researchGrowthPercent: gameState.researchGrowthPercent || 0,
+				researchGrowthPeriod: gameState.researchGrowthPeriod || 0,
+				socialGrowthPercent: gameState.socialGrowthPercent || 0,
+				socialGrowthPeriod: gameState.socialGrowthPeriod || 0,
+				favorGrowthPercent: gameState.favorGrowthPercent || 0,
+				favorGrowthPeriod: gameState.favorGrowthPeriod || 0
 			};
 		}
 
@@ -1329,6 +1399,31 @@
 			gameState.memberCardLevel = save.memberCardLevel || 0;
 			gameState.hasAutoRestock = save.hasAutoRestock || false;
 			gameState.hasDisplayStand = save.hasDisplayStand || false;
+
+			// ★★★ 修复：恢复难度诅咒相关状态 ★★★
+			gameState.difficultyPoints = save.difficultyPoints || 0;
+			gameState.activeCurses = save.activeCurses ? {...save.activeCurses} : {};
+			gameState.researchDecay = save.researchDecay || 0;
+			gameState.researchDecayPeriod = save.researchDecayPeriod || 0;
+			gameState.socialDecay = save.socialDecay || 0;
+			gameState.socialDecayPeriod = save.socialDecayPeriod || 0;
+			gameState.favorDecay = save.favorDecay || 0;
+			gameState.favorDecayPeriod = save.favorDecayPeriod || 0;
+			gameState.monthlySanDrain = save.monthlySanDrain || 0;
+			gameState.monthlyExpenseBonus = save.monthlyExpenseBonus || 0;
+			gameState.phdRequirementBonus = save.phdRequirementBonus || 0;
+			gameState.graduationRequirementBonus = save.graduationRequirementBonus || 0;
+
+			// ★★★ 新增：恢复祝福相关状态 ★★★
+			gameState.activeBlessings = save.activeBlessings ? {...save.activeBlessings} : {};
+			gameState.monthlySanRecoveryPercent = save.monthlySanRecoveryPercent || 0;
+			gameState.monthlyGoldPercent = save.monthlyGoldPercent || 0;
+			gameState.researchGrowthPercent = save.researchGrowthPercent || 0;
+			gameState.researchGrowthPeriod = save.researchGrowthPeriod || 0;
+			gameState.socialGrowthPercent = save.socialGrowthPercent || 0;
+			gameState.socialGrowthPeriod = save.socialGrowthPeriod || 0;
+			gameState.favorGrowthPercent = save.favorGrowthPercent || 0;
+			gameState.favorGrowthPeriod = save.favorGrowthPeriod || 0;
 
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';

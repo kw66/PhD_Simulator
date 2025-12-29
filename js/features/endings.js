@@ -233,6 +233,28 @@
 			// ★★★ 新增：整装待发 - 同时拥有电动车+遮阳伞+羽绒服 ★★★
 			if (gameState.bikeUpgrade === 'ebike' && gameState.hasParasol && gameState.hasDownJacket) a.push('🎒 整装待发');
 
+			// ★★★ 修复：以下成就在checkInGameAchievements中有但collectAchievements中遗漏了 ★★★
+			// 超级体魄：SAN上限达到45
+			if ((gameState.sanMax || 20) >= 45) a.push('💪 超级体魄');
+			// 超级大脑：科研能力上限达到30
+			if ((gameState.researchMax || 20) >= 30) a.push('🧠 超级大脑');
+			// 画龙点睛：全靠保底机制一次性为论文某一项分数提升达到20分
+			if (gameState.achievementConditions && gameState.achievementConditions.floorBoost20) a.push('✨ 画龙点睛');
+			// 人情练达：和关系栏的所有角色共计交流50次
+			const totalInteractCount = gameState.relationships ?
+				gameState.relationships.reduce((sum, r) => sum + (r.stats?.interactCount || 0), 0) : 0;
+			if (totalInteractCount >= 50) a.push('🤝 人情练达');
+			// 得力干将：完成导师任务12次
+			const advisorForTask = gameState.relationships && gameState.relationships.find(r => r.type === 'advisor');
+			if (advisorForTask && (advisorForTask.stats?.completedCount || 0) >= 12) a.push('🎖️ 得力干将');
+			// 琴瑟和鸣：完成恋人恋爱任务12次
+			const loverForTask = gameState.relationships && gameState.relationships.find(r => r.type === 'lover');
+			if (loverForTask && (loverForTask.stats?.completedCount || 0) >= 12) a.push('💕 琴瑟和鸣');
+			// 自然风干：论文的idea和实验分由于时间流逝都衰减为1
+			if (gameState.naturallyDried) a.push('🍂 自然风干');
+			// 骑行大佬：累计骑自行车减少30SAN
+			if ((gameState.bikeSanSpent || 0) >= 30) a.push('🚴 骑行大佬');
+
 			// ★★★ 以下成就仍然需要顺利毕业 ★★★
 			if (!isGraduated) {
 				return a;
@@ -921,6 +943,12 @@
 		}
 
 		function updateLocalMeta(character, isReversed, score, citations, achievementCount, endingType) {
+			// ★★★ 新增：负难度分时不更新角色最佳记录 ★★★
+			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+				console.log('⚠️ 负难度分，不更新角色最佳记录');
+				return null;
+			}
+
 			// ★★★ 新增：只有好结局才统计 ★★★
 			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
 			if (!goodEndings.includes(endingType)) {

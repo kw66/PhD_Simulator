@@ -119,6 +119,12 @@
 
 		// 记录角色博士通关
 		function recordCharacterPhdUnlock(characterId, isReversed) {
+			// ★★★ 新增：负难度分时不记录博士通关（无法解锁真·大多数）★★★
+			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+				console.log('⚠️ 负难度分，不记录博士通关，无法解锁真·大多数');
+				return;
+			}
+
 			const unlocks = getCharacterPhdUnlocks();
 			const mode = isReversed ? 'reversed' : 'normal';
 			unlocks[mode][characterId] = true;
@@ -273,6 +279,12 @@
 
 		// 保存玩家达成的结局和成就
 		function savePlayerRecord(endingType, achievements, isReversed) {
+			// ★★★ 新增：负难度分时不永久保存成就和结局 ★★★
+			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+				console.log('⚠️ 负难度分，成就和结局仅局内生效，不永久保存');
+				return;
+			}
+
 			const recordKey = 'graduateSimulator_playerRecords';
 			try {
 				let records = { 
@@ -446,6 +458,12 @@
 
 
 		async function recordEnding(endingType, endingTitle) {
+			// ★★★ 新增：负难度分时不上传结局到全球统计 ★★★
+			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+				console.log('⚠️ 负难度分，结局不计入全球统计');
+				return;
+			}
+
 			// ★★★ 移除数据验证，直接上传 ★★★
 
 			// 计算成就数量
@@ -510,6 +528,13 @@
 
         async function recordAchievements(achievements) {
             if (!window.supabaseClient || achievements.length === 0) return;
+
+            // ★★★ 新增：负难度分时不永久记录成就 ★★★
+            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
+                console.log('⚠️ 负难度分，成就仅局内生效，不永久记录');
+                return;
+            }
+
             try {
                 const records = achievements.map(ach => ({
                     achievement_name: ach,

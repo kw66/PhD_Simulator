@@ -13,7 +13,33 @@
 
         function closeModal() {
             document.getElementById('modal-overlay').classList.remove('active');
+            // ★★★ 修复：弹窗关闭后确保移动端操作栏正确显示 ★★★
+            ensureMobileQuickBar();
         }
+
+        // ★★★ 修复：确保移动端操作栏正确显示的函数 ★★★
+        function ensureMobileQuickBar() {
+            const quickBar = document.getElementById('mobile-quick-bar');
+            const gameScreen = document.getElementById('game-screen');
+            // 如果游戏界面正在显示，确保操作栏也显示
+            if (quickBar && gameScreen && gameScreen.style.display === 'block') {
+                if (!quickBar.classList.contains('game-active')) {
+                    quickBar.classList.add('game-active');
+                }
+            }
+        }
+
+        // ★★★ 修复：页面可见性变化时检查操作栏 ★★★
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                setTimeout(ensureMobileQuickBar, 100);
+            }
+        });
+
+        // ★★★ 修复：窗口获得焦点时检查操作栏 ★★★
+        window.addEventListener('focus', function() {
+            setTimeout(ensureMobileQuickBar, 100);
+        });
 
         function showPaperSelectModal(action, papers, callback) {
             let html = `<p style="font-size:0.9rem;">请选择要进行"${action}"的论文：</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
@@ -274,6 +300,7 @@
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.showModal = showModal;
 		window.closeModal = closeModal;
+		window.ensureMobileQuickBar = ensureMobileQuickBar;
 		window.showPaperSelectModal = showPaperSelectModal;
 		window.addLog = addLog;
 		window.rand = rand;
