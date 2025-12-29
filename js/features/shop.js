@@ -843,6 +843,16 @@
 			if (gameState.hasDisplayStand) upgradeInfo.push(`🗄️4槽`);
 
 			let html = `
+				<!-- ★★★ 成就查看按钮（移到上方）★★★ -->
+				<div style="display:flex;gap:8px;margin-bottom:10px;">
+					<button class="btn btn-success" onclick="showCurrentAchievements()" style="flex:1;font-size:0.8rem;padding:6px;">
+						<i class="fas fa-trophy"></i> 本局成就
+					</button>
+					<button class="btn btn-warning" onclick="showAllAchievements()" style="flex:1;font-size:0.8rem;padding:6px;">
+						<i class="fas fa-list"></i> 全部成就
+					</button>
+				</div>
+
 				<div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));border-radius:10px;border:1px solid rgba(102,126,234,0.4);">
 					<div style="display:flex;justify-content:space-between;align-items:center;">
 						<div>
@@ -915,18 +925,6 @@
 			});
 
 			html += '</div>';
-
-			// 成就查看按钮
-			html += `
-				<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);">
-					<button class="btn btn-success" onclick="showCurrentAchievements()" style="flex:1;font-size:0.8rem;">
-						<i class="fas fa-trophy"></i> 本局成就
-					</button>
-					<button class="btn btn-warning" onclick="showAllAchievements()" style="flex:1;font-size:0.8rem;">
-						<i class="fas fa-list"></i> 全部成就
-					</button>
-				</div>
-			`;
 
 			showModal('🏆 成就商店', html, [{ text: '关闭', class: 'btn-info', action: closeModal }]);
 		}

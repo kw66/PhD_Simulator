@@ -150,8 +150,12 @@
 			showTalentTree();
 		}
 
+		// ★★★ 天赋弹窗分页状态 ★★★
+		let talentTreePage = 1;
+
 		// ==================== 天赋和装备系统 ====================
-		function showTalentTree() {
+		function showTalentTree(page = talentTreePage) {
+			talentTreePage = page;
 			// 获取角色数据
 			const isTrueNormal = gameState.character === 'true-normal' || gameState.isTrueNormal;
 			const charData = isTrueNormal ? null : characters.find(c => c.id === gameState.character);
@@ -341,8 +345,23 @@
 				}
 			</style>
 			<div class="talent-container">
+
+			<!-- ★★★ 分页导航按钮 ★★★ -->
+			<div style="display:flex;gap:8px;margin-bottom:12px;">
+				<button class="btn ${page === 1 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(1)" style="flex:1;padding:6px;font-size:0.8rem;">
+					⭐ 天赋
+				</button>
+				<button class="btn ${page === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(2)" style="flex:1;padding:6px;font-size:0.8rem;">
+					📦 装备
+				</button>
+				<button class="btn ${page === 3 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(3)" style="flex:1;padding:6px;font-size:0.8rem;">
+					💀 诅咒/祝福
+				</button>
+			</div>
 			`;
 
+			// ========== 第一页：天赋 ==========
+			if (page === 1) {
 			// ========== 角色天赋区 ==========
 			html += `<div class="talent-section">
 				<div class="talent-section-title"><i class="fas fa-user-circle"></i> 角色天赋</div>
@@ -418,8 +437,10 @@
 
 			// 大牛联培
 			const hasBigBull = gameState.bigBullCooperation;
+			const bigBullCoopCount = gameState.bigBullCoopCount || 0;
+			const currentResearchMax = gameState.researchMax || 20;
 			html += `
-				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|科研上限+2，想idea分数+5，做实验分数+5|在开会时与大牛深入交流2次后触发" data-color="green">
+				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|科研上限+2，导师科研资源+2，想idea分数+5，做实验分数+5${hasBigBull ? `｜成长性：每次找大牛合作科研上限+1（已+${bigBullCoopCount}，当前上限${currentResearchMax}）` : ''}|在开会时与大牛深入交流2次后触发" data-color="green">
 					<div class="node-icon">🎓</div>
 					<div class="node-label">大牛联培</div>
 				</div>
@@ -427,8 +448,13 @@
 
 			// 企业实习
 			const hasInternship = gameState.ailabInternship;
+			const internshipAPaperCount = gameState.internshipAPaperCount || 0;
+			const internshipIncome = 2 + Math.min(internshipAPaperCount, 3);
+			// ★★★ 计算当前实习buff的实际值 ★★★
+			const internshipBuff = gameState.buffs?.permanent?.find(b => b.name && b.name.includes('实习加成'));
+			const currentInternshipMultiplier = internshipBuff ? internshipBuff.value : 1.25;
 			html += `
-				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+2，每月SAN-2（逆位大多数为-4/-6），做实验分数×1.25|在随机事件中选择接受企业实习" data-color="green">
+				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+${hasInternship ? internshipIncome : '2~5'}（基础2+A类论文数，最多+3），每月SAN-2，做实验分数×${hasInternship ? currentInternshipMultiplier : '1.25'}${hasInternship ? `｜成长性：每次找企业交流+0.05（当前×${currentInternshipMultiplier}）` : ''}|在随机事件中选择接受企业实习" data-color="green">
 					<div class="node-icon">💼</div>
 					<div class="node-label">企业实习</div>
 				</div>
@@ -436,8 +462,16 @@
 
 			// 聪慧恋人
 			const hasSmartLover = gameState.hasLover && gameState.loverType === 'smart';
+			// ★★★ 计算聪慧恋人的成长性数据 ★★★
+			const smartLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
+			const smartTasksCompleted = smartLoverPerson?.loverTasksCompleted || 0;
+			const hasIdeaBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_idea');
+			const hasExpBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_experiment');
+			const hasWriteBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_write');
+			const smartBuffCount = (hasIdeaBuff ? 1 : 0) + (hasExpBuff ? 1 : 0) + (hasWriteBuff ? 1 : 0);
+			const smartGrowthText = hasSmartLover ? `｜成长性：已完成${smartTasksCompleted}次约会，解锁${smartBuffCount}/3个循环buff` : '';
 			html += `
-				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|成为恋人时：SAN+1，科研+1，永久buff每次想idea/做实验/写论文多一次。每月金币-2。完成任务循环：想idea多一次→做实验多一次→写论文多一次|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|成为恋人时：SAN+1，科研+1，永久buff每次想idea/做实验/写论文多一次。每月金币-2。完成任务循环：想idea多一次→做实验多一次→写论文多一次${smartGrowthText}|社交≥12后在开会时多次交流同一异性学者" data-color="green">
 					<div class="node-icon">💕</div>
 					<div class="node-label">聪慧恋人</div>
 				</div>
@@ -445,15 +479,24 @@
 
 			// 活泼恋人
 			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
+			// ★★★ 计算活泼恋人的成长性数据 ★★★
+			const beautifulLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
+			const beautifulTasksCompleted = beautifulLoverPerson?.loverTasksCompleted || 0;
+			const extraRecoveryRate = gameState.beautifulLoverExtraRecoveryRate || 0;
+			const totalRecoveryRate = 10 + extraRecoveryRate;
+			const beautifulGrowthText = hasBeautifulLover ? `｜成长性：已完成${beautifulTasksCompleted}次约会，当前月回复${totalRecoveryRate}%已损SAN` : '';
 			html += `
-				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|成为恋人时：SAN回满，SAN上限+4。每月金币-2，回复10%已损SAN。完成任务循环：回复10%已损SAN→SAN上限+1→月回复+2%|社交≥12后在开会时多次交流同一异性学者" data-color="green">
+				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|成为恋人时：SAN回满，SAN上限+4。每月金币-2，回复10%已损SAN。完成任务循环：回复10%已损SAN→SAN上限+1→月回复+2%${beautifulGrowthText}|社交≥12后在开会时多次交流同一异性学者" data-color="green">
 					<div class="node-icon">💕</div>
 					<div class="node-label">活泼恋人</div>
 				</div>
 			`;
 
 			html += `</div></div>`;
+			} // 第一页结束
 
+			// ========== 第二页：装备 ==========
+			if (page === 2) {
 			// ========== 装备栏 ==========
 			html += `<div class="talent-section">
 				<div class="talent-section-title"><i class="fas fa-box"></i> 装备栏</div>`;
@@ -547,6 +590,67 @@
 			html += `</div>`;
 
 			html += `</div>`; // 装备栏结束
+			} // 第二页结束
+
+			// ========== 第三页：诅咒和祝福 ==========
+			if (page === 3) {
+				const diffPoints = gameState.difficultyPoints || 0;
+				const activeCurses = gameState.activeCurses || {};
+
+				// 祝福区域（暂无）
+				html += `<div class="talent-section">
+					<div class="talent-section-title" style="background:linear-gradient(135deg,rgba(46,204,113,0.2),rgba(39,174,96,0.15));">
+						<i class="fas fa-star" style="color:#2ecc71;"></i> 祝福效果
+					</div>
+					<div style="text-align:center;padding:20px;color:var(--text-secondary);">
+						<div style="font-size:2rem;margin-bottom:8px;">🔮</div>
+						<div>暂无祝福系统</div>
+						<div style="font-size:0.8rem;margin-top:5px;">敬请期待后续版本...</div>
+					</div>
+				</div>`;
+
+				// 诅咒区域
+				html += `<div class="talent-section" style="background:linear-gradient(135deg,rgba(231,76,60,0.08),rgba(192,57,43,0.05));">
+					<div class="talent-section-title" style="background:linear-gradient(135deg,rgba(231,76,60,0.2),rgba(192,57,43,0.15));">
+						<i class="fas fa-skull" style="color:#e74c3c;"></i> 诅咒效果
+						${diffPoints > 0 ? `<span style="margin-left:auto;background:#e74c3c;color:white;padding:2px 8px;border-radius:10px;font-size:0.75rem;">难度分 ${diffPoints}</span>` : ''}
+					</div>`;
+
+				// 获取激活的诅咒
+				let curseCount = 0;
+				if (typeof CURSES !== 'undefined') {
+					Object.keys(activeCurses).forEach(curseId => {
+						const count = activeCurses[curseId];
+						if (count > 0 && CURSES[curseId]) {
+							curseCount++;
+							const curse = CURSES[curseId];
+							html += `
+								<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:6px 0;background:rgba(231,76,60,0.1);border-radius:8px;border-left:3px solid #e74c3c;">
+									<div style="font-size:1.5rem;">${curse.icon}</div>
+									<div style="flex:1;">
+										<div style="font-weight:600;font-size:0.9rem;">${curse.name}${count > 1 ? ` ×${count}` : ''}</div>
+										<div style="font-size:0.8rem;color:var(--text-secondary);">${curse.desc}</div>
+									</div>
+									<div style="background:#e74c3c;color:white;padding:2px 6px;border-radius:6px;font-size:0.7rem;">+${curse.pointCosts[count-1]}分</div>
+								</div>
+							`;
+						}
+					});
+				}
+
+				if (curseCount === 0) {
+					html += `
+						<div style="text-align:center;padding:20px;color:var(--text-secondary);">
+							<div style="font-size:2rem;margin-bottom:8px;">😇</div>
+							<div>本局无诅咒加成</div>
+							<div style="font-size:0.8rem;margin-top:5px;">轻松模式通关中~</div>
+						</div>
+					`;
+				}
+
+				html += `</div>`; // 诅咒区域结束
+			} // 第三页结束
+
 			html += `</div>`; // talent-container结束
 
 			showModal('⭐ 天赋和装备', html, [{ text: '关闭', class: 'btn-primary', action: () => {
@@ -740,9 +844,12 @@
 				const sanCost = gameState.isReversed && gameState.character === 'normal'
 					? (gameState.reversedAwakened ? 6 : 4)
 					: 2;
+				// ★★★ 新增：根据A类论文数计算实习收入 ★★★
+				const aPaperBonus = Math.min(gameState.internshipAPaperCount || 0, 3);
+				const internshipGold = 2 + aPaperBonus;
 				allBuffs.push({
 					type: 'internship',
-					name: `🏢AILab实习(金+2,SAN-${sanCost},实验×1.25)`,
+					name: `🏢AILab实习(金+${internshipGold},SAN-${sanCost},实验×1.25)`,
 					permanent: true,
 					isInternship: true
 				});

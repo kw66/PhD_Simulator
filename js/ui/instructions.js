@@ -513,7 +513,8 @@
 						<li>☕ 茶歇+晚宴（SAN+1，社交+1）</li>
 						<li>🔬 同行交流（下次实验×3次）</li>
 						<li>💡 广泛交流（下次idea×3次）</li>
-						<li>🌟 找大牛交流（idea×1.25）→可发展为联合培养</li>
+						<li>🌟 找著名学者交流（idea×1.25）</li>
+						<li>🎓 找大牛合作（社交≥6，写论文+8）→可发展为联合培养</li>
 						<li>🏢 找企业交流（实验×1.25）→3次后解锁AI Lab实习</li>
 						<li>💕 和异性学者交流（社交≥6）→可发展为恋人</li>
 					</ul>
@@ -854,7 +855,7 @@
 						策略：靠转化获得金钱和SAN，多写低分论文刷量
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
-						<strong>贪求之富可敌国</strong>：每月属性重置为1<br>
+						<strong>贪求之富可敌国</strong>：每月属性重置为2<br>
 						策略：觉醒后变为半年重置+消费涨属性，疯狂花钱
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">

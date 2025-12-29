@@ -241,6 +241,11 @@
 			// ★★★ 修改：检查毕业前一个月结束时的状态 ★★★
 			if (gameState.achievementConditions && gameState.achievementConditions.allOutBeforeGrad) a.push('🏋️ 全力以赴');
 
+			// ★★★ 新增：保底机制 - 顺利毕业但没有取得其他成就 ★★★
+			if (a.length === 0) {
+				a.push('🎉 保底机制');
+			}
+
 			return a;
 		}
 

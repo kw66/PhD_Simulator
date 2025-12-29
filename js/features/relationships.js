@@ -592,6 +592,8 @@
                         }},
                         { text: '✨ 加入关系网', class: 'btn-primary', action: () => {
                             gameState.relationships.push(person);
+                            // ★★★ 新增：统计认识过的人数 ★★★
+                            gameState.totalRelationshipsMet = (gameState.totalRelationshipsMet || 0) + 1;
                             addLog('人际关系', `${person.name}加入关系网`, `${displayTypeName}`);
                             closeModal();
                             renderRelationshipPanel();
@@ -747,6 +749,8 @@
                 const newDisplayName = getRelationshipDisplayName(newPerson);
 
                 gameState.relationships[realIndex] = newPerson;
+                // ★★★ 新增：替换也算认识新人 ★★★
+                gameState.totalRelationshipsMet = (gameState.totalRelationshipsMet || 0) + 1;
                 addLog('人际关系', `${newPerson.name}替换了${oldPerson.name}`, `${oldDisplayName} → ${newDisplayName}`);
             }
 

@@ -549,19 +549,32 @@
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🌟 找大牛交流', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+				{ text: '🌟 找著名学者交流', fn: () => {
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false });
 					gameState.metBigBull = true;
-					addLog('开会事件', '找大牛交流', '临时buff-下次想idea分数×1.25');
+					addLog('开会事件', '找著名学者交流', '临时buff-下次想idea分数×1.25');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🏢 找企业交流', fn: () => { 
+				{ text: '🏢 找企业交流', fn: () => {
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
-					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false });
+
+					// ★★★ 新增：企业实习成长性 - 每次找企业交流提升永久buff效果+0.05 ★★★
+					if (gameState.ailabInternship) {
+						const internshipBuff = gameState.buffs.permanent.find(b => b.name && b.name.includes('实习加成'));
+						if (internshipBuff) {
+							internshipBuff.value = Math.round((internshipBuff.value + 0.05) * 100) / 100;
+							internshipBuff.name = `实习加成：做实验分数×${internshipBuff.value}`;
+							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25，实习永久buff提升至×${internshipBuff.value}（第${gameState.enterpriseCount}次）`);
+						} else {
+							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+						}
+					} else {
+						addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					}
 					updateBuffs();
-					
+
 					// 第3次及以后触发实习邀请（需要未实习、未永久阻止、导师好感度≥6）
 					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship && gameState.favor >= 6) {
 						setTimeout(() => showAILabInternshipModal(), 300);
@@ -574,20 +587,37 @@
 			const advancedOptions = [];
 			
 			if (gameState.social >= 6) {
-				// 找大牛合作 - 如果已触发过则不再出现（用后续选项替代）
-				if (!gameState.metBigBullCoop) {
-					advancedOptions.push({ 
-						text: '🎓 找大牛合作', 
-						fn: () => { 
-							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
-							gameState.metBigBull = true;
-							gameState.metBigBullCoop = true;  // 标记已触发
-							addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
-							updateBuffs();
-							return changeSocial(1);
-						},
-						category: 'advanced'
-					});
+				// 找大牛合作（联培前只能触发一次，联培后每次科研上限+1）
+				if (!gameState.metBigBullCoop || gameState.bigBullCooperation) {
+					// ★★★ 修改：联培后可以继续找大牛合作，每次科研上限+1 ★★★
+					if (gameState.bigBullCooperation) {
+						advancedOptions.push({
+							text: '🎓 找大牛合作',
+							fn: () => {
+								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+								gameState.researchMax = (gameState.researchMax || 20) + 1;
+								gameState.bigBullCoopCount = (gameState.bigBullCoopCount || 0) + 1;
+								addLog('开会事件', '【联培加成】找大牛合作', `临时buff-下次写论文分数+8，科研上限+1（当前上限${gameState.researchMax}）`);
+								updateBuffs();
+								return changeSocial(1);
+							},
+							category: 'advanced'
+						});
+					} else if (!gameState.metBigBullCoop) {
+						// 联培前的首次找大牛合作
+						advancedOptions.push({
+							text: '🎓 找大牛合作',
+							fn: () => {
+								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+								gameState.metBigBull = true;
+								gameState.metBigBullCoop = true;
+								addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+								updateBuffs();
+								return changeSocial(1);
+							},
+							category: 'advanced'
+						});
+					}
 				}
 				
 				// 和活泼的异性学者交流 - 如果已触发过则不再出现（用后续选项替代）
@@ -857,11 +887,17 @@
 			if (gameState.permanentlyBlockedInternship || gameState.ailabInternship) {
 				return;
 			}
-			
-			const sanCost = gameState.isReversed && gameState.character === 'normal' 
-				? (gameState.reversedAwakened ? 9 : 6) 
+
+			const sanCost = gameState.isReversed && gameState.character === 'normal'
+				? (gameState.reversedAwakened ? 9 : 6)
 				: 3;
-			
+
+			// ★★★ 新增：计算当前A类论文数量，确定实习收入 ★★★
+			const aPaperCount = (gameState.publishedPapers || []).filter(p => p.grade === 'A').length;
+			const bonusFromA = Math.min(aPaperCount, 3);  // 每篇A+1，最多+3
+			const baseIncome = 2;
+			const totalIncome = baseIncome + bonusFromA;  // 2~5
+
 			// 显示拒绝次数警告
 			const rejectCount = gameState.rejectedInternshipCount || 0;
 			let warningText = '';
@@ -870,14 +906,19 @@
 			} else if (rejectCount === 1) {
 				warningText = '<p style="font-size:0.8rem;color:#e74c3c;margin-top:10px;"><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>这是最后一次实习机会！再次拒绝将永久错过</p>';
 			}
-			
-			showModal('🏢 实习邀请', 
+
+			// ★★★ 收入说明 ★★★
+			const incomeExplain = aPaperCount > 0
+				? `每月金钱 +${totalIncome}（基础2 + A类论文${Math.min(aPaperCount, 3)}篇×1）`
+				: '每月金钱 +2（基础工资，每有1篇A类论文再+1，最多+5）';
+
+			showModal('🏢 实习邀请',
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2.5rem;margin-bottom:10px;">🤖</div>
 					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);">上海AI Lab 远程实习邀请</div>
 				</div>
 				<p>你在企业交流中表现出色，AI Lab 的L研究员对你印象深刻，向你发出了远程实习邀请！</p>
-				
+
 				<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin:15px 0;">
 					<div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">📋 实习待遇：</div>
 					<div style="display:flex;flex-direction:column;gap:6px;font-size:0.85rem;">
@@ -887,7 +928,7 @@
 						</div>
 						<div style="display:flex;align-items:center;gap:8px;">
 							<span style="color:var(--success-color);">✓</span>
-							<span>每月金钱 +2（实习工资）</span>
+							<span>${incomeExplain}</span>
 						</div>
 						<div style="display:flex;align-items:center;gap:8px;">
 							<span style="color:var(--danger-color);">✗</span>
@@ -895,7 +936,7 @@
 						</div>
 					</div>
 				</div>
-				
+
 				<p style="font-size:0.8rem;color:var(--text-secondary);text-align:center;">
 					远程实习可以兼顾学业，但需要承担额外的工作压力
 				</p>
@@ -903,18 +944,20 @@
 				[
 					{ text: '婉拒邀请', class: 'btn-info', action: () => {
 						gameState.rejectedInternshipCount = (gameState.rejectedInternshipCount || 0) + 1;
-						
+
 						if (gameState.rejectedInternshipCount >= 2) {
 							gameState.permanentlyBlockedInternship = true;
 							addLog('实习邀请', '再次婉拒了AI Lab的实习邀请', '实习机会已永久关闭');
 						} else {
 							addLog('实习邀请', '暂时婉拒了AI Lab的实习邀请', '下次企业交流还有机会');
 						}
-						
+
 						closeModal();
 					}},
 					{ text: '🚀 接受实习', class: 'btn-primary', action: () => {
 						gameState.ailabInternship = true;
+						// ★★★ 新增：记录接受时的A类论文数量 ★★★
+						gameState.internshipAPaperCount = aPaperCount;
 						gameState.buffs.permanent.push({
 							type: 'exp_bonus',
 							name: '实习加成：做实验分数×1.25',
@@ -922,7 +965,7 @@
 							multiply: true,
 							permanent: true
 						});
-						addLog('实习邀请', '接受了AI Lab的远程实习', '永久buff-做实验分数×1.25，每月金钱+2，每月SAN-2');
+						addLog('实习邀请', '接受了AI Lab的远程实习', `永久buff-做实验分数×1.25，每月金钱+${totalIncome}，每月SAN-2`);
 						closeModal();
 						updateBuffs();
 						updateAllUI();
@@ -951,6 +994,7 @@
 				<div style="margin-top:10px;padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.85rem;">
 					<strong>联合培养效果：</strong><br>
 					✨ 科研上限+2<br>
+					✨ 导师科研资源+2<br>
 					✨ 永久buff：想idea分数+5，做实验分数+5<br>
 					✨ 解锁"学术之星"等高级结局条件
 				</div>
@@ -971,9 +1015,14 @@
 					{ text: '✨ 接受联合培养', class: 'btn-primary', action: () => {
 						gameState.bigBullCooperation = true;
 						gameState.researchMax = (gameState.researchMax || 20) + 2;
+						// ★★★ 新增：导师科研资源+2 ★★★
+						const advisor = gameState.relationships?.find(r => r.type === 'advisor');
+						if (advisor) {
+							advisor.researchResource = Math.min(20, (advisor.researchResource || 0) + 2);
+						}
 						gameState.buffs.permanent.push({ type: 'idea_bonus', name: '联培加成：想idea分数+5', value: 5, permanent: true });
 						gameState.buffs.permanent.push({ type: 'exp_bonus', name: '联培加成：做实验分数+5', value: 5, permanent: true });
-						addLog('联合培养', '导师与大牛联合培养', '科研上限+2，永久buff-想idea分数+5，做实验分数+5');
+						addLog('联合培养', '导师与大牛联合培养', '科研上限+2，导师科研资源+2，永久buff-想idea分数+5，做实验分数+5');
 						closeModal();
 						updateBuffs();
 					}}

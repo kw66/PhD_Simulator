@@ -475,7 +475,7 @@
 					</div>
 					<div class="message-content">${escapeHtml(msg.content)}</div>
 					<div class="message-actions">
-						<button onclick="setReplyTo(${msg.id}, '${escapeHtml(msg.nickname)}', '${escapeHtml(msg.content.substring(0, 30))}')">
+						<button onclick="setReplyTo('${msg.id}', '${escapeForJs(escapeHtml(msg.nickname))}', '${escapeForJs(escapeHtml(msg.content.substring(0, 30)))}')">
 							<i class="fas fa-reply"></i> 回复
 						</button>
 						${replyCount > 0 ? `<span class="reply-count"><i class="fas fa-comments"></i> ${replyCount} 条回复</span>` : ''}
@@ -531,6 +531,17 @@
 			const div = document.createElement('div');
 			div.textContent = text;
 			return div.innerHTML;
+		}
+
+		// 为onclick属性中的字符串参数进行转义（处理单引号、反斜杠、换行符等）
+		function escapeForJs(text) {
+			if (!text) return '';
+			return text
+				.replace(/\\/g, '\\\\')  // 反斜杠
+				.replace(/'/g, "\\'")    // 单引号
+				.replace(/\n/g, '\\n')   // 换行符
+				.replace(/\r/g, '\\r')   // 回车符
+				.replace(/\t/g, '\\t');  // 制表符
 		}
 
 		// 设置回复目标

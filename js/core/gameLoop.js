@@ -104,19 +104,19 @@
 					addLog('逆位效果', '贪求之月度衰减',
 						`SAN ${oldSan}→${gameState.san}(-${sanLoss}), 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})`);
 				} else {
-					// 觉醒前：每月重置为1
+					// 觉醒前：每月重置为2
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					gameState.san = 1;
-					gameState.research = 1;
-					gameState.social = 1;
-					gameState.favor = 1;
+					gameState.san = 2;
+					gameState.research = 2;
+					gameState.social = 2;
+					gameState.favor = 2;
 
 					addLog('逆位效果', '贪求之每月重置',
-						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1`);
+						`SAN ${oldSan}→2, 科研 ${oldResearch}→2, 社交 ${oldSocial}→2, 好感 ${oldFavor}→2`);
 				}
 			}
 
@@ -282,8 +282,11 @@
 
 			// ★★★ AILab 实习效果（-SAN类）★★★
 			if (gameState.ailabInternship) {
+				// ★★★ 新增：实习收入 = 基础2 + min(接受时A类论文数, 3)，最多5 ★★★
+				const aPaperBonus = Math.min(gameState.internshipAPaperCount || 0, 3);
+				const baseIncome = 2 + aPaperBonus;
 				// ★★★ 修改：白手起家术 - 实习收入翻倍 ★★★
-				const internshipIncome = gameState.incomeDoubled ? 4 : 2;
+				const internshipIncome = gameState.incomeDoubled ? baseIncome * 2 : baseIncome;
 				gameState.gold += internshipIncome;  // 实习收入
 				clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
@@ -487,6 +490,29 @@
 
 			// ★★★ 新增：更新人际关系进度 ★★★
 			updateRelationshipProgress();
+
+			// ★★★ 新增：导师子女觉醒 - 每月自动和导师交流一次 ★★★
+			if (gameState.autoAdvisorChat) {
+				const advisor = gameState.relationships.find(r => r.type === 'advisor');
+				if (advisor) {
+					// 免费推进导师任务（不消耗SAN）
+					const baseGrowth = gameState.research * (0.5 + Math.random());
+					const randomBonus = Math.floor(Math.random() * 6);
+					const growth = Math.floor(baseGrowth) + randomBonus;
+					advisor.taskProgress = (advisor.taskProgress || 0) + growth;
+
+					// 统计
+					if (!advisor.stats) advisor.stats = { taskCount: 0, interactCount: 0, completedCount: 0, helpReceivedCount: 0 };
+					advisor.stats.taskCount++;
+
+					addLog('血脉共鸣', `自动与${advisor.name}交流`, `项目进度+${growth}`);
+
+					// 检查任务完成
+					if (typeof checkTaskCompletion === 'function') {
+						checkTaskCompletion(advisor);
+					}
+				}
+			}
 
 			let logResult = `工资+${salary}`;
 			// ★★★ 新增：显示隐藏觉醒工资加成 ★★★
@@ -1694,9 +1720,20 @@
 					effectDesc = '社交达人的人脉全面绽放，冥冥之中影响了审稿人分布！';
 					gameState.socialAwakened = true;
 
-					// ★★★ 修改：实际用于计算的社交能力为 min(20, 社交+5) ★★★
-					const actualSocialVal = Math.min(20, gameState.social + 5);
-					const socialVal = actualSocialVal;
+					// ★★★ 新增：根据认识过的人数增加社交能力和上限 ★★★
+					const peopleMet = gameState.totalRelationshipsMet || 0;
+					const oldSocialAwaken = gameState.social;
+					const oldSocialMaxAwaken = gameState.socialMax || 20;
+					if (peopleMet > 0) {
+						gameState.social = Math.min((gameState.socialMax || 20) + peopleMet, gameState.social + peopleMet);
+						gameState.socialMax = (gameState.socialMax || 20) + peopleMet;
+						bonusDetails.push(`认识过 ${peopleMet} 人`);
+						bonusDetails.push(`社交能力 ${oldSocialAwaken} → ${gameState.social} (+${peopleMet})`);
+						bonusDetails.push(`社交上限 ${oldSocialMaxAwaken} → ${gameState.socialMax} (+${peopleMet})`);
+					}
+
+					// ★★★ 修改：直接用社交能力计算，不再+5 ★★★
+					const socialVal = gameState.social;
 					let normalP = Math.max(0, 0.40 - socialVal * 0.01);
 					let kindP = 0.10 + socialVal * 0.005;
 					let expertP = 0.10 + socialVal * 0.01;
@@ -1721,8 +1758,7 @@
 						questions: questionsP
 					};
 
-					bonusDetails.push(`转博时社交: ${gameState.social}（+5加成后按${actualSocialVal}计算）`);
-					bonusDetails.push(`审稿人分布已永久改变`);
+					bonusDetails.push(`审稿人分布已永久改变（按社交${socialVal}计算）`);
 					break;
 					
 				case 'rich':
@@ -1735,20 +1771,11 @@
 					
 				case 'teacher-child':
 					effectName = '👑 血脉共鸣';
-					effectDesc = '导师子女的身份优势凸显，好感度转化为科研能力和工资！';
-					// ★★★ 修改：每5好感度提升1科研，0.5月工资 ★★★
-					const oldFavorTC = gameState.favor;
-					const researchGainTC = Math.floor(oldFavorTC / 5);
-					const wageGainTC = Math.floor(oldFavorTC / 5) * 0.5;
-					if (researchGainTC > 0) {
-						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + researchGainTC);
-						gameState.monthlyWageBonus = (gameState.monthlyWageBonus || 0) + wageGainTC;
-						bonusDetails.push(`好感度 ${oldFavorTC}（每5点转化）`);
-						bonusDetails.push(`科研能力 +${researchGainTC}`);
-						bonusDetails.push(`每月工资 +${wageGainTC}`);
-					} else {
-						bonusDetails.push(`好感度不足5，暂无转化`);
-					}
+					effectDesc = '导师子女的血脉联系加深，每月自动与导师交流！';
+					// ★★★ 修改：每月自动和导师交流一次 ★★★
+					gameState.autoAdvisorChat = true;
+					bonusDetails.push('✨ 每月自动和导师交流一次');
+					bonusDetails.push('（相当于每月自动获得导师交流的收益）');
 					break;
 					
 				case 'chosen':

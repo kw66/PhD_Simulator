@@ -1134,15 +1134,15 @@
                     break;
                     
 				case 'rich':
-					// ★★★ 修改：重置为1而不是0 ★★★
-					gameState.san = 1;
-					gameState.research = 1;
-					gameState.social = 1;
-					gameState.favor = 1;
+					// ★★★ 修改：重置为2 ★★★
+					gameState.san = 2;
+					gameState.research = 2;
+					gameState.social = 2;
+					gameState.favor = 2;
 					gameState.goldSpentTotal = 0;
 					gameState.lastResetMonth = 0;
-					addLog('逆位效果', '贪求之《富可敌国》', 
-						 '除了钱一无所有，每月属性重置为1，金钱+3');
+					addLog('逆位效果', '贪求之《富可敌国》',
+						 '除了钱一无所有，每月属性重置为2，金钱+3');
 					break;
                     
 				case 'teacher-child':

@@ -292,6 +292,9 @@
                 lastResetMonth: gameState.lastResetMonth || 0,
 				socialAwakened: gameState.socialAwakened || false,
 				reviewerDistribution: gameState.reviewerDistribution || null,
+				// ★★★ 新增：社交达人和导师子女觉醒字段 ★★★
+				totalRelationshipsMet: gameState.totalRelationshipsMet || 0,
+				autoAdvisorChat: gameState.autoAdvisorChat || false,
 				badmintonYear: gameState.badmintonYear || -1,
 				ideaClickCount: gameState.ideaClickCount || 0,
 				expClickCount: gameState.expClickCount || 0,
@@ -531,6 +534,9 @@
                             lastResetMonth: save.lastResetMonth || 0,
 							socialAwakened: save.socialAwakened || false,
 							reviewerDistribution: save.reviewerDistribution || null,
+							// ★★★ 新增：社交达人和导师子女觉醒字段 ★★★
+							totalRelationshipsMet: save.totalRelationshipsMet || 0,
+							autoAdvisorChat: save.autoAdvisorChat || false,
 							badmintonYear: save.badmintonYear || -1,
 							ideaClickCount: save.ideaClickCount || 0,
 							expClickCount: save.expClickCount || 0,
@@ -858,6 +864,9 @@
 				lastResetMonth: gameState.lastResetMonth || 0,
 				socialAwakened: gameState.socialAwakened || false,
 				reviewerDistribution: gameState.reviewerDistribution || null,
+				// ★★★ 新增：社交达人和导师子女觉醒字段 ★★★
+				totalRelationshipsMet: gameState.totalRelationshipsMet || 0,
+				autoAdvisorChat: gameState.autoAdvisorChat || false,
 				badmintonYear: gameState.badmintonYear || -1,
 				ideaClickCount: gameState.ideaClickCount || 0,
 				expClickCount: gameState.expClickCount || 0,
@@ -1201,6 +1210,9 @@
 				lastResetMonth: save.lastResetMonth || 0,
 				socialAwakened: save.socialAwakened || false,
 				reviewerDistribution: save.reviewerDistribution || null,
+				// ★★★ 新增：社交达人和导师子女觉醒字段 ★★★
+				totalRelationshipsMet: save.totalRelationshipsMet || 0,
+				autoAdvisorChat: save.autoAdvisorChat || false,
 				badmintonYear: save.badmintonYear || -1,
 				ideaClickCount: save.ideaClickCount || 0,
 				expClickCount: save.expClickCount || 0,

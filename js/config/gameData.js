@@ -52,15 +52,15 @@
 				stats: {}
 			}
 		},
-		{ 
-			id: 'social', 
-			name: '社交达人', 
-			icon: '🤝', 
+		{
+			id: 'social',
+			name: '社交达人',
+			icon: '🤝',
 			awakenIcon: '🌐',
-			desc: '八面玲珑的社交高手', 
-			bonus: '社交能力初始+5', 
+			desc: '八面玲珑的社交高手',
+			bonus: '社交能力初始+5',
 			awakenName: '人脉网络激活',
-			awakenDesc: '转博时根据社交能力改变审稿人分布',
+			awakenDesc: '转博时每认识过一人社交+1且上限+1，根据社交能力改变审稿人分布',
 			// 隐藏觉醒
 			hiddenAwakenName: '师兄师姐救我',
 			hiddenAwakenIcon: '🆘',
@@ -98,21 +98,21 @@
 				icon: '🏴‍☠️',
 				awakenIcon: '💸',
 				desc: '除了钱一无所有',
-				bonus: '每月SAN/科研/社交/好感重置为1，每月金钱+3',
+				bonus: '每月SAN/科研/社交/好感重置为2，每月金钱+3',
 				awakenName: '金钱的力量',
 				awakenDesc: '每月属性降低15%（上取整），每花费4金币属性各+1，每月金钱+6%（上取整）',
 				stats: {}
 			}
 		},
-		{ 
-			id: 'teacher-child', 
-			name: '导师子女', 
-			icon: '👨‍👧', 
+		{
+			id: 'teacher-child',
+			name: '导师子女',
+			icon: '👨‍👧',
 			awakenIcon: '👑',
-			desc: '近水楼台先得月', 
-			bonus: '导师好感度初始+5', 
+			desc: '近水楼台先得月',
+			bonus: '导师好感度初始+5',
 			awakenName: '血脉共鸣',
-			awakenDesc: '转博时根据好感度提升科研和月工资，每5好感度提升1科研和0.5月工资',
+			awakenDesc: '每月自动和导师交流一次',
 			// 隐藏觉醒
 			hiddenAwakenName: '导师救我',
 			hiddenAwakenIcon: '🛡️',
@@ -203,6 +203,8 @@
 			'🚴 骑行大佬',
 			// ★★★ 新增：更多成就 ★★★
 			'📰📰 好事成双', '💸 倒买倒卖', '🎒 整装待发',
+			// ★★★ 新增：保底成就 ★★★
+			'🎉 保底机制',
 		];
 
         // 结局名称映射
@@ -336,6 +338,8 @@
 			'📰📰 好事成双': '发表2篇Nature论文',
 			'💸 倒买倒卖': '卖东西累计超过20金币',
 			'🎒 整装待发': '同时拥有电动车（小电驴）+遮阳伞+羽绒服',
+			// ★★★ 新增：保底成就要求 ★★★
+			'🎉 保底机制': '顺利毕业且没有取得任何其他成就',
 		};
 
         // 商店物品
@@ -640,10 +644,10 @@
 		// 秋季（现实9-11月）= 游戏月份 1, 2, 3
 		// 冬季（现实12-2月）= 游戏月份 4, 5, 6
 		const SEASONS = {
-			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '万物复苏', desc: '所有主动操作导致的SAN扣除-1（最低为0）' },
-			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '烈日当空', desc: '所有主动操作导致的SAN扣除+1' },
-			autumn: { name: '秋季', icon: '🍂', months: [1, 2, 3], buff: '秋高气爽', desc: '每月回复SAN+1' },
-			winter: { name: '冬季', icon: '❄️', months: [4, 5, 6], buff: '寒风刺骨', desc: '每月回复SAN-1' }
+			spring: { name: '春季', icon: '🌸', months: [7, 8, 9], buff: '春-主动操作的SAN扣除-1', desc: '万物复苏，心情舒畅（最低扣0）' },
+			summer: { name: '夏季', icon: '☀️', months: [10, 11, 12], buff: '夏-主动操作的SAN扣除+1', desc: '烈日炎炎，容易烦躁' },
+			autumn: { name: '秋季', icon: '🍂', months: [1, 2, 3], buff: '秋-每月回复SAN+1', desc: '秋高气爽，精神饱满' },
+			winter: { name: '冬季', icon: '❄️', months: [4, 5, 6], buff: '冬-每月回复SAN-1', desc: '寒风刺骨，意志消沉' }
 		};
 
 		// 获取当前季节

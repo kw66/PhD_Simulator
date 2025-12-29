@@ -1973,20 +1973,33 @@
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🌟 找大牛交流', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false }); 
+				{ text: '🌟 找著名学者交流', fn: () => {
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false });
 					gameState.metBigBull = true;
-					addLog('开会事件', '找大牛交流', '临时buff-下次想idea分数×1.25');
+					addLog('开会事件', '找著名学者交流', '临时buff-下次想idea分数×1.25');
 					updateBuffs();
 					return true;
 				}},
 				// 找企业交流是基础选项
-				{ text: '🏢 找企业交流', fn: () => { 
+				{ text: '🏢 找企业交流', fn: () => {
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false }); 
-					addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false });
+
+					// ★★★ 新增：企业实习成长性 - 每次找企业交流提升永久buff效果+0.05 ★★★
+					if (gameState.ailabInternship) {
+						const internshipBuff = gameState.buffs.permanent.find(b => b.name && b.name.includes('实习加成'));
+						if (internshipBuff) {
+							internshipBuff.value = Math.round((internshipBuff.value + 0.05) * 100) / 100;  // 避免浮点精度问题
+							internshipBuff.name = `实习加成：做实验分数×${internshipBuff.value}`;
+							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25，实习永久buff提升至×${internshipBuff.value}（第${gameState.enterpriseCount}次）`);
+						} else {
+							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+						}
+					} else {
+						addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+					}
 					updateBuffs();
-					
+
 					if (gameState.enterpriseCount >= 3 && !gameState.ailabInternship && !gameState.permanentlyBlockedInternship) {
 						setTimeout(() => showAILabInternshipModal(), 300);
 					}
@@ -1998,20 +2011,37 @@
 			const advancedOptions = [];
 			
 			if (gameState.social >= 6) {
-				// 找大牛合作
-				if (!gameState.metBigBullCoop) {
-					advancedOptions.push({ 
-						text: '🎓 找大牛合作', 
-						fn: () => { 
-							gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false }); 
-							gameState.metBigBull = true;
-							gameState.metBigBullCoop = true;
-							addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
-							updateBuffs();
-							return changeSocial(1);
-						},
-						category: 'advanced'
-					});
+				// 找大牛合作（联培前只能触发一次，联培后每次科研上限+1）
+				if (!gameState.metBigBullCoop || gameState.bigBullCooperation) {
+					// ★★★ 修改：联培后可以继续找大牛合作，每次科研上限+1 ★★★
+					if (gameState.bigBullCooperation) {
+						advancedOptions.push({
+							text: '🎓 找大牛合作',
+							fn: () => {
+								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+								gameState.researchMax = (gameState.researchMax || 20) + 1;
+								gameState.bigBullCoopCount = (gameState.bigBullCoopCount || 0) + 1;
+								addLog('开会事件', '【联培加成】找大牛合作', `临时buff-下次写论文分数+8，科研上限+1（当前上限${gameState.researchMax}）`);
+								updateBuffs();
+								return changeSocial(1);
+							},
+							category: 'advanced'
+						});
+					} else if (!gameState.metBigBullCoop) {
+						// 联培前的首次找大牛合作
+						advancedOptions.push({
+							text: '🎓 找大牛合作',
+							fn: () => {
+								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
+								gameState.metBigBull = true;
+								gameState.metBigBullCoop = true;
+								addLog('开会事件', '【社交>=6】找大牛合作', '临时buff-下次写论文分数+8，社交能力+1');
+								updateBuffs();
+								return changeSocial(1);
+							},
+							category: 'advanced'
+						});
+					}
 				}
 				
 				// 和活泼的异性学者交流
