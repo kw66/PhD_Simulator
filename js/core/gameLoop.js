@@ -1325,10 +1325,12 @@
 						effectName = '👁️ 嫉妒重置';
 						effectDesc = '社交能力重置，触发连带效果';
 						const oldSocialVal = gameState.social;
+						const socialResetResearchMax = gameState.researchMax || 20;
+						const socialResetFavorMax = gameState.favorMax || 20;
 						if (oldSocialVal > 5) {
 							const decrease = oldSocialVal - 5;
-							gameState.research = Math.min(20, gameState.research + decrease);
-							gameState.favor = Math.min(20, gameState.favor + decrease);
+							gameState.research = Math.min(socialResetResearchMax, gameState.research + decrease);
+							gameState.favor = Math.min(socialResetFavorMax, gameState.favor + decrease);
 							bonusDetails.push(`社交 ${oldSocialVal} → 5`);
 							bonusDetails.push(`触发嫉妒转化：科研+${decrease}, 好感+${decrease}`);
 						} else if (oldSocialVal < 5) {

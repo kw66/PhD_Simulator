@@ -193,6 +193,9 @@
 					submittedIdeaScore: paper.submittedIdeaScore || null,
 					submittedExpScore: paper.submittedExpScore || null,
 					submittedWriteScore: paper.submittedWriteScore || null,
+					// ★★★ 修复：期刊投稿状态 ★★★
+					journalRevising: paper.journalRevising || false,
+					journalRevisingType: paper.journalRevisingType || null,
                 };
             });
             
@@ -414,7 +417,20 @@
                 socialGrowthPercent: gameState.socialGrowthPercent || 0,
                 socialGrowthPeriod: gameState.socialGrowthPeriod || 0,
                 favorGrowthPercent: gameState.favorGrowthPercent || 0,
-                favorGrowthPeriod: gameState.favorGrowthPeriod || 0
+                favorGrowthPeriod: gameState.favorGrowthPeriod || 0,
+				// ★★★ 修复：订阅/预购状态 ★★★
+				subscriptions: gameState.subscriptions ? {...gameState.subscriptions} : null,
+				// ★★★ 修复：自行车和装备状态 ★★★
+				hasBike: gameState.hasBike || false,
+				bikeUpgrade: gameState.bikeUpgrade || null,
+				bikeSanSpent: gameState.bikeSanSpent || 0,
+				hasDownJacket: gameState.hasDownJacket || false,
+				hasParasol: gameState.hasParasol || false,
+				incomeDoubled: gameState.incomeDoubled || false,
+				internshipAPaperCount: gameState.internshipAPaperCount || 0,
+				goldMax: gameState.goldMax,
+				slothAwakened: gameState.slothAwakened || false,
+				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0
             };
             
             saves[slot] = saveData;
@@ -501,7 +517,13 @@
 									// ★★★ 新增字段 ★★★
 									submittedMonth: p.submittedMonth || null,
 									conferenceInfo: p.conferenceInfo || null,
-									conferenceLocation: p.conferenceLocation || null
+									conferenceLocation: p.conferenceLocation || null,
+									submittedIdeaScore: p.submittedIdeaScore || null,
+									submittedExpScore: p.submittedExpScore || null,
+									submittedWriteScore: p.submittedWriteScore || null,
+									// ★★★ 修复：期刊投稿状态 ★★★
+									journalRevising: p.journalRevising || false,
+									journalRevisingType: p.journalRevisingType || null,
 								};
 							}),
                             
@@ -706,6 +728,22 @@
 						gameState.favorGrowthPercent = save.favorGrowthPercent || 0;
 						gameState.favorGrowthPeriod = save.favorGrowthPeriod || 0;
 
+						// ★★★ 修复：恢复订阅/预购状态 ★★★
+						if (save.subscriptions) {
+							gameState.subscriptions = {...save.subscriptions};
+						}
+						// ★★★ 修复：恢复自行车和装备状态 ★★★
+						gameState.hasBike = save.hasBike || false;
+						gameState.bikeUpgrade = save.bikeUpgrade || null;
+						gameState.bikeSanSpent = save.bikeSanSpent || 0;
+						gameState.hasDownJacket = save.hasDownJacket || false;
+						gameState.hasParasol = save.hasParasol || false;
+						gameState.incomeDoubled = save.incomeDoubled || false;
+						gameState.internshipAPaperCount = save.internshipAPaperCount || 0;
+						gameState.goldMax = save.goldMax;
+						gameState.slothAwakened = save.slothAwakened || false;
+						gameState.beautifulLoverExtraRecoveryRate = save.beautifulLoverExtraRecoveryRate || 0;
+
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
                         document.getElementById('mobile-quick-bar').classList.add('game-active');
@@ -813,6 +851,9 @@
 					submittedIdeaScore: paper.submittedIdeaScore || null,
 					submittedExpScore: paper.submittedExpScore || null,
 					submittedWriteScore: paper.submittedWriteScore || null,
+					// ★★★ 修复：期刊投稿状态 ★★★
+					journalRevising: paper.journalRevising || false,
+					journalRevisingType: paper.journalRevisingType || null,
 				};
 			});
 
@@ -1029,7 +1070,20 @@
 				socialGrowthPercent: gameState.socialGrowthPercent || 0,
 				socialGrowthPeriod: gameState.socialGrowthPeriod || 0,
 				favorGrowthPercent: gameState.favorGrowthPercent || 0,
-				favorGrowthPeriod: gameState.favorGrowthPeriod || 0
+				favorGrowthPeriod: gameState.favorGrowthPeriod || 0,
+				// ★★★ 修复：订阅/预购状态 ★★★
+				subscriptions: gameState.subscriptions ? {...gameState.subscriptions} : null,
+				// ★★★ 修复：自行车和装备状态 ★★★
+				hasBike: gameState.hasBike || false,
+				bikeUpgrade: gameState.bikeUpgrade || null,
+				bikeSanSpent: gameState.bikeSanSpent || 0,
+				hasDownJacket: gameState.hasDownJacket || false,
+				hasParasol: gameState.hasParasol || false,
+				incomeDoubled: gameState.incomeDoubled || false,
+				internshipAPaperCount: gameState.internshipAPaperCount || 0,
+				goldMax: gameState.goldMax,
+				slothAwakened: gameState.slothAwakened || false,
+				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0
 			};
 		}
 
@@ -1226,7 +1280,13 @@
 						submittedScore: p.submittedScore || 0,
 						submittedMonth: p.submittedMonth || null,
 						conferenceInfo: p.conferenceInfo || null,
-						conferenceLocation: p.conferenceLocation || null
+						conferenceLocation: p.conferenceLocation || null,
+						submittedIdeaScore: p.submittedIdeaScore || null,
+						submittedExpScore: p.submittedExpScore || null,
+						submittedWriteScore: p.submittedWriteScore || null,
+						// ★★★ 修复：期刊投稿状态 ★★★
+						journalRevising: p.journalRevising || false,
+						journalRevisingType: p.journalRevisingType || null,
 					};
 				}),
 
@@ -1424,6 +1484,22 @@
 			gameState.socialGrowthPeriod = save.socialGrowthPeriod || 0;
 			gameState.favorGrowthPercent = save.favorGrowthPercent || 0;
 			gameState.favorGrowthPeriod = save.favorGrowthPeriod || 0;
+
+			// ★★★ 修复：恢复订阅/预购状态 ★★★
+			if (save.subscriptions) {
+				gameState.subscriptions = {...save.subscriptions};
+			}
+			// ★★★ 修复：恢复自行车和装备状态 ★★★
+			gameState.hasBike = save.hasBike || false;
+			gameState.bikeUpgrade = save.bikeUpgrade || null;
+			gameState.bikeSanSpent = save.bikeSanSpent || 0;
+			gameState.hasDownJacket = save.hasDownJacket || false;
+			gameState.hasParasol = save.hasParasol || false;
+			gameState.incomeDoubled = save.incomeDoubled || false;
+			gameState.internshipAPaperCount = save.internshipAPaperCount || 0;
+			gameState.goldMax = save.goldMax;
+			gameState.slothAwakened = save.slothAwakened || false;
+			gameState.beautifulLoverExtraRecoveryRate = save.beautifulLoverExtraRecoveryRate || 0;
 
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';

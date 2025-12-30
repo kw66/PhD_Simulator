@@ -309,9 +309,7 @@
 			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
 			if (hasCPaperOver100) achievementsToCheck.push('💎 无法埋没');
 			if (gameState.publishedPapers.length > 0 && gameState.publishedPapers[0].citations > 200) achievementsToCheck.push('🔔 不鸣则已');
-			// ★★★ 修改：S类论文也算高端论文 ★★★
-			const paperS_check = (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
-			if ((gameState.paperA > 0 || paperS_check > 0) && gameState.paperB === 0 && gameState.paperC === 0) achievementsToCheck.push('🎻 曲高和寡');
+			// ★★★ 曲高和寡是结局成就，不在游戏内检测 ★★★
 			// 百发百中：前5次投稿全部命中
 			const first5Submissions = (gameState.submissionHistory || []).slice(0, 5);
 			if (first5Submissions.length >= 5 && first5Submissions.every(s => s.accepted)) achievementsToCheck.push('🎯 百发百中');
@@ -943,14 +941,8 @@
 		}
 
 		function updateLocalMeta(character, isReversed, score, citations, achievementCount, endingType) {
-			// ★★★ 新增：负难度分时不更新角色最佳记录 ★★★
-			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-				console.log('⚠️ 负难度分，不更新角色最佳记录');
-				return null;
-			}
-
 			// ★★★ 新增：只有好结局才统计 ★★★
-			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life'];
+			const goodEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'true_phd', 'true_devotion', 'true_life', 'nobel_start', 'true_nobel_start'];
 			if (!goodEndings.includes(endingType)) {
 				console.log('非毕业结局，不更新本地最高记录');
 				return null;
@@ -967,10 +959,22 @@
 			const record = meta[mode][character];
 			const difficultyPoints = gameState.difficultyPoints || 0;
 
-			if (score > record.maxScore) record.maxScore = score;
-			if (citations > record.maxCitations) record.maxCitations = citations;
-			if (achievementCount > record.maxAchievements) record.maxAchievements = achievementCount;
-			if (difficultyPoints > (record.maxDifficulty || 0)) record.maxDifficulty = difficultyPoints;
+			// ★★★ 检查是否使用了诅咒或祝福 ★★★
+			const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+
+			if (usedCurseOrBlessing) {
+				// 使用了诅咒或祝福：只更新难度分记录
+				if (difficultyPoints > (record.maxDifficulty || 0)) {
+					record.maxDifficulty = difficultyPoints;
+					console.log('⚠️ 使用了诅咒/祝福，只更新难度分记录');
+				}
+			} else {
+				// 未使用诅咒或祝福：更新所有记录
+				if (score > record.maxScore) record.maxScore = score;
+				if (citations > record.maxCitations) record.maxCitations = citations;
+				if (achievementCount > record.maxAchievements) record.maxAchievements = achievementCount;
+				if (difficultyPoints > (record.maxDifficulty || 0)) record.maxDifficulty = difficultyPoints;
+			}
 
 			saveLocalMeta(meta);
 			return record;
@@ -998,7 +1002,7 @@
 
 				const { data, error } = await window.supabaseClient
 					.from('stats_character_records_cache')
-					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements');
+					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements, max_difficulty');
 				
 				if (error) throw error;
 				
@@ -1009,14 +1013,14 @@
 				const allCharIds = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen', 'true-normal'];
 				allCharIds.forEach(charId => {
 					records.normal[charId] = {
-						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+						today: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 },
+						history: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 }
 					};
 					// 真·大多数只有正位
 					if (charId !== 'true-normal') {
 						records.reversed[charId] = {
-							today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-							history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+							today: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 },
+							history: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 }
 						};
 					}
 				});
@@ -1026,12 +1030,13 @@
 					const mode = row.is_reversed ? 'reversed' : 'normal';
 					const charId = row.character_id;
 					const recordType = row.record_type; // 'today' or 'history'
-					
+
 					if (records[mode] && records[mode][charId] && records[mode][charId][recordType]) {
 						records[mode][charId][recordType] = {
 							maxScore: row.max_score || 0,
 							maxCitations: row.max_citations || 0,
-							maxAchievements: row.max_achievements || 0
+							maxAchievements: row.max_achievements || 0,
+							maxDifficulty: row.max_difficulty || 0
 						};
 					}
 				});

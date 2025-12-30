@@ -105,18 +105,18 @@
 
 				// 好感度归零检测
 				if (gameState.favor <= 0) {
-					// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4 ★★★
+					// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4，但不超过上限 ★★★
 					const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
-					gameState.favor = resetValue;
+					gameState.favor = Math.min(favorMax, resetValue);
 					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
 					gameState.gold += 2;
 					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
 					if (gameState.reversedAwakened) {
-						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
+						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
 					} else {
-						addLog('逆位效果', '变本加厉', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
+						addLog('逆位效果', '变本加厉', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
 					}
 				}
 
@@ -290,18 +290,18 @@
 
 					// ✅ 添加归零条件判断
 					if (gameState.favor <= 0) {
-						// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4 ★★★
+						// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4，但不超过上限 ★★★
 						const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
-						gameState.favor = resetValue;
+						gameState.favor = Math.min(favorMax, resetValue);
 						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
 						gameState.gold += 2;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 
 						if (gameState.reversedAwakened) {
-							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
+							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
 						} else {
-							addLog('逆位效果', '变本加厉', `好感度归零，重置为${resetValue} → 社交+1, 科研+1, 金币+2`);
+							addLog('逆位效果', '变本加厉', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
 						}
 					}
 					// 玩世之导师子女不会因好感度触发退学

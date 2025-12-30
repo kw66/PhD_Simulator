@@ -541,7 +541,7 @@
 					<!-- 诅咒页 -->
 					<div class="curses-container" style="display:${currentDifficultyPage === 'curses' ? 'block' : 'none'}">
 						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
-							ℹ️ <strong>负难度分仅用于体验</strong>：难度分&lt;0时，本局游戏数据不计入全球统计，不影响角色最佳记录，无法解锁真·大多数，但成就正常生效。
+							ℹ️ <strong>使用诅咒或祝福时</strong>：本局游戏只记录难度分，不计入全球统计、角色记录，无法解锁真·大多数。成就正常生效。
 						</div>
 						${cursesHtml}
 						<div class="difficulty-footer">
@@ -551,8 +551,8 @@
 
 					<!-- 祝福页 -->
 					<div class="blessings-container" style="display:${currentDifficultyPage === 'blessings' ? 'block' : 'none'}">
-						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(231,76,60,0.15),rgba(192,57,43,0.15));border:1px dashed #e74c3c;border-radius:8px;text-align:center;color:#e74c3c;font-size:13px;">
-							🚫 <strong>无法被祝福者</strong>：逆位角色无法接受祝福，选择的祝福不会生效。
+						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
+							ℹ️ <strong>使用诅咒或祝福时</strong>：本局游戏只记录难度分，不计入全球统计、角色记录，无法解锁真·大多数。成就正常生效。
 						</div>
 						${blessingsHtml}
 						<div class="difficulty-footer blessing-footer">
@@ -780,12 +780,6 @@
 
 		// ★★★ 新增：应用祝福效果到游戏状态（游戏开始时调用）★★★
 		function applyBlessingEffects() {
-			// ★★★ 逆位角色无法使用祝福 ★★★
-			if (gameState.isReversed) {
-				gameState.activeBlessings = {};
-				return;
-			}
-
 			if (!difficultySettings || !difficultySettings.selectedBlessings) return;
 
 			const blessings = difficultySettings.selectedBlessings;
@@ -1039,6 +1033,21 @@
 			initBlessingSelection();
 		}
 
+		// ★★★ 新增：检查是否使用了任何诅咒或祝福 ★★★
+		function hasAnyCurseOrBlessing() {
+			// 检查是否有任何诅咒被选中
+			const curses = gameState.activeCurses || {};
+			for (const id in curses) {
+				if (curses[id] > 0) return true;
+			}
+			// 检查是否有任何祝福被选中
+			const blessings = gameState.activeBlessings || {};
+			for (const id in blessings) {
+				if (blessings[id] > 0) return true;
+			}
+			return false;
+		}
+
 		// 全局函数暴露
 		window.openDifficultyModal = openDifficultyModal;
 		window.toggleCurse = toggleCurse;
@@ -1052,3 +1061,4 @@
 		window.resetDifficultySettings = resetDifficultySettings;
 		window.getSavedDifficultyPoints = getSavedDifficultyPoints;
 		window.updateDifficultyButton = updateDifficultyButton;
+		window.hasAnyCurseOrBlessing = hasAnyCurseOrBlessing;

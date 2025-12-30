@@ -119,9 +119,10 @@
 
 		// 记录角色博士通关
 		function recordCharacterPhdUnlock(characterId, isReversed) {
-			// ★★★ 新增：负难度分时不记录博士通关（无法解锁真·大多数）★★★
-			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-				console.log('⚠️ 负难度分，不记录博士通关，无法解锁真·大多数');
+			// ★★★ 修改：使用诅咒或祝福时不记录博士通关（无法解锁真·大多数）★★★
+			const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+			if (usedCurseOrBlessing) {
+				console.log('⚠️ 使用了诅咒/祝福，不记录博士通关，无法解锁真·大多数');
 				return;
 			}
 
@@ -279,9 +280,10 @@
 
 		// 保存玩家达成的结局和成就
 		function savePlayerRecord(endingType, achievements, isReversed) {
-			// ★★★ 新增：负难度分时不永久保存成就和结局 ★★★
-			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-				console.log('⚠️ 负难度分，成就和结局仅局内生效，不永久保存');
+			// ★★★ 修改：使用诅咒或祝福时不永久保存成就和结局 ★★★
+			const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+			if (usedCurseOrBlessing) {
+				console.log('⚠️ 使用了诅咒/祝福，成就和结局仅局内生效，不永久保存');
 				return;
 			}
 
@@ -458,26 +460,21 @@
 
 
 		async function recordEnding(endingType, endingTitle) {
-			// ★★★ 新增：负难度分时不上传结局到全球统计 ★★★
-			if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-				console.log('⚠️ 负难度分，结局不计入全球统计');
-				return;
-			}
-
-			// ★★★ 移除数据验证，直接上传 ★★★
+			// ★★★ 检查是否使用了诅咒或祝福 ★★★
+			const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
 
 			// 计算成就数量
 			const achievements = collectAchievements(endingType);
 			const achievementCount = achievements.length;
 
-			// 更新本地记录
+			// 更新本地记录（内部会根据是否使用诅咒/祝福决定更新哪些字段）
 			updateLocalMeta(
 				gameState.character,
 				gameState.isReversed,
 				gameState.totalScore,
 				gameState.totalCitations,
 				achievementCount,
-				endingType,  // ★★★ 新增参数 ★★★
+				endingType,
 			);
 
 			if (!window.supabaseClient) return;
@@ -494,6 +491,17 @@
 					}
 					if (Object.keys(activeCurses).length > 0) {
 						cursesData = JSON.stringify(activeCurses);
+					}
+				}
+				// ★★★ 新增：存储祝福数据 ★★★
+				let blessingsData = null;
+				if (gameState.activeBlessings) {
+					const activeBlessings = {};
+					for (const [key, value] of Object.entries(gameState.activeBlessings)) {
+						if (value > 0) activeBlessings[key] = value;
+					}
+					if (Object.keys(activeBlessings).length > 0) {
+						blessingsData = JSON.stringify(activeBlessings);
 					}
 				}
 
@@ -513,11 +521,13 @@
 					achievements_count: achievementCount,
 					difficulty_points: difficultyPoints,
 					curses: cursesData,
+					blessings: blessingsData,
+					used_modifiers: usedCurseOrBlessing,
 					created_at: new Date().toISOString()
 				});
 
 				if (error) throw error;
-				console.log('✅ 结局已记录:', endingTitle);
+				console.log('✅ 结局已记录:', endingTitle, usedCurseOrBlessing ? '(使用了诅咒/祝福)' : '');
 
 				// 清除缓存
 				globalCharacterRecords = null;
@@ -529,9 +539,10 @@
         async function recordAchievements(achievements) {
             if (!window.supabaseClient || achievements.length === 0) return;
 
-            // ★★★ 新增：负难度分时不永久记录成就 ★★★
-            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-                console.log('⚠️ 负难度分，成就仅局内生效，不永久记录');
+            // ★★★ 修改：使用诅咒或祝福时不永久记录成就 ★★★
+            const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+            if (usedCurseOrBlessing) {
+                console.log('⚠️ 使用了诅咒/祝福，成就仅局内生效，不永久记录');
                 return;
             }
 
