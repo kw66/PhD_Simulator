@@ -540,12 +540,12 @@
 
 					<!-- 诅咒页 -->
 					<div class="curses-container" style="display:${currentDifficultyPage === 'curses' ? 'block' : 'none'}">
+						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
+							ℹ️ <strong>负难度分仅用于体验</strong>：难度分&lt;0时，本局游戏数据不计入全球统计，不影响角色最佳记录，无法解锁真·大多数，但成就正常生效。
+						</div>
 						${cursesHtml}
 						<div class="difficulty-footer">
 							<span>💀</span> 点击骷髅激活诅咒，再次点击取消
-						</div>
-						<div style="padding:12px;margin-top:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
-							ℹ️ <strong>负难度分仅用于体验</strong>：难度分&lt;0时，本局游戏数据不计入全球统计，不影响角色最佳记录，无法解锁真·大多数，但成就正常生效。
 						</div>
 					</div>
 
