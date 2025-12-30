@@ -852,7 +852,7 @@
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
 						<strong>愚钝之院士转世</strong>：科研=0，全论文槽<br>
-						策略：靠转化获得金钱和SAN，多写低分论文刷量
+						策略：靠转化获得金钱和SAN，多写论文获取转化收益
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
 						<strong>贪求之富可敌国</strong>：每月属性重置为2<br>

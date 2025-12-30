@@ -637,9 +637,35 @@
 			}
 		}
 
+		// 跳转到指定页
+		function goToMessagePage(page) {
+			if (page >= 1 && page <= totalMessagePages && page !== currentMessagePage) {
+				loadMessages(page);
+			}
+		}
+
 		// 更新分页UI
 		function updatePagination() {
-			document.getElementById('page-info').textContent = `第 ${currentMessagePage} / ${totalMessagePages} 页`;
+			const pageNumbersEl = document.getElementById('page-numbers');
+			if (!pageNumbersEl) return;
+
+			// 生成页码（当前页左右各3个，共最多7个）
+			const range = 3;
+			let startPage = Math.max(1, currentMessagePage - range);
+			let endPage = Math.min(totalMessagePages, currentMessagePage + range);
+
+			let html = '';
+			for (let i = startPage; i <= endPage; i++) {
+				if (i === currentMessagePage) {
+					// 当前页高亮
+					html += `<span style="display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;background:var(--primary-color);color:white;border-radius:4px;font-size:0.8rem;font-weight:600;">${i}</span>`;
+				} else {
+					// 可点击的页码
+					html += `<span onclick="goToMessagePage(${i})" style="display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;background:var(--light-bg);color:var(--text-color);border-radius:4px;font-size:0.8rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--primary-color)';this.style.color='white'" onmouseout="this.style.background='var(--light-bg)';this.style.color='var(--text-color)'">${i}</span>`;
+				}
+			}
+			pageNumbersEl.innerHTML = html;
+
 			document.getElementById('prev-page-btn').disabled = currentMessagePage <= 1;
 			document.getElementById('next-page-btn').disabled = currentMessagePage >= totalMessagePages;
 		}
@@ -758,6 +784,7 @@
 		window.setReplyTo = setReplyTo;
 		window.cancelReply = cancelReply;
 		window.changeMessagePage = changeMessagePage;
+		window.goToMessagePage = goToMessagePage;
 		window.toggleReplies = toggleReplies;
 		window.initMessageBoard = initMessageBoard;
 		window.triggerFeedbackEvent = triggerFeedbackEvent;

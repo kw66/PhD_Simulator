@@ -596,6 +596,14 @@
 									<i class="fas fa-history"></i> 回溯
 								</button>
 							</div>
+							<div class="button-row">
+								<button class="btn start-btn-small special-mode-btn" onclick="showTimeTravelerInfo()">
+									<i class="fas fa-hourglass-half"></i> 时空旅人
+								</button>
+								<button class="btn start-btn-small special-mode-btn" onclick="showAdvisorModeInfo()">
+									<i class="fas fa-chalkboard-teacher"></i> 导师模式
+								</button>
+							</div>
 						</div>
 					</div>
 					<div class="constellation-panel constellation-preview-panel">
@@ -1212,10 +1220,55 @@
 			addLog('事件轮换', '新的一年开始', '随机事件池已重置');
 		}
 
+		// ==================== 特殊模式按钮（未实装） ====================
+		function showTimeTravelerInfo() {
+			showModal('⏳ 时空旅人模式', `
+				<div style="text-align:center;margin-bottom:20px;">
+					<div style="font-size:3rem;margin-bottom:15px;">⏳</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);margin-bottom:10px;">敬请期待</div>
+				</div>
+				<div style="background:var(--light-bg);border-radius:12px;padding:15px;margin-bottom:15px;">
+					<div style="font-weight:600;margin-bottom:10px;color:var(--primary-color);">📖 模式介绍</div>
+					<div style="font-size:0.85rem;line-height:1.6;color:var(--text-secondary);">
+						<p style="margin-bottom:8px;">在时空旅人模式中，你将扮演一位来自未来的研究生，拥有<strong>回溯时空</strong>的能力（奇异博士？）。</p>
+						<p style="margin-bottom:8px;">🔮 <strong>游戏目标</strong>：你将遍历所有可能达到博士毕业获得诺贝尔奖的壮举（idea分或者实验分达到1000），现实中德布罗意凭借博士论文提出了物质波理论，获得了1929年诺贝尔物理学奖。</p>
+						<p style="margin-bottom:8px;">⚡ <strong>预知未来</strong>：你将不断的进行每一学年，并操纵所有遇到过的随机事件，审稿结果等，最终你将达到每个阶段的最优解。</p>
+						<p style="margin-bottom:0;">💫 <strong>命运交织</strong>：你的每个周目可以通过完成不同的任务来取得永久的跨局加成效果。</p>
+					</div>
+				</div>
+				<div style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">
+					该模式正在开发中，敬请期待后续更新！
+				</div>
+			`, [{ text: '知道了', class: 'btn-primary', action: closeModal }]);
+		}
+
+		function showAdvisorModeInfo() {
+			showModal('👨‍🏫 导师模式', `
+				<div style="text-align:center;margin-bottom:20px;">
+					<div style="font-size:3rem;margin-bottom:15px;">👨‍🏫</div>
+					<div style="font-size:1.1rem;font-weight:600;color:var(--primary-color);margin-bottom:10px;">敬请期待</div>
+				</div>
+				<div style="background:var(--light-bg);border-radius:12px;padding:15px;margin-bottom:15px;">
+					<div style="font-weight:600;margin-bottom:10px;color:var(--primary-color);">📖 模式介绍</div>
+					<div style="font-size:0.85rem;line-height:1.6;color:var(--text-secondary);">
+						<p style="margin-bottom:8px;">在导师模式中，你将以<strong>导师的视角</strong>体验研究生培养的全过程。</p>
+						<p style="margin-bottom:8px;">📚 <strong>团队组建</strong>：你会招收各种不同效果的学生，如院士转世、天选之人等，请组建你的团队。</p>
+						<p style="margin-bottom:8px;">💼 <strong>申请项目</strong>：申请横向和纵向项目，赚钱养实验室，积累科研资源，学生成果是申请的关键。</p>
+						<p style="margin-bottom:0;">⚖️ <strong>学生培养</strong>：学生毕业后还会进行科研和项目上的合作，请善待每一个学生。</p>
+					</div>
+				</div>
+				<div style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">
+					该模式正在开发中，敬请期待后续更新！
+				</div>
+			`, [{ text: '知道了', class: 'btn-primary', action: closeModal }]);
+		}
+
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.selectCharacterFromRune = selectCharacterFromRune;
 		window.toggleTrueNormalMode = toggleTrueNormalMode;
 		window.startGame = startGame;
 		window.resetRandomEventPool = resetRandomEventPool;
 		window.yearlyResetRandomEventPool = yearlyResetRandomEventPool;
+		window.showTimeTravelerInfo = showTimeTravelerInfo;
+		window.showAdvisorModeInfo = showAdvisorModeInfo;
 

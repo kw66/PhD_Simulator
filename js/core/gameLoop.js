@@ -1318,7 +1318,7 @@
 						effectName = '🎭 大智若愚';
 						effectDesc = '真正的智慧不在于科研数值';
 						bonusDetails.push('科研提升转化效果升级');
-						bonusDetails.push('每1点科研提升 → 好感+2, SAN+6, 社交+2, 金+6');
+						bonusDetails.push('每1点科研提升 → 好感+2, SAN+8, 社交+2, 金+8');
 						break;
 						
 					case 'social': // 嫉妒之社交达人
@@ -1699,21 +1699,30 @@
 					effectDesc = '院士转世的血脉开始沸腾，过往成就化为实力！';
 					// ★★★ 修改：S类论文计入A类数量（Nature/Nature子刊 > A类）★★★
 					const paperS_genius = (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
-					const aCount = (gameState.paperA || 0) + paperS_genius;
+					const aOnlyCount = gameState.paperA || 0;
+					const sCount = paperS_genius;
+					// ★★★ 新增：3篇B类论文折算1篇A类论文（用于觉醒效果计算）★★★
+					const bPaperCount_genius = gameState.paperB || 0;
+					const convertedFromB = Math.floor(bPaperCount_genius / 3);
+					// 总A类等效数量 = A类 + S类 + B类折算
+					const aCount = aOnlyCount + sCount + convertedFromB;
 					if (aCount > 0) {
 						// 每篇A/S类论文科研+2，上限+4
 						const researchGain = aCount * 2;
 						const maxGain = aCount * 4;
 						gameState.researchMax = (gameState.researchMax || 20) + maxGain;
 						gameState.research = Math.min(gameState.researchMax, gameState.research + researchGain);
-						const aOnlyCount = gameState.paperA || 0;
-						const sCount = paperS_genius;
-						const paperText = sCount > 0 ? `A/S类论文 ${aCount} 篇（A×${aOnlyCount}, S×${sCount}）` : `A类论文 ${aCount} 篇`;
+						// 构建论文统计文本
+						let paperTextParts = [];
+						if (aOnlyCount > 0) paperTextParts.push(`A×${aOnlyCount}`);
+						if (sCount > 0) paperTextParts.push(`S×${sCount}`);
+						if (convertedFromB > 0) paperTextParts.push(`B→A×${convertedFromB}(${bPaperCount_genius}篇B类)`);
+						const paperText = `论文折算 ${aCount} 篇A类等效（${paperTextParts.join(', ')}）`;
 						bonusDetails.push(paperText);
 						bonusDetails.push(`科研能力 +${researchGain}`);
 						bonusDetails.push(`科研能力上限 +${maxGain}（现为${gameState.researchMax}）`);
 					} else {
-						bonusDetails.push('暂无A类或S类论文，继续努力！');
+						bonusDetails.push('暂无A类/S类/B类论文，继续努力！');
 					}
 					break;
 					

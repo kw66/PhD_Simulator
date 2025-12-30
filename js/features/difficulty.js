@@ -541,7 +541,7 @@
 					<!-- 诅咒页 -->
 					<div class="curses-container" style="display:${currentDifficultyPage === 'curses' ? 'block' : 'none'}">
 						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
-							ℹ️ <strong>使用诅咒或祝福时</strong>：本局游戏只记录难度分，不计入全球统计、角色记录，无法解锁真·大多数。成就正常生效。
+							ℹ️ <strong>使用诅咒或祝福时</strong>：本局只记录难度分，不计入全球统计、角色记录、成就记录，无法解锁真·大多数。局内成就币正常获取。
 						</div>
 						${cursesHtml}
 						<div class="difficulty-footer">
@@ -552,7 +552,7 @@
 					<!-- 祝福页 -->
 					<div class="blessings-container" style="display:${currentDifficultyPage === 'blessings' ? 'block' : 'none'}">
 						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
-							ℹ️ <strong>使用诅咒或祝福时</strong>：本局游戏只记录难度分，不计入全球统计、角色记录，无法解锁真·大多数。成就正常生效。
+							ℹ️ <strong>使用诅咒或祝福时</strong>：本局只记录难度分，不计入全球统计、角色记录、成就记录，无法解锁真·大多数。局内成就币正常获取。
 						</div>
 						${blessingsHtml}
 						<div class="difficulty-footer blessing-footer">

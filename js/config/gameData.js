@@ -34,7 +34,7 @@
 			desc: '天生就是做科研的料', 
 			bonus: '科研能力初始+5', 
 			awakenName: '学术天赋觉醒',
-			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+4',
+			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+4（3篇B类折算1篇A类）',
 			// 隐藏觉醒
 			hiddenAwakenName: '预见未来热点',
 			hiddenAwakenIcon: '🔮',
