@@ -963,7 +963,7 @@
 			const nextMilestone = (currentTier + 1) * 10 + 1;
 			const nextBonus = ideaBonus + 1;
 
-			let result = `SAN值-${actualSanCost}`;
+			let result = `SAN值-${actualCost}`;
 			if (has4K) result += '（4K显示器生效）';
 			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
@@ -1024,7 +1024,7 @@
 			const nextGold = goldReward + 1;
 			const nextSan = baseSanCost + 1;
 
-			let result = `SAN值-${actualSanCost}`;
+			let result = `SAN值-${actualCost}`;
 			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
