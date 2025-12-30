@@ -497,7 +497,7 @@
 				return {
 					selfPay: 2,
 					advisorCost: favor >= 6 ? 0 : 1,
-					advisorText: favor >= 6 ? '👨‍🏫 导师报销（免费）' : '👨‍🏫 导师报销（好感度-1）',
+					advisorText: favor >= 6 ? '👨‍🏫 导师报销（好感≥6：免费）' : '👨‍🏫 导师报销（好感<6：好感-1）',
 					proxyCost: 0,
 					proxyText: '👥 请人代参加（免费）'
 				};
@@ -506,43 +506,43 @@
 				let advisorCost, advisorText;
 				if (favor >= 12) {
 					advisorCost = 0;
-					advisorText = '👨‍🏫 导师报销（免费）';
+					advisorText = '👨‍🏫 导师报销（好感≥12：免费）';
 				} else if (favor >= 6) {
 					advisorCost = 1;
-					advisorText = '👨‍🏫 导师报销（好感度-1）';
+					advisorText = '👨‍🏫 导师报销（好感6-11：好感-1）';
 				} else {
 					advisorCost = 2;
-					advisorText = '👨‍🏫 导师报销（好感度-2）';
+					advisorText = '👨‍🏫 导师报销（好感<6：好感-2）';
 				}
 				return {
 					selfPay: 4,
 					advisorCost: advisorCost,
 					advisorText: advisorText,
 					proxyCost: social >= 6 ? 0 : 1,
-					proxyText: social >= 6 ? '👥 请同学代参加（免费）' : '👥 请人代参加（金钱-1）'
+					proxyText: social >= 6 ? '👥 请同学代参加（社交≥6：免费）' : '👥 请人代参加（社交<6：金钱-1）'
 				};
 			} else {
 				// 欧美：自费6，导师报销-3好感（好感≥6花2，好感≥12花1，好感≥18免费），请人按社交
 				let advisorCost, advisorText;
 				if (favor >= 18) {
 					advisorCost = 0;
-					advisorText = '👨‍🏫 导师报销（免费）';
+					advisorText = '👨‍🏫 导师报销（好感≥18：免费）';
 				} else if (favor >= 12) {
 					advisorCost = 1;
-					advisorText = '👨‍🏫 导师报销（好感度-1）';
+					advisorText = '👨‍🏫 导师报销（好感12-17：好感-1）';
 				} else if (favor >= 6) {
 					advisorCost = 2;
-					advisorText = '👨‍🏫 导师报销（好感度-2）';
+					advisorText = '👨‍🏫 导师报销（好感6-11：好感-2）';
 				} else {
 					advisorCost = 3;
-					advisorText = '👨‍🏫 导师报销（好感度-3）';
+					advisorText = '👨‍🏫 导师报销（好感<6：好感-3）';
 				}
 				return {
 					selfPay: 6,
 					advisorCost: advisorCost,
 					advisorText: advisorText,
 					proxyCost: social >= 6 ? 0 : 1,
-					proxyText: social >= 6 ? '👥 请同学代参加（免费）' : '👥 请人代参加（金钱-1）'
+					proxyText: social >= 6 ? '👥 请同学代参加（社交≥6：免费）' : '👥 请人代参加（社交<6：金钱-1）'
 				};
 			}
 		}

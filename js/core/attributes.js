@@ -17,6 +17,38 @@
             return delta;
         }
 
+        // ★★★ 新增：生成SAN消耗的详细说明文本 ★★★
+        function getSanCostExplanation(baseCost) {
+            const seasonMod = getSeasonSanModifier();
+            const season = getCurrentSeason();
+            const seasonNames = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+            const seasonName = seasonNames[season] || '';
+
+            let explanation = `基础${baseCost}`;
+            let currentCost = -baseCost;  // 负数表示消耗
+
+            // 怠惰效果
+            if (gameState.isReversed && gameState.character === 'normal') {
+                const multiplier = gameState.reversedAwakened ? 3 : 2;
+                currentCost = currentCost * multiplier;
+                explanation += ` ×${multiplier}(怠惰)`;
+            }
+
+            // 季节效果
+            if (seasonMod !== 0) {
+                currentCost = currentCost + seasonMod;
+                if (currentCost > 0) currentCost = 0;
+                if (seasonMod < 0) {
+                    explanation += ` ${seasonMod}(${seasonName}季)`;
+                } else {
+                    explanation += ` +${seasonMod}(${seasonName}季)`;
+                }
+            }
+
+            const actualCost = Math.abs(currentCost);
+            return { actualCost, explanation };
+        }
+
         function changeSan(delta) {
             if (delta < 0) {
                 // 怠惰之大多数效果
@@ -63,7 +95,7 @@
 					gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
 					gameState.research = Math.min(20, gameState.research + newGains);
 					gameState.social = Math.min(20, gameState.social + newGains);
-					gameState.favor = Math.min(20, gameState.favor + newGains);
+					gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + newGains);
 					addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
 					// ★★★ 修复：科研和社交增加时检查解锁 ★★★
 					checkResearchUnlock();
@@ -156,7 +188,7 @@
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
-						gameState.favor = Math.min(20, gameState.favor + favorGain);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + favorGain);
 						gameState.social = Math.min(20, gameState.social + socialGain);
 						addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
 					} else {
@@ -169,7 +201,7 @@
 						gameState.gold += goldGain;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.social = Math.min(20, gameState.social + socialGain);
-						gameState.favor = Math.min(20, gameState.favor + favorGain);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + favorGain);
 						addLog('逆位效果', '愚钝转化', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 社交+${socialGain}, 好感+${favorGain}`);
 					}
 				}
@@ -268,7 +300,7 @@
 						gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
 						gameState.research = Math.min(20, gameState.research + newGains);
 						gameState.social = Math.min(20, gameState.social + newGains);
-						gameState.favor = Math.min(20, gameState.favor + newGains);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + newGains);
 						addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
 					}
 				}
@@ -328,10 +360,10 @@
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						// ★★★ 修改：未觉醒也有社交和好感加成（使用严格布尔比较）★★★
 						if (gameState.reversedAwakened === true) {
-							gameState.favor = Math.min(20, gameState.favor + changes.research * 2);
+							gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + changes.research * 2);
 							gameState.social = Math.min(20, gameState.social + changes.research * 2);
 						} else {
-							gameState.favor = Math.min(20, gameState.favor + changes.research * 1);
+							gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + changes.research * 1);
 							gameState.social = Math.min(20, gameState.social + changes.research * 1);
 						}
 					}

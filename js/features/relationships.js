@@ -1223,10 +1223,10 @@
             // 消耗SAN（免费时不消耗）
             if (!isFree) {
                 const baseSanCost = 3;
-                // ★★★ 修复：使用getActualSanChange计算实际SAN消耗（考虑季节buff等）★★★
-                const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-                if (gameState.san < actualSanCost) {
-                    showModal('❌ SAN不足', `<p>推进导师项目需要<strong>${actualSanCost}点SAN</strong>，当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
+                // ★★★ 修复：使用getSanCostExplanation显示详细计算过程 ★★★
+                const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+                if (gameState.san < actualCost) {
+                    showModal('❌ SAN不足', `<p>推进导师项目需要<strong>${actualCost}点SAN</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
                         [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                     return;
                 }
@@ -1283,10 +1283,10 @@
             }
 
             if (!isFree) {
-                // 计算实际SAN消耗
-                const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-                if (gameState.san < actualSanCost) {
-                    showModal('❌ SAN不足', `<p>${taskName}需要<strong>${actualSanCost}点SAN</strong>，当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
+                // ★★★ 修复：使用getSanCostExplanation显示详细计算过程 ★★★
+                const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+                if (gameState.san < actualCost) {
+                    showModal('❌ SAN不足', `<p>${taskName}需要<strong>${actualCost}点SAN</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p><p style="color:var(--text-secondary);font-size:0.85rem;">💡 可以通过休息、购买物品等方式恢复SAN值</p>`,
                         [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                     return;
                 }

@@ -203,6 +203,13 @@
 			if (!gameState.careerMilestones) {
 				gameState.careerMilestones = [];
 			}
+			// ★★★ 修复：防止重复记录first_*类型的里程碑 ★★★
+			if (type.startsWith('first_')) {
+				const exists = gameState.careerMilestones.some(m => m.type === type);
+				if (exists) {
+					return; // 已存在该类型的里程碑，不重复添加
+				}
+			}
 			gameState.careerMilestones.push({
 				month: gameState.totalMonths,
 				year: gameState.year,

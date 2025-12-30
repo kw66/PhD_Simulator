@@ -23,67 +23,52 @@
 			switch(type) {
 				case 'arxiv': {
 					const baseSanCost = 3;
-					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					
-					if (gameState.san < actualSanCost) {
-						const tipText = (gameState.isReversed && gameState.character === 'normal')
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-						showModal('❌ 操作失败', tipText, 
+					const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+
+					if (gameState.san < actualCost) {
+						showModal('❌ 操作失败',
+							`<p>SAN值不足！需要<strong>${actualCost}点</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.arxiv = true;
 					// ★★★ 改为加法：+0.25 ★★★
 					paper.citationMultiplier += 0.25;
-					const sanText = (gameState.isReversed && gameState.character === 'normal')
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
-						: `SAN值-${baseSanCost}`;
-					result = `${sanText}，论文引用速度+25%`;
+					result = `SAN-${actualCost}（${explanation}），论文引用速度+25%`;
 					canProceed = changeSan(-baseSanCost);
 					break;
 				}
 				case 'github': {
 					const baseSanCost = 6;
-					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					
-					if (gameState.san < actualSanCost) {
-						const tipText = (gameState.isReversed && gameState.character === 'normal')
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-						showModal('❌ 操作失败', tipText, 
+					const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+
+					if (gameState.san < actualCost) {
+						showModal('❌ 操作失败',
+							`<p>SAN值不足！需要<strong>${actualCost}点</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.github = true;
 					// ★★★ 改为加法：+0.5 ★★★
 					paper.citationMultiplier += 0.5;
-					const sanText = (gameState.isReversed && gameState.character === 'normal')
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
-						: `SAN值-${baseSanCost}`;
-					result = `${sanText}，论文引用速度+50%`;
+					result = `SAN-${actualCost}（${explanation}），论文引用速度+50%`;
 					canProceed = changeSan(-baseSanCost);
 					break;
 				}
 				case 'xiaohongshu': {
 					const baseSanCost = 3;
-					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-					
-					if (gameState.san < actualSanCost) {
-						const tipText = (gameState.isReversed && gameState.character === 'normal')
-							? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-							: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-						showModal('❌ 操作失败', tipText, 
+					const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+
+					if (gameState.san < actualCost) {
+						showModal('❌ 操作失败',
+							`<p>SAN值不足！需要<strong>${actualCost}点</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 						return;
 					}
 					paper.promotions.xiaohongshu = true;
 					// ★★★ 改为加法：+0.25 ★★★
 					paper.citationMultiplier += 0.25;
-					const sanText = (gameState.isReversed && gameState.character === 'normal')
-						? `SAN值-${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）`
-						: `SAN值-${baseSanCost}`;
-					result = `${sanText}，论文引用速度+25%`;
+					result = `SAN-${actualCost}（${explanation}），论文引用速度+25%`;
 					canProceed = changeSan(-baseSanCost);
 					break;
 				}
@@ -955,13 +940,11 @@
 			
 			const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
 			const baseSanCost = has4K ? 1 : 2;
-			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
-			
-			if (gameState.san < actualSanCost) {
-				const tipText = (gameState.isReversed && gameState.character === 'normal')
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText, 
+			const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
+
+			if (gameState.san < actualCost) {
+				showModal('❌ 操作失败',
+					`<p>SAN值不足！需要<strong>${actualCost}点</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -1016,13 +999,11 @@
 			const currentTier = Math.floor((nextWorkCount - 1) / 8);  // 1-8次=0档, 9-16次=1档...
 			const baseSanCost = 5 + currentTier;  // 5, 6, 7, 8...
 			const goldReward = 2 + currentTier;   // 2, 3, 4, 5...
-			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
+			const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
 
-			if (gameState.san < actualSanCost) {
-				const tipText = (gameState.isReversed && gameState.character === 'normal')
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText,
+			if (gameState.san < actualCost) {
+				showModal('❌ 操作失败',
+					`<p>SAN值不足！需要<strong>${actualCost}点</strong>（${explanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -1094,15 +1075,14 @@
 			
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
-			if (gameState.san < actualSanCost) {
-				const tipText = (gameState.isReversed && gameState.character === 'normal')
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText, 
+			const { actualCost: sanActualCost, explanation: sanExplanation } = getSanCostExplanation(baseSanCost);
+			if (gameState.san < sanActualCost) {
+				showModal('❌ 操作失败',
+					`<p>SAN值不足！需要<strong>${sanActualCost}点</strong>（${sanExplanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing);
 			if (available.length === 0) {
@@ -1283,15 +1263,14 @@
 			
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
-			if (gameState.san < actualSanCost) {
-				const tipText = (gameState.isReversed && gameState.character === 'normal')
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText, 
+			const { actualCost: sanActualCost, explanation: sanExplanation } = getSanCostExplanation(baseSanCost);
+			if (gameState.san < sanActualCost) {
+				showModal('❌ 操作失败',
+					`<p>SAN值不足！需要<strong>${sanActualCost}点</strong>（${sanExplanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
 			if (available.length === 0) {
@@ -1462,15 +1441,14 @@
 			
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
-			if (gameState.san < actualSanCost) {
-				const tipText = (gameState.isReversed && gameState.character === 'normal')
-					? `<p>SAN值不足！基础消耗${baseSanCost}点，怠惰×${gameState.reversedAwakened ? 3 : 2}后需要${actualSanCost}点SAN值。</p>`
-					: `<p>SAN值不足！需要至少${baseSanCost}点SAN值。</p>`;
-				showModal('❌ 操作失败', tipText, 
+			const { actualCost: sanActualCost, explanation: sanExplanation } = getSanCostExplanation(baseSanCost);
+			if (gameState.san < sanActualCost) {
+				showModal('❌ 操作失败',
+					`<p>SAN值不足！需要<strong>${sanActualCost}点</strong>（${sanExplanation}），当前只有<strong>${gameState.san}点</strong>。</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
+
 			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
 				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
 			if (available.length === 0) {
@@ -2019,7 +1997,7 @@
 					// ★★★ 修改：联培后可以继续找大牛合作，每次科研上限+1 ★★★
 					if (gameState.bigBullCooperation) {
 						advancedOptions.push({
-							text: '🎓 找大牛合作（下次论文+8，社交+1，科研上限+1）',
+							text: '🎓 找大牛合作【联培】（下次论文+8，社交+1，科研上限+1）',
 							fn: () => {
 								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 								gameState.researchMax = (gameState.researchMax || 20) + 1;
@@ -2033,7 +2011,7 @@
 					} else if (!gameState.metBigBullCoop) {
 						// 联培前的首次找大牛合作
 						advancedOptions.push({
-							text: '🎓 找大牛合作（下次论文+8，社交+1）',
+							text: '🎓 找大牛合作【社交≥6】（下次论文+8，社交+1）',
 							fn: () => {
 								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 								gameState.metBigBull = true;
@@ -2050,7 +2028,7 @@
 				// 和活泼的异性学者交流
 				if (!gameState.metBeautiful && !gameState.permanentlyBlockedBeautifulLover && !gameState.hasLover) {
 					advancedOptions.push({
-						text: '💕 和活泼的异性学者交流（SAN+5，社交+1）',
+						text: '💕 和活泼的异性学者交流【社交≥6】（SAN+5，社交+1）',
 						fn: () => { 
 							gameState.metBeautiful = true;
 							gameState.beautifulCount = 1;
@@ -2064,7 +2042,7 @@
 				// 和聪慧的异性学者交流
 				if (!gameState.metSmart && !gameState.permanentlyBlockedSmartLover && !gameState.hasLover) {
 					advancedOptions.push({
-						text: '🧠 和聪慧的异性学者交流（SAN+1，社交+1，下次想idea+1次）',
+						text: '🧠 和聪慧的异性学者交流【社交≥6】（SAN+1，社交+1，下次想idea+1次）',
 						fn: () => { 
 							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
 							gameState.metSmart = true;
@@ -2084,7 +2062,7 @@
 			// 和上次那个大牛深入合作（需要科研≥12）
 			if (gameState.research >= 12 && gameState.metBigBullCoop && !gameState.bigBullCooperation && !gameState.permanentlyBlockedBigBullCoop) {
 				followUpOptions.push({
-					text: '🌟 和上次那个大牛深入合作（下次论文+8）',
+					text: '🌟 和上次那个大牛深入合作【科研≥12】（下次论文+8）',
 					fn: () => {
 						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
@@ -2102,7 +2080,7 @@
 			// 和上次那个活泼的异性学者交流（需要社交≥12）
 			if (gameState.social >= 12 && gameState.metBeautiful && !gameState.hasLover && !gameState.permanentlyBlockedBeautifulLover) {
 				followUpOptions.push({
-					text: '💕 和上次那个活泼的异性学者交流（SAN+8，SAN上限+3）',
+					text: '💕 和上次那个活泼的异性学者交流【社交≥12】（SAN+8，SAN上限+3）',
 					fn: () => {
 						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
 						addLog('开会事件', '【社交>=12】和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
@@ -2120,7 +2098,7 @@
 			// 和上次那个聪慧的异性学者交流（需要社交≥12）
 			if (gameState.social >= 12 && gameState.metSmart && !gameState.hasLover && !gameState.permanentlyBlockedSmartLover) {
 				followUpOptions.push({
-					text: '🧠 和上次那个聪慧的异性学者交流（SAN+1，科研+1）',
+					text: '🧠 和上次那个聪慧的异性学者交流【社交≥12】（SAN+1，科研+1）',
 					fn: () => {
 						gameState.smartCount = (gameState.smartCount || 0) + 1;
 						addLog('开会事件', '和【社交>=12】上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');

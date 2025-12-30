@@ -3874,6 +3874,27 @@ html {
     font-size: 0.9rem;
 }
 
+/* 当前局统计行（SAN上限、难度分）*/
+.player-stats-box .ps-row-game {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(212, 175, 55, 0.4);
+    justify-content: center;
+    gap: 20px;
+}
+
+.player-stats-box .ps-difficulty {
+    color: #c0392b;
+}
+
+.player-stats-box .ps-difficulty i {
+    color: #e74c3c;
+}
+
+.player-stats-box .ps-difficulty strong {
+    color: #c0392b;
+}
+
 /* 海报样式（分享页毕业纪念卡内）*/
 .player-stats-poster {
     background: linear-gradient(145deg, rgba(255, 254, 245, 0.95), rgba(255, 239, 192, 0.9));

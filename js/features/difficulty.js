@@ -633,8 +633,12 @@
 			const points = getSavedDifficultyPoints();
 			const btn = document.querySelector('.difficulty-btn');
 			if (btn) {
-				// 统一格式：💀 数值 难度
-				btn.innerHTML = `<i class="fas fa-skull"></i> <span class="difficulty-badge">${points}</span> 难度`;
+				// 格式：难度调整（数值），根据正负显示不同颜色背景
+				const displayPoints = points > 0 ? `+${points}` : points;
+				const bgColor = points > 0 ? 'rgba(239, 68, 68, 0.15)' : (points < 0 ? 'rgba(16, 185, 129, 0.15)' : 'transparent');
+				const textColor = points > 0 ? '#dc2626' : (points < 0 ? '#059669' : 'inherit');
+				const badgeStyle = points !== 0 ? `background:${bgColor};color:${textColor};padding:2px 6px;border-radius:8px;font-weight:600;` : '';
+				btn.innerHTML = `难度调整 <span style="${badgeStyle}">${displayPoints}</span>`;
 			}
 		}
 

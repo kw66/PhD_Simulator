@@ -250,7 +250,7 @@
 						gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
 						gameState.research = Math.min(20, gameState.research + newGains);
 						gameState.social = Math.min(20, gameState.social + newGains);
-						gameState.favor = Math.min(20, gameState.favor + newGains);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + newGains);
 						addLog('逆位效果', '金钱觉醒', `累计消费${gameState.goldSpentTotal}金 → SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`);
 						// ★★★ 修复：科研和社交增加时检查解锁 ★★★
 						checkResearchUnlock();
@@ -1294,7 +1294,7 @@
 						const oldSanMax1 = gameState.sanMax;
 						gameState.research = Math.min(20, gameState.research * 2);
 						gameState.social = Math.min(20, gameState.social * 2);
-						gameState.favor = Math.min(20, gameState.favor * 2);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor * 2);
 						// ★★★ 修改：SAN上限+50%（上取整）★★★
 						const sanMaxGain = Math.ceil(gameState.sanMax * 0.5);
 						gameState.sanMax = gameState.sanMax + sanMaxGain;
@@ -1796,7 +1796,7 @@
 					const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
 					gameState.research = Math.min(20, maxStat);
 					gameState.social = Math.min(20, maxStat);
-					gameState.favor = Math.min(20, maxStat);
+					gameState.favor = Math.min(gameState.favorMax || 20, maxStat);
 					if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
 					if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
 					if (oldStats.favor !== maxStat) bonusDetails.push(`导师好感度 ${oldStats.favor} → ${gameState.favor}`);
@@ -1810,7 +1810,7 @@
 					const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
 					gameState.research = Math.min(20, gameState.research * 2);
 					gameState.social = Math.min(20, gameState.social * 2);
-					gameState.favor = Math.min(20, gameState.favor * 2);
+					gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor * 2);
 					bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
 					bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);
 					bonusDetails.push(`导师好感度 ${oldF} → ${gameState.favor} (×2)`);

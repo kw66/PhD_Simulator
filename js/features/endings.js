@@ -555,6 +555,8 @@
 					<div>👥 关系人数：${(gameState.relationships || []).length}</div>
 					<div>🧠 科研：${gameState.research} 👥 社交：${gameState.social}</div>
 					<div>❤️ 好感：${gameState.favor} 💰 金币：${gameState.gold}</div>
+					<div>💖 SAN上限：${gameState.sanMax || 20}</div>
+					<div>💀 难度分：<span style="color:${(gameState.difficultyPoints || 0) > 0 ? '#ef4444' : (gameState.difficultyPoints || 0) < 0 ? '#10b981' : '#6b7280'};font-weight:600;">${(gameState.difficultyPoints || 0) > 0 ? '+' + gameState.difficultyPoints : gameState.difficultyPoints || 0}</span></div>
 				</div>
 				<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:0.75rem;">
 					<span style="padding:3px 8px;border-radius:12px;${gameState.hasLover ? 'background:rgba(236,72,153,0.2);color:#ec4899;' : 'background:rgba(156,163,175,0.2);color:#9ca3af;'}">

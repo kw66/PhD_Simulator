@@ -1741,7 +1741,7 @@
                     gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
                     gameState.research = Math.min(20, gameState.research + newGains);
                     gameState.social = Math.min(20, gameState.social + newGains);
-                    gameState.favor = Math.min(20, gameState.favor + newGains);
+                    gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + newGains);
                     result += `，金钱觉醒(累计${gameState.goldSpentTotal}金)：SAN+${newGains}, 科研+${newGains}, 社交+${newGains}, 好感+${newGains}`;
                     // ★★★ 修复：科研和社交增加时检查解锁 ★★★
                     checkResearchUnlock();

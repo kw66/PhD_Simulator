@@ -1,7 +1,7 @@
 		// ==================== 生涯总结滑动卡片 ====================
 
 		let currentSlide = 0;
-		let totalSlides = 10;  // ★★★ 修改：增加到10页 ★★★
+		let totalSlides = 9;  // ★★★ 修改：减少到9页（去掉重要的第一次）★★★
 		let touchStartX = 0;
 		let touchEndX = 0;
 
@@ -195,8 +195,7 @@
 				generateSlide3_Highlights(),
 				generateSlide4_Lowlights(),
 				generateSlide5_Leisure(),
-				generateSlide6_FirstTimes(),
-				generateSlide7_BlessingsCurses(),  // ★★★ 新增：祝福与诅咒页 ★★★
+				generateSlide7_BlessingsCurses(),  // ★★★ 祝福与诅咒页 ★★★
 				generateSlide8_Relationships(),
 				generateSlide9_Achievements(),
 				generateSlide10_Share()
@@ -351,7 +350,7 @@
 							<div class="extra-item"><span class="extra-icon">🔬</span><span>做实验 ${gameState.expClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">✍️</span><span>写论文 ${gameState.writeClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">📚</span><span>看论文 ${gameState.readCount || 0}次</span></div>
-							<div class="extra-item"><span class="extra-icon">☕</span><span>喝咖啡 ${gameState.coffeeCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">☕</span><span>喝咖啡 ${gameState.coffeeBoughtCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">💼</span><span>打工 ${gameState.workCount || 0}次</span></div>
 						</div>
 					</div>
@@ -766,123 +765,84 @@
 			const bigbull = relationships.find(r => r.type === 'bigbull');
 			const others = relationships.filter(r => r.type !== 'advisor' && r.type !== 'lover' && r.type !== 'bigbull');
 
-			// ★★★ 按类型分组：师兄师姐、同门、师弟师妹 ★★★
-			const seniors = others.filter(r => r.type === 'senior');
-			const classmates = others.filter(r => r.type === 'classmate' || r.type === 'peer');
-			const juniors = others.filter(r => r.type === 'junior');
-			const otherFriends = others.filter(r => !['senior', 'classmate', 'peer', 'junior'].includes(r.type));
+			// ★★★ 计算总的任务次数和交流次数 ★★★
+			let totalTaskCount = 0;
+			let totalInteractCount = 0;
+			relationships.forEach(r => {
+				const stats = r.stats || {};
+				totalTaskCount += stats.taskCount || 0;
+				totalInteractCount += stats.interactCount || 0;
+			});
 
-			// ★★★ 判断是否需要分页（有实验室成员或其他朋友时分页）★★★
-			const hasLabMembers = seniors.length > 0 || classmates.length > 0 || juniors.length > 0;
-			const hasFriends = otherFriends.length > 0;
-			const needsPagination = hasLabMembers || hasFriends;
+			// ★★★ 生成关系列表（单页显示所有关系）★★★
+			const generateRelationItem = (relation, type) => {
+				const desc = RELATION_DESCRIPTIONS[type] || RELATION_DESCRIPTIONS['default'];
+				const typeName = desc.getTypeName ? desc.getTypeName(relation) : desc.typeName;
+				const stats = relation.stats || {};
+				const taskCount = stats.taskCount || 0;
+				const interactCount = stats.interactCount || 0;
 
-			// 生成VIP区域（导师、恋人、大牛）
-			let vipSection = '';
-			if (advisor || lover || bigbull) {
-				vipSection = `
-					<div class="relation-vip-section animate-fade-up">
-						<div class="section-label">💎 重要人物</div>
-						<div class="vip-cards">
-							${advisor ? generateRelationCardCompact(advisor, 'advisor', 0) : ''}
-							${lover ? generateRelationCardCompact(lover, 'lover', 1) : generateSingleCard()}
-							${bigbull ? generateRelationCardCompact(bigbull, 'bigbull', 2) : ''}
-						</div>
-					</div>
-				`;
-			}
-
-			// 生成同门区域
-			let labSection = '';
-			const labMembers = [...seniors, ...classmates, ...juniors];
-			if (labMembers.length > 0) {
-				labSection = `
-					<div class="relation-lab-section animate-fade-up delay-1">
-						<div class="section-label">🔬 实验室成员</div>
-						<div class="lab-member-grid">
-							${labMembers.map((r, i) => generateRelationCardMini(r, r.type, i)).join('')}
-						</div>
-					</div>
-				`;
-			}
-
-			// 生成其他朋友区域
-			let friendSection = '';
-			if (otherFriends.length > 0) {
-				friendSection = `
-					<div class="relation-friend-section animate-fade-up delay-2">
-						<div class="section-label">🤝 其他朋友</div>
-						<div class="friend-tags">
-							${otherFriends.map((r, i) => `
-								<div class="friend-tag animate-pop-in" style="--delay: ${i * 0.05}s">
-									<span class="friend-icon">${RELATION_DESCRIPTIONS[r.type]?.icon || '👤'}</span>
-									<span class="friend-name">${r.name}</span>
-								</div>
-							`).join('')}
-						</div>
-					</div>
-				`;
-			}
-
-			// ★★★ 分页布局：第一页VIP，第二页实验室成员+朋友 ★★★
-			if (needsPagination) {
 				return `
-					<div class="slide-content relationships-slide">
-						<div class="slide-bg relationships-bg"></div>
-						<div class="heart-particles"></div>
-						<div class="slide-inner">
-							<h2 class="slide-title animate-title">人际关系</h2>
-							<div class="relation-subpages">
-								<div class="relation-subpage active" data-subpage="0">
-									${vipSection}
-									<div class="relation-summary animate-fade-up delay-2">
-										<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
-										<div class="summary-badges">
-											${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
-											${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
-										</div>
-									</div>
-								</div>
-								<div class="relation-subpage" data-subpage="1">
-									${labSection}
-									${friendSection}
-									<div class="relation-summary animate-fade-up delay-2">
-										<div class="summary-badges">
-											${seniors.length >= 2 ? '<span class="summary-badge senior-badge">👨‍🎓 师门人脉</span>' : ''}
-											${juniors.length >= 2 ? '<span class="summary-badge junior-badge">👶 桃李满门</span>' : ''}
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="relation-subpage-nav">
-								<span class="subpage-dot active" onclick="switchRelationSubpage(0)"></span>
-								<span class="subpage-dot" onclick="switchRelationSubpage(1)"></span>
-							</div>
-						</div>
+					<div class="relation-row">
+						<span class="relation-row-icon">${desc.icon}</span>
+						<span class="relation-row-name">${relation.name}</span>
+						<span class="relation-row-type">${typeName}</span>
+						<span class="relation-row-stats">
+							<span class="row-stat">📋${taskCount}</span>
+							<span class="row-stat">💬${interactCount}</span>
+						</span>
 					</div>
 				`;
-			} else {
-				// 不需要分页时的简单布局
-				return `
-					<div class="slide-content relationships-slide">
-						<div class="slide-bg relationships-bg"></div>
-						<div class="heart-particles"></div>
-						<div class="slide-inner">
-							<h2 class="slide-title animate-title">人际关系</h2>
-							<div class="relations-container">
-								${vipSection}
+			};
+
+			// 生成所有关系行
+			let relationRows = '';
+			if (advisor) relationRows += generateRelationItem(advisor, 'advisor');
+			if (lover) relationRows += generateRelationItem(lover, 'lover');
+			if (bigbull) relationRows += generateRelationItem(bigbull, 'bigbull');
+			others.forEach(r => {
+				relationRows += generateRelationItem(r, r.type);
+			});
+
+			return `
+				<div class="slide-content relationships-slide">
+					<div class="slide-bg relationships-bg"></div>
+					<div class="heart-particles"></div>
+					<div class="slide-inner">
+						<h2 class="slide-title animate-title">人际关系</h2>
+
+						<!-- 总计统计 -->
+						<div class="relation-total-stats animate-fade-up">
+							<div class="total-stat-item">
+								<span class="total-stat-icon">👥</span>
+								<span class="total-stat-value">${relationships.length}</span>
+								<span class="total-stat-label">结识人数</span>
 							</div>
-							<div class="relation-summary animate-fade-up delay-3">
-								<div class="summary-text">共结识 <span class="highlight-num">${relationships.length}</span> 位重要人物</div>
-								<div class="summary-badges">
-									${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
-									${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
-								</div>
+							<div class="total-stat-item">
+								<span class="total-stat-icon">📋</span>
+								<span class="total-stat-value">${totalTaskCount}</span>
+								<span class="total-stat-label">完成任务</span>
+							</div>
+							<div class="total-stat-item">
+								<span class="total-stat-icon">💬</span>
+								<span class="total-stat-value">${totalInteractCount}</span>
+								<span class="total-stat-label">交流次数</span>
 							</div>
 						</div>
+
+						<!-- 关系列表 -->
+						<div class="relation-list-container animate-fade-up delay-1">
+							${relationRows || '<div class="empty-message"><div class="empty-icon">😔</div><div class="empty-text">独行侠模式</div></div>'}
+						</div>
+
+						<!-- 徽章 -->
+						<div class="relation-badges animate-fade-up delay-2">
+							${gameState.hasLover ? '<span class="summary-badge love-badge">❤️ 有情人终成眷属</span>' : ''}
+							${gameState.bigBullCooperation ? '<span class="summary-badge collab-badge">🌟 大牛联培</span>' : ''}
+						</div>
 					</div>
-				`;
-			}
+				</div>
+			`;
 		}
 
 		// ★★★ 新增：紧凑版关系卡片（VIP区域用）★★★
@@ -1138,13 +1098,7 @@
 			// ★★★ 新增：计算里程碑数量 ★★★
 			const milestoneCount = (gameState.careerMilestones || []).length;
 
-			// ★★★ 新增：生成标签 ★★★
-			const tags = [];
-			if (gameState.isReversed) tags.push('逆位');
-			if (gameState.reversedAwakened) tags.push('觉醒');
-			if (gameState.hiddenAwakened) tags.push('隐藏觉醒');
-			if (paperNature > 0) tags.push('Nature作者');
-			if (gameState.paperA >= 3) tags.push('高产学者');
+			// ★★★ 删除：不再使用标签，改为显示毕业属性 ★★★
 
 			// ★★★ 新增：获取难度分 ★★★
 			const difficultyPoints = gameState.difficultyPoints || 0;
@@ -1220,12 +1174,34 @@
 									${paperNatureSub > 0 ? `<span class="paper-item naturesub-item">🌟子×${paperNatureSub}</span>` : ''}
 								</div>
 
-								<!-- 标签（限制最多4个） -->
-								${tags.length > 0 ? `
-									<div class="poster-tags">
-										${tags.slice(0, 4).map(tag => `<span class="poster-tag">${tag}</span>`).join('')}
+								<!-- 毕业属性 -->
+								<div class="poster-final-stats">
+									<div class="final-stat-item">
+										<span class="final-stat-icon">❤️</span>
+										<span class="final-stat-value">${gameState.sanMax}</span>
+										<span class="final-stat-label">SAN上限</span>
 									</div>
-								` : ''}
+									<div class="final-stat-item">
+										<span class="final-stat-icon">🧠</span>
+										<span class="final-stat-value">${gameState.research}</span>
+										<span class="final-stat-label">科研</span>
+									</div>
+									<div class="final-stat-item">
+										<span class="final-stat-icon">👥</span>
+										<span class="final-stat-value">${gameState.social}</span>
+										<span class="final-stat-label">社交</span>
+									</div>
+									<div class="final-stat-item">
+										<span class="final-stat-icon">💖</span>
+										<span class="final-stat-value">${gameState.favor}</span>
+										<span class="final-stat-label">好感</span>
+									</div>
+									<div class="final-stat-item">
+										<span class="final-stat-icon">💰</span>
+										<span class="final-stat-value">${gameState.gold}</span>
+										<span class="final-stat-label">金币</span>
+									</div>
+								</div>
 
 								<!-- 成就（限制最多4个） -->
 								${achievements.length > 0 ? `
@@ -2596,6 +2572,110 @@
 					border: 1px solid rgba(255,255,255,0.15);
 				}
 
+				/* ★★★ 新增：人际关系单页布局样式 ★★★ */
+				.relation-total-stats {
+					display: flex;
+					justify-content: center;
+					gap: 20px;
+					margin-bottom: 15px;
+				}
+
+				.total-stat-item {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					background: rgba(255,255,255,0.12);
+					padding: 12px 18px;
+					border-radius: 12px;
+					min-width: 70px;
+				}
+
+				.total-stat-icon {
+					font-size: 1.3rem;
+					margin-bottom: 4px;
+				}
+
+				.total-stat-value {
+					font-size: 1.4rem;
+					font-weight: 700;
+					color: #fff;
+				}
+
+				.total-stat-label {
+					font-size: 0.65rem;
+					color: rgba(255,255,255,0.7);
+					margin-top: 2px;
+				}
+
+				.relation-list-container {
+					width: 100%;
+					max-width: 340px;
+					max-height: 280px;
+					overflow-y: auto;
+					background: rgba(255,255,255,0.05);
+					border-radius: 12px;
+					padding: 8px;
+				}
+
+				.relation-row {
+					display: flex;
+					align-items: center;
+					gap: 10px;
+					padding: 10px 12px;
+					background: rgba(255,255,255,0.08);
+					border-radius: 10px;
+					margin-bottom: 6px;
+				}
+
+				.relation-row:last-child {
+					margin-bottom: 0;
+				}
+
+				.relation-row-icon {
+					font-size: 1.3rem;
+					width: 32px;
+					text-align: center;
+				}
+
+				.relation-row-name {
+					flex: 1;
+					font-size: 0.9rem;
+					font-weight: 600;
+					color: #fff;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				.relation-row-type {
+					font-size: 0.65rem;
+					color: rgba(255,255,255,0.6);
+					background: rgba(255,255,255,0.1);
+					padding: 2px 8px;
+					border-radius: 8px;
+				}
+
+				.relation-row-stats {
+					display: flex;
+					gap: 8px;
+				}
+
+				.row-stat {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.8);
+					background: rgba(255,255,255,0.1);
+					padding: 3px 6px;
+					border-radius: 6px;
+				}
+
+				.relation-badges {
+					display: flex;
+					justify-content: center;
+					gap: 8px;
+					margin-top: 12px;
+					flex-wrap: wrap;
+				}
+
 				.vip-cards {
 					display: flex;
 					flex-direction: column;
@@ -3093,23 +3173,41 @@
 					border-radius: 8px;
 				}
 
-				/* ★★★ 新增：标签行 ★★★ */
-				.poster-tags {
+				/* ★★★ 新增：毕业属性行 ★★★ */
+				.poster-final-stats {
 					display: flex;
 					justify-content: center;
-					gap: 5px;
-					margin-bottom: 10px;
+					gap: 8px;
+					margin: 10px 0;
 					flex-wrap: wrap;
 				}
 
-				.poster-tag {
-					font-size: 0.55rem;
-					padding: 2px 6px;
+				.final-stat-item {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+					padding: 6px 10px;
 					border-radius: 8px;
-					background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
-					color: #667eea;
-					border: 1px solid rgba(102,126,234,0.3);
+					min-width: 45px;
 				}
+
+				.final-stat-icon {
+					font-size: 0.9rem;
+				}
+
+				.final-stat-value {
+					font-size: 0.85rem;
+					font-weight: 700;
+					color: #333;
+				}
+
+				.final-stat-label {
+					font-size: 0.55rem;
+					color: #666;
+				}
+
+				/* ★★★ 删除：不再使用标签样式 ★★★ */
 
 				.poster-special {
 					display: flex;

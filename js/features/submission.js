@@ -153,7 +153,8 @@
 			const hasDecay = actualSanGain < baseSan || actualFavorGain < baseFavor;
 
 			gameState.san = Math.min(gameState.sanMax, gameState.san + actualSanGain);
-			gameState.favor = Math.min(20, gameState.favor + actualFavorGain);
+			const favorMax = gameState.favorMax || 20;
+			gameState.favor = Math.min(favorMax, gameState.favor + actualFavorGain);
 			gameState.totalScore += scoreMap[grade];
 
 			if (grade === 'A') {

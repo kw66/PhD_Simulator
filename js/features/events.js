@@ -99,7 +99,8 @@
                     gameState.consecutiveStampGifts = 0;
                     addLog('教师节', '赠送茶叶', '金钱-1，导师开心收下茶叶，导师好感度+1');
                     closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 1);
+                    const favorMax = gameState.favorMax || 20;
+                    gameState.favor = Math.min(favorMax, gameState.favor + 1);
                     changeGold(-1);
                 }},
                 { text: '📮 赠送邮票（金钱-3，好感+2）', class: 'btn-warning', action: () => {
@@ -113,7 +114,8 @@
                     }
                     addLog('教师节', '赠送邮票', logText);
                     closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 2);
+                    const favorMax = gameState.favorMax || 20;
+                    gameState.favor = Math.min(favorMax, gameState.favor + 2);
                     changeGold(-3);
                 }}
             ]);
@@ -169,7 +171,7 @@
 				</div>
 				<p>你来到了<strong>${location}</strong>参加CCIG，在会议期间你打算：</p>`,
 				[
-					{ text: '📚 认真听报告（临时+永久buff）', class: 'btn-primary', action: () => {
+					{ text: '📚 认真听报告（下次idea+5，永久idea+1）', class: 'btn-primary', action: () => {
 						gameState.buffs.temporary.push({
 							type: 'idea_bonus',
 							name: '下次想idea分数+5',
@@ -470,7 +472,7 @@
 			// 预计算强撑的结果用于按钮显示
 			const baseSanCostHigh = -8;
 			const actualSanCostHigh = getActualSanChange(baseSanCostHigh);
-			const strongText = gameState.san >= 8 ? `SAN${actualSanCostHigh}` : '上限-4';
+			const strongText = gameState.san >= 8 ? `SAN≥8：SAN${actualSanCostHigh}` : 'SAN<8：上限-4';
 
 			showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
 				{ text: `强撑（${strongText}）`, class: 'btn-danger', action: () => {
@@ -526,9 +528,9 @@
 			const verticalSanCost = getActualSanChange(-5);
 			const shareSanCost = getActualSanChange(-2);
 			// 拒绝项目的惩罚预览
-			const rejectText = gameState.research < 6 ? '好感-2' : (gameState.research < 12 ? '好感-1' : '无');
+			const rejectText = gameState.research < 6 ? '科研<6：好感-2' : (gameState.research < 12 ? '科研6-11：好感-1' : '科研≥12：无');
 			// 分担项目的惩罚预览
-			const shareText = gameState.social < 6 ? `SAN${shareSanCost}，社交-1` : (gameState.social < 12 ? `SAN${shareSanCost}` : '无');
+			const shareText = gameState.social < 6 ? `社交<6：SAN${shareSanCost}，社交-1` : (gameState.social < 12 ? `社交6-11：SAN${shareSanCost}` : '社交≥12：无');
 
             showModal('💼 随机事件', '<p>导师安排你做项目。</p>', [
                 { text: `横向项目（SAN${horizonSanCost}，好感+1，金钱+5）`, class: 'btn-warning', action: () => {
@@ -543,7 +545,7 @@
                     const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     addLog('随机事件', '导师安排你做项目 - 横向项目', `成功结项，${sanText}，导师好感度+1，金钱+5`);
                     closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 1);
+                    gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + 1);
                     gameState.gold += 5;
                     clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                     changeSan(baseSanCost);
@@ -560,7 +562,7 @@
                     const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     addLog('随机事件', '导师安排你做项目 - 纵向项目', `成功结项，${sanText}，导师好感度+1，科研能力+1`);
                     closeModal();
-                    gameState.favor = Math.min(20, gameState.favor + 1);
+                    gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + 1);
                     changeResearch(1);
                     changeSan(baseSanCost);
                 }},
@@ -685,7 +687,7 @@
                     
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但导师大力夸赞了你的见解，${sanText}，导师好感度+2`);
-                        gameState.favor = Math.min(20, gameState.favor + 2);
+                        gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + 2);
                     } else {
                         addLog('随机事件', '实验室召开组会 - 讲解系列论文', `虽然很辛苦但运气不好导师没来参会，${sanText}`);
                     }
@@ -706,7 +708,7 @@
 
         function showRandomEvent7() {
 			// 预计算用于按钮显示
-			const badmintonText = gameState.san >= 20 ? 'SAN+2，社交+1' : 'SAN+2';
+			const badmintonText = gameState.san >= 20 ? 'SAN≥20：SAN+2，社交+1' : 'SAN<20：SAN+2';
 
             showModal('🎉 随机事件', '<p>实验室组织团建。</p>', [
 				{ text: `🏸 打羽毛球（${badmintonText}）`, class: 'btn-primary', action: () => {
@@ -786,7 +788,7 @@
 						gameState.san = Math.min(gameState.sanMax, gameState.san + 5);
 						changeGold(-2);
 					} else {
-						gameState.favor = Math.min(20, gameState.favor + 1);
+						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + 1);
 						addLog('随机事件', '实验室组织团建 - 聚餐', '运气好导师请客，SAN值+5，导师好感度+1');
 						changeSan(5);
 					}
@@ -796,7 +798,7 @@
 
         function showRandomEvent8() {
 			// 预计算用于按钮显示
-			const gpuText = gameState.favor >= 12 ? '好感≥12：50%永久实验+2次' : (gameState.favor >= 6 ? '好感6-11：50%永久实验+1次' : '好感≤5：50%永久实验+0次');
+			const gpuText = gameState.favor >= 12 ? '好感≥12：50%永久实验+3次' : (gameState.favor >= 6 ? '好感6-11：50%永久实验+2次' : '好感≤5：50%永久实验+1次');
 			const salaryText = gameState.favor >= 12 ? '好感≥12：金钱+6' : (gameState.favor >= 6 ? '好感6-11：金钱+4' : '好感<6：金钱+2');
 
             showModal('💰 随机事件', '<p>导师科研经费充足，你建议。</p>', [
@@ -896,7 +898,7 @@
 			// 预计算用于按钮显示
 			const exchangeText = gameState.social < 6 ? '社交<6：idea+5但被偷÷2' : '社交≥6：idea+5';
 			const mutualSanCost = getActualSanChange(-2);
-			const coopText = gameState.social < 6 ? `社交<6：SAN${mutualSanCost}，想×1写×1` : '社交≥6：想×1写×1';
+			const coopText = gameState.social < 6 ? `社交<6：SAN${mutualSanCost}，想+1次写+1次` : '社交≥6：想+1次写+1次';
 
             showModal('🤝 随机事件', '<p>同门找你合作论文，你会选择。</p>', [
                 { text: `学术交流（${exchangeText}）`, class: 'btn-primary', action: () => {
@@ -912,7 +914,7 @@
                     updateAllUI();
                     updateBuffs();
                 }},
-				{ text: `约定互挂论文（SAN${mutualSanCost}，50%buff）`, class: 'btn-warning', action: () => {
+				{ text: `约定互挂论文（SAN${mutualSanCost}，50%下篇引用×2）`, class: 'btn-warning', action: () => {
 					closeModal();
 					// ★★★ 新增：SAN-2 ★★★
 					const baseSanCost = -2;

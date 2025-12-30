@@ -1422,9 +1422,10 @@
 
         // 缓存投稿数据（游戏结束时批量写入，节省数据库流量）
         function recordSubmission(gameMonth, grade, submittedScore, result, isReversed) {
-            // ★★★ 新增：负难度分时不记录投稿数据 ★★★
-            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-                console.log('⚠️ 负难度分，投稿数据不计入统计');
+            // ★★★ 修改：使用诅咒或祝福时不记录投稿数据 ★★★
+            const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+            if (usedCurseOrBlessing) {
+                console.log('⚠️ 使用了诅咒/祝福，投稿数据不计入统计');
                 return;
             }
 
@@ -1445,9 +1446,10 @@
 
         // 批量写入所有缓存的投稿数据（游戏结束时调用）
         async function batchRecordSubmissions() {
-            // ★★★ 新增：负难度分时不上传统计数据 ★★★
-            if (gameState.difficultyPoints !== undefined && gameState.difficultyPoints < 0) {
-                console.log('⚠️ 负难度分，跳过批量写入投稿数据');
+            // ★★★ 修改：使用诅咒或祝福时不上传统计数据 ★★★
+            const usedCurseOrBlessing = typeof hasAnyCurseOrBlessing === 'function' && hasAnyCurseOrBlessing();
+            if (usedCurseOrBlessing) {
+                console.log('⚠️ 使用了诅咒/祝福，跳过批量写入投稿数据');
                 gameState.pendingSubmissions = [];
                 return;
             }

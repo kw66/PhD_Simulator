@@ -1312,12 +1312,20 @@
 				`;
 			} else {
 				// 默认样式（用于开始页面和结局弹窗）- 淡金色真大多数配色
+				// ★★★ 新增：获取当前局的SAN上限和难度分 ★★★
+				const currentSanMax = (typeof gameState !== 'undefined' && gameState.sanMax) ? gameState.sanMax : 0;
+				const currentDifficultyPoints = (typeof gameState !== 'undefined' && gameState.difficultyPoints) ? gameState.difficultyPoints : 0;
+
 				return `
 					<div class="player-stats-box">
 						<div class="ps-row">
 							<span class="ps-item"><i class="fas fa-check-circle"></i> 通关数 <strong>${stats.clearCount}/${stats.totalGames}</strong></span>
 							<span class="ps-item"><i class="fas fa-trophy"></i> 总成就 <strong>${stats.totalAchievements}/${stats.maxAchievements}</strong></span>
 							<span class="ps-item"><i class="fas fa-user-check"></i> 通关角色 <strong>${stats.totalClearedCharacters}/13</strong></span>
+						</div>
+						<div class="ps-row ps-row-game">
+							<span class="ps-item"><i class="fas fa-heart"></i> SAN上限 <strong>${currentSanMax}</strong></span>
+							<span class="ps-item ${currentDifficultyPoints > 0 ? 'ps-difficulty' : ''}"><i class="fas fa-skull"></i> 难度分 <strong>${currentDifficultyPoints > 0 ? '+' + currentDifficultyPoints : '0'}</strong></span>
 						</div>
 					</div>
 				`;
