@@ -1948,35 +1948,35 @@
 			
 			// ==================== 定义基础选项（C类可用，不需要任何条件）====================
 			const baseOptions = [
-				{ text: '🏖️ 顺便旅游', fn: () => { 
+				{ text: '🏖️ 顺便旅游（SAN+6）', fn: () => {
 					gameState.tourCount++;
 					addLog('开会事件', `在${confLocation.city}顺便旅游`, 'SAN值+6');
 					return changeSan(6);
 				}},
-				{ text: '☕ 茶歇+晚宴', fn: () => { 
+				{ text: '☕ 茶歇+晚宴（SAN+1，社交+1）', fn: () => {
 					gameState.teaBreakCount++;
 					addLog('开会事件', '茶歇+晚宴', 'SAN值+1，社交能力+1');
 					return changeStats({ san: 1, social: 1 });
 				}},
-				{ text: '🔬 同行交流', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false }); 
+				{ text: '🔬 同行交流（下次实验+2次）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false });
 					addLog('开会事件', '同行交流', '临时buff-下次做实验多做3次');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '💡 广泛交流', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false }); 
+				{ text: '💡 广泛交流（下次想idea+2次）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false });
 					addLog('开会事件', '广泛交流', '临时buff-下次想idea多想3次');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🤝 找同学合作', fn: () => { 
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false }); 
+				{ text: '🤝 找同学合作（下次实验+5）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
 					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🌟 找著名学者交流', fn: () => {
+				{ text: '🌟 找著名学者交流（下次idea×1.25）', fn: () => {
 					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false });
 					gameState.metBigBull = true;
 					addLog('开会事件', '找著名学者交流', '临时buff-下次想idea分数×1.25');
@@ -1984,7 +1984,7 @@
 					return true;
 				}},
 				// 找企业交流是基础选项
-				{ text: '🏢 找企业交流', fn: () => {
+				{ text: '🏢 找企业交流（下次实验×1.25）', fn: () => {
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
 					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false });
 
@@ -2019,7 +2019,7 @@
 					// ★★★ 修改：联培后可以继续找大牛合作，每次科研上限+1 ★★★
 					if (gameState.bigBullCooperation) {
 						advancedOptions.push({
-							text: '🎓 找大牛合作',
+							text: '🎓 找大牛合作（下次论文+8，社交+1，科研上限+1）',
 							fn: () => {
 								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 								gameState.researchMax = (gameState.researchMax || 20) + 1;
@@ -2033,7 +2033,7 @@
 					} else if (!gameState.metBigBullCoop) {
 						// 联培前的首次找大牛合作
 						advancedOptions.push({
-							text: '🎓 找大牛合作',
+							text: '🎓 找大牛合作（下次论文+8，社交+1）',
 							fn: () => {
 								gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 								gameState.metBigBull = true;
@@ -2049,8 +2049,8 @@
 				
 				// 和活泼的异性学者交流
 				if (!gameState.metBeautiful && !gameState.permanentlyBlockedBeautifulLover && !gameState.hasLover) {
-					advancedOptions.push({ 
-						text: '💕 和活泼的异性学者交流', 
+					advancedOptions.push({
+						text: '💕 和活泼的异性学者交流（SAN+5，社交+1）',
 						fn: () => { 
 							gameState.metBeautiful = true;
 							gameState.beautifulCount = 1;
@@ -2063,8 +2063,8 @@
 				
 				// 和聪慧的异性学者交流
 				if (!gameState.metSmart && !gameState.permanentlyBlockedSmartLover && !gameState.hasLover) {
-					advancedOptions.push({ 
-						text: '🧠 和聪慧的异性学者交流', 
+					advancedOptions.push({
+						text: '🧠 和聪慧的异性学者交流（SAN+1，社交+1，下次想idea+1次）',
 						fn: () => { 
 							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
 							gameState.metSmart = true;
@@ -2083,8 +2083,8 @@
 			
 			// 和上次那个大牛深入合作（需要科研≥12）
 			if (gameState.research >= 12 && gameState.metBigBullCoop && !gameState.bigBullCooperation && !gameState.permanentlyBlockedBigBullCoop) {
-				followUpOptions.push({ 
-					text: '🌟 和上次那个大牛深入合作', 
+				followUpOptions.push({
+					text: '🌟 和上次那个大牛深入合作（下次论文+8）',
 					fn: () => {
 						gameState.buffs.temporary.push({ type: 'write_bonus', name: '下次写论文分数+8', value: 8, permanent: false });
 						gameState.bigBullDeepCount = (gameState.bigBullDeepCount || 0) + 1;
@@ -2101,8 +2101,8 @@
 
 			// 和上次那个活泼的异性学者交流（需要社交≥12）
 			if (gameState.social >= 12 && gameState.metBeautiful && !gameState.hasLover && !gameState.permanentlyBlockedBeautifulLover) {
-				followUpOptions.push({ 
-					text: '💕 和上次那个活泼的异性学者交流', 
+				followUpOptions.push({
+					text: '💕 和上次那个活泼的异性学者交流（SAN+8，SAN上限+3）',
 					fn: () => {
 						gameState.beautifulCount = (gameState.beautifulCount || 0) + 1;
 						addLog('开会事件', '【社交>=12】和上次那个活泼的异性学者交流', 'SAN值+8，SAN值上限+3');
@@ -2119,8 +2119,8 @@
 
 			// 和上次那个聪慧的异性学者交流（需要社交≥12）
 			if (gameState.social >= 12 && gameState.metSmart && !gameState.hasLover && !gameState.permanentlyBlockedSmartLover) {
-				followUpOptions.push({ 
-					text: '🧠 和上次那个聪慧的异性学者交流', 
+				followUpOptions.push({
+					text: '🧠 和上次那个聪慧的异性学者交流（SAN+1，科研+1）',
 					fn: () => {
 						gameState.smartCount = (gameState.smartCount || 0) + 1;
 						addLog('开会事件', '和【社交>=12】上次那个聪慧的异性学者交流', 'SAN值+1，科研能力+1');
