@@ -635,8 +635,8 @@
 			if (btn) {
 				// 格式：难度调整（数值），根据正负显示不同颜色背景
 				const displayPoints = points > 0 ? `+${points}` : points;
-				const bgColor = points > 0 ? 'rgba(239, 68, 68, 0.15)' : (points < 0 ? 'rgba(16, 185, 129, 0.15)' : 'transparent');
-				const textColor = points > 0 ? '#dc2626' : (points < 0 ? '#059669' : 'inherit');
+				const bgColor = points > 0 ? '#ef4444' : (points < 0 ? '#10b981' : 'transparent');
+				const textColor = points !== 0 ? '#ffffff' : 'inherit';
 				const badgeStyle = points !== 0 ? `background:${bgColor};color:${textColor};padding:2px 6px;border-radius:8px;font-weight:600;` : '';
 				btn.innerHTML = `难度调整 <span style="${badgeStyle}">${displayPoints}</span>`;
 			}
