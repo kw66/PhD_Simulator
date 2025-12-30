@@ -991,10 +991,17 @@
 			// 先检查本地缓存
 			const cached = getLocalCache(CACHE_KEYS.CHARACTER_RECORDS);
 			if (cached) {
-				console.log('使用本地缓存的角色记录');
-				globalCharacterRecords = cached;
-				globalCharacterRecordsTime = Date.now();
-				return cached;
+				// ★★★ 检查缓存数据是否完整（包含maxDifficulty字段）★★★
+				const sampleRecord = cached.normal?.normal?.history;
+				if (sampleRecord && sampleRecord.maxDifficulty === undefined) {
+					console.log('⚠️ 角色记录缓存版本过旧，清除并重新加载');
+					clearLocalCache(CACHE_KEYS.CHARACTER_RECORDS);
+				} else {
+					console.log('使用本地缓存的角色记录');
+					globalCharacterRecords = cached;
+					globalCharacterRecordsTime = Date.now();
+					return cached;
+				}
 			}
 			
 			if (!window.supabaseClient) return null;

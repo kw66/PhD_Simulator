@@ -240,8 +240,8 @@
 			// 获取全球记录
 			const mode = statsIsReversed ? 'reversed' : 'normal';
 			const globalRecord = globalCharacterRecords?.[mode]?.[statsCharId] || {
-				today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-				history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+				today: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 },
+				history: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 }
 			};
 			const hasGlobalRecord = globalRecord.history.maxScore > 0;
 
@@ -348,21 +348,21 @@
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? '💀' + localRecord.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? localRecord.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">今日全球</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? '💀' + globalRecord.today.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? globalRecord.today.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">历史全球</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? '💀' + globalRecord.history.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? globalRecord.history.maxDifficulty : '-'}</td>
 								</tr>
 							</tbody>
 						</table>
@@ -683,8 +683,8 @@
 				// 获取全球记录
 				const mode = statsIsReversed ? 'reversed' : 'normal';
 				const globalRecord = globalRecords?.[mode]?.[statsCharId] || {
-					today: { maxScore: 0, maxCitations: 0, maxAchievements: 0 },
-					history: { maxScore: 0, maxCitations: 0, maxAchievements: 0 }
+					today: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 },
+					history: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 }
 				};
 				const hasGlobalRecord = globalRecord.history.maxScore > 0;
 				
@@ -749,21 +749,21 @@
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? '💀' + localRecord.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? localRecord.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">今日全球</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? '💀' + globalRecord.today.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? globalRecord.today.maxDifficulty : '-'}</td>
 								</tr>
 								<tr>
 									<td style="padding:3px 4px;font-weight:600;">历史全球</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
 									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? '💀' + globalRecord.history.maxDifficulty : '-'}</td>
+									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? globalRecord.history.maxDifficulty : '-'}</td>
 								</tr>
 							</tbody>
 						</table>
