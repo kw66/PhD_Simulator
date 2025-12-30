@@ -1231,7 +1231,7 @@
 					<div style="font-weight:600;margin-bottom:10px;color:var(--primary-color);">📖 模式介绍</div>
 					<div style="font-size:0.85rem;line-height:1.6;color:var(--text-secondary);">
 						<p style="margin-bottom:8px;">在时空旅人模式中，你将扮演一位来自未来的研究生，拥有<strong>回溯时空</strong>的能力（奇异博士？）。</p>
-						<p style="margin-bottom:8px;">🔮 <strong>游戏目标</strong>：你将遍历所有可能达到博士毕业获得诺贝尔奖的壮举（idea分或者实验分达到1000），现实中德布罗意凭借博士论文提出了物质波理论，获得了1929年诺贝尔物理学奖。</p>
+						<p style="margin-bottom:8px;">🔮 <strong>游戏目标</strong>：你将遍历所有可能，达到博士毕业获得诺贝尔奖的壮举（idea分或者实验分达到1000），现实中德布罗意凭借博士论文提出了物质波理论，获得了1929年诺贝尔物理学奖。</p>
 						<p style="margin-bottom:8px;">⚡ <strong>预知未来</strong>：你将不断的进行每一学年，并操纵所有遇到过的随机事件，审稿结果等，最终你将达到每个阶段的最优解。</p>
 						<p style="margin-bottom:0;">💫 <strong>命运交织</strong>：你的每个周目可以通过完成不同的任务来取得永久的跨局加成效果。</p>
 					</div>

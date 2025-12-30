@@ -82,7 +82,7 @@
 
         function triggerTeachersDayEvent() {
             showModal('🎁 教师节', '<p>教师节到了，你准备送导师什么礼物？</p>', [
-                { text: '什么也不送', class: 'btn-info', action: () => {
+                { text: '什么也不送（好感<6时-1）', class: 'btn-info', action: () => {
                     // ★★★ 重置连续邮票计数 ★★★
                     gameState.consecutiveStampGifts = 0;
                     closeModal();
@@ -94,7 +94,7 @@
                         changeFavor(-1);
                     }
                 }},
-                { text: '🍵 赠送茶叶（1金）', class: 'btn-primary', action: () => {
+                { text: '🍵 赠送茶叶（金钱-1，好感+1）', class: 'btn-primary', action: () => {
                     // ★★★ 重置连续邮票计数 ★★★
                     gameState.consecutiveStampGifts = 0;
                     addLog('教师节', '赠送茶叶', '金钱-1，导师开心收下茶叶，导师好感度+1');
@@ -102,7 +102,7 @@
                     gameState.favor = Math.min(20, gameState.favor + 1);
                     changeGold(-1);
                 }},
-                { text: '📮 赠送邮票（3金）', class: 'btn-warning', action: () => {
+                { text: '📮 赠送邮票（金钱-3，好感+2）', class: 'btn-warning', action: () => {
                     // ★★★ 连续邮票计数 ★★★
                     gameState.consecutiveStampGifts = (gameState.consecutiveStampGifts || 0) + 1;
                     let logText = '金钱-3，导师开心收下邮票并点了点头，导师好感度+2';
@@ -138,7 +138,7 @@
 						closeModal();
 						updateAllUI();
 					}},
-					{ text: '👨‍🏫 导师报销', class: 'btn-primary', action: () => {
+					{ text: '👨‍🏫 导师报销（好感<6时-1）', class: 'btn-primary', action: () => {
 						closeModal();
 						if (gameState.favor >= 6) {
 							addLog('CCIG', `导师报销参加CCIG @ ${location}`, '导师爽快答应');
@@ -371,8 +371,10 @@
 		}
 
         function showRandomEvent1() {
+            const baseSanCost = -3;
+            const actualSanCost = getActualSanChange(baseSanCost);
             showModal('📚 随机事件', '<p>导师派你指导本科生毕设。</p>', [
-                { text: '残忍拒绝', class: 'btn-danger', action: () => {
+                { text: '残忍拒绝（好感-1）', class: 'btn-danger', action: () => {
                     // ★★★ 拒绝指导本科生计数 ★★★
                     gameState.rejectedMentoring = true;
                     checkLearnToSayNo();
@@ -380,10 +382,8 @@
                     closeModal();
                     changeFavor(-1);
                 }},
-                { text: '亲力亲为', class: 'btn-primary', action: () => {
+                { text: `亲力亲为（SAN${actualSanCost}，50%科研+1）`, class: 'btn-primary', action: () => {
                     closeModal();
-                    const baseSanCost = -3;
-                    const actualSanCost = getActualSanChange(baseSanCost);
                     const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
 
                     const becomesJunior = Math.random() < 0.5;
@@ -405,7 +405,7 @@
                         }, 300);
                     }
                 }},
-                { text: '让师弟师妹去指导', class: 'btn-info', action: () => {
+                { text: '让师弟师妹去指导（社交<6时-1）', class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
@@ -419,8 +419,10 @@
         }
 
         function showRandomEvent2() {
+            const baseSanCost = -2;
+            const actualSanCost = getActualSanChange(baseSanCost);
             showModal('📝 随机事件', '<p>导师让你帮他审稿。</p>', [
-                { text: '以没时间为由拒绝', class: 'btn-danger', action: () => {
+                { text: '以没时间为由拒绝（好感-1）', class: 'btn-danger', action: () => {
                     // ★★★ 拒绝审稿计数 ★★★
                     gameState.rejectedReview = true;
                     checkLearnToSayNo();
@@ -428,10 +430,8 @@
                     closeModal();
                     changeFavor(-1);
                 }},
-                { text: '认真审稿', class: 'btn-primary', action: () => {
+                { text: `认真审稿（SAN${actualSanCost}，50%idea+4）`, class: 'btn-primary', action: () => {
                     closeModal();
-                    const baseSanCost = -2;
-                    const actualSanCost = getActualSanChange(baseSanCost);
                     const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
                     
                     if (Math.random() < 0.5) {
@@ -443,7 +443,7 @@
                     }
                     changeSan(baseSanCost);
                 }},
-                { text: '交给师弟师妹', class: 'btn-info', action: () => {
+                { text: '交给师弟师妹（社交<6时-1）', class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
@@ -467,8 +467,13 @@
 				gameState.achievementConditions.sickly = true;
 			}
 
+			// 预计算强撑的结果用于按钮显示
+			const baseSanCostHigh = -8;
+			const actualSanCostHigh = getActualSanChange(baseSanCostHigh);
+			const strongText = gameState.san >= 8 ? `SAN${actualSanCostHigh}` : '上限-4';
+
 			showModal('🤧 随机事件', '<p>突然感冒了。</p>', [
-				{ text: '强撑', class: 'btn-danger', action: () => {
+				{ text: `强撑（${strongText}）`, class: 'btn-danger', action: () => {
 					closeModal();
 					if (gameState.san>=8) {
 						const baseSanCost = -8;
@@ -495,12 +500,12 @@
 						updateAllUI();
 					}
 				}},
-				{ text: '自己买感冒药', class: 'btn-primary', action: () => {
+				{ text: '自己买感冒药（金钱-2）', class: 'btn-primary', action: () => {
 					addLog('随机事件', '突然感冒了 - 自己买感冒药', '喝999感冒灵好了，金钱-2');
 					closeModal();
 					changeGold(-2);
 				}},
-				{ text: '去医院看病', class: 'btn-info', action: () => {
+				{ text: '去医院看病（SAN+2，金钱-4）', class: 'btn-info', action: () => {
 					// ★★★ 新增：去医院计数 ★★★
 					gameState.hospitalCount = (gameState.hospitalCount || 0) + 1;
 					if (gameState.hospitalCount >= 3) {
@@ -516,8 +521,17 @@
 		}
 
         function showRandomEvent4() {
+			// 预计算SAN消耗用于按钮显示
+			const horizonSanCost = getActualSanChange(-7);
+			const verticalSanCost = getActualSanChange(-5);
+			const shareSanCost = getActualSanChange(-2);
+			// 拒绝项目的惩罚预览
+			const rejectText = gameState.research < 6 ? '好感-2' : (gameState.research < 12 ? '好感-1' : '无');
+			// 分担项目的惩罚预览
+			const shareText = gameState.social < 6 ? `SAN${shareSanCost}，社交-1` : (gameState.social < 12 ? `SAN${shareSanCost}` : '无');
+
             showModal('💼 随机事件', '<p>导师安排你做项目。</p>', [
-                { text: '横向项目', class: 'btn-warning', action: () => {
+                { text: `横向项目（SAN${horizonSanCost}，好感+1，金钱+5）`, class: 'btn-warning', action: () => {
                     // ★★★ 项目完成计数 ★★★
                     gameState.projectCompletedCount = (gameState.projectCompletedCount || 0) + 1;
                     if (gameState.projectCompletedCount >= 3) {
@@ -534,7 +548,7 @@
                     clampGold();  // ★★★ 赤贫学子诅咒 ★★★
                     changeSan(baseSanCost);
                 }},
-                { text: '纵向项目', class: 'btn-primary', action: () => {
+                { text: `纵向项目（SAN${verticalSanCost}，好感+1，科研+1）`, class: 'btn-primary', action: () => {
                     // ★★★ 项目完成计数 ★★★
                     gameState.projectCompletedCount = (gameState.projectCompletedCount || 0) + 1;
                     if (gameState.projectCompletedCount >= 3) {
@@ -550,7 +564,7 @@
                     changeResearch(1);
                     changeSan(baseSanCost);
                 }},
-                { text: '拒绝项目', class: 'btn-danger', action: () => {
+                { text: `拒绝项目（${rejectText}）`, class: 'btn-danger', action: () => {
                     // ★★★ 拒绝项目计数 ★★★
                     gameState.rejectedProject = true;
                     checkLearnToSayNo();
@@ -566,7 +580,7 @@
                         updateAllUI();
                     }
                 }},
-                { text: '让师弟师妹分担', class: 'btn-info', action: () => {
+                { text: `让师弟师妹分担（${shareText}）`, class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         const baseSanCost = -2;
@@ -598,8 +612,14 @@
         }
 
         function showRandomEvent5() {
+			// 预计算用于按钮显示
+			const prepareText = gameState.research >= 6 ? 'idea+5' : '好感-1';
+			const askText = gameState.favor >= 6 ? '科研+1' : '好感-1';
+			const internSanCost = getActualSanChange(-6);
+			const internText = gameState.favor >= 6 ? `SAN${internSanCost}，金钱+5` : '好感-1';
+
             showModal('💬 随机事件', '<p>导师找你谈话。</p>', [
-                { text: '认真准备科研进展', class: 'btn-primary', action: () => {
+                { text: `认真准备科研进展（${prepareText}）`, class: 'btn-primary', action: () => {
                     closeModal();
                     if (gameState.research >= 6) {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
@@ -611,7 +631,7 @@
                         changeFavor(-1);
                     }
                 }},
-                { text: '向导师询问如何科研', class: 'btn-info', action: () => {
+                { text: `向导师询问如何科研（${askText}）`, class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.favor < 6) {
                         addLog('随机事件', '导师找你谈话 - 向导师询问如何科研', '【好感<6】导师感觉你事情很多，导师好感度-1');
@@ -621,7 +641,7 @@
                         changeResearch(1);
                     }
                 }},
-                { text: '告诉导师想要去短期实习', class: 'btn-warning', action: () => {
+                { text: `告诉导师想要去短期实习（${internText}）`, class: 'btn-warning', action: () => {
                     closeModal();
                     if (gameState.favor >= 6) {
                         const baseSanCost = -6;
@@ -642,8 +662,12 @@
         }
 
         function showRandomEvent6() {
+			// 预计算用于按钮显示
+			const deepText = gameState.research >= 6 ? '好感+1' : '好感-1';
+			const seriesSanCost = getActualSanChange(-3);
+
             showModal('📊 随机事件', '<p>实验室召开组会。</p>', [
-                { text: '讲解一篇深奥论文', class: 'btn-primary', action: () => {
+                { text: `讲解一篇深奥论文（${deepText}）`, class: 'btn-primary', action: () => {
                     closeModal();
                     if (gameState.research < 6) {
                         addLog('随机事件', '实验室召开组会 - 讲解一篇深奥论文', '【科研<6】导师发现你不懂装懂，导师好感度-1');
@@ -653,7 +677,7 @@
                         changeFavor(1);
                     }
                 }},
-                { text: '讲解系列论文', class: 'btn-warning', action: () => {
+                { text: `讲解系列论文（SAN${seriesSanCost}，50%好感+2）`, class: 'btn-warning', action: () => {
                     closeModal();
                     const baseSanCost = -3;
                     const actualSanCost = getActualSanChange(baseSanCost);
@@ -667,7 +691,7 @@
                     }
                     changeSan(baseSanCost);
                 }},
-                { text: '偷偷水过去', class: 'btn-info', action: () => {
+                { text: '偷偷水过去（50%好感-1）', class: 'btn-info', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室召开组会 - 偷偷水过去', '导师对你略有不满，导师好感度-1');
@@ -681,8 +705,11 @@
         }
 
         function showRandomEvent7() {
+			// 预计算用于按钮显示
+			const badmintonText = gameState.san >= 20 ? 'SAN+2，社交+1' : 'SAN+2';
+
             showModal('🎉 随机事件', '<p>实验室组织团建。</p>', [
-				{ text: '🏸 打羽毛球', class: 'btn-primary', action: () => {
+				{ text: `🏸 打羽毛球（${badmintonText}）`, class: 'btn-primary', action: () => {
 					gameState.badmintonYear = gameState.year;
 					// ★★★ 新增：羽毛球计数和冠军机制 ★★★
 					gameState.badmintonCount = (gameState.badmintonCount || 0) + 1;
@@ -719,7 +746,7 @@
 					changeSan(2);
 					updateBuffs();
 				}},
-                { text: '🃏 打德州扑克', class: 'btn-warning', action: () => {
+                { text: '🃏 打德州扑克（金钱?）', class: 'btn-warning', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
                         // 输钱：输掉所有钱，最多不超过4金币
@@ -738,7 +765,7 @@
                         changeGold(winAmount);
                     }
                 }},
-                { text: '🎤 KTV唱歌', class: 'btn-accent', action: () => {
+                { text: '🎤 KTV唱歌（社交+1）', class: 'btn-accent', action: () => {
 					// ★★★ 新增：KTV计数 ★★★
 					gameState.ktvCount = (gameState.ktvCount || 0) + 1;
 					let logText = '唱了猪猪侠主题曲，聪明勇敢有力气，社交能力+1';
@@ -750,7 +777,7 @@
                     closeModal();
                     changeSocial(1);
                 }},
-				{ text: '🍜 聚餐', class: 'btn-info', action: () => {
+				{ text: '🍜 聚餐（SAN+5，50%金钱-2）', class: 'btn-info', action: () => {
 					// ★★★ 新增：聚餐计数 ★★★
 					gameState.dinnerCount = (gameState.dinnerCount || 0) + 1;
 					closeModal();
@@ -768,8 +795,12 @@
         }
 
         function showRandomEvent8() {
+			// 预计算用于按钮显示
+			const gpuText = gameState.favor >= 12 ? '50%实验×3' : (gameState.favor >= 6 ? '50%实验×2' : '50%实验×1');
+			const salaryText = gameState.favor >= 12 ? '金钱+6' : (gameState.favor >= 6 ? '金钱+4' : '金钱+2');
+
             showModal('💰 随机事件', '<p>导师科研经费充足，你建议。</p>', [
-                { text: '🖥️ 购买GPU服务器', class: 'btn-primary', action: () => {
+                { text: `🖥️ 购买GPU服务器（${gpuText}）`, class: 'btn-primary', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', '导师并不想买');
@@ -794,7 +825,7 @@
                     }
                     updateAllUI();
                 }},
-				{ text: '💵 多发劳务费', class: 'btn-warning', action: () => {
+				{ text: `💵 多发劳务费（${salaryText}）`, class: 'btn-warning', action: () => {
 					closeModal();
 					if (gameState.favor < 6) {
 						addLog('随机事件', '导师科研经费充足 - 多发劳务费', `【好感<6】导师只发了一点点，金钱+2`);
@@ -809,7 +840,7 @@
 					}
 					updateAllUI();
 				}},
-                { text: '🪑 装修学生工位', class: 'btn-info', action: () => {
+                { text: '🪑 装修学生工位（buff+2）', class: 'btn-info', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push(
                         { type: 'idea_bonus', name: '每次想idea分数+1', value: 1, permanent: true },
@@ -823,8 +854,11 @@
         }
 
         function showRandomEvent9() {
+			// 预计算用于按钮显示
+			const basicText = gameState.research < 4 ? '科研+1' : '无';
+
             showModal('📖 随机事件', '<p>你打算学点新知识，你会选择。</p>', [
-                { text: '📚 基础知识', class: 'btn-primary', action: () => {
+                { text: `📚 基础知识（${basicText}）`, class: 'btn-primary', action: () => {
                     closeModal();
                     if (gameState.research < 4) {
                         addLog('随机事件', '学习新知识 - 基础知识', '打好了基础，科研能力+1');
@@ -834,21 +868,21 @@
                         updateAllUI();
                     }
                 }},
-                { text: '🚀 最新技术', class: 'btn-warning', action: () => {
+                { text: '🚀 最新技术（idea+1）', class: 'btn-warning', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push({ type: 'idea_bonus', name: '每次想idea分数+1', value: 1, permanent: true });
                     addLog('随机事件', '学习新知识 - 最新技术', '永久buff-每次想idea分数+1');
                     updateAllUI();
                     updateBuffs();
                 }},
-                { text: '💻 代码知识', class: 'btn-info', action: () => {
+                { text: '💻 代码知识（实验+1）', class: 'btn-info', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
                     addLog('随机事件', '学习新知识 - 代码知识', '永久buff-每次做实验分数+1');
                     updateAllUI();
                     updateBuffs();
                 }},
-                { text: '🔮 深奥的知识', class: 'btn-accent', action: () => {
+                { text: '🔮 深奥的知识（论文+1）', class: 'btn-accent', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push({ type: 'write_bonus', name: '每次写论文分数+1', value: 1, permanent: true });
                     addLog('随机事件', '学习新知识 - 看起来很深奥的知识', '永久buff-每次写论文分数+1');
@@ -859,8 +893,13 @@
         }
 
         function showRandomEvent10() {
+			// 预计算用于按钮显示
+			const exchangeText = gameState.social < 6 ? 'idea+5 debuff-1' : 'idea+5';
+			const mutualSanCost = getActualSanChange(-2);
+			const coopText = gameState.social < 6 ? `SAN${mutualSanCost}，buff+2` : 'buff+2';
+
             showModal('🤝 随机事件', '<p>同门找你合作论文，你会选择。</p>', [
-                { text: '学术交流', class: 'btn-primary', action: () => {
+                { text: `学术交流（${exchangeText}）`, class: 'btn-primary', action: () => {
                     closeModal();
 					if (gameState.social < 6) {
 						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
@@ -873,7 +912,7 @@
                     updateAllUI();
                     updateBuffs();
                 }},
-				{ text: '约定互挂论文', class: 'btn-warning', action: () => {
+				{ text: `约定互挂论文（SAN${mutualSanCost}，50%buff）`, class: 'btn-warning', action: () => {
 					closeModal();
 					// ★★★ 新增：SAN-2 ★★★
 					const baseSanCost = -2;
@@ -889,11 +928,11 @@
                     changeSan(baseSanCost);
                     updateBuffs();
                 }},
-                { text: '婉拒合作', class: 'btn-info', action: () => {
+                { text: '婉拒合作（无）', class: 'btn-info', action: () => {
                     addLog('随机事件', '同门找你合作论文 - 婉拒合作', '无事发生');
                     closeModal();
                 }},
-                { text: '开展全面合作', class: 'btn-success', action: () => {
+                { text: `开展全面合作（${coopText}）`, class: 'btn-success', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         const baseSanCost = -2;
@@ -928,12 +967,15 @@
         }
 
         function showRandomEvent11() {
+			// 预计算用于按钮显示
+			const seniorSanCost = getActualSanChange(-2);
+
             showModal('👨‍🎓 随机事件', '<p>师兄师姐找你合作论文，你会选择。</p>', [
-                { text: '观望一下', class: 'btn-info', action: () => {
+                { text: '观望一下（无）', class: 'btn-info', action: () => {
                     addLog('随机事件', '师兄师姐找你合作论文 - 观望一下', '师兄师姐先找了同门合作');
                     closeModal();
                 }},
-                { text: '浅浅合作', class: 'btn-primary', action: () => {
+                { text: `浅浅合作（SAN${seniorSanCost}，idea+10）`, class: 'btn-primary', action: () => {
                     closeModal();
                     // ★★★ 新增：SAN-2 ★★★
                     const baseSanCost = -2;
@@ -944,7 +986,7 @@
                     changeSan(baseSanCost);
                     updateBuffs();
                 }},
-                { text: '深入合作', class: 'btn-warning', action: () => {
+                { text: `深入合作（SAN${seniorSanCost}，科研+1）`, class: 'btn-warning', action: () => {
                     closeModal();
                     // ★★★ 修改：新增SAN-2，删除idea buff ★★★
                     const baseSanCost = -2;
@@ -962,7 +1004,7 @@
                         showAddToNetworkModal(seniorPerson);
                     }, 300);
                 }},
-                { text: '拜入门下', class: 'btn-success', action: () => {
+                { text: `拜入门下（SAN${seniorSanCost}，论文+5）`, class: 'btn-success', action: () => {
                     closeModal();
                     // ★★★ 修改：不增加科研，buff+5，新增SAN-2 ★★★
                     const baseSanCost = -2;
@@ -986,14 +1028,17 @@
 
 		function showRandomEvent12() {
 			const isTeacherChild = gameState.character === 'teacher-child';
-			
-			const grabOptionText = isTeacherChild 
-				? '劝说导师抢师弟师妹一作 🎁（导师子女：获得C类论文）' 
-				: '劝说导师抢师弟师妹一作';
+
+			// 预计算用于按钮显示
+			const cryText = gameState.favor >= 6 ? '无' : 'debuff-1';
+			const argueText = gameState.favor >= 6 ? '无' : `SAN${getActualSanChange(-2)}`;
+			const grabOptionText = isTeacherChild
+				? '劝说导师抢师弟师妹一作 🎁（C论文+1，社交-2）'
+				: '劝说导师抢师弟师妹一作（社交-1）';
 			const grabOptionClass = isTeacherChild ? 'btn-success' : 'btn-warning';  // 导师子女用绿色按钮突出显示
-			
+
 			showModal('⚠️ 随机事件', '<p>导师想要抢你论文的一作。</p>', [
-				{ text: '向导师诉苦', class: 'btn-primary', action: () => {
+				{ text: `向导师诉苦（${cryText}）`, class: 'btn-primary', action: () => {
 					closeModal();
 					if (gameState.favor >= 6) {
 						addLog('随机事件', '导师想要抢你论文的一作 - 向导师诉苦', '【好感>=6】导师心软了');
@@ -1029,7 +1074,7 @@
 					}
 					updateAllUI();
 				}},
-				{ text: '据理力争', class: 'btn-info', action: () => {
+				{ text: `据理力争（${argueText}）`, class: 'btn-info', action: () => {
 					closeModal();
 					if (gameState.favor >= 6) {
 						addLog('随机事件', '导师想要抢你论文的一作 - 据理力争', '【好感>=6】导师轻松被你说服');
@@ -1042,7 +1087,7 @@
 						changeSan(baseSanCost);
 					}
 				}},
-				{ text: '以死相逼', class: 'btn-danger', action: () => {
+				{ text: '以死相逼（金钱+2，好感-2）', class: 'btn-danger', action: () => {
 					gameState.gold += 2;
 					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 					gameState.favor = Math.max(0, gameState.favor - 2);
@@ -1056,20 +1101,23 @@
         function showRandomEvent13() {
 			// ★★★ 新增：服务器损坏计数 ★★★
 			gameState.serverCrashCount = (gameState.serverCrashCount || 0) + 1;
+			// 预计算用于按钮显示
+			const reinstallSanCost = getActualSanChange(-3);
+
             showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
-                { text: '催导师快修', class: 'btn-primary', action: () => {
+                { text: '催导师快修（debuff-1）', class: 'btn-primary', action: () => {
                     closeModal();
                     gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数-2', value: -2, permanent: true });
                     addLog('随机事件', '实验室服务器突然坏了 - 催导师快修', '导师每次坏了就帮你重启，永久debuff-每次做实验分数-2');
                     updateAllUI();
                     updateBuffs();
                 }},
-                { text: '举报同门挖矿', class: 'btn-warning', action: () => {
+                { text: '举报同门挖矿（社交-2）', class: 'btn-warning', action: () => {
                     addLog('随机事件', '实验室服务器突然坏了 - 举报同门用服务器挖矿', '同门负责修好了，社交能力-2');
                     closeModal();
                     changeSocial(-2);
                 }},
-                { text: '自己重装系统', class: 'btn-info', action: () => {
+                { text: `自己重装系统（SAN${reinstallSanCost}，50%社交-1 debuff-1）`, class: 'btn-info', action: () => {
                     closeModal();
                     const baseSanCost = -3;
                     const actualSanCost = getActualSanChange(baseSanCost);
@@ -1085,7 +1133,7 @@
                     }
                     changeSan(baseSanCost);
                 }},
-                { text: '淘宝找人修理', class: 'btn-danger', action: () => {
+                { text: '淘宝找人修理（金钱？）', class: 'btn-danger', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '运气好，遇到高手修好了，金币-2');
@@ -1105,13 +1153,15 @@
         function showRandomEvent14() {
             // ★★★ 修改：被动效果不受季节buff影响，固定描述 ★★★
             const sanDescText = '每月SAN-1';
+			// 预计算用于按钮显示
+			const ideaSanCost = getActualSanChange(-5);
 
             showModal('👨‍🎓 随机事件', '<p>你已经初窥科研门道了，考虑指导师弟师妹：</p>', [
-                { text: '精力有限算了', class: 'btn-info', action: () => {
+                { text: '精力有限算了（无）', class: 'btn-info', action: () => {
                     addLog('随机事件', '指导师弟师妹 - 精力有限算了', '无事发生');
                     closeModal();
                 }},
-                { text: '最近有个idea可以合作一波', class: 'btn-primary', action: () => {
+                { text: `最近有个idea可以合作一波（SAN${ideaSanCost}，社交+1）`, class: 'btn-primary', action: () => {
 					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
 					if (!gameState.firstMentoringMonth) {
 						gameState.firstMentoringMonth = gameState.totalMonths;
@@ -1138,7 +1188,7 @@
 						showAddToNetworkModal(juniorPerson);
 					}, 300);
 				}},
-                { text: '展开长期合作', class: 'btn-success', action: () => {
+                { text: '展开长期合作（每月SAN-1，引用+科研）', class: 'btn-success', action: () => {
 					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
 					if (!gameState.firstMentoringMonth) {
 						gameState.firstMentoringMonth = gameState.totalMonths;
@@ -1168,8 +1218,13 @@
 		function showRandomEvent15() {
 			// ★★★ 新增：游戏总次数统计 ★★★
 			gameState.gamePlayCount = (gameState.gamePlayCount || 0) + 1;
+			// 预计算用于按钮显示
+			const terrariaSanCost = getActualSanChange(-4);
+			const magicTowerSanCost = getActualSanChange(-6);
+			const kingsSanCost = getActualSanChange(-5);
+
 			showModal('🎮 随机事件', '<p>学了一天你打算玩游戏放松一下。</p>', [
-				{ text: '🌲 玩泰拉瑞亚', class: 'btn-success', action: () => {
+				{ text: `🌲 玩泰拉瑞亚（SAN${terrariaSanCost}，社交+1）`, class: 'btn-success', action: () => {
 					// ★★★ 新增：泰拉瑞亚计数 ★★★
 					gameState.terrariaCount = (gameState.terrariaCount || 0) + 1;
 					if (gameState.terrariaCount >= 3) {
@@ -1186,7 +1241,7 @@
 					changeSocial(1);
 					changeSan(-baseSanCost);
 				}},
-				{ text: '🗼 玩魔塔50层', class: 'btn-primary', action: () => {
+				{ text: `🗼 玩魔塔50层（SAN${magicTowerSanCost}，科研+1）`, class: 'btn-primary', action: () => {
 					// ★★★ 新增：魔塔计数 ★★★
 					gameState.magicTowerCount = (gameState.magicTowerCount || 0) + 1;
 					if (gameState.magicTowerCount >= 3) {
@@ -1203,7 +1258,7 @@
 					changeResearch(1);
 					changeSan(-baseSanCost);
 				}},
-				{ text: '🎓 玩研究生模拟器', class: 'btn-info', action: () => {
+				{ text: '🎓 玩研究生模拟器（SAN+2）', class: 'btn-info', action: () => {
 					// ★★★ 新增：研究生模拟器计数 ★★★
 					gameState.gradSimCount = (gameState.gradSimCount || 0) + 1;
 					if (gameState.gradSimCount >= 3) {
@@ -1214,7 +1269,7 @@
 					closeModal();
 					changeSan(2);
 				}},
-				{ text: '👑 玩王者荣耀', class: 'btn-warning', action: () => {
+				{ text: `👑 玩王者荣耀（SAN${kingsSanCost}，金钱+2）`, class: 'btn-warning', action: () => {
 					const baseSanCost = 5;
 					const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 					const sanText = (gameState.isReversed && gameState.character === 'normal')
@@ -1247,8 +1302,11 @@
 			// ★★★ 新增：数据丢失计数（只有真正触发时才计数）★★★
 			gameState.dataLossCount = (gameState.dataLossCount || 0) + 1;
 
+			// 预计算用于按钮显示
+			const stayUpSanCost = getActualSanChange(-6);
+
 			showModal('💾 随机事件', '<p>实验室服务器崩溃了，你的实验数据全部丢失！</p>', [
-				{ text: '😤 熬夜补数据', class: 'btn-danger', action: () => {
+				{ text: `😤 熬夜补数据（SAN${stayUpSanCost}）`, class: 'btn-danger', action: () => {
 					const baseSanCost = -6;
 					const actualSanCost = getActualSanChange(baseSanCost);
 					const sanText = (gameState.isReversed && gameState.character === 'normal')
@@ -1258,7 +1316,7 @@
 					closeModal();
 					changeSan(baseSanCost);
 				}},
-				{ text: '😢 从头再来', class: 'btn-warning', action: () => {
+				{ text: '😢 从头再来（论文清零）', class: 'btn-warning', action: () => {
 					// 所有未投稿论文分数清0
 					gameState.papers.forEach((paper, idx) => {
 						if (paper && !paper.reviewing) {
@@ -1272,12 +1330,12 @@
 					renderPaperSlots();
 					updateAllUI();
 				}},
-				{ text: '💰 花钱恢复', class: 'btn-primary', action: () => {
+				{ text: '💰 花钱恢复（金钱-6）', class: 'btn-primary', action: () => {
 					addLog('随机事件', '数据丢失 - 花钱恢复', '找数据恢复公司，金钱-6');
 					closeModal();
 					changeGold(-6);
 				}},
-				{ text: '🤥 胡编乱造', class: 'btn-info', action: () => {
+				{ text: '🤥 胡编乱造（debuff-1）', class: 'btn-info', action: () => {
 					// 永久debuff：论文引用除以2
 					gameState.buffs.permanent.push({
 						type: 'citation_halved',
