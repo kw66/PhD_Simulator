@@ -626,6 +626,7 @@
 		function generateSlide7_BlessingsCurses() {
 			const diffPoints = gameState.difficultyPoints || 0;
 			const activeCurses = gameState.activeCurses || {};
+			const activeBlessings = gameState.activeBlessings || {};
 
 			// 获取选择的诅咒列表
 			const cursesList = [];
@@ -645,6 +646,31 @@
 				});
 			}
 
+			// ★★★ 获取选择的祝福列表 ★★★
+			const blessingsList = [];
+			if (typeof BLESSINGS !== 'undefined') {
+				Object.keys(activeBlessings).forEach(blessingId => {
+					const count = activeBlessings[blessingId];
+					if (count > 0 && BLESSINGS[blessingId]) {
+						const blessing = BLESSINGS[blessingId];
+						blessingsList.push({
+							icon: blessing.icon,
+							name: blessing.name,
+							count: count,
+							desc: blessing.desc,
+							points: blessing.pointCosts[count - 1] || 0
+						});
+					}
+				});
+			}
+
+			// ★★★ 计算祝福负分 ★★★
+			let blessingPoints = 0;
+			blessingsList.forEach(b => { blessingPoints += b.points; });
+
+			// ★★★ 逆位角色无法使用祝福 ★★★
+			const isReversed = gameState.isReversed || false;
+
 			return `
 				<div class="slide-content curses-slide">
 					<div class="slide-bg curses-bg"></div>
@@ -656,17 +682,43 @@
 					<div class="slide-inner">
 						<h2 class="slide-title animate-title">祝福与诅咒</h2>
 
-						<!-- 祝福区域（暂无） -->
+						<!-- 祝福区域 -->
 						<div class="blessings-section animate-fade-up">
 							<div class="section-header">
 								<span class="section-icon">✨</span>
 								<span class="section-title">祝福</span>
+								${blessingPoints < 0 ? `<span class="difficulty-badge-slide blessing-badge">${blessingPoints}分</span>` : ''}
 							</div>
-							<div class="blessings-empty">
-								<div class="empty-icon">🔮</div>
-								<div class="empty-text">暂无祝福系统</div>
-								<div class="empty-sub">敬请期待后续版本...</div>
-							</div>
+							${isReversed ? `
+								<div class="blessings-empty">
+									<div class="empty-icon">🚫</div>
+									<div class="empty-text">无法被祝福者</div>
+									<div class="empty-sub">逆位角色无法接受祝福</div>
+								</div>
+							` : (blessingsList.length > 0 ? `
+								<div class="blessings-list-slide">
+									${blessingsList.map((blessing, i) => `
+										<div class="blessing-card animate-pop-in" style="--delay: ${i * 0.1}s">
+											<div class="blessing-card-icon">${blessing.icon}</div>
+											<div class="blessing-card-info">
+												<div class="blessing-card-name">${blessing.name}${blessing.count > 1 ? ` ×${blessing.count}` : ''}</div>
+												<div class="blessing-card-desc">${blessing.desc}</div>
+											</div>
+											<div class="blessing-card-points">${blessing.points}</div>
+										</div>
+									`).join('')}
+								</div>
+								<div class="blessings-summary animate-fade-up delay-2">
+									<span class="summary-icon">⭐</span>
+									<span class="summary-text">共获得 <strong>${blessingsList.length}</strong> 项祝福</span>
+								</div>
+							` : `
+								<div class="blessings-empty">
+									<div class="empty-icon">😇</div>
+									<div class="empty-text">无祝福加成</div>
+									<div class="empty-sub">凭自己的实力通关</div>
+								</div>
+							`)}
 						</div>
 
 						<!-- 诅咒区域 -->
@@ -1088,8 +1140,6 @@
 
 			// ★★★ 新增：生成标签 ★★★
 			const tags = [];
-			if (gameState.degree === 'phd') tags.push('博士');
-			else tags.push('硕士');
 			if (gameState.isReversed) tags.push('逆位');
 			if (gameState.reversedAwakened) tags.push('觉醒');
 			if (gameState.hiddenAwakened) tags.push('隐藏觉醒');
@@ -3464,6 +3514,80 @@
 
 				.curses-summary .summary-text strong {
 					color: #e74c3c;
+				}
+
+				/* ★★★ 祝福卡片样式 ★★★ */
+				.blessings-list-slide {
+					display: flex;
+					flex-direction: column;
+					gap: 10px;
+				}
+
+				.blessing-card {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 12px;
+					background: rgba(16, 185, 129, 0.15);
+					border-radius: 10px;
+					border: 1px solid rgba(16, 185, 129, 0.3);
+				}
+
+				.blessing-card-icon {
+					font-size: 1.5rem;
+				}
+
+				.blessing-card-info {
+					flex: 1;
+				}
+
+				.blessing-card-name {
+					font-size: 0.9rem;
+					font-weight: 600;
+					color: #fff;
+				}
+
+				.blessing-card-desc {
+					font-size: 0.7rem;
+					color: rgba(255,255,255,0.6);
+					margin-top: 2px;
+				}
+
+				.blessing-card-points {
+					font-size: 0.85rem;
+					font-weight: 600;
+					color: #10b981;
+					padding: 4px 10px;
+					background: rgba(16, 185, 129, 0.2);
+					border-radius: 10px;
+				}
+
+				.blessings-summary {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 8px;
+					margin-top: 12px;
+					padding: 10px;
+					background: rgba(255,255,255,0.08);
+					border-radius: 10px;
+				}
+
+				.blessings-summary .summary-icon {
+					font-size: 1.2rem;
+				}
+
+				.blessings-summary .summary-text {
+					font-size: 0.85rem;
+					color: rgba(255,255,255,0.85);
+				}
+
+				.blessings-summary .summary-text strong {
+					color: #10b981;
+				}
+
+				.difficulty-badge-slide.blessing-badge {
+					background: linear-gradient(135deg, #10b981, #059669);
 				}
 
 				/* 难度统计样式 */

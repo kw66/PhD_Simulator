@@ -544,24 +544,20 @@
 						<div class="difficulty-footer">
 							<span>💀</span> 点击骷髅激活诅咒，再次点击取消
 						</div>
+						<div style="padding:12px;margin-top:12px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.15));border:1px dashed #3b82f6;border-radius:8px;text-align:center;color:#60a5fa;font-size:13px;">
+							ℹ️ <strong>负难度分仅用于体验</strong>：难度分&lt;0时，本局游戏数据不计入全球统计，不影响角色最佳记录，无法解锁真·大多数，但成就正常生效。
+						</div>
 					</div>
 
 					<!-- 祝福页 -->
 					<div class="blessings-container" style="display:${currentDifficultyPage === 'blessings' ? 'block' : 'none'}">
-						${isReversedMode ? `
-							<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(231,76,60,0.15),rgba(192,57,43,0.15));border:1px dashed #e74c3c;border-radius:8px;text-align:center;color:#e74c3c;">
-								🚫 <strong>无法被祝福者</strong>：逆位角色无法接受祝福，选择的祝福不会生效。
-							</div>
-						` : ''}
+						<div style="padding:12px;margin-bottom:12px;background:linear-gradient(135deg,rgba(231,76,60,0.15),rgba(192,57,43,0.15));border:1px dashed #e74c3c;border-radius:8px;text-align:center;color:#e74c3c;font-size:13px;">
+							🚫 <strong>无法被祝福者</strong>：逆位角色无法接受祝福，选择的祝福不会生效。
+						</div>
 						${blessingsHtml}
 						<div class="difficulty-footer blessing-footer">
 							<span>⭐</span> 点击星星激活祝福，再次点击取消
 						</div>
-						${!isReversedMode ? `
-							<div class="negative-difficulty-warning">
-								⚠️ <strong>负难度分提示</strong>：难度分<0时，本局游戏数据不计入全球统计，不影响角色最佳记录，无法解锁真·大多数，但成就正常生效。
-							</div>
-						` : ''}
 					</div>
 				</div>
 			`;
