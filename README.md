@@ -1,5 +1,6 @@
 # PhD_Simulator
 [点击即玩](https://kw66.github.io/PhD_Simulator/)
+
 用AI从0开始制作“研究生模拟器”小游戏
 试了几个AI，claude opus 4.5 thinking真的强，完全可以支持这个体量和复杂度的游戏开发，基本能一次跑通，debug也很在行。
 Gemini 3 pro就差点意思了，调了好几天都不行，特别是debug，总是信誓旦旦修好了，结果始终不行，还会自作主张修改要求，不太听话。
