@@ -1126,6 +1126,7 @@
 			gameState.serverCrashCount = (gameState.serverCrashCount || 0) + 1;
 			// 预计算用于按钮显示
 			const reinstallSanCost = getActualSanChange(-3);
+			const taobaoSanCost = getActualSanChange(-2);
 
             showModal('💻 随机事件', '<p>实验室服务器突然坏了。</p>', [
                 { text: '催导师快修（永久实验-2）', class: 'btn-primary', action: () => {
@@ -1156,7 +1157,7 @@
                     }
                     changeSan(baseSanCost);
                 }},
-                { text: '淘宝找人修理（50%金钱-2，50%金钱-4+SAN）', class: 'btn-danger', action: () => {
+                { text: `淘宝找人修理（金-2，50%额外金-2,SAN${taobaoSanCost}）`, class: 'btn-danger', action: () => {
                     closeModal();
                     if (Math.random() < 0.5) {
                         addLog('随机事件', '实验室服务器突然坏了 - 淘宝找人修理', '运气好，遇到高手修好了，金币-2');
