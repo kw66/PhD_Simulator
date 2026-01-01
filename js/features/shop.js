@@ -1111,20 +1111,93 @@
 				const subscribableItems = ['coffee', 'claude', 'gpt', 'gemini', 'gpu_rent'];
 
 				currentPageItems.forEach(item => {
-					const canBuy = gameState.gold >= item.price && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
-					const reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < item.price ? '金币不足' : '';
+					// ★★★ 新增：GPU数量限制检查 ★★★
+					let gpuBuyAvailable = 0;
+					let gpuRentAvailable = 0;
+					if (item.id === 'gpu_buy') {
+						// 购买GPU：数量 = 当前月份 - 已购买数量（确保第一个月至少有1个库存）
+						const effectiveMonths = Math.max(1, gameState.totalMonths || 1);
+						gpuBuyAvailable = Math.max(0, effectiveMonths - (gameState.gpuServersBought || 0));
+					} else if (item.id === 'gpu_rent') {
+						// 租用GPU：每月刷新，上限20
+						gpuRentAvailable = Math.max(0, 20 - (gameState.gpuRentedThisMonth || 0));
+					}
 
-					// ★★★ 修改：冰美式动态描述（前15杯不变，第16杯开始提升）★★★
+					// ★★★ 冰美式价格（无限咖啡机价格递增2,3,4...）★★★
+					let itemPrice = item.price;
+					if (item.id === 'coffee' && gameState.coffeeMachineUpgrade === 'unlimited') {
+						const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+						itemPrice = coffeeBoughtThisMonth + 2;  // 第1杯2金币，第2杯3金币...
+					}
+
+					let canBuy = gameState.gold >= itemPrice && !(item.once && item.bought) && !(item.monthlyOnce && item.boughtThisMonth);
+					let reason = (item.once && item.bought) ? '已购买' : (item.monthlyOnce && item.boughtThisMonth) ? '本月已购' : gameState.gold < itemPrice ? '金币不足' : '';
+
+					// ★★★ GPU数量限制 ★★★
+					if (item.id === 'gpu_buy' && gpuBuyAvailable <= 0) {
+						canBuy = false;
+						reason = '已售罄';
+					}
+					if (item.id === 'gpu_rent' && gpuRentAvailable <= 0) {
+						canBuy = false;
+						reason = '已售罄';
+					}
+
+					// ★★★ 冰美式每月购买上限1杯（无限咖啡机除外）★★★
+					if (item.id === 'coffee') {
+						const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+						// 无限咖啡机可以无限购买
+						if (gameState.coffeeMachineUpgrade !== 'unlimited' && coffeeBoughtThisMonth >= 1) {
+							canBuy = false;
+							reason = '本月已购';
+						}
+					}
+
+					// ★★★ 修改：冰美式动态描述（根据咖啡机升级类型显示不同内容）★★★
 					let itemDesc = item.desc;
 					if (item.id === 'coffee') {
-						const count = gameState.coffeeBoughtCount || 0;
-						const currentBonus = 3 + Math.floor(count / 15);
-						const currentTier = Math.floor(count / 15);
-						const nextMilestone = (currentTier + 1) * 15 + 1;  // 16, 31, 46...
-						const nextBonus = currentBonus + 1;
+						const count = gameState.coffeeMachineCount || 0;
+						const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
 
-						itemDesc = `SAN值+${currentBonus}`;
-						itemDesc += ` (${count}/${nextMilestone}杯时+${nextBonus})`;
+						if (gameState.hasCoffeeMachine && gameState.coffeeMachineUpgrade) {
+							// 有升级过的咖啡机：根据升级类型显示
+							if (gameState.coffeeMachineUpgrade === 'automatic') {
+								// 自动咖啡机：固定+3SAN
+								itemDesc = `SAN值+3 (自动咖啡机固定效果)`;
+							} else if (gameState.coffeeMachineUpgrade === 'advanced') {
+								// 高级咖啡机：累计加成
+								const coffeeBonus = getCoffeeMachineBonus();
+								const totalBonus = 3 + coffeeBonus;
+								const threshold = 12;  // 每12杯+1
+								const maxBonus = 5;    // 最多+5
+								const nextLevel = coffeeBonus + 1;
+								const nextCount = nextLevel * threshold;
+
+								if (coffeeBonus >= maxBonus) {
+									itemDesc = `SAN值+${totalBonus} (高级咖啡机已满级+${maxBonus})`;
+								} else {
+									itemDesc = `SAN值+${totalBonus} (${count}/${nextCount}杯→+${nextLevel})`;
+								}
+							} else if (gameState.coffeeMachineUpgrade === 'unlimited') {
+								// 无限咖啡机：显示本月已购和下杯价格
+								const nextPrice = coffeeBoughtThisMonth + 2;
+								itemDesc = `SAN值+3 (本月已购${coffeeBoughtThisMonth}杯，本杯${nextPrice}金币)`;
+							}
+						} else if (gameState.hasCoffeeMachine) {
+							// 有咖啡机但未升级
+							itemDesc = `SAN值+3 (可在出售/升级页升级咖啡机)`;
+						} else {
+							// 无咖啡机：基础效果
+							itemDesc = `SAN值+3 (购买咖啡机可提升效果)`;
+						}
+					}
+
+					// ★★★ 新增：GPU数量显示 ★★★
+					if (item.id === 'gpu_buy') {
+						itemDesc = `永久buff-每次做实验多做1次且分数+1 (库存:${gpuBuyAvailable}，已购:${gameState.gpuServersBought || 0})`;
+					}
+					if (item.id === 'gpu_rent') {
+						itemDesc = `本月做实验多做1次且分数+1 (剩余:${gpuRentAvailable}/20)`;
 					}
 
 					// ★★★ 商品图标 ★★★
@@ -1138,6 +1211,7 @@
 						'chair': '🪑',
 						'keyboard': '⌨️',
 						'monitor': '🖥️',
+						'coffee_machine': '☕',
 						'bike': '🚲',
 						'down_jacket': '🧥',
 						'parasol': '☂️'
@@ -1160,7 +1234,7 @@
 							<div class="shop-item-desc">${itemDesc}</div>
 						</div>
 						<div class="shop-item-action">
-							<span class="shop-item-price">💰${item.price}</span>
+							<span class="shop-item-price">💰${itemPrice}</span>
 							${subscribeBtn}
 							<button class="btn btn-primary" onclick="buyItem('${item.id}')" ${!canBuy ? 'disabled' : ''}>${reason || '购买'}</button>
 						</div>
@@ -1205,10 +1279,11 @@
 			// ★★★ 可出售物品列表 ★★★
 			const sellableItems = [
 				{ id: 'chair', name: '人体工学椅', icon: '🪑', sellPrice: 5 },
-				{ id: 'monitor', name: '4K显示器', icon: '🖥️', sellPrice: 4 },
+				{ id: 'monitor', name: '2K显示器', icon: '🖥️', sellPrice: 4 },
 				{ id: 'keyboard', name: '机械键盘', icon: '⌨️', sellPrice: 4 },
 				{ id: 'gpu_buy', name: 'GPU服务器', icon: '🖳', sellPrice: 6 },
 				{ id: 'bike', name: '平把公路车', icon: '🚲', sellPrice: 5 },
+				{ id: 'coffee_machine', name: '咖啡机', icon: '☕', sellPrice: 3 },
 				{ id: 'down_jacket', name: '羽绒服', icon: '🧥', sellPrice: 4 },
 				{ id: 'parasol', name: '遮阳伞', icon: '☂️', sellPrice: 4 }
 			];
@@ -1226,6 +1301,9 @@
 				}
 				if (si.id === 'parasol') {
 					return gameState.hasParasol;
+				}
+				if (si.id === 'coffee_machine') {
+					return gameState.hasCoffeeMachine;
 				}
 				return gameState.furnitureBought && gameState.furnitureBought[si.id.replace('_buy', '')];
 			});
@@ -1248,34 +1326,91 @@
 					}
 
 					// ★★★ 椅子升级信息 ★★★
-					let chairInfo = '';
+					let displayName = si.name;
+					let displayIcon = si.icon;
+					let effectDesc = '';
 					let upgradeBtn = '';
 					if (si.id === 'chair') {
 						const chairUpgrade = gameState.chairUpgrade;
 						if (chairUpgrade && typeof CHAIR_UPGRADES !== 'undefined' && CHAIR_UPGRADES[chairUpgrade]) {
-							chairInfo = ` → ${CHAIR_UPGRADES[chairUpgrade].icon} ${CHAIR_UPGRADES[chairUpgrade].name}`;
+							displayIcon = CHAIR_UPGRADES[chairUpgrade].icon;
+							displayName = CHAIR_UPGRADES[chairUpgrade].name;
+							effectDesc = CHAIR_UPGRADES[chairUpgrade].desc;
+						} else {
+							effectDesc = '每月SAN+1';
 						}
-						upgradeBtn = `<button class="btn btn-success" onclick="showChairUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						// ★★★ 只有未升级时才显示升级按钮 ★★★
+						if (!chairUpgrade) {
+							upgradeBtn = `<span class="shop-item-price" style="color:var(--warning-color);margin-right:4px;">💰18-20</span><button class="btn btn-success" onclick="showChairUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						}
 					}
 
 					// ★★★ 自行车升级信息 ★★★
-					let bikeInfo = '';
 					if (si.id === 'bike') {
 						const bikeUpgrade = gameState.bikeUpgrade;
 						if (bikeUpgrade && typeof BIKE_UPGRADES !== 'undefined' && BIKE_UPGRADES[bikeUpgrade]) {
-							bikeInfo = ` → ${BIKE_UPGRADES[bikeUpgrade].icon} ${BIKE_UPGRADES[bikeUpgrade].name}`;
+							displayIcon = BIKE_UPGRADES[bikeUpgrade].icon;
+							displayName = BIKE_UPGRADES[bikeUpgrade].name;
+							effectDesc = BIKE_UPGRADES[bikeUpgrade].desc;
+						} else {
+							effectDesc = '每月SAN-1，每累计6点换SAN上限+1';
 						}
-						upgradeBtn = `<button class="btn btn-success" onclick="showBikeUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						// ★★★ 只有未升级时才显示升级按钮 ★★★
+						if (!bikeUpgrade) {
+							upgradeBtn = `<span class="shop-item-price" style="color:var(--warning-color);margin-right:4px;">💰12-20</span><button class="btn btn-success" onclick="showBikeUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						}
+					}
+
+					// ★★★ 咖啡机升级信息 ★★★
+					if (si.id === 'coffee_machine') {
+						const coffeeMachineUpgrade = gameState.coffeeMachineUpgrade;
+						if (coffeeMachineUpgrade && typeof COFFEE_MACHINE_UPGRADES !== 'undefined' && COFFEE_MACHINE_UPGRADES[coffeeMachineUpgrade]) {
+							displayIcon = COFFEE_MACHINE_UPGRADES[coffeeMachineUpgrade].icon;
+							displayName = COFFEE_MACHINE_UPGRADES[coffeeMachineUpgrade].name;
+							effectDesc = COFFEE_MACHINE_UPGRADES[coffeeMachineUpgrade].desc;
+						} else {
+							effectDesc = '每累计喝15杯冰美式，SAN回复+1（最多+2）';
+						}
+						// ★★★ 只有未升级时才显示升级按钮 ★★★
+						if (!coffeeMachineUpgrade) {
+							upgradeBtn = `<span class="shop-item-price" style="color:var(--warning-color);margin-right:4px;">💰16-20</span><button class="btn btn-success" onclick="showCoffeeMachineUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						}
+					}
+
+					// ★★★ 显示器升级信息 ★★★
+					if (si.id === 'monitor') {
+						const monitorUpgrade = gameState.monitorUpgrade;
+						if (monitorUpgrade && typeof MONITOR_UPGRADES !== 'undefined' && MONITOR_UPGRADES[monitorUpgrade]) {
+							displayIcon = MONITOR_UPGRADES[monitorUpgrade].icon;
+							displayName = MONITOR_UPGRADES[monitorUpgrade].name;
+							effectDesc = MONITOR_UPGRADES[monitorUpgrade].desc;
+						} else {
+							effectDesc = '看论文SAN-1';
+						}
+						// ★★★ 只有未升级时才显示升级按钮 ★★★
+						if (!monitorUpgrade) {
+							upgradeBtn = `<span class="shop-item-price" style="color:var(--warning-color);margin-right:4px;">💰15</span><button class="btn btn-success" onclick="showMonitorUpgradeModal()" style="padding:4px 10px;font-size:0.75rem;margin-right:4px;">升级</button>`;
+						}
+					}
+
+					// ★★★ 其他物品的效果描述 ★★★
+					if (si.id === 'keyboard') {
+						effectDesc = '写论文SAN-3，分数+1';
+					} else if (si.id === 'gpu_buy') {
+						effectDesc = '每次做实验多做1次且分数+1';
+					} else if (si.id === 'down_jacket') {
+						effectDesc = '冬季"寒风刺骨"debuff无效';
+					} else if (si.id === 'parasol') {
+						effectDesc = '夏季"烈日当空"debuff无效';
 					}
 
 					html += `<div class="shop-item" style="background:var(--card-bg);">
 						<div class="shop-item-info">
-							<div class="shop-item-name"><span style="font-size:1.2rem;margin-right:6px;">${si.icon}</span>${si.name}${chairInfo}${bikeInfo} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
-							<div class="shop-item-desc">出售获得 ${si.sellPrice} 金币</div>
+							<div class="shop-item-name"><span style="font-size:1.2rem;margin-right:6px;">${displayIcon}</span>${displayName} ${ownedCount > 1 ? `(×${ownedCount})` : ''}</div>
+							<div class="shop-item-desc">${effectDesc ? `效果：${effectDesc}` : ''}</div>
 						</div>
 						<div class="shop-item-action">
-							<span class="shop-item-price" style="color:var(--success-color);">+💰${si.sellPrice}</span>
-							${upgradeBtn}
+							${upgradeBtn}<span class="shop-item-price" style="color:var(--success-color);margin-right:4px;">+💰${si.sellPrice}</span>
 							<button class="btn btn-warning" onclick="sellItem('${si.id}')" style="padding:4px 10px;font-size:0.75rem;">出售</button>
 						</div>
 					</div>`;
@@ -1287,13 +1422,139 @@
 			// ★★★ 升级说明 ★★★
 			html += `<div style="padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.75rem;color:var(--text-secondary);">
 				<div style="font-weight:600;margin-bottom:5px;">💡 升级说明</div>
-				<div>• 人体工学椅和自行车购买后可以进行升级</div>
-				<div>• 升级后效果增强，卖出价格也会提高</div>
+				<div>• 人体工学椅、自行车、咖啡机和显示器购买后可以进行升级（消耗金币）</div>
 				<div>• 卖出后重新购买可以选择新的升级方向</div>
 			</div>`;
 
 			return html;
 		}
+
+		// ==================== 显示器升级系统 ====================
+		const MONITOR_UPGRADES = {
+			'4k': {
+				name: '4K显示器',
+				icon: '🖥️',
+				desc: '看论文SAN-0（不消耗SAN）',
+				price: 15,
+				effect: 'read_no_san'  // 看论文不消耗SAN
+			},
+			'smart': {
+				name: '智能显示器',
+				icon: '📺',
+				desc: '看论文SAN-2，每10次看论文buff效果+1',
+				price: 15,
+				effect: 'read_buff_bonus'  // 每10次看论文buff效果+1
+			},
+			'dual': {
+				name: '双屏显示器',
+				icon: '🖥️🖥️',
+				desc: '看论文SAN-2，每月自动看一次（-2SAN）',
+				price: 15,
+				effect: 'auto_read'  // 每月自动看论文
+			}
+		};
+
+		// 显示显示器升级选项
+		function showMonitorUpgradeModal() {
+			const currentUpgrade = gameState.monitorUpgrade;
+
+			// 如果已经升级过，不能再升级
+			if (currentUpgrade) {
+				const upgrade = MONITOR_UPGRADES[currentUpgrade];
+				const readCount = gameState.readCount || 0;
+				const bonusLevel = Math.floor(readCount / 10);
+				showModal('🖥️ 显示器升级',
+					`<div style="text-align:center;">
+						<div style="font-size:3rem;margin-bottom:10px;">${upgrade.icon}</div>
+						<div style="font-weight:600;font-size:1.1rem;">${upgrade.name}</div>
+						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;">效果：${upgrade.desc}</div>
+						<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">已看论文：${readCount}次 | 当前加成：+${bonusLevel}</div>
+						<div style="margin-top:15px;padding:12px;background:var(--light-bg);border-radius:8px;">
+							<p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+								<i class="fas fa-info-circle"></i> 显示器已升级完成<br>
+								如需更换，请先卖出后重新购买
+							</p>
+						</div>
+					</div>`,
+					[{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }]
+				);
+				return;
+			}
+
+			const readCount = gameState.readCount || 0;
+
+			let html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">🖥️</div>
+					<div style="font-weight:600;">当前：2K显示器</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：看论文变为SAN-1</div>
+					<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">已看论文：${readCount}次</div>
+				</div>
+				<div style="font-weight:600;margin-bottom:10px;">选择升级方向（只能选择一次）：</div>
+			`;
+
+			Object.entries(MONITOR_UPGRADES).forEach(([key, upgrade]) => {
+				const canAfford = gameState.gold >= upgrade.price;
+
+				html += `
+					<div class="shop-item ${!canAfford ? 'disabled' : ''}" style="margin-bottom:8px;">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${upgrade.icon} ${upgrade.name}</div>
+							<div class="shop-item-desc">${upgrade.desc}</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price">💰${upgrade.price}</span>
+							<button class="btn btn-primary" onclick="upgradeMonitor('${key}')" ${!canAfford ? 'disabled' : ''}>
+								${canAfford ? '升级' : '金币不足'}
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			showModal('🖥️ 显示器升级', html, [
+				{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }
+			]);
+		}
+
+		// 执行显示器升级
+		function upgradeMonitor(upgradeKey) {
+			const upgrade = MONITOR_UPGRADES[upgradeKey];
+			if (!upgrade) return;
+
+			if (gameState.gold < upgrade.price) {
+				showModal('❌ 升级失败', `<p>金币不足！升级到${upgrade.name}需要${upgrade.price}金币，当前只有${gameState.gold}金币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除金币
+			gameState.gold -= upgrade.price;
+
+			// 记录升级状态
+			gameState.monitorUpgrade = upgradeKey;
+
+			// ★★★ 触发高级装备成就条件 ★★★
+			gameState.achievementConditions = gameState.achievementConditions || {};
+			gameState.achievementConditions.upgradedEquipment = true;
+			// ★★★ 修复：立即检查成就 ★★★
+			if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+
+			addLog('升级', `显示器升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
+
+			closeModal();
+			openShop();
+			updateAllUI();
+			updateBuffs();
+		}
+
+		// 获取4K显示器提供的想idea加成
+		function getMonitorIdeaBonus() {
+			if (!gameState.monitorUpgrade) return 0;
+			const readCount = gameState.readCount || 0;
+			return Math.floor(readCount / 10);
+		}
+
 		// ==================== 人体工学椅升级系统 ====================
 		const CHAIR_UPGRADES = {
 			advanced: {
@@ -1412,6 +1673,8 @@
 			// ★★★ 新增：触发高级装备成就条件 ★★★
 			gameState.achievementConditions = gameState.achievementConditions || {};
 			gameState.achievementConditions.upgradedEquipment = true;
+			// ★★★ 修复：立即检查成就 ★★★
+			if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
 
 			addLog('升级', `椅子升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
 
@@ -1501,9 +1764,178 @@
 			if (upgradeKey === 'road') {
 				gameState.achievementConditions = gameState.achievementConditions || {};
 				gameState.achievementConditions.upgradedEquipment = true;
+				// ★★★ 修复：立即检查成就 ★★★
+				if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+			}
+
+			// ★★★ 新增：升级小电驴时检查整装待发成就 ★★★
+			if (upgradeKey === 'ebike') {
+				if (gameState.hasParasol && gameState.hasDownJacket) {
+					// ★★★ 修复：立即检查成就 ★★★
+					if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+				}
 			}
 
 			addLog('升级', `自行车升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
+
+			closeModal();
+			openShop();
+			updateAllUI();
+			updateBuffs();
+		}
+
+		// ==================== 咖啡机升级系统 ====================
+		const COFFEE_MACHINE_UPGRADES = {
+			automatic: {
+				name: '自动咖啡机',
+				icon: '🤖☕',
+				desc: '冰美式固定+3SAN，每月自动喝一次（-2金币）',
+				price: 16,
+				effect: 'auto_coffee'  // 每月自动喝咖啡
+			},
+			advanced: {
+				name: '高级咖啡机',
+				icon: '☕✨',
+				desc: '每累计喝12杯冰美式，SAN回复+1（最多+5）',
+				price: 20,
+				threshold: 12,  // 每12杯+1
+				maxBonus: 5,    // 最多+5
+				effect: 'coffee_bonus'
+			},
+			unlimited: {
+				name: '无限咖啡机',
+				icon: '☕∞',
+				desc: '冰美式固定+3SAN，每月可无限购买（价格递增2,3,4...）',
+				price: 18,
+				effect: 'unlimited_coffee'  // 无限购买
+			}
+		};
+
+		// 获取咖啡机提供的SAN加成
+		function getCoffeeMachineBonus() {
+			if (!gameState.hasCoffeeMachine) return 0;
+			// ★★★ 只有高级咖啡机才有累计加成效果 ★★★
+			if (gameState.coffeeMachineUpgrade === 'advanced') {
+				return gameState.coffeeMachineBonusLevel || 0;
+			}
+			return 0;
+		}
+
+		// 更新咖啡机加成等级
+		function updateCoffeeMachineBonus() {
+			if (!gameState.hasCoffeeMachine) return;
+			// ★★★ 只有高级咖啡机才计算累计加成 ★★★
+			if (gameState.coffeeMachineUpgrade !== 'advanced') return;
+
+			const count = gameState.coffeeMachineCount || 0;
+			const threshold = COFFEE_MACHINE_UPGRADES.advanced.threshold;  // 12
+			const maxBonus = COFFEE_MACHINE_UPGRADES.advanced.maxBonus;    // 5
+
+			const newLevel = Math.min(maxBonus, Math.floor(count / threshold));
+			if (newLevel > (gameState.coffeeMachineBonusLevel || 0)) {
+				gameState.coffeeMachineBonusLevel = newLevel;
+				addLog('高级咖啡机', '咖啡机效果提升', `冰美式SAN回复+${newLevel}（累计${count}杯）`);
+			}
+		}
+
+		// 显示咖啡机升级选项
+		function showCoffeeMachineUpgradeModal() {
+			const currentUpgrade = gameState.coffeeMachineUpgrade;
+
+			// 如果已经升级过，不能再升级
+			if (currentUpgrade) {
+				const upgrade = COFFEE_MACHINE_UPGRADES[currentUpgrade];
+				const count = gameState.coffeeMachineCount || 0;
+				const bonus = gameState.coffeeMachineBonusLevel || 0;
+				// ★★★ 根据升级类型显示不同统计信息 ★★★
+				let statsInfo = `累计喝咖啡：${count}杯`;
+				if (currentUpgrade === 'advanced') {
+					statsInfo += ` | 当前加成：+${bonus}`;
+				}
+				showModal('☕ 咖啡机升级',
+					`<div style="text-align:center;">
+						<div style="font-size:3rem;margin-bottom:10px;">${upgrade.icon}</div>
+						<div style="font-weight:600;font-size:1.1rem;">${upgrade.name}</div>
+						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;">效果：${upgrade.desc}</div>
+						<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">${statsInfo}</div>
+						<div style="margin-top:15px;padding:12px;background:var(--light-bg);border-radius:8px;">
+							<p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+								<i class="fas fa-info-circle"></i> 咖啡机已升级完成<br>
+								如需更换升级方向，请先卖出后重新购买
+							</p>
+						</div>
+					</div>`,
+					[{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }]
+				);
+				return;
+			}
+
+			const count = gameState.coffeeMachineCount || 0;
+
+			let html = `
+				<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:2rem;margin-bottom:8px;">☕</div>
+					<div style="font-weight:600;">当前：咖啡机</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：购买冰美式回复SAN值</div>
+					<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">累计喝咖啡：${count}杯</div>
+				</div>
+				<div style="font-weight:600;margin-bottom:10px;">选择升级方向（只能选择一次）：</div>
+			`;
+
+			Object.entries(COFFEE_MACHINE_UPGRADES).forEach(([key, upgrade]) => {
+				const canAfford = gameState.gold >= upgrade.price;
+
+				html += `
+					<div class="shop-item ${!canAfford ? 'disabled' : ''}" style="margin-bottom:8px;">
+						<div class="shop-item-info">
+							<div class="shop-item-name">${upgrade.icon} ${upgrade.name}</div>
+							<div class="shop-item-desc">${upgrade.desc}</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price">💰${upgrade.price}</span>
+							<button class="btn btn-primary" onclick="upgradeCoffeeMachine('${key}')" ${!canAfford ? 'disabled' : ''}>
+								${canAfford ? '升级' : '金币不足'}
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			showModal('☕ 咖啡机升级', html, [
+				{ text: '返回商店', class: 'btn-info', action: () => { closeModal(); openShop(); } }
+			]);
+		}
+
+		// 执行咖啡机升级
+		function upgradeCoffeeMachine(upgradeKey) {
+			const upgrade = COFFEE_MACHINE_UPGRADES[upgradeKey];
+			if (!upgrade) return;
+
+			if (gameState.gold < upgrade.price) {
+				showModal('❌ 升级失败', `<p>金币不足！升级到${upgrade.name}需要${upgrade.price}金币，当前只有${gameState.gold}金币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除金币
+			gameState.gold -= upgrade.price;
+
+			// 记录升级状态（保留累计喝咖啡数量）
+			gameState.coffeeMachineUpgrade = upgradeKey;
+
+			// ★★★ 咖啡机升级触发高级装备成就 ★★★
+			gameState.achievementConditions = gameState.achievementConditions || {};
+			gameState.achievementConditions.upgradedEquipment = true;
+			// ★★★ 修复：立即检查成就 ★★★
+			if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+
+			// ★★★ 只有高级咖啡机才需要计算加成等级 ★★★
+			if (upgradeKey === 'advanced') {
+				const count = gameState.coffeeMachineCount || 0;
+				gameState.coffeeMachineBonusLevel = Math.min(upgrade.maxBonus, Math.floor(count / upgrade.threshold));
+			}
+
+			addLog('升级', `咖啡机升级为${upgrade.name}`, `金币-${upgrade.price}，${upgrade.desc}`);
 
 			closeModal();
 			openShop();
@@ -1535,14 +1967,37 @@
 				return basePrice;
 			};
 
+			// ★★★ 新增：咖啡机卖出价格根据升级状态计算 ★★★
+			const getCoffeeMachineSellPrice = () => {
+				let basePrice = 3;
+				if (gameState.coffeeMachineUpgrade) {
+					const upgrade = COFFEE_MACHINE_UPGRADES[gameState.coffeeMachineUpgrade];
+					// 升级后卖出价格 = 基础价格 + 升级价格的一半（下取整）
+					basePrice += Math.floor(upgrade.price / 2);
+				}
+				return basePrice;
+			};
+
+			// ★★★ 新增：显示器卖出价格根据升级状态计算 ★★★
+			const getMonitorSellPrice = () => {
+				let basePrice = 4;
+				if (gameState.monitorUpgrade) {
+					const upgrade = MONITOR_UPGRADES[gameState.monitorUpgrade];
+					// 升级后卖出价格 = 基础价格 + 升级价格的一半（下取整）
+					basePrice += Math.floor(upgrade.price / 2);
+				}
+				return basePrice;
+			};
+
 			const sellPrices = {
 				'chair': getChairSellPrice(),
-				'monitor': 4,
+				'monitor': getMonitorSellPrice(),
 				'keyboard': 4,
 				'gpu_buy': 6,
 				'bike': getBikeSellPrice(),
 				'down_jacket': 4,
-				'parasol': 4
+				'parasol': 4,
+				'coffee_machine': getCoffeeMachineSellPrice()
 			};
 
 			const sellPrice = sellPrices[id];
@@ -1563,7 +2018,12 @@
 					break;
 				case 'monitor':
 					canSell = gameState.furnitureBought && gameState.furnitureBought.monitor;
-					itemName = '4K显示器';
+					// ★★★ 修复：显示升级后的显示器名称 ★★★
+					if (gameState.monitorUpgrade) {
+						itemName = MONITOR_UPGRADES[gameState.monitorUpgrade].name;
+					} else {
+						itemName = '2K显示器';
+					}
 					break;
 				case 'keyboard':
 					canSell = gameState.furnitureBought && gameState.furnitureBought.keyboard;
@@ -1589,6 +2049,15 @@
 				case 'parasol':
 					canSell = gameState.hasParasol;
 					itemName = '遮阳伞';
+					break;
+				case 'coffee_machine':
+					canSell = gameState.hasCoffeeMachine;
+					// 显示升级后的名称
+					if (gameState.coffeeMachineUpgrade) {
+						itemName = COFFEE_MACHINE_UPGRADES[gameState.coffeeMachineUpgrade].name;
+					} else {
+						itemName = '咖啡机';
+					}
 					break;
 			}
 			
@@ -1625,6 +2094,9 @@
 							case 'monitor':
 								gameState.furnitureBought.monitor = false;
 								gameState.buffs.permanent = gameState.buffs.permanent.filter(b => b.type !== 'read_san_reduce');
+								// ★★★ 重置升级状态，再次购买可重新选择升级方向 ★★★
+								gameState.monitorUpgrade = null;
+								// 注意：累计看论文次数（readCount）保留，不重置
 								const monitorItem = shopItems.find(i => i.id === 'monitor');
 								if (monitorItem) monitorItem.bought = false;
 								break;
@@ -1670,14 +2142,25 @@
 								const parasolItem = shopItems.find(i => i.id === 'parasol');
 								if (parasolItem) parasolItem.bought = false;
 								break;
+							case 'coffee_machine':
+								gameState.hasCoffeeMachine = false;
+								// 重置升级状态，再次购买可重新选择升级方向
+								gameState.coffeeMachineUpgrade = null;
+								// 注意：累计喝咖啡数量（coffeeMachineCount）保留，不重置，但加成失效
+								gameState.coffeeMachineBonusLevel = 0;
+								// 恢复商店状态
+								const coffeeMachineItem = shopItems.find(i => i.id === 'coffee_machine');
+								if (coffeeMachineItem) coffeeMachineItem.bought = false;
+								break;
 						}
 						
-						// 检查全套家具成就条件
+						// 检查豪华工位成就条件
 						if (gameState.furnitureBought) {
 							const hasAll = gameState.furnitureBought.chair &&
 										   gameState.furnitureBought.monitor &&
 										   gameState.furnitureBought.keyboard &&
-										   (gameState.gpuServersBought || 0) >= 1;
+										   (gameState.gpuServersBought || 0) >= 1 &&
+										   gameState.hasCoffeeMachine;
 							if (!hasAll && gameState.achievementConditions) {
 								gameState.achievementConditions.fullFurnitureSet = false;
 							}
@@ -1701,8 +2184,15 @@
             const item = shopItems.find(i => i.id === id);
             if (!item) return;
 
-            if (gameState.gold < item.price) {
-                showModal('❌ 购买失败', `<p>金钱不足！购买${item.name}需要${item.price}金币，当前只有${gameState.gold}金币。</p>`,
+            // 冰美式价格（无限咖啡机价格递增2,3,4...）
+            let actualPrice = item.price;
+            if (id === 'coffee' && gameState.coffeeMachineUpgrade === 'unlimited') {
+                const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+                actualPrice = coffeeBoughtThisMonth + 2;  // 第1杯2金币，第2杯3金币...
+            }
+
+            if (gameState.gold < actualPrice) {
+                showModal('❌ 购买失败', `<p>金钱不足！购买${item.name}需要${actualPrice}金币，当前只有${gameState.gold}金币。</p>`,
                     [{ text: '确定', class: 'btn-primary', action: closeModal }]);
                 return;
             }
@@ -1715,26 +2205,46 @@
             const item = shopItems.find(i => i.id === id);
             if (!item) return false;
 
-            if (gameState.gold < item.price) {
+            // 冰美式价格（无限咖啡机价格递增2,3,4...）
+            let actualPrice = item.price;
+            if (id === 'coffee' && gameState.coffeeMachineUpgrade === 'unlimited') {
+                const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+                actualPrice = coffeeBoughtThisMonth + 2;  // 第1杯2金币，第2杯3金币...
+            }
+
+            if (gameState.gold < actualPrice) {
                 return false;
             }
 
             // 检查购买限制
             if (item.once && item.bought) return false;
-            if (item.monthlyOnce && item.boughtThisMonth) return false;
+            // ★★★ 冰美式使用单独的计数器检查 ★★★
+            if (item.monthlyOnce && item.boughtThisMonth && id !== 'coffee') return false;
 
-            let result = `金钱-${item.price}`;
+            // 冰美式每月购买上限1杯（无限咖啡机除外）
+            if (id === 'coffee') {
+                const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+                // ★★★ 无限咖啡机可以无限购买 ★★★
+                if (gameState.coffeeMachineUpgrade !== 'unlimited' && coffeeBoughtThisMonth >= 1) return false;
+            }
+
+            // ★★★ GPU数量限制检查（确保第一个月至少有1个库存）★★★
+            const effectiveMonths = Math.max(1, gameState.totalMonths || 1);
+            if (id === 'gpu_buy' && (gameState.gpuServersBought || 0) >= effectiveMonths) return false;
+            if (id === 'gpu_rent' && (gameState.gpuRentedThisMonth || 0) >= 20) return false;
+
+            let result = `金钱-${actualPrice}`;
             if (isAutoSubscription) {
                 result = `【预购】${result}`;
             }
-            
+
             // 富可敌国觉醒：通过消费增加属性
             if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened) {
-                const spent = item.price;
+                const spent = actualPrice;
                 gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
-                
-                const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
-                const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
+
+                const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
+                const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 4);
                 const newGains = attributeGains - previousGains;
                 
                 if (newGains > 0) {
@@ -1748,9 +2258,9 @@
                     checkSocialUnlock();
                 }
             }
-            
-            gameState.gold -= item.price;
-            
+
+            gameState.gold -= actualPrice;
+
             switch(id) {
                 case 'gpu_buy':
                     gameState.gpuServersBought = (gameState.gpuServersBought || 0) + 1;
@@ -1774,14 +2284,17 @@
                     break;
             }
             
-            // 检查全套家具成就（需要工学椅或其升级+显示器+键盘+GPU服务器）
+            // 检查豪华工位成就（需要工学椅或其升级+显示器+键盘+GPU服务器+咖啡机）
             if (gameState.furnitureBought &&
                 gameState.furnitureBought.chair &&
                 gameState.furnitureBought.monitor &&
                 gameState.furnitureBought.keyboard &&
-                (gameState.gpuServersBought || 0) >= 1) {
+                (gameState.gpuServersBought || 0) >= 1 &&
+                gameState.hasCoffeeMachine) {
                 gameState.achievementConditions = gameState.achievementConditions || {};
                 gameState.achievementConditions.fullFurnitureSet = true;
+                // ★★★ 修复：立即检查成就 ★★★
+                if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
             }
             
             switch (id) {
@@ -1795,76 +2308,116 @@
                     // ★★★ 新增：购买GPU服务器增加实验分数+1 ★★★
                     gameState.buffs.permanent.push({ type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true });
                     result += '，获得永久buff-每次做实验多做1次且分数+1';
-                    // ★★★ 购买GPU后也检查全套家具成就 ★★★
+                    // ★★★ 购买GPU后也检查豪华工位成就 ★★★
                     if (gameState.furnitureBought &&
                         gameState.furnitureBought.chair &&
                         gameState.furnitureBought.monitor &&
                         gameState.furnitureBought.keyboard &&
-                        (gameState.gpuServersBought || 0) >= 1) {
+                        (gameState.gpuServersBought || 0) >= 1 &&
+                        gameState.hasCoffeeMachine) {
                         gameState.achievementConditions = gameState.achievementConditions || {};
                         gameState.achievementConditions.fullFurnitureSet = true;
+                        // ★★★ 修复：立即检查成就 ★★★
+                        if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
                     }
                     break;
                 case 'keyboard':
                     item.bought = true;
                     gameState.buffs.permanent.push({ type: 'write_san_reduce', name: '写论文SAN-3', value: 1, permanent: true });
-                    result += '，获得永久buff-每次写论文变为SAN值-3';
+                    gameState.buffs.permanent.push({ type: 'write_bonus', name: '写论文分数+1', value: 1, permanent: true });
+                    result += '，获得永久buff-每次写论文变为SAN值-3且分数+1';
                     break;
                 case 'monitor':
                     item.bought = true;
-                    gameState.buffs.permanent.push({ type: 'read_san_reduce', name: '读论文SAN-1', value: 1, permanent: true });
-                    result += '，获得永久buff-读论文变为SAN值-1';
+                    gameState.buffs.permanent.push({ type: 'read_san_reduce', name: '看论文SAN-1', value: 1, permanent: true });
+                    result += '，获得永久buff-看论文变为SAN值-1';
                     break;
 				case 'coffee':
-					item.boughtThisMonth = true;
+					// 使用本月购买计数器
+					gameState.coffeeBoughtThisMonth = (gameState.coffeeBoughtThisMonth || 0) + 1;
 					gameState.coffeeBoughtCount = (gameState.coffeeBoughtCount || 0) + 1;
-					// ★★★ 修改：前15杯不变，第16杯开始提升 ★★★
-					const coffeeBonus = 3 + Math.floor((gameState.coffeeBoughtCount - 1) / 15);
+					// ★★★ 咖啡机升级决定SAN恢复效果 ★★★
+					// 自动咖啡机/无限咖啡机：固定+3SAN
+					// 高级咖啡机：+3+累计加成
+					// 无咖啡机：+3
+					let coffeeBonus = 3;
+					if (gameState.coffeeMachineUpgrade === 'advanced') {
+						coffeeBonus = 3 + getCoffeeMachineBonus();
+					}
 					gameState.san = Math.min(gameState.sanMax, gameState.san + coffeeBonus);
 					result += `，SAN值+${coffeeBonus}`;
+					// 如果有咖啡机，增加累计计数用于高级咖啡机升级加成
+					if (gameState.hasCoffeeMachine) {
+						gameState.coffeeMachineCount = (gameState.coffeeMachineCount || 0) + 1;
+						if (gameState.coffeeMachineUpgrade === 'advanced') {
+							updateCoffeeMachineBonus();
+						}
+					}
+					break;
+
+				case 'coffee_machine':
+					item.bought = true;
+					gameState.hasCoffeeMachine = true;
+					gameState.coffeeMachineUpgrade = null;  // 未升级
+					gameState.coffeeMachineCount = 0;  // 重置计数（但不清零累计）
+					gameState.coffeeMachineBonusLevel = 0;  // 加成等级
+					result += '，获得咖啡机-可在商店第3页升级';
+					// ★★★ 购买咖啡机后检查豪华工位成就 ★★★
+					if (gameState.furnitureBought &&
+						gameState.furnitureBought.chair &&
+						gameState.furnitureBought.monitor &&
+						gameState.furnitureBought.keyboard &&
+						(gameState.gpuServersBought || 0) >= 1) {
+						gameState.achievementConditions = gameState.achievementConditions || {};
+						gameState.achievementConditions.fullFurnitureSet = true;
+						// ★★★ 修复：立即检查成就 ★★★
+						if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+					}
 					break;
 					
 				case 'gemini':
 					item.boughtThisMonth = true;
 					// ★★★ 只添加一个综合buff，不再单独添加分数buff ★★★
-					gameState.buffs.temporary.push({ 
-						type: 'idea_san_reduce', 
-						name: 'Gemini订阅', 
-						value: 1, 
+					gameState.buffs.temporary.push({
+						type: 'idea_san_reduce',
+						name: 'Gemini订阅',
+						value: 1,
 						permanent: false,
 						thisMonthOnly: true,
-						bonusScore: 4  // ★★★ 在buff中记录分数加成 ★★★
+						bonusScore: 5  // ★★★ 修改：+4改为+5 ★★★
 					});
-					result += '，获得本月buff-想idea时SAN消耗-1，分数+4';
+					result += '，获得本月buff-想idea时SAN消耗-1，分数+5';
 					break;
 					
 				case 'gpt':
 					item.boughtThisMonth = true;
-					gameState.buffs.temporary.push({ 
-						type: 'exp_san_reduce', 
-						name: 'GPT订阅', 
-						value: 1, 
+					gameState.buffs.temporary.push({
+						type: 'exp_san_reduce',
+						name: 'GPT订阅',
+						value: 1,
 						permanent: false,
 						thisMonthOnly: true,
-						bonusScore: 4
+						bonusScore: 5  // ★★★ 修改：+4改为+5 ★★★
 					});
-					result += '，获得本月buff-做实验时SAN消耗-1，分数+4';
+					result += '，获得本月buff-做实验时SAN消耗-1，分数+5';
 					break;
 					
 				case 'claude':
 					item.boughtThisMonth = true;
-					gameState.buffs.temporary.push({ 
-						type: 'write_san_reduce_temp', 
-						name: 'Claude订阅', 
-						value: 1, 
+					gameState.buffs.temporary.push({
+						type: 'write_san_reduce_temp',
+						name: 'Claude订阅',
+						value: 1,
 						permanent: false,
 						thisMonthOnly: true,
-						bonusScore: 4
+						bonusScore: 5  // ★★★ 修改：+4改为+5 ★★★
 					});
-					result += '，获得本月buff-写论文时SAN消耗-1，分数+4';
+					result += '，获得本月buff-写论文时SAN消耗-1，分数+5';
 					break;
 					
 				case 'gpu_rent':
+					// ★★★ 新增：增加本月已租用数量 ★★★
+					gameState.gpuRentedThisMonth = (gameState.gpuRentedThisMonth || 0) + 1;
 					// 改为本月buff而不是下次
 					gameState.buffs.temporary.push({
 						type: 'exp_times',
@@ -1895,12 +2448,20 @@
 					item.bought = true;
 					gameState.hasDownJacket = true;
 					result += '，获得永久效果-使冬季"寒风刺骨"debuff无效';
+					// ★★★ 修复：检查整装待发成就 ★★★
+					if (gameState.bikeUpgrade === 'ebike' && gameState.hasParasol) {
+						if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+					}
 					break;
 
 				case 'parasol':
 					item.bought = true;
 					gameState.hasParasol = true;
 					result += '，获得永久效果-使夏季"烈日当空"debuff无效';
+					// ★★★ 修复：检查整装待发成就 ★★★
+					if (gameState.bikeUpgrade === 'ebike' && gameState.hasDownJacket) {
+						if (typeof checkInGameAchievements === 'function') checkInGameAchievements();
+					}
 					break;
             }
 
@@ -1945,7 +2506,15 @@
                 if (!item) return;
 
                 // 检查是否已购买（月度物品）
-                if (item.monthlyOnce && item.boughtThisMonth) return;
+                // 冰美式使用单独的计数器检查
+                if (itemId === 'coffee') {
+                    // SAN满时不自动购买冰美式
+                    if (gameState.san >= gameState.sanMax) return;
+                    const coffeeBoughtThisMonth = gameState.coffeeBoughtThisMonth || 0;
+                    if (coffeeBoughtThisMonth >= 1) return;
+                } else if (item.monthlyOnce && item.boughtThisMonth) {
+                    return;
+                }
 
                 // 根据触发类型决定是否购买
                 let shouldBuy = false;
@@ -1984,6 +2553,13 @@
 		window.upgradeChair = upgradeChair;
 		window.showBikeUpgradeModal = showBikeUpgradeModal;
 		window.upgradeBike = upgradeBike;
+		window.showCoffeeMachineUpgradeModal = showCoffeeMachineUpgradeModal;
+		window.upgradeCoffeeMachine = upgradeCoffeeMachine;
+		window.getCoffeeMachineBonus = getCoffeeMachineBonus;
+		window.updateCoffeeMachineBonus = updateCoffeeMachineBonus;
+		window.showMonitorUpgradeModal = showMonitorUpgradeModal;
+		window.upgradeMonitor = upgradeMonitor;
+		window.getMonitorIdeaBonus = getMonitorIdeaBonus;
 		window.manualRefreshBlackMarket = manualRefreshBlackMarket;
 		window.toggleItemLock = toggleItemLock;
 		window.buyBlackMarketItem = buyBlackMarketItem;

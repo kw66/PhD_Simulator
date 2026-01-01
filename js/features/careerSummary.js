@@ -1177,27 +1177,22 @@
 								<!-- 毕业属性 -->
 								<div class="poster-final-stats">
 									<div class="final-stat-item">
-										<span class="final-stat-icon">❤️</span>
 										<span class="final-stat-value">${gameState.sanMax}</span>
 										<span class="final-stat-label">SAN上限</span>
 									</div>
 									<div class="final-stat-item">
-										<span class="final-stat-icon">🧠</span>
 										<span class="final-stat-value">${gameState.research}</span>
 										<span class="final-stat-label">科研</span>
 									</div>
 									<div class="final-stat-item">
-										<span class="final-stat-icon">👥</span>
 										<span class="final-stat-value">${gameState.social}</span>
 										<span class="final-stat-label">社交</span>
 									</div>
 									<div class="final-stat-item">
-										<span class="final-stat-icon">💖</span>
 										<span class="final-stat-value">${gameState.favor}</span>
 										<span class="final-stat-label">好感</span>
 									</div>
 									<div class="final-stat-item">
-										<span class="final-stat-icon">💰</span>
 										<span class="final-stat-value">${gameState.gold}</span>
 										<span class="final-stat-label">金币</span>
 									</div>

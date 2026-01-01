@@ -59,12 +59,12 @@
                 color: '#b8860b',  // 暗金色
                 probability: 0.05,
                 requirements: {
-                    phdYear2: 5,      // 第二年转博要求
-                    phdYear3: 7,      // 第三年转博要求
-                    masterGrad: 4,    // 硕士毕业要求
-                    phdGrad: 20       // 博士毕业要求
+                    phdYear2: 4,      // 第二年转博要求
+                    phdYear3: 6,      // 第三年转博要求
+                    masterGrad: 3,    // 硕士毕业要求
+                    phdGrad: 15       // 博士毕业要求
                 },
-                salary: { master: 2, phd: 5 },  // 2=每月2元, 5=每月5元
+                salary: { master: 1.75, phd: 3.5 },
                 researchResourceRange: [11, 14],
                 initialAffinityRange: [1, 3],
                 papersRange: [700, 900],      // 论文数范围
@@ -78,12 +78,12 @@
                 color: '#e67e22',
                 probability: 0.10,
                 requirements: {
-                    phdYear2: 4,
-                    phdYear3: 6,
-                    masterGrad: 4,
-                    phdGrad: 16
+                    phdYear2: 3,
+                    phdYear3: 5,
+                    masterGrad: 3,
+                    phdGrad: 13
                 },
-                salary: { master: 1.5, phd: 5 },  // 1.5=偶数月发2元
+                salary: { master: 1.5, phd: 3.25 },
                 researchResourceRange: [9, 12],
                 initialAffinityRange: [2, 3],
                 papersRange: [500, 700],
@@ -98,11 +98,11 @@
                 probability: 0.20,
                 requirements: {
                     phdYear2: 3,
-                    phdYear3: 5,
-                    masterGrad: 3,
-                    phdGrad: 12
+                    phdYear3: 4,
+                    masterGrad: 2,
+                    phdGrad: 11
                 },
-                salary: { master: 1.25, phd: 4 },  // 1.25=4,8,12月发2元
+                salary: { master: 1.25, phd: 3.0 },
                 researchResourceRange: [7, 10],
                 initialAffinityRange: [2, 4],
                 papersRange: [250, 350],
@@ -117,11 +117,11 @@
                 probability: 0.25,
                 requirements: {
                     phdYear2: 2,
-                    phdYear3: 4,
+                    phdYear3: 3,
                     masterGrad: 2,
                     phdGrad: 9
                 },
-                salary: { master: 1.25, phd: 3 },  // 1.25=4,8,12月发2元
+                salary: { master: 1, phd: 2.75 },
                 researchResourceRange: [5, 8],
                 initialAffinityRange: [3, 4],
                 papersRange: [80, 120],
@@ -140,7 +140,7 @@
                     masterGrad: 1,
                     phdGrad: 7
                 },
-                salary: { master: 1, phd: 3 },
+                salary: { master: 1, phd: 2.5 },
                 researchResourceRange: [3, 6],
                 initialAffinityRange: [3, 5],
                 papersRange: [40, 60],
@@ -794,7 +794,7 @@
                     <h4 style="margin:0 0 8px;font-size:0.9rem;">📌 角色类型</h4>
                     <div style="font-size:0.8rem;">
                         <div style="padding:6px 0;border-bottom:1px solid var(--border-color);">
-                            <strong>👨‍🏫 导师</strong>：做项目(SAN-3) → 亲和度+1，科研资源+1，项目奖励<br>
+                            <strong>👨‍🏫 导师</strong>：做项目(SAN-5) → 亲和度+1，科研资源+1，项目奖励<br>
                             <span style="color:var(--text-secondary);font-size:0.75rem;">关系增长 = 好感度 + 亲和度</span>
                         </div>
                         <div style="padding:6px 0;border-bottom:1px solid var(--border-color);">
@@ -895,12 +895,12 @@
 
                     // 获取任务名称、消耗和奖励说明
                     let taskName = '做项目';
-                    let taskCost = 'SAN-3';
+                    let taskCost = 'SAN-5';
                     let taskIcon = '📋';
                     let taskReward = '亲和度+1，科研资源+1，项目奖励';
                     if (person.type === 'advisor') {
                         taskName = '做项目';
-                        taskCost = 'SAN-3';
+                        taskCost = 'SAN-5';
                         taskIcon = '📋';
                         taskReward = '亲和度+1，科研资源+1，项目奖励，可选论文加成';
                     } else if (person.type === 'senior') {
@@ -1222,7 +1222,7 @@
 
             // 消耗SAN（免费时不消耗）
             if (!isFree) {
-                const baseSanCost = 3;
+                const baseSanCost = 5;
                 // ★★★ 修复：使用getSanCostExplanation显示详细计算过程 ★★★
                 const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
                 if (gameState.san < actualCost) {
@@ -1388,18 +1388,21 @@
             const multiplier = person.taskMultiplier || 8;
             person.taskMax = person.researchResource * multiplier + 20;
 
-            // 随机横向/纵向项目
-            const isHorizontal = Math.random() < 0.5;
+            // ★★★ 修改：项目奖励改为循环（横向→纵向→横向...）★★★
+            person.advisorTasksCompleted = (person.advisorTasksCompleted || 0) + 1;
+            const cycle = (person.advisorTasksCompleted - 1) % 2;
             let rewardText = '';
-            if (isHorizontal) {
-                gameState.gold += 5;
-                clampGold();  // ★★★ 赤贫学子诅咒 ★★★
-                rewardText = '横向项目，金币+5';
-            } else {
-                gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-                // ★★★ 修复：科研增加时检查解锁 ★★★
-                checkResearchUnlock();
-                rewardText = '纵向项目，科研能力+1';
+            switch (cycle) {
+                case 0:  // 横向项目：金币+5
+                    gameState.gold += 5;
+                    clampGold();  // ★★★ 赤贫学子诅咒 ★★★
+                    rewardText = '横向项目，金币+5';
+                    break;
+                case 1:  // 纵向项目：科研能力+1
+                    gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+                    checkResearchUnlock();
+                    rewardText = '纵向项目，科研能力+1';
+                    break;
             }
 
             addLog('项目完成', `帮${person.name}完成项目`, `亲和度+1，科研资源+1，${rewardText}`);

@@ -22,6 +22,7 @@
 				social: 1,
 				favor: 1,
 				gold: 1,
+				goldMax: 200,  // 金币上限
 				paperS: 0,          // S类论文数量（Nature + Nature子刊）
 				paperNature: 0,     // Nature论文数量
 				paperNatureSub: 0,  // Nature子刊数量
@@ -59,9 +60,12 @@
 				isReversed: false,
 				reversedAwakened: false,
 				blockedResearchGains: 0,
-				
+
 				phdChoiceMadeThisYear: false,
 				pendingPhDChoice: false,
+				pendingNatureExtension: false,      // ★★★ 新增：延毕发Nature选择等待中 ★★★
+				natureExtensionChoiceMade: false,   // ★★★ 新增：是否已做过延毕选择 ★★★
+				yearEndSummaryTriggeredThisYear: 0, // ★★★ 新增：学年总结已触发的年份（防止重复触发）★★★
 				pendingConference: null,
 				goldSpentTotal: 0,
 				enterpriseCount: 0,
@@ -85,6 +89,7 @@
 				maxConcurrentReviews: 0,
 				phdOpportunitiesRejected: 0,
 				gpuServersBought: 0,
+				gpuRentedThisMonth: 0,  // 本月已租用GPU数量（每月重置，上限20）
 				furnitureBought: {
 					chair: false,
 					monitor: false,
@@ -122,8 +127,10 @@
 				nextIdeaBonusSource: null,        // 加成来源（'senior' 或 'teacher'）
 				isTrueNormal: false,  // 是否使用真·大多数角色
 				researchMax: 20,
-				socialMax: 20,  
-				favorMax: 20, 
+				socialMax: 20,
+				favorMax: 20,
+				// ★★★ 新增：自行车SAN上限增益追踪 ★★★
+				bikeSanMaxGained: 0,             // 骑行获得的SAN上限增益（最多+6平把/+12弯把）
 				// ★★★ 新增：高级选项触发记录 ★★★
 				metBigBullCoop: false,           // 是否触发过"找大牛合作"
 

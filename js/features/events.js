@@ -81,8 +81,10 @@
 		}
 
         function triggerTeachersDayEvent() {
+            // ★★★ 根据当前好感度动态显示结果 ★★★
+            const noGiftText = gameState.favor < 6 ? '什么也不送（好感<6：好感-1）' : '什么也不送（好感≥6：无事发生）';
             showModal('🎁 教师节', '<p>教师节到了，你准备送导师什么礼物？</p>', [
-                { text: '什么也不送（好感<6：好感-1，否则无）', class: 'btn-info', action: () => {
+                { text: noGiftText, class: 'btn-info', action: () => {
                     // ★★★ 重置连续邮票计数 ★★★
                     gameState.consecutiveStampGifts = 0;
                     closeModal();
@@ -125,7 +127,21 @@
 			const year = gameState.year;
 			const location = CCIG_LOCATIONS[(year - 1) % 5]; // 1-5年对应索引0-4
 			const realYear = getRealYear(year, 9);
-			
+
+			// ★★★ 根据当前好感度动态显示结果 ★★★
+			const advisorPayText = gameState.favor < 6 ? '👨‍🏫 导师报销（好感<6：好感-1）' : '👨‍🏫 导师报销（好感≥6：免费）';
+
+			// ★★★ 整装待发天赋：基础-2，每4次开会+1，最多-6 ★★★
+			const hasFullGear = gameState.bikeUpgrade === 'ebike' &&
+				gameState.hasParasol &&
+				gameState.hasDownJacket;
+			const meetingCount = gameState.meetingCount || 0;
+			const fullGearDiscount = hasFullGear ? Math.min(2 + Math.floor(meetingCount / 4), 6) : 0;
+			const actualSelfPay = Math.max(0, 2 - fullGearDiscount);
+			const selfPayText = hasFullGear
+				? (actualSelfPay <= 0 ? `💰 自费前往（免费🎒）` : `💰 自费前往（金钱-${actualSelfPay}🎒）`)
+				: `💰 自费前往（金钱-2）`;
+
 			showModal('🏛️ CCIG中国图象图形学学会年会',
 				`<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2rem;margin-bottom:10px;">🇨🇳</div>
@@ -135,12 +151,12 @@
 				</div>
 				<p>一年一度的CCIG国内学术会议即将在<strong>${location}</strong>举办，是否参加？</p>`,
 				[
-					{ text: '❌ 不去参加（无）', class: 'btn-info', action: () => {
+					{ text: '❌ 不去参加', class: 'btn-info', action: () => {
 						addLog('CCIG', `不参加CCIG ${realYear} @ ${location}`, '无事发生');
 						closeModal();
 						updateAllUI();
 					}},
-					{ text: '👨‍🏫 导师报销（好感<6：好感-1，否则无）', class: 'btn-primary', action: () => {
+					{ text: advisorPayText, class: 'btn-primary', action: () => {
 						closeModal();
 						if (gameState.favor >= 6) {
 							addLog('CCIG', `导师报销参加CCIG @ ${location}`, '导师爽快答应');
@@ -152,10 +168,11 @@
 							}
 						}
 					}},
-					{ text: '💰 自费前往（金钱-2）', class: 'btn-warning', action: () => {
-						addLog('CCIG', `自费参加CCIG @ ${location}`, '金币-2');
+					{ text: selfPayText, class: 'btn-warning', action: () => {
+						const costText = hasFullGear ? '免费（整装待发）' : '金币-2';
+						addLog('CCIG', `自费参加CCIG @ ${location}`, costText);
 						closeModal();
-						if (changeGold(-2)) {
+						if (actualSelfPay === 0 || changeGold(-actualSelfPay)) {
 							setTimeout(() => showCCIGActivityModal(location, realYear), 200);
 						}
 					}}
@@ -375,6 +392,8 @@
         function showRandomEvent1() {
             const baseSanCost = -3;
             const actualSanCost = getActualSanChange(baseSanCost);
+            // ★★★ 根据当前社交动态显示结果 ★★★
+            const delegateText = gameState.social < 6 ? '让师弟师妹去指导（社交<6：社交-1）' : '让师弟师妹去指导（社交≥6：无惩罚）';
             showModal('📚 随机事件', '<p>导师派你指导本科生毕设。</p>', [
                 { text: '残忍拒绝（好感-1）', class: 'btn-danger', action: () => {
                     // ★★★ 拒绝指导本科生计数 ★★★
@@ -407,7 +426,7 @@
                         }, 300);
                     }
                 }},
-                { text: '让师弟师妹去指导（社交<6：社交-1，否则无）', class: 'btn-info', action: () => {
+                { text: delegateText, class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         addLog('随机事件', '导师派你指导本科生毕设 - 让师弟师妹去指导', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
@@ -423,6 +442,8 @@
         function showRandomEvent2() {
             const baseSanCost = -2;
             const actualSanCost = getActualSanChange(baseSanCost);
+            // ★★★ 根据当前社交动态显示结果 ★★★
+            const delegateText = gameState.social < 6 ? '交给师弟师妹（社交<6：社交-1）' : '交给师弟师妹（社交≥6：无惩罚）';
             showModal('📝 随机事件', '<p>导师让你帮他审稿。</p>', [
                 { text: '以没时间为由拒绝（好感-1）', class: 'btn-danger', action: () => {
                     // ★★★ 拒绝审稿计数 ★★★
@@ -445,10 +466,10 @@
                     }
                     changeSan(baseSanCost);
                 }},
-                { text: '交给师弟师妹（社交<6：社交-1，否则无）', class: 'btn-info', action: () => {
+                { text: delegateText, class: 'btn-info', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
-                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '【社交<6】师弟师妹对你颇有微词，社交能力-1');
+                        addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '师弟师妹对你颇有微词，社交能力-1');
                         changeSocial(-1);
                     } else {
                         addLog('随机事件', '导师让你帮他审稿 - 交给师弟师妹', '【社交>=6】师弟师妹成功为你分忧');
@@ -748,23 +769,23 @@
 					changeSan(2);
 					updateBuffs();
 				}},
-                { text: '🃏 打德州扑克（50%输光，50%翻倍）', class: 'btn-warning', action: () => {
+                { text: '🃏 打德州扑克（本钱≤6，随机输光或翻倍）', class: 'btn-warning', action: () => {
                     closeModal();
+                    // ★★★ 修改：本钱限制改为最多6金币 ★★★
+                    const stake = Math.min(gameState.gold, 6);
                     if (Math.random() < 0.5) {
-                        // 输钱：输掉所有钱，最多不超过4金币
-                        const loseAmount = Math.min(gameState.gold, 4);
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `手气太差，金钱-${loseAmount}`);
-                        changeGold(-loseAmount);
+                        // 输钱：输掉本钱
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `手气太差，金钱-${stake}`);
+                        changeGold(-stake);
                     } else {
-                        // 赢钱：金钱翻倍，最多不超过8金币
+                        // 赢钱：本钱翻倍
                         gameState.pokerWinCount = (gameState.pokerWinCount || 0) + 1;
                         if (gameState.pokerWinCount >= 3) {
                             gameState.achievementConditions = gameState.achievementConditions || {};
                             gameState.achievementConditions.pokerGod = true;
                         }
-                        const winAmount = Math.min(gameState.gold, 8);
-                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `你翻出了皇家同花顺，金钱+${winAmount}`);
-                        changeGold(winAmount);
+                        addLog('随机事件', '实验室组织团建 - 打德州扑克', `你翻出了皇家同花顺，金钱+${stake}`);
+                        changeGold(stake);
                     }
                 }},
                 { text: '🎤 KTV唱歌（社交+1）', class: 'btn-accent', action: () => {

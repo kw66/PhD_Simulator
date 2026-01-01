@@ -136,7 +136,7 @@
 								<i class="fas fa-dice"></i><span>事件系统</span>
 							</button>
 							<button class="guide-btn" onclick="showGuide('shop')">
-								<i class="fas fa-store"></i><span>成就商店与黑市</span>
+								<i class="fas fa-star"></i><span>天赋与商店</span>
 							</button>
 							<button class="guide-btn" onclick="showGuide('buffs')">
 								<i class="fas fa-magic"></i><span>Buff与Debuff</span>
@@ -357,10 +357,7 @@
 				<div class="panel" id="buff-panel">
 					<div class="panel-title collapsible" onclick="toggleCollapse('buff-panel')">
 						<i class="fas fa-magic"></i> 增益/减益效果
-						<button class="btn btn-info" style="padding:3px 8px;font-size:0.7rem;margin-left:auto;margin-right:4px;" onclick="event.stopPropagation();showTalentTree()" title="查看天赋和装备">
-							<i class="fas fa-star"></i> 天赋和装备
-						</button>
-						<button class="btn btn-secondary" style="padding:3px 8px;font-size:0.7rem;margin-right:8px;" onclick="event.stopPropagation();showCurseBlessingModal()" title="查看诅咒和祝福">
+						<button class="btn btn-secondary" style="padding:3px 8px;font-size:0.7rem;margin-left:auto;margin-right:8px;" onclick="event.stopPropagation();showCurseBlessingModal()" title="查看诅咒和祝福">
 							<i class="fas fa-skull"></i> 诅咒和祝福
 						</button>
 						<i class="fas fa-chevron-down collapse-icon" id="buff-panel-collapse-icon"></i>
@@ -383,8 +380,8 @@
 						</div>
 						<!-- 功能按钮区 -->
 						<div class="utility-buttons">
-							<button class="btn utility-btn" onclick="openShop()"><i class="fas fa-store"></i><span>金币商店</span></button>
-							<button class="btn utility-btn" onclick="openAchievementShop()"><i class="fas fa-trophy"></i><span>成就商店</span></button>
+							<button class="btn utility-btn" onclick="openShop()"><i class="fas fa-store"></i><span>商店</span></button>
+							<button class="btn utility-btn" onclick="showTalentTree()"><i class="fas fa-star"></i><span>天赋</span></button>
 							<button class="btn utility-btn" onclick="openSaveModal()"><i class="fas fa-save"></i><span>存档</span></button>
 							<button class="btn utility-btn" onclick="openLoadModal()"><i class="fas fa-folder-open"></i><span>读档</span></button>
 							<button class="btn utility-btn" onclick="openAutoSaveModal()"><i class="fas fa-history"></i><span>回溯</span></button>

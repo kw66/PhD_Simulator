@@ -933,13 +933,24 @@
 		function readPaper() {
 			// ★★★ 修改：检查行动次数而非单次标志 ★★★
 			if (gameState.actionCount >= gameState.actionLimit) {
-				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`, 
+				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
-			
-			const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
-			const baseSanCost = has4K ? 1 : 2;
+
+			// ★★★ 修改：根据显示器升级类型决定SAN消耗 ★★★
+			// 4K显示器: 0 SAN
+			// 智能显示器/双屏显示器: 2 SAN
+			// 2K显示器(未升级): 1 SAN
+			// 无显示器: 2 SAN
+			const hasMonitor = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
+			let baseSanCost = hasMonitor ? 1 : 2;  // 默认: 有显示器1, 无显示器2
+
+			if (gameState.monitorUpgrade === '4k') {
+				baseSanCost = 0;  // 4K显示器: 不消耗SAN
+			} else if (gameState.monitorUpgrade === 'smart' || gameState.monitorUpgrade === 'dual') {
+				baseSanCost = 2;  // 智能/双屏显示器: 2 SAN
+			}
 			const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
 
 			if (gameState.san < actualCost) {
@@ -955,7 +966,14 @@
 			gameState.readCount++;
 
 			// ★★★ 修改：每看论文10次，idea bonus效果+1（1-10次基础，11-20次+1）★★★
-			const ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
+			let ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
+
+			// ★★★ 新增：智能显示器加成 - 每10次看论文buff效果额外+1 ★★★
+			let smartMonitorBonus = 0;
+			if (gameState.monitorUpgrade === 'smart') {
+				smartMonitorBonus = Math.floor(gameState.readCount / 10);
+				ideaBonus += smartMonitorBonus;
+			}
 			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次想idea分数+${ideaBonus}`, value: ideaBonus, permanent: false });
 
 			// ★★★ 新增：计算下次提升的阈值（11,21,31...）★★★
@@ -964,7 +982,16 @@
 			const nextBonus = ideaBonus + 1;
 
 			let result = `SAN值-${actualCost}`;
-			if (has4K) result += '（4K显示器生效）';
+			// ★★★ 修改：显示正确的显示器类型 ★★★
+			if (gameState.monitorUpgrade === '4k') {
+				result += '（4K显示器：免SAN）';
+			} else if (gameState.monitorUpgrade === 'smart') {
+				result += `（智能显示器：额外+${smartMonitorBonus}）`;
+			} else if (gameState.monitorUpgrade === 'dual') {
+				result += '（双屏显示器）';
+			} else if (hasMonitor) {
+				result += '（2K显示器生效）';
+			}
 			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
@@ -978,10 +1005,10 @@
 			// ★★★ 修改：每10次阅读（11,21,31...）科研+1 ★★★
 			if (gameState.readCount % 10 === 1 && gameState.readCount >= 11) {
 				changeResearch(1);
-				result += `，阅读论文达到${gameState.readCount}次，科研能力+1`;
+				result += `，看论文达到${gameState.readCount}次，科研能力+1`;
 			}
 
-			addLog('看论文', '认真阅读了学术论文', result);
+			addLog('看论文', `[第${gameState.readCount}次] 认真阅读了学术论文`, result);
 			updateBuffs();
 			changeSan(-baseSanCost);
 		}
@@ -1141,12 +1168,27 @@
 						permanentIdeaBonus += b.value;
 					}
 				});
-				const ideaFloor = 1 + Math.floor(permanentIdeaBonus / 5);
+				// ★★★ 豪华工位天赋：每5点（进阶后4点）永久buff增加1点保底 ★★★
+				const hasLuxuryWorkstation = gameState.furnitureBought?.chair &&
+					gameState.furnitureBought?.monitor &&
+					gameState.furnitureBought?.keyboard &&
+					(gameState.gpuServersBought || 0) >= 1 &&
+					gameState.hasCoffeeMachine;
+				const luxuryDivisor = 5;  // 豪华工位：每5点永久buff增加1点保底
+				const ideaFloor = 1 + (hasLuxuryWorkstation ? Math.floor(permanentIdeaBonus / luxuryDivisor) : 0);
+
+				// ★★★ 新增：4K显示器加成（每10次看论文+1分）★★★
+				const monitorBonus = (typeof getMonitorIdeaBonus === 'function') ? getMonitorIdeaBonus() : 0;
 
 				for (let i = 0; i < times; i++) {
 					// ★★★ 第一次使用所有buff，后续只使用永久buff ★★★
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('idea', effectiveResearch, permanentOnly);
+
+					// ★★★ 4K显示器加成：每次都生效 ★★★
+					if (monitorBonus > 0) {
+						gen += monitorBonus;
+					}
 
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasGeminiSub && geminiSub.bonusScore) {
@@ -1231,7 +1273,7 @@
 					gameState.achievementConditions.floorBoost20 = true;
 				}
 
-				addLog('想idea', `为"${paper.title.substring(0, 15)}..."思考idea`, result);
+				addLog('想idea', `[第${gameState.ideaClickCount}次] 为"${paper.title.substring(0, 15)}..."思考idea`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
 				updateBuffs();
@@ -1327,7 +1369,14 @@
 						permanentExpBonus += b.value;
 					}
 				});
-				const expFloor = 1 + Math.floor(permanentExpBonus / 5);
+				// ★★★ 豪华工位天赋：每5点（进阶后4点）永久buff增加1点保底 ★★★
+				const hasLuxuryWorkstation2 = gameState.furnitureBought?.chair &&
+					gameState.furnitureBought?.monitor &&
+					gameState.furnitureBought?.keyboard &&
+					(gameState.gpuServersBought || 0) >= 1 &&
+					gameState.hasCoffeeMachine;
+				const luxuryDivisor2 = 5;  // 豪华工位：每5点永久buff增加1点保底
+				const expFloor = 1 + (hasLuxuryWorkstation2 ? Math.floor(permanentExpBonus / luxuryDivisor2) : 0);
 
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
@@ -1407,7 +1456,7 @@
 					gameState.achievementConditions.floorBoost20 = true;
 				}
 
-				addLog('做实验', `为"${paper.title.substring(0, 15)}..."做实验`, result);
+				addLog('做实验', `[第${gameState.expClickCount}次] 为"${paper.title.substring(0, 15)}..."做实验`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
 				updateBuffs();
@@ -1505,7 +1554,14 @@
 						permanentWriteBonus += b.value;
 					}
 				});
-				const writeFloor = 1 + Math.floor(permanentWriteBonus / 5);
+				// ★★★ 豪华工位天赋：每5点（进阶后4点）永久buff增加1点保底 ★★★
+				const hasLuxuryWorkstation3 = gameState.furnitureBought?.chair &&
+					gameState.furnitureBought?.monitor &&
+					gameState.furnitureBought?.keyboard &&
+					(gameState.gpuServersBought || 0) >= 1 &&
+					gameState.hasCoffeeMachine;
+				const luxuryDivisor3 = 5;  // 豪华工位：每5点永久buff增加1点保底
+				const writeFloor = 1 + (hasLuxuryWorkstation3 ? Math.floor(permanentWriteBonus / luxuryDivisor3) : 0);
 
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
@@ -1562,7 +1618,9 @@
 				if (skillUsed) {
 					result += `（${skillSource}生效！）`;
 				}
-				if (hasKeyboard) result += '（机械键盘生效）';
+				if (hasKeyboard) {
+					result += '（机械键盘生效）';
+				}
 				if (hasClaudeSub) result += '（Claude: 每次+4）';
 				if (hasWritersBlock) result += '（首次无从下笔÷2）';
 				if (hasSlack) result += '（首次松懈÷2）';
@@ -1586,7 +1644,7 @@
 					gameState.achievementConditions.floorBoost20 = true;
 				}
 
-				addLog('写论文', `为"${paper.title.substring(0, 15)}..."写作`, result);
+				addLog('写论文', `[第${gameState.writeClickCount}次] 为"${paper.title.substring(0, 15)}..."写作`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
 				updateBuffs();
@@ -1817,6 +1875,16 @@
 			const regionInfo = getRegionInfo(confLocation.region);
 			const costs = getConferenceCostByRegion(confLocation.region, gameState);
 
+			// ★★★ 整装待发天赋（成长性）：基础-2，每4次开会+1，最多-6（16次后免费）★★★
+			const hasFullGear = gameState.bikeUpgrade === 'ebike' &&
+				gameState.hasParasol &&
+				gameState.hasDownJacket;
+			const meetingCount = gameState.meetingCount || 0;
+			const fullGearDiscount = hasFullGear ? Math.min(2 + Math.floor(meetingCount / 4), 6) : 0;
+			const selfPayDiscount = fullGearDiscount;
+			const actualSelfPay = Math.max(0, costs.selfPay - selfPayDiscount);
+			const selfPayText = hasFullGear ? `${actualSelfPay}金（原${costs.selfPay}，整装待发-${fullGearDiscount}）` : `${costs.selfPay}金`;
+
 			// 构建论文列表显示
 			let papersListHtml = '';
 			if (isMultiple) {
@@ -1835,10 +1903,10 @@
 			const costExplanationHtml = `
 				<div style="margin:10px 0;padding:8px 12px;background:${regionInfo.color}15;border-radius:8px;border-left:3px solid ${regionInfo.color};">
 					<div style="font-size:0.8rem;color:${regionInfo.color};font-weight:600;margin-bottom:4px;">
-						${regionInfo.icon} ${regionInfo.name}会议费用标准
+						${regionInfo.icon} ${regionInfo.name}会议费用标准${hasFullGear ? ` <span style="color:var(--success-color);">🎒整装待发-${fullGearDiscount}</span>` : ''}
 					</div>
 					<div style="font-size:0.75rem;color:var(--text-secondary);">
-						自费${costs.selfPay}金 | 导师报销${costs.advisorCost > 0 ? '好感-' + costs.advisorCost : '免费'} | 代参加${costs.proxyCost > 0 ? costs.proxyCost + '金' : '免费'}
+						自费${selfPayText} | 导师报销${costs.advisorCost > 0 ? '好感-' + costs.advisorCost : '免费'} | 代参加${costs.proxyCost > 0 ? costs.proxyCost + '金' : '免费'}
 					</div>
 				</div>`;
 
@@ -1854,10 +1922,10 @@
 				 ${papersListHtml}
 				 <p>请选择参会方式：</p>`,
 				[
-				{ text: `💰 自己出钱（金钱-${costs.selfPay}）`, class: 'btn-warning', action: () => {
-					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${costs.selfPay}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+				{ text: `💰 自己出钱（金钱-${actualSelfPay}${hasFullGear ? '🎒' : ''}）`, class: 'btn-warning', action: () => {
+					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${actualSelfPay}${hasFullGear ? `（整装待发-${fullGearDiscount}）` : ''}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
 					closeModal();
-					if (changeGold(-costs.selfPay)) {
+					if (changeGold(-actualSelfPay)) {
 						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
 					} else {
 						// 金钱不足导致游戏结束
@@ -2177,6 +2245,52 @@
 			);
 		}
 
+		// ==================== 自动看论文buff（双屏显示器）====================
+		/**
+		 * 应用看论文buff效果（供双屏显示器自动阅读调用）
+		 * @param {boolean} isAuto - 是否是自动阅读（双屏显示器）
+		 * @returns {string} - buff描述文本
+		 */
+		function applyReadPaperBuff(isAuto = false) {
+			// 计算buff值（与手动看论文逻辑一致）
+			let ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
+
+			// 智能显示器额外加成（虽然双屏不会同时有智能，但保持一致性）
+			if (gameState.monitorUpgrade === 'smart') {
+				ideaBonus += Math.floor(gameState.readCount / 10);
+			}
+
+			// 添加临时buff
+			gameState.buffs.temporary.push({
+				type: 'idea_bonus',
+				name: isAuto ? `自动阅读：想idea+${ideaBonus}` : `下次想idea分数+${ideaBonus}`,
+				value: ideaBonus,
+				permanent: false,
+				thisMonthOnly: isAuto  // 自动阅读的buff本月有效
+			});
+
+			// 检查是否达到科研提升里程碑
+			if (gameState.readCount % 10 === 1 && gameState.readCount >= 11) {
+				changeResearch(1);
+				return `想idea分数+${ideaBonus}，科研能力+1`;
+			}
+
+			return `想idea分数+${ideaBonus}`;
+		}
+
+		// ==================== 4K显示器加成（想idea时）====================
+		/**
+		 * 获取4K显示器的想idea加成
+		 * @returns {number} - 加成值（每10次看论文+1）
+		 */
+		function getMonitorIdeaBonus() {
+			if (gameState.monitorUpgrade === '4k') {
+				// 4K显示器：每10次看论文，想idea时+1分
+				return Math.floor((gameState.readCount || 0) / 10);
+			}
+			return 0;
+		}
+
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.createNewPaper = createNewPaper;
 		window.submitToJournal = submitToJournal;
@@ -2190,3 +2304,5 @@
 		window.thinkIdea = thinkIdea;
 		window.doExperiment = doExperiment;
 		window.writePaper = writePaper;
+		window.applyReadPaperBuff = applyReadPaperBuff;
+		window.getMonitorIdeaBonus = getMonitorIdeaBonus;

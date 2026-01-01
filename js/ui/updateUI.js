@@ -151,7 +151,9 @@
 		}
 
 		// ★★★ 天赋弹窗分页状态 ★★★
-		let talentTreePage = 1;
+		let talentTreePage = 'character'; // 'character', 'relationship', 'equipment'
+
+
 
 		// ==================== 天赋和装备系统 ====================
 		function showTalentTree(page = talentTreePage) {
@@ -178,9 +180,36 @@
 			let html = `
 			<style>
 				.talent-container {
-					max-height: 75vh;
+					max-height: 70vh;
 					overflow-y: auto;
 					padding: 5px;
+				}
+				.talent-tabs {
+					display: flex;
+					gap: 8px;
+					margin-bottom: 12px;
+				}
+				.talent-tab {
+					flex: 1;
+					padding: 10px;
+					border-radius: 8px;
+					border: none;
+					cursor: pointer;
+					font-size: 0.85rem;
+					font-weight: 600;
+					transition: all 0.2s;
+				}
+				.talent-tab.char-tab {
+					background: ${page === 'character' ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'rgba(102,126,234,0.15)'};
+					color: ${page === 'character' ? 'white' : '#667eea'};
+				}
+				.talent-tab.relation-tab {
+					background: ${page === 'relationship' ? 'linear-gradient(135deg,#e91e63,#c2185b)' : 'rgba(233,30,99,0.15)'};
+					color: ${page === 'relationship' ? 'white' : '#e91e63'};
+				}
+				.talent-tab.equip-tab {
+					background: ${page === 'equipment' ? 'linear-gradient(135deg,#f39c12,#e67e22)' : 'rgba(243,156,18,0.15)'};
+					color: ${page === 'equipment' ? 'white' : '#f39c12'};
 				}
 				.talent-section {
 					margin-bottom: 12px;
@@ -202,189 +231,164 @@
 					font-weight: 600;
 				}
 
-				/* 天赋节点 - 圆形 */
-				.talent-row {
+				/* 条状天赋样式 */
+				.talent-item {
 					display: flex;
-					justify-content: center;
-					gap: 20px;
-					flex-wrap: wrap;
-					padding: 6px 0 8px 0;
-				}
-				.talent-node {
-					width: 60px;
-					height: 60px;
-					border-radius: 50%;
-					background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.1) 100%);
-					border: 3px solid transparent;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					position: relative;
-					cursor: pointer;
-					transition: all 0.25s ease;
-				}
-				.talent-node:hover {
-					transform: scale(1.15) translateY(-3px);
-					background: linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.2) 100%);
-				}
-				.talent-node.active {
-					border-color: #4ecdc4;
-					box-shadow: 0 0 15px rgba(78,205,196,0.4);
-				}
-				.talent-node.active:hover {
-					transform: scale(1.15) translateY(-3px);
-				}
-				.talent-node.active.color-blue { border-color: #3498db; box-shadow: 0 0 15px rgba(52,152,219,0.4); }
-				.talent-node.active.color-purple { border-color: #9b59b6; box-shadow: 0 0 15px rgba(155,89,182,0.4); }
-				.talent-node.active.color-orange { border-color: #f39c12; box-shadow: 0 0 15px rgba(243,156,18,0.4); }
-				.talent-node.active.color-green { border-color: #2ecc71; box-shadow: 0 0 15px rgba(46,204,113,0.4); }
-				.talent-node .node-icon {
-					font-size: 1.6rem;
-				}
-				.talent-node .node-label {
-					display: none;  /* 隐藏图标下方的文字说明 */
-				}
-
-				/* 装备节点 - 方形 */
-				.equip-row {
-					display: flex;
-					justify-content: center;
-					gap: 12px;
-					flex-wrap: wrap;
-					margin-bottom: 12px;
-				}
-				.equip-row:last-child {
-					margin-bottom: 5px;
-				}
-				.equip-node {
-					width: 52px;
-					height: 52px;
+					justify-content: space-between;
+					align-items: flex-start;
+					padding: 10px 12px;
+					background: var(--light-bg);
 					border-radius: 8px;
-					background: linear-gradient(135deg, rgba(230,126,34,0.1) 0%, rgba(211,84,0,0.08) 100%);
-					border: 2px solid transparent;
+					margin-bottom: 8px;
+					border-left: 4px solid transparent;
+					transition: all 0.2s ease;
+				}
+				.talent-item:hover {
+					background: rgba(102,126,234,0.12);
+				}
+				.talent-item.active {
+					border-left-color: #2ecc71;
+					background: rgba(46,204,113,0.08);
+				}
+				.talent-item.active.color-blue { border-left-color: #3498db; background: rgba(52,152,219,0.08); }
+				.talent-item.active.color-purple { border-left-color: #9b59b6; background: rgba(155,89,182,0.08); }
+				.talent-item.active.color-orange { border-left-color: #f39c12; background: rgba(243,156,18,0.08); }
+				.talent-item.active.color-green { border-left-color: #2ecc71; background: rgba(46,204,113,0.08); }
+				.talent-item.inactive {
+					opacity: 0.6;
+					border-left-color: #7f8c8d;
+				}
+				.talent-item-info {
+					flex: 1;
+					min-width: 0;
+				}
+				.talent-item-header {
 					display: flex;
 					align-items: center;
-					justify-content: center;
-					position: relative;
-					cursor: pointer;
-					transition: all 0.25s ease;
+					gap: 8px;
+					margin-bottom: 4px;
 				}
-				.equip-node:hover {
-					transform: scale(1.12) translateY(-2px);
-					background: linear-gradient(135deg, rgba(230,126,34,0.2) 0%, rgba(211,84,0,0.15) 100%);
+				.talent-item-icon {
+					font-size: 1.3rem;
+					flex-shrink: 0;
 				}
-				.equip-node.active {
-					border-color: #e67e22;
-					box-shadow: 0 0 12px rgba(230,126,34,0.35);
-				}
-				.equip-node.active:hover {
-					transform: scale(1.12) translateY(-2px);
-				}
-				.equip-node .node-icon {
-					font-size: 1.4rem;
-				}
-				.equip-node .node-label {
-					display: none;  /* 隐藏图标下方的文字说明 */
-				}
-				.equip-node .equip-count {
-					position: absolute;
-					top: -4px;
-					right: -4px;
-					background: linear-gradient(135deg, #e74c3c, #c0392b);
-					color: white;
-					font-size: 0.55rem;
+				.talent-item-name {
 					font-weight: 600;
-					min-width: 16px;
-					height: 16px;
-					padding: 0 3px;
-					border-radius: 8px;
-					display: flex;
-					align-items: center;
-					justify-content: center;
+					font-size: 0.9rem;
+					color: var(--text-primary);
 				}
-
-				/* Tooltip - 圆角边框方框 */
-				.talent-tip {
-					position: fixed;
-					background: rgba(15,15,20,0.98);
-					border: 2px solid #4ecdc4;
-					border-radius: 10px;
-					padding: 10px 14px;
-					max-width: 240px;
-					z-index: 10000;
-					pointer-events: none;
-					display: none;
-					box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-				}
-				.talent-tip.color-blue { border-color: #3498db; }
-				.talent-tip.color-purple { border-color: #9b59b6; }
-				.talent-tip.color-orange { border-color: #f39c12; }
-				.talent-tip.color-green { border-color: #2ecc71; }
-				.talent-tip.color-equip { border-color: #e67e22; }
-				.talent-tip-title {
-					font-weight: 600;
-					font-size: 0.85rem;
-					color: #4ecdc4;
-					margin-bottom: 5px;
-				}
-				.talent-tip.color-blue .talent-tip-title { color: #3498db; }
-				.talent-tip.color-purple .talent-tip-title { color: #9b59b6; }
-				.talent-tip.color-orange .talent-tip-title { color: #f39c12; }
-				.talent-tip.color-green .talent-tip-title { color: #2ecc71; }
-				.talent-tip.color-equip .talent-tip-title { color: #e67e22; }
-				.talent-tip-effect {
-					font-size: 0.8rem;
-					color: rgba(255,255,255,0.9);
-					margin-bottom: 6px;
-					line-height: 1.4;
-				}
-				.talent-tip-how {
+				.talent-item-status {
 					font-size: 0.7rem;
-					color: rgba(255,255,255,0.55);
+					padding: 2px 6px;
+					border-radius: 4px;
+					margin-left: auto;
+					flex-shrink: 0;
+				}
+				.talent-item-status.active {
+					background: rgba(46,204,113,0.2);
+					color: #2ecc71;
+				}
+				.talent-item-status.inactive {
+					background: rgba(127,140,141,0.2);
+					color: #7f8c8d;
+				}
+				.talent-item-desc {
+					font-size: 0.78rem;
+					color: var(--text-secondary);
+					line-height: 1.4;
+					margin-bottom: 4px;
+				}
+				.talent-item-current {
+					font-size: 0.75rem;
+					color: #2ecc71;
+					background: rgba(46,204,113,0.1);
+					padding: 4px 8px;
+					border-radius: 4px;
+					margin-top: 4px;
+				}
+				.talent-item-next {
+					font-size: 0.75rem;
+					color: #3498db;
+					background: rgba(52,152,219,0.1);
+					padding: 4px 8px;
+					border-radius: 4px;
+					margin-top: 4px;
+					display: inline-block;
+				}
+				.talent-item-how {
+					font-size: 0.7rem;
+					color: #95a5a6;
 					font-style: italic;
+					margin-top: 4px;
+				}
+				.talent-item-equip {
+					font-size: 0.75rem;
+					color: #f39c12;
+					background: rgba(243,156,18,0.1);
+					padding: 4px 8px;
+					border-radius: 4px;
+					margin-top: 4px;
 				}
 			</style>
 			<div class="talent-container">
-
-			<!-- ★★★ 分页导航按钮 ★★★ -->
-			<div style="display:flex;gap:8px;margin-bottom:12px;">
-				<button class="btn ${page === 1 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(1)" style="flex:1;padding:6px;font-size:0.8rem;">
-					⭐ 天赋
-				</button>
-				<button class="btn ${page === 2 ? 'btn-primary' : 'btn-secondary'}" onclick="showTalentTree(2)" style="flex:1;padding:6px;font-size:0.8rem;">
-					📦 装备
-				</button>
-			</div>
+				<!-- 分页标签 -->
+				<div class="talent-tabs">
+					<button class="talent-tab char-tab" onclick="showTalentTree('character')">
+						👤 角色
+					</button>
+					<button class="talent-tab relation-tab" onclick="showTalentTree('relationship')">
+						💕 关系
+					</button>
+					<button class="talent-tab equip-tab" onclick="showTalentTree('equipment')">
+						🛠️ 装备
+					</button>
+				</div>
 			`;
 
-			// ========== 第一页：天赋 ==========
-			if (page === 1) {
-			// ========== 角色天赋区 ==========
+			// ========== 角色天赋区（条状显示）==========
+			if (page === 'character') {
 			html += `<div class="talent-section">
-				<div class="talent-section-title"><i class="fas fa-user-circle"></i> 角色天赋</div>
-				<div class="talent-row">`;
+				<div class="talent-section-title"><i class="fas fa-user-circle"></i> 角色天赋</div>`;
 
 			if (isTrueNormal) {
-				// 真大多数：只有2个天赋（横向）
+				// 真大多数
 				html += `
-					<div class="talent-node active" data-tip="真·大多数|经历过所有角色的洗礼，回归本真|使用6个角色各通关一次" data-color="">
-						<div class="node-icon">👤</div>
-						<div class="node-label">真·大多数</div>
+					<div class="talent-item active">
+						<div class="talent-item-info">
+							<div class="talent-item-header">
+								<span class="talent-item-icon">👤</span>
+								<span class="talent-item-name">真·大多数</span>
+								<span class="talent-item-status active">已激活</span>
+							</div>
+							<div class="talent-item-desc">经历过所有角色的洗礼，回归本真</div>
+						</div>
 					</div>
-					<div class="talent-node ${isTrueNormalAwakened ? 'active color-orange' : ''}" data-tip="往昔荣光|成就币翻倍，成就商店刷新间隔变为2个月|真·大多数转博时触发" data-color="orange">
-						<div class="node-icon">✨</div>
-						<div class="node-label">往昔荣光</div>
+					<div class="talent-item ${isTrueNormalAwakened ? 'active color-orange' : 'inactive'}">
+						<div class="talent-item-info">
+							<div class="talent-item-header">
+								<span class="talent-item-icon">✨</span>
+								<span class="talent-item-name">往昔荣光</span>
+								<span class="talent-item-status ${isTrueNormalAwakened ? 'active' : 'inactive'}">${isTrueNormalAwakened ? '已激活' : '未激活'}</span>
+							</div>
+							<div class="talent-item-desc">成就币翻倍</div>
+						</div>
 					</div>
 				`;
 			} else if (charData) {
-				// 初始天赋（角色头像）
+				// 初始天赋（角色）
 				const charIcon = isReversed ? charData.reversed.icon : charData.icon;
 				const charName = isReversed ? charData.reversed.name : charData.name;
 				const charBonus = isReversed ? charData.reversed.bonus : charData.bonus;
 				html += `
-					<div class="talent-node active" data-tip="${charName}|${charBonus}|选择角色时获得" data-color="">
-						<div class="node-icon">${charIcon}</div>
-						<div class="node-label">${charName.length > 4 ? charName.substring(0,4) : charName}</div>
+					<div class="talent-item active">
+						<div class="talent-item-info">
+							<div class="talent-item-header">
+								<span class="talent-item-icon">${charIcon}</span>
+								<span class="talent-item-name">${charName}</span>
+								<span class="talent-item-status active">已激活</span>
+							</div>
+							<div class="talent-item-desc">${charBonus}</div>
+						</div>
 					</div>
 				`;
 
@@ -394,9 +398,15 @@
 					const awakenDesc = charData.reversed.awakenDesc;
 					const awakenIcon = charData.reversed.awakenIcon || '⚡';
 					html += `
-						<div class="talent-node ${reversedAwakened ? 'active color-purple' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|逆位角色转博时触发" data-color="purple">
-							<div class="node-icon">${awakenIcon}</div>
-							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
+						<div class="talent-item ${reversedAwakened ? 'active color-purple' : 'inactive'}">
+							<div class="talent-item-info">
+								<div class="talent-item-header">
+									<span class="talent-item-icon">${awakenIcon}</span>
+									<span class="talent-item-name">${awakenName}</span>
+									<span class="talent-item-status ${reversedAwakened ? 'active' : 'inactive'}">${reversedAwakened ? '已觉醒' : '未觉醒'}</span>
+								</div>
+								<div class="talent-item-desc">${awakenDesc}</div>
+							</div>
 						</div>
 					`;
 				} else {
@@ -405,9 +415,15 @@
 					const awakenDesc = charData.awakenDesc;
 					const awakenIcon = charData.awakenIcon || '⚡';
 					html += `
-						<div class="talent-node ${hasNormalAwaken ? 'active color-blue' : ''}" data-tip="⚡ ${awakenName}|${awakenDesc}|正位角色转博时触发" data-color="blue">
-							<div class="node-icon">${awakenIcon}</div>
-							<div class="node-label">${awakenName.length > 5 ? awakenName.substring(0,5) : awakenName}</div>
+						<div class="talent-item ${hasNormalAwaken && !hasHiddenAwaken ? 'active color-blue' : 'inactive'}">
+							<div class="talent-item-info">
+								<div class="talent-item-header">
+									<span class="talent-item-icon">${awakenIcon}</span>
+									<span class="talent-item-name">${awakenName}</span>
+									<span class="talent-item-status ${hasNormalAwaken && !hasHiddenAwaken ? 'active' : 'inactive'}">${hasNormalAwaken && !hasHiddenAwaken ? '已觉醒' : '未觉醒'}</span>
+								</div>
+								<div class="talent-item-desc">${awakenDesc}</div>
+							</div>
 						</div>
 					`;
 
@@ -417,342 +433,219 @@
 						const hiddenDesc = charData.hiddenAwakenDesc;
 						const hiddenIcon = charData.hiddenAwakenIcon || '⚙️';
 						html += `
-							<div class="talent-node ${hasHiddenAwaken ? 'active color-orange' : ''}" data-tip="⚙️ ${hiddenName}|${hiddenDesc}|满足特定条件时触发（替代转博觉醒）" data-color="orange">
-								<div class="node-icon">${hiddenIcon}</div>
-								<div class="node-label">${hiddenName.length > 5 ? hiddenName.substring(0,5) : hiddenName}</div>
+							<div class="talent-item ${hasHiddenAwaken ? 'active color-orange' : 'inactive'}">
+								<div class="talent-item-info">
+									<div class="talent-item-header">
+										<span class="talent-item-icon">${hiddenIcon}</span>
+										<span class="talent-item-name">${hiddenName}</span>
+										<span class="talent-item-status ${hasHiddenAwaken ? 'active' : 'inactive'}">${hasHiddenAwaken ? '已觉醒' : '未觉醒'}</span>
+									</div>
+									<div class="talent-item-desc">${hiddenDesc}</div>
+								</div>
 							</div>
 						`;
 					}
 				}
 			}
-			html += `</div></div>`;
+			html += `</div>`;
+			} // end if (page === 'character')
 
-			// ========== 通用天赋区（4个一行）==========
+			// ========== 关系天赋区 ==========
+			if (page === 'relationship') {
 			html += `<div class="talent-section">
-				<div class="talent-section-title"><i class="fas fa-star"></i> 通用天赋</div>
-				<div class="talent-row">`;
+				<div class="talent-section-title"><i class="fas fa-heart"></i> 关系天赋</div>`;
 
-			// 大牛联培
-			const hasBigBull = gameState.bigBullCooperation;
-			const bigBullCoopCount = gameState.bigBullCoopCount || 0;
-			const currentResearchMax = gameState.researchMax || 20;
+			// ★★★ 导师关系天赋 ★★★
+			const advisorPerson = gameState.relationships?.find(r => r.type === 'advisor');
+			const hasAdvisor = !!advisorPerson;
+			const advisorTasksCompleted = advisorPerson?.advisorTasksCompleted || 0;
+			const advisorGoldEarned = Math.floor(advisorTasksCompleted / 2) * 5 + (advisorTasksCompleted % 2 === 1 ? 5 : 0);
+			const advisorResearchEarned = Math.floor(advisorTasksCompleted / 2);
 			html += `
-				<div class="talent-node ${hasBigBull ? 'active color-green' : ''}" data-tip="大牛联培|科研上限+2，导师科研资源+2，想idea分数+5，做实验分数+5${hasBigBull ? `｜成长性：每次找大牛合作科研上限+1（已+${bigBullCoopCount}，当前上限${currentResearchMax}）` : ''}|在开会时与大牛深入交流2次后触发" data-color="green">
-					<div class="node-icon">🎓</div>
-					<div class="node-label">大牛联培</div>
+				<div class="talent-item ${hasAdvisor ? 'active color-blue' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">👨‍🏫</span>
+							<span class="talent-item-name">导师关系</span>
+							<span class="talent-item-status ${hasAdvisor ? 'active' : 'inactive'}">${hasAdvisor ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：完成项目，获得项目奖励</div>
+						<div class="talent-item-current">循环：横向项目(金+5)→纵向项目(科研+1)</div>
+						<div class="talent-item-next">累计：已完成${advisorTasksCompleted}次，金币+${advisorGoldEarned}，科研+${advisorResearchEarned}</div>
+					</div>
+				</div>
+			`;
+
+			// 大牛联培 - 成长性：每500引用科研上限+2，最多+10
+			const hasBigBull = gameState.bigBullCooperation;
+			const bigBullCitations = gameState.totalCitations || 0;
+			const bigBullCitationBonus = hasBigBull ? Math.min(Math.floor(bigBullCitations / 500) * 2, 10) : 0;
+			html += `
+				<div class="talent-item ${hasBigBull ? 'active color-green' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">🎓</span>
+							<span class="talent-item-name">大牛联培</span>
+							<span class="talent-item-status ${hasBigBull ? 'active' : 'inactive'}">${hasBigBull ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：导师科研资源+2，想idea+5，做实验+5</div>
+						<div class="talent-item-current">成长：每500引用科研上限+2（最多+10）</div>
+						<div class="talent-item-next">累计：${bigBullCitations}引用，科研上限+${bigBullCitationBonus}</div>
+						${!hasBigBull ? `<div class="talent-item-how">获取：科研≥12且总引用≥500后，在开会时与大牛深入交流2次</div>` : ''}
+					</div>
 				</div>
 			`;
 
 			// 企业实习
 			const hasInternship = gameState.ailabInternship;
-			const internshipAPaperCount = gameState.internshipAPaperCount || 0;
-			const internshipIncome = 2 + Math.min(internshipAPaperCount, 3);
-			// ★★★ 计算当前实习buff的实际值 ★★★
-			const internshipBuff = gameState.buffs?.permanent?.find(b => b.name && b.name.includes('实习加成'));
-			const currentInternshipMultiplier = internshipBuff ? internshipBuff.value : 1.25;
+			const currentAPaperCount = (gameState.publishedPapers || []).filter(p => p.grade === 'A').length;
+			const currentTotalCitations = gameState.totalCitations || 0;
+			const internshipBaseIncome = 2;
+			const internshipAPaperBonus = currentAPaperCount * 0.5;
+			const internshipCitationBonus = Math.floor(currentTotalCitations / 500) * 0.5;
+			const internshipIncome = Math.min(internshipBaseIncome + internshipAPaperBonus + internshipCitationBonus, 6);
 			html += `
-				<div class="talent-node ${hasInternship ? 'active color-green' : ''}" data-tip="企业实习|每月金币+${hasInternship ? internshipIncome : '2~5'}（基础2+A类论文数，最多+3），每月SAN-2，做实验分数×${hasInternship ? currentInternshipMultiplier : '1.25'}${hasInternship ? `｜成长性：每次找企业交流+0.05（当前×${currentInternshipMultiplier}）` : ''}|在随机事件中选择接受企业实习" data-color="green">
-					<div class="node-icon">💼</div>
-					<div class="node-label">企业实习</div>
+				<div class="talent-item ${hasInternship ? 'active color-green' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💼</span>
+							<span class="talent-item-name">企业实习</span>
+							<span class="talent-item-status ${hasInternship ? 'active' : 'inactive'}">${hasInternship ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：每月SAN-2，做实验×1.25，每月工资+2</div>
+						<div class="talent-item-current">成长：工资=2+A会×0.5+引用/500×0.5（上限6）</div>
+						<div class="talent-item-next">累计：当前工资${internshipIncome.toFixed(1)}/月，A会${currentAPaperCount}篇，引用${currentTotalCitations}</div>
+						${!hasInternship ? `<div class="talent-item-how">获取：在开会时与企业交流3次后触发邀请</div>` : ''}
+					</div>
 				</div>
 			`;
 
 			// 聪慧恋人
 			const hasSmartLover = gameState.hasLover && gameState.loverType === 'smart';
-			// ★★★ 计算聪慧恋人的成长性数据 ★★★
 			const smartLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
 			const smartTasksCompleted = smartLoverPerson?.loverTasksCompleted || 0;
-			const hasIdeaBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_idea');
-			const hasExpBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_experiment');
-			const hasWriteBuff = gameState.buffs?.permanent?.some(b => b.type === 'lover_extra_write');
-			const smartBuffCount = (hasIdeaBuff ? 1 : 0) + (hasExpBuff ? 1 : 0) + (hasWriteBuff ? 1 : 0);
-			const smartGrowthText = hasSmartLover ? `｜成长性：已完成${smartTasksCompleted}次约会，解锁${smartBuffCount}/3个循环buff` : '';
+			const smartIdeaTimes = 1 + Math.floor((smartTasksCompleted + 2) / 3);
+			const smartExpTimes = 1 + Math.floor((smartTasksCompleted + 1) / 3);
+			const smartWriteTimes = 1 + Math.floor(smartTasksCompleted / 3);
 			html += `
-				<div class="talent-node ${hasSmartLover ? 'active color-green' : ''}" data-tip="聪慧恋人|成为恋人时：SAN+1，科研+1，永久buff每次想idea/做实验/写论文多一次。每月金币-2。完成任务循环：想idea多一次→做实验多一次→写论文多一次${smartGrowthText}|社交≥12后在开会时多次交流同一异性学者" data-color="green">
-					<div class="node-icon">💕</div>
-					<div class="node-label">聪慧恋人</div>
+				<div class="talent-item ${hasSmartLover ? 'active color-purple' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">聪慧恋人</span>
+							<span class="talent-item-status ${hasSmartLover ? 'active' : 'inactive'}">${hasSmartLover ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
+						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，想idea+${smartIdeaTimes}次，做实验+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
+						${!hasSmartLover ? `<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>` : ''}
+					</div>
 				</div>
 			`;
 
 			// 活泼恋人
 			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
-			// ★★★ 计算活泼恋人的成长性数据 ★★★
 			const beautifulLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
 			const beautifulTasksCompleted = beautifulLoverPerson?.loverTasksCompleted || 0;
-			const extraRecoveryRate = gameState.beautifulLoverExtraRecoveryRate || 0;
-			const totalRecoveryRate = 10 + extraRecoveryRate;
-			const beautifulGrowthText = hasBeautifulLover ? `｜成长性：已完成${beautifulTasksCompleted}次约会，当前月回复${totalRecoveryRate}%已损SAN` : '';
+			const beautifulSanMaxBonus = 4 + Math.floor((beautifulTasksCompleted + 1) / 3);
+			const beautifulRecoveryRate = 10 + Math.floor(beautifulTasksCompleted / 3) * 2;
 			html += `
-				<div class="talent-node ${hasBeautifulLover ? 'active color-green' : ''}" data-tip="活泼恋人|成为恋人时：SAN回满，SAN上限+4。每月金币-2，回复10%已损SAN。完成任务循环：回复10%已损SAN→SAN上限+1→月回复+2%${beautifulGrowthText}|社交≥12后在开会时多次交流同一异性学者" data-color="green">
-					<div class="node-icon">💕</div>
-					<div class="node-label">活泼恋人</div>
+				<div class="talent-item ${hasBeautifulLover ? 'active color-purple' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">活泼恋人</span>
+							<span class="talent-item-status ${hasBeautifulLover ? 'active' : 'inactive'}">${hasBeautifulLover ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：获得时SAN回满、SAN上限+4，每月金币-2，每月回复SAN</div>
+						<div class="talent-item-current">循环：回复10%已损SAN→SAN上限+1→月回复+2%</div>
+						<div class="talent-item-next">累计：已约会${beautifulTasksCompleted}次，SAN上限+${beautifulSanMaxBonus}，每月回复${beautifulRecoveryRate}%已损SAN</div>
+						${!hasBeautifulLover ? `<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>` : ''}
+					</div>
 				</div>
 			`;
 
-			html += `</div></div>`;
-			} // 第一页结束
+			html += `</div>`;
+			} // end if (page === 'relationship')
 
-			// ========== 第二页：装备 ==========
-			if (page === 2) {
-			// ========== 装备栏 ==========
+			// ========== 装备天赋区 ==========
+			if (page === 'equipment') {
 			html += `<div class="talent-section">
-				<div class="talent-section-title"><i class="fas fa-box"></i> 装备栏</div>`;
+				<div class="talent-section-title"><i class="fas fa-toolbox"></i> 装备天赋</div>`;
 
-			// 第一行：椅子及其3种升级（4个）
-			const hasChair = furniture.chair;
-			html += `<div class="equip-row">`;
-			html += `<div class="equip-node ${hasChair && !chairUpgrade ? 'active' : ''}" data-tip="人体工学椅|每月SAN+1|金币商店购买（10金币）" data-color="equip">
-				<div class="node-icon">🪑</div>
-				<div class="node-label">工学椅</div>
-			</div>`;
-			html += `<div class="equip-node ${chairUpgrade === 'advanced' ? 'active' : ''}" data-tip="高级人体工学椅|每月SAN+2|购买工学椅后升级（18金币）" data-color="equip">
-				<div class="node-icon">💺</div>
-				<div class="node-label">高级椅</div>
-			</div>`;
-			html += `<div class="equip-node ${chairUpgrade === 'massage' ? 'active' : ''}" data-tip="电动沙发按摩椅|每月恢复10%已损失SAN|购买工学椅后升级（20金币）" data-color="equip">
-				<div class="node-icon">🛋️</div>
-				<div class="node-label">按摩椅</div>
-			</div>`;
-			html += `<div class="equip-node ${chairUpgrade === 'torture' ? 'active' : ''}" data-tip="头悬梁锥刺股椅|每月恢复当前SAN的20%|购买工学椅后升级（20金币）" data-color="equip">
-				<div class="node-icon">⚔️</div>
-				<div class="node-label">刺股椅</div>
-			</div>`;
+			// ★★★ 豪华工位天赋 ★★★
+			const hasLuxuryWorkstation = gameState.furnitureBought?.chair &&
+				gameState.furnitureBought?.monitor &&
+				gameState.furnitureBought?.keyboard &&
+				(gameState.gpuServersBought || 0) >= 1 &&
+				gameState.hasCoffeeMachine;
+			const buffDivisor = 5;
+			const ideaPermanentBuff = gameState.buffs?.permanent?.filter(b => b.type === 'idea_bonus').reduce((sum, b) => sum + (b.value || 0), 0) || 0;
+			const expPermanentBuff = gameState.buffs?.permanent?.filter(b => b.type === 'exp_bonus').reduce((sum, b) => sum + (b.value || 0), 0) || 0;
+			const writePermanentBuff = gameState.buffs?.permanent?.filter(b => b.type === 'write_bonus').reduce((sum, b) => sum + (b.value || 0), 0) || 0;
+			const ideaFloorBonus = hasLuxuryWorkstation ? Math.floor(ideaPermanentBuff / buffDivisor) : 0;
+			const expFloorBonus = hasLuxuryWorkstation ? Math.floor(expPermanentBuff / buffDivisor) : 0;
+			const writeFloorBonus = hasLuxuryWorkstation ? Math.floor(writePermanentBuff / buffDivisor) : 0;
+			const luxuryEquipStatus = [
+				gameState.furnitureBought?.chair ? '✓椅' : '○椅',
+				gameState.furnitureBought?.monitor ? '✓显' : '○显',
+				gameState.furnitureBought?.keyboard ? '✓键' : '○键',
+				(gameState.gpuServersBought || 0) >= 1 ? '✓GPU' : '○GPU',
+				gameState.hasCoffeeMachine ? '✓咖' : '○咖'
+			].join(' ');
+			html += `
+				<div class="talent-item ${hasLuxuryWorkstation ? 'active color-orange' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">🛋️</span>
+							<span class="talent-item-name">豪华工位</span>
+							<span class="talent-item-status ${hasLuxuryWorkstation ? 'active' : 'inactive'}">${hasLuxuryWorkstation ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：每5点永久buff分数，增加1点对应操作的保底分数</div>
+						<div class="talent-item-current">进度：想idea+${ideaFloorBonus}，做实验+${expFloorBonus}，写论文+${writeFloorBonus}</div>
+						<div class="talent-item-equip">装备：${luxuryEquipStatus}</div>
+						${!hasLuxuryWorkstation ? `<div class="talent-item-how">获取：同时拥有工学椅+显示器+键盘+GPU服务器+咖啡机</div>` : ''}
+					</div>
+				</div>
+			`;
+
+			// ★★★ 整装待发天赋（成长性：开会次数越多减免越多）★★★
+			const hasFullGear = gameState.bikeUpgrade === 'ebike' &&
+				gameState.hasParasol &&
+				gameState.hasDownJacket;
+			const meetingCount = gameState.meetingCount || 0;
+			const fullGearDiscount = hasFullGear ? Math.min(2 + Math.floor(meetingCount / 4), 6) : 0;
+			const fullGearEquipStatus = [
+				gameState.bikeUpgrade === 'ebike' ? '✓电驴' : '○电驴',
+				gameState.hasParasol ? '✓伞' : '○伞',
+				gameState.hasDownJacket ? '✓羽绒服' : '○羽绒服'
+			].join(' ');
+			html += `
+				<div class="talent-item ${hasFullGear ? 'active color-orange' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">🎒</span>
+							<span class="talent-item-name">整装待发</span>
+							<span class="talent-item-status ${hasFullGear ? 'active' : 'inactive'}">${hasFullGear ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：开会自费时金钱消耗减少</div>
+						<div class="talent-item-current">成长：基础-2，每4次开会+1（最多-6）</div>
+						<div class="talent-item-next">进度：已开会${meetingCount}次，当前减免${fullGearDiscount}金</div>
+						<div class="talent-item-equip">装备：${fullGearEquipStatus}</div>
+						${!hasFullGear ? `<div class="talent-item-how">获取：同时拥有小电驴+遮阳伞+羽绒服</div>` : ''}
+					</div>
+				</div>
+			`;
+
 			html += `</div>`;
-
-			// 第二行：自行车及其2种升级（3个）
-			const hasBike = gameState.hasBike;
-			html += `<div class="equip-row">`;
-			html += `<div class="equip-node ${hasBike && !bikeUpgrade ? 'active' : ''}" data-tip="平把公路车|每月SAN-1，每累计6点换SAN上限+1|金币商店购买（10金币）" data-color="equip">
-				<div class="node-icon">🚲</div>
-				<div class="node-label">平把车</div>
-			</div>`;
-			html += `<div class="equip-node ${bikeUpgrade === 'road' ? 'active' : ''}" data-tip="弯把公路车|每月SAN-2，每累计5点换SAN上限+1|购买自行车后升级（20金币）" data-color="equip">
-				<div class="node-icon">🚴</div>
-				<div class="node-label">弯把车</div>
-			</div>`;
-			html += `<div class="equip-node ${bikeUpgrade === 'ebike' ? 'active' : ''}" data-tip="小电驴|春季和秋季每月SAN+1|购买自行车后升级（12金币）" data-color="equip">
-				<div class="node-icon">🛵</div>
-				<div class="node-label">小电驴</div>
-			</div>`;
-			html += `</div>`;
-
-			// 第三行：GPU、键盘、显示器、遮阳伞、羽绒服（5个）
-			const gpuCount = gameState.gpuServersBought || 0;
-			html += `<div class="equip-row">`;
-			html += `<div class="equip-node ${gpuCount > 0 ? 'active' : ''}" data-tip="GPU服务器|每次做实验多做${gpuCount || 1}次，分数+${gpuCount || 1}|金币商店购买（10金币/台）" data-color="equip">
-				<div class="node-icon">🖳</div>
-				<div class="node-label">GPU</div>
-				${gpuCount > 0 ? `<div class="equip-count">${gpuCount}</div>` : ''}
-			</div>`;
-			html += `<div class="equip-node ${furniture.keyboard ? 'active' : ''}" data-tip="机械键盘|写论文SAN消耗-1（变为SAN-3）|金币商店购买（8金币）" data-color="equip">
-				<div class="node-icon">⌨️</div>
-				<div class="node-label">键盘</div>
-			</div>`;
-			html += `<div class="equip-node ${furniture.monitor ? 'active' : ''}" data-tip="4K显示器|读论文SAN消耗-1（变为SAN-1）|金币商店购买（8金币）" data-color="equip">
-				<div class="node-icon">🖥️</div>
-				<div class="node-label">显示器</div>
-			</div>`;
-			html += `<div class="equip-node ${gameState.hasParasol ? 'active' : ''}" data-tip="遮阳伞|夏季(6-8月)\"烈日当空\"debuff无效：原本夏季SAN减少会额外-1，遮阳伞可抵消|金币商店购买（8金币）" data-color="equip">
-				<div class="node-icon">☂️</div>
-				<div class="node-label">遮阳伞</div>
-			</div>`;
-			html += `<div class="equip-node ${gameState.hasDownJacket ? 'active' : ''}" data-tip="羽绒服|冬季(12-2月)\"寒风刺骨\"debuff无效：原本冬季每月SAN回复-1，羽绒服可抵消|金币商店购买（8金币）" data-color="equip">
-				<div class="node-icon">🧥</div>
-				<div class="node-label">羽绒服</div>
-			</div>`;
-			html += `</div>`;
-
-			// 第四行：4种护身符
-			html += `<div class="equip-row">`;
-			html += `<div class="equip-node ${amulets.san > 0 ? 'active' : ''}" data-tip="理智护身符|SAN降为0时自动+${amulets.san || 1}|成就商店购买" data-color="equip">
-				<div class="node-icon">🛡️</div>
-				<div class="node-label">SAN护符</div>
-				${amulets.san > 0 ? `<div class="equip-count">${amulets.san}</div>` : ''}
-			</div>`;
-			html += `<div class="equip-node ${amulets.gold > 0 ? 'active' : ''}" data-tip="零钱护身符|金币降为0时自动+${amulets.gold || 1}|成就商店购买" data-color="equip">
-				<div class="node-icon">💰</div>
-				<div class="node-label">金币护符</div>
-				${amulets.gold > 0 ? `<div class="equip-count">${amulets.gold}</div>` : ''}
-			</div>`;
-			html += `<div class="equip-node ${amulets.favor > 0 ? 'active' : ''}" data-tip="好感护身符|好感降为0时自动+${amulets.favor || 1}|成就商店购买" data-color="equip">
-				<div class="node-icon">🎁</div>
-				<div class="node-label">好感护符</div>
-				${amulets.favor > 0 ? `<div class="equip-count">${amulets.favor}</div>` : ''}
-			</div>`;
-			html += `<div class="equip-node ${amulets.social > 0 ? 'active' : ''}" data-tip="社交护身符|社交降为0时自动+${amulets.social || 1}|成就商店购买" data-color="equip">
-				<div class="node-icon">🤝</div>
-				<div class="node-label">社交护符</div>
-				${amulets.social > 0 ? `<div class="equip-count">${amulets.social}</div>` : ''}
-			</div>`;
-			html += `</div>`;
-
-			html += `</div>`; // 装备栏结束
-			} // 第二页结束
+			} // end if (page === 'equipment')
 
 			html += `</div>`; // talent-container结束
 
-			showModal('⭐ 天赋和装备', html, [{ text: '关闭', class: 'btn-primary', action: () => {
-				// 关闭时移除tooltip
-				const existingTip = document.getElementById('talent-tip');
-				if (existingTip) existingTip.remove();
-				closeModal();
-			}}]);
-
-			// 创建tooltip到body层级（避免被modal的overflow裁剪）
-			setTimeout(() => {
-				// 移除可能存在的旧tooltip
-				const existingTip = document.getElementById('talent-tip');
-				if (existingTip) existingTip.remove();
-
-				// 创建新的tooltip元素
-				const tooltip = document.createElement('div');
-				tooltip.id = 'talent-tip';
-				tooltip.className = 'talent-tip';
-				tooltip.innerHTML = `
-					<div class="talent-tip-title"></div>
-					<div class="talent-tip-effect"></div>
-					<div class="talent-tip-how"></div>
-				`;
-				tooltip.style.cssText = `
-					position: fixed;
-					background: rgba(15,15,20,0.98);
-					border: 2px solid #4ecdc4;
-					border-radius: 10px;
-					padding: 10px 14px;
-					max-width: 240px;
-					z-index: 100000;
-					pointer-events: none;
-					display: none;
-					box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-				`;
-				document.body.appendChild(tooltip);
-
-				// 绑定tooltip事件
-				document.querySelectorAll('[data-tip]').forEach(el => {
-					el.addEventListener('mouseenter', (e) => {
-						const tipData = e.currentTarget.dataset.tip.split('|');
-						const color = e.currentTarget.dataset.color || '';
-						tooltip.querySelector('.talent-tip-title').textContent = tipData[0] || '';
-						tooltip.querySelector('.talent-tip-effect').textContent = tipData[1] || '';
-						tooltip.querySelector('.talent-tip-how').textContent = tipData[2] ? '获取：' + tipData[2] : '';
-
-						// 设置边框和标题颜色
-						const colors = {
-							'blue': '#3498db',
-							'purple': '#9b59b6',
-							'orange': '#f39c12',
-							'green': '#2ecc71',
-							'equip': '#e67e22'
-						};
-						const borderColor = colors[color] || '#4ecdc4';
-						tooltip.style.borderColor = borderColor;
-						tooltip.querySelector('.talent-tip-title').style.color = borderColor;
-						tooltip.querySelector('.talent-tip-effect').style.color = 'rgba(255,255,255,0.9)';
-						tooltip.querySelector('.talent-tip-how').style.color = 'rgba(255,255,255,0.55)';
-						tooltip.querySelector('.talent-tip-how').style.fontStyle = 'italic';
-						tooltip.querySelector('.talent-tip-how').style.fontSize = '0.7rem';
-						tooltip.querySelector('.talent-tip-title').style.fontWeight = '600';
-						tooltip.querySelector('.talent-tip-title').style.fontSize = '0.85rem';
-						tooltip.querySelector('.talent-tip-title').style.marginBottom = '5px';
-						tooltip.querySelector('.talent-tip-effect').style.fontSize = '0.8rem';
-						tooltip.querySelector('.talent-tip-effect').style.marginBottom = '6px';
-						tooltip.querySelector('.talent-tip-effect').style.lineHeight = '1.4';
-
-						tooltip.style.display = 'block';
-					});
-					el.addEventListener('mousemove', (e) => {
-						const tipWidth = tooltip.offsetWidth;
-						const tipHeight = tooltip.offsetHeight;
-						let x = e.clientX + 15;
-						let y = e.clientY + 15;
-						// 防止超出右边界
-						if (x + tipWidth > window.innerWidth - 10) {
-							x = e.clientX - tipWidth - 15;
-						}
-						// 防止超出左边界
-						if (x < 10) {
-							x = 10;
-						}
-						// 防止超出下边界
-						if (y + tipHeight > window.innerHeight - 10) {
-							y = e.clientY - tipHeight - 15;
-						}
-						// 防止超出上边界
-						if (y < 10) {
-							y = 10;
-						}
-						tooltip.style.left = x + 'px';
-						tooltip.style.top = y + 'px';
-					});
-					el.addEventListener('mouseleave', () => {
-						tooltip.style.display = 'none';
-					});
-
-					// 移动端点击支持
-					el.addEventListener('click', (e) => {
-						e.stopPropagation();
-						const tipData = e.currentTarget.dataset.tip.split('|');
-						const color = e.currentTarget.dataset.color || '';
-						tooltip.querySelector('.talent-tip-title').textContent = tipData[0] || '';
-						tooltip.querySelector('.talent-tip-effect').textContent = tipData[1] || '';
-						tooltip.querySelector('.talent-tip-how').textContent = tipData[2] ? '获取：' + tipData[2] : '';
-
-						const colors = {
-							'blue': '#3498db',
-							'purple': '#9b59b6',
-							'orange': '#f39c12',
-							'green': '#2ecc71',
-							'equip': '#e67e22'
-						};
-						const borderColor = colors[color] || '#4ecdc4';
-						tooltip.style.borderColor = borderColor;
-						tooltip.querySelector('.talent-tip-title').style.color = borderColor;
-						tooltip.querySelector('.talent-tip-effect').style.color = 'rgba(255,255,255,0.9)';
-						tooltip.querySelector('.talent-tip-how').style.color = 'rgba(255,255,255,0.55)';
-						tooltip.querySelector('.talent-tip-how').style.fontStyle = 'italic';
-						tooltip.querySelector('.talent-tip-how').style.fontSize = '0.7rem';
-						tooltip.querySelector('.talent-tip-title').style.fontWeight = '600';
-						tooltip.querySelector('.talent-tip-title').style.fontSize = '0.85rem';
-						tooltip.querySelector('.talent-tip-title').style.marginBottom = '5px';
-						tooltip.querySelector('.talent-tip-effect').style.fontSize = '0.8rem';
-						tooltip.querySelector('.talent-tip-effect').style.marginBottom = '6px';
-						tooltip.querySelector('.talent-tip-effect').style.lineHeight = '1.4';
-
-						tooltip.style.display = 'block';
-
-						// 计算位置（移动端居中显示）
-						const tipWidth = tooltip.offsetWidth;
-						const tipHeight = tooltip.offsetHeight;
-						let x = (window.innerWidth - tipWidth) / 2;
-						let y = e.clientY + 20;
-
-						// 防止超出下边界
-						if (y + tipHeight > window.innerHeight - 10) {
-							y = e.clientY - tipHeight - 20;
-						}
-						// 防止超出上边界
-						if (y < 10) {
-							y = 10;
-						}
-
-						tooltip.style.left = x + 'px';
-						tooltip.style.top = y + 'px';
-
-						// 3秒后自动隐藏
-						setTimeout(() => {
-							tooltip.style.display = 'none';
-						}, 3000);
-					});
-				});
-
-				// 点击其他区域关闭tooltip
-				document.addEventListener('click', (e) => {
-					if (!e.target.closest('[data-tip]')) {
-						tooltip.style.display = 'none';
-					}
-				});
-			}, 150);
+			const titleText = page === 'character' ? '👤 角色天赋' : (page === 'relationship' ? '💕 关系天赋' : '🛠️ 装备天赋');
+			showModal(titleText, html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
 		}
+		window.showTalentTree = showTalentTree;
 
         function updateGraduation() {
             // 剩余月数已移至日志条目中显示，此函数仅保留接口兼容性
@@ -914,7 +807,7 @@
 					'lover_extra_idea': '想idea',
 					'lover_extra_experiment': '做实验',
 					'lover_extra_write': '写论文',
-					'read_san_reduce': '读论文SAN',
+					'read_san_reduce': '看论文SAN',
 					'write_san_reduce': '写论文SAN',
 					'citation_multiply': '中稿引用'
 				};
@@ -943,7 +836,7 @@
 				} else if (buff.type === 'lover_extra_write') {
 					name = buff.desc || `每次写论文多写1次 (恋人)`;
 				} else if (buff.type === 'read_san_reduce') {
-					name = `读论文SAN-1`;
+					name = `看论文SAN-1`;
 				} else if (buff.type === 'write_san_reduce') {
 					name = `写论文SAN-3`;
 				} else if (buff.type === 'citation_multiply') {

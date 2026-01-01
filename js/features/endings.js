@@ -154,7 +154,7 @@
 			if (gameState.maxConcurrentReviews >= 4) a.push('🔥 火力全开');
 			if (gameState.achievementConditions && gameState.achievementConditions.tripleRejected) a.push('🍚 食之无味');
 			if (gameState.achievementConditions && gameState.achievementConditions.bought5GPUs) a.push('🤖 机械飞升');
-			if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 全套家具');
+			if (gameState.achievementConditions && gameState.achievementConditions.fullFurnitureSet) a.push('🛋️ 豪华工位');
 			if (gameState.achievementConditions && gameState.achievementConditions.phdRequirementMetEarly) a.push('🧒 天才少年');
 
 			const hasCPaperOver100 = gameState.publishedPapers.some(p => p.grade === 'C' && p.citations > 100);
@@ -328,7 +328,7 @@
 				if (gameState.achievementConditions.allBadReviewers) achievementsToCheck.push('😭 倒霉蛋');
 				if (gameState.achievementConditions.tripleRejected) achievementsToCheck.push('🍚 食之无味');
 				if (gameState.achievementConditions.bought5GPUs) achievementsToCheck.push('🤖 机械飞升');
-				if (gameState.achievementConditions.fullFurnitureSet) achievementsToCheck.push('🛋️ 全套家具');
+				if (gameState.achievementConditions.fullFurnitureSet) achievementsToCheck.push('🛋️ 豪华工位');
 				if (gameState.achievementConditions.phdRequirementMetEarly) achievementsToCheck.push('🧒 天才少年');
 				if (gameState.achievementConditions.rejectedPhdTwice) achievementsToCheck.push('🧠 人间清醒');
 				if (gameState.achievementConditions.twoInOneConference) achievementsToCheck.push('🏹 一箭双雕');
@@ -541,7 +541,7 @@
 							onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102,126,234,0.5)'"
 							onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102,126,234,0.4)'">
 						<i class="fas fa-book-open"></i>
-						📖 回顾我的研究生生涯
+						回顾我的研究生生涯
 					</button>
 				</div>
 				<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:0.8rem;color:#374151;">
@@ -624,11 +624,11 @@
 				</div>`;
 			}
 
-			// ★★★ 重开按钮（在最后）★★★
+			// ★★★ 重开和回溯按钮（同一行）★★★
 			html += `
-			<div style="text-align:center;margin-top:8px;">
+			<div style="display:flex;justify-content:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
 				<button onclick="restartGame()"
-						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 35px;
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 30px;
 							   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
 							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
 							   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
@@ -636,8 +636,18 @@
 						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(139,92,246,0.45)'"
 						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(139,92,246,0.35)'">
 					<i class="fas fa-redo"></i>
-					<i class="fas fa-gamepad"></i>
 					我要重开
+				</button>
+				<button onclick="closeModal();openAutoSaveModal()"
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 30px;
+							   background:linear-gradient(135deg,#f59e0b,#fbbf24);
+							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+							   cursor:pointer;box-shadow:0 4px 15px rgba(245,158,11,0.35);
+							   transition:all 0.3s ease;font-family:inherit;"
+						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(245,158,11,0.45)'"
+						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(245,158,11,0.35)'">
+					<i class="fas fa-history"></i>
+					我要回溯
 				</button>
 			</div>`;
 

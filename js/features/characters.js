@@ -204,7 +204,7 @@
 				displayName = '真·大多数';
 				displayDesc = '经历过所有角色的洗礼，回归本真';
 				displayBonus = '无特殊能力，一切靠自己';
-				displayAwaken = { icon: '✨', name: '往昔荣光', desc: '成就币翻倍，成就商店刷新间隔变为2个月' };
+				displayAwaken = { icon: '✨', name: '往昔荣光', desc: '成就币翻倍' };
 				statsCharId = 'true-normal';
 				statsIsReversed = false;
 			} else if (isReversedSide && char.reversed) {
@@ -644,7 +644,7 @@
 					displayAwaken = {
 						icon: '✨',
 						name: '往昔荣光',
-						desc: '成就币翻倍，成就商店刷新间隔变为2个月'
+						desc: '成就币翻倍'
 					};
 					data = char;
 					statsCharId = 'true-normal';
@@ -1174,15 +1174,15 @@
                     break;
                     
 				case 'rich':
-					// ★★★ 修改：重置为2 ★★★
-					gameState.san = 2;
-					gameState.research = 2;
-					gameState.social = 2;
-					gameState.favor = 2;
+					// ★★★ 修改：重置为1 ★★★
+					gameState.san = 1;
+					gameState.research = 1;
+					gameState.social = 1;
+					gameState.favor = 1;
 					gameState.goldSpentTotal = 0;
 					gameState.lastResetMonth = 0;
 					addLog('逆位效果', '贪求之《富可敌国》',
-						 '除了钱一无所有，每月属性重置为2，金钱+3');
+						 '除了钱一无所有，每月属性重置为1，金钱+3');
 					break;
                     
 				case 'teacher-child':

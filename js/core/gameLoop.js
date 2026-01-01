@@ -20,6 +20,17 @@
 		}
 
 		function nextMonthInternal() {
+			// ★★★ 安全机制：严格按照学位限制强制结束游戏 ★★★
+			// 硕士最多36个月，博士最多60个月，延毕最多72个月
+			// 注意：使用 > 而非 >=，确保在最后一个月时正常毕业逻辑能执行
+			const absoluteMaxMonths = gameState.degree === 'master' ? 36 : 72;
+			if (gameState.totalMonths > absoluteMaxMonths) {
+				console.error(`⚠️ 游戏超时：${gameState.degree}已超过${absoluteMaxMonths}个月，强制触发结局`);
+				addLog('系统', '已达到最大游戏时间', '强制触发结局');
+				triggerEnding('delay');
+				return;
+			}
+
 			// ★★★ 新增：重置行动次数 ★★★
 			gameState.actionCount = 0;
 			gameState.actionUsed = false;
@@ -85,16 +96,16 @@
 			// ★★★ 贪求之富可敌国：月初属性变化 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
 				if (gameState.reversedAwakened) {
-					// ★★★ 觉醒后：每月属性降低15%（上取整）★★★
+					// ★★★ 觉醒后：每月属性降低20%（上取整）★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					const sanLoss = Math.ceil(gameState.san * 0.15);
-					const researchLoss = Math.ceil(gameState.research * 0.15);
-					const socialLoss = Math.ceil(gameState.social * 0.15);
-					const favorLoss = Math.ceil(gameState.favor * 0.15);
+					const sanLoss = Math.ceil(gameState.san * 0.20);
+					const researchLoss = Math.ceil(gameState.research * 0.20);
+					const socialLoss = Math.ceil(gameState.social * 0.20);
+					const favorLoss = Math.ceil(gameState.favor * 0.20);
 
 					gameState.san = Math.max(1, gameState.san - sanLoss);
 					gameState.research = Math.max(1, gameState.research - researchLoss);
@@ -104,19 +115,19 @@
 					addLog('逆位效果', '贪求之月度衰减',
 						`SAN ${oldSan}→${gameState.san}(-${sanLoss}), 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})`);
 				} else {
-					// 觉醒前：每月重置为2
+					// 觉醒前：每月重置为1
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					gameState.san = 2;
-					gameState.research = 2;
-					gameState.social = 2;
-					gameState.favor = 2;
+					gameState.san = 1;
+					gameState.research = 1;
+					gameState.social = 1;
+					gameState.favor = 1;
 
 					addLog('逆位效果', '贪求之每月重置',
-						`SAN ${oldSan}→2, 科研 ${oldResearch}→2, 社交 ${oldSocial}→2, 好感 ${oldFavor}→2`);
+						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1`);
 				}
 			}
 
@@ -242,8 +253,8 @@
 				if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened) {
 					gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + 1;
 
-					const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
-					const previousGains = Math.floor((gameState.goldSpentTotal - 1) / 6);
+					const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
+					const previousGains = Math.floor((gameState.goldSpentTotal - 1) / 4);
 					const newGains = attributeGains - previousGains;
 
 					if (newGains > 0) {
@@ -282,9 +293,12 @@
 
 			// ★★★ AILab 实习效果（-SAN类）★★★
 			if (gameState.ailabInternship) {
-				// ★★★ 新增：实习收入 = 基础2 + min(接受时A类论文数, 3)，最多5 ★★★
-				const aPaperBonus = Math.min(gameState.internshipAPaperCount || 0, 3);
-				const baseIncome = 2 + aPaperBonus;
+				// ★★★ 实习收入 = 基础2 + A会×0.5 + 每500引用×0.5，上限6（实时计算）★★★
+				const aPaperCount = (gameState.publishedPapers || []).filter(p => p.grade === 'A').length;
+				const totalCitations = gameState.totalCitations || 0;
+				const aPaperBonus = aPaperCount * 0.5;
+				const citationBonus = Math.floor(totalCitations / 500) * 0.5;
+				const baseIncome = Math.min(2 + aPaperBonus + citationBonus, 6);
 				// ★★★ 修改：白手起家术 - 实习收入翻倍 ★★★
 				const internshipIncome = gameState.incomeDoubled ? baseIncome * 2 : baseIncome;
 				gameState.gold += internshipIncome;  // 实习收入
@@ -327,10 +341,12 @@
 				// 平把公路车或弯把公路车
 				let bikeSanCost = 1;  // 平把公路车每月-1
 				let sanThreshold = 6;  // 平把公路车每累计6后SAN上限+1
+				let maxSanGain = 6;    // ★★★ 平把公路车最多+6 ★★★
 
 				if (gameState.bikeUpgrade === 'road') {
 					bikeSanCost = 2;  // 弯把公路车每月-2
 					sanThreshold = 5;  // 弯把公路车每累计5后SAN上限+1
+					maxSanGain = 12;   // 弯把公路车最多+12
 				}
 
 				// 扣除SAN
@@ -342,10 +358,16 @@
 				// 检查是否达到SAN上限提升阈值
 				const prevThresholdCount = Math.floor((gameState.bikeSanSpent - bikeSanCost) / sanThreshold);
 				const newThresholdCount = Math.floor(gameState.bikeSanSpent / sanThreshold);
-				if (newThresholdCount > prevThresholdCount) {
+				// ★★★ 新增：检查是否达到上限增益最大值 ★★★
+				const currentBikeSanMaxGained = gameState.bikeSanMaxGained || 0;
+				if (newThresholdCount > prevThresholdCount && currentBikeSanMaxGained < maxSanGain) {
 					gameState.sanMax = (gameState.sanMax || 20) + 1;
+					gameState.bikeSanMaxGained = currentBikeSanMaxGained + 1;
 					addLog('骑行效果', gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车',
-						`累计骑行消耗${gameState.bikeSanSpent}SAN，SAN上限+1 → ${gameState.sanMax}`);
+						`累计骑行消耗${gameState.bikeSanSpent}SAN，SAN上限+1 → ${gameState.sanMax}（已获得+${gameState.bikeSanMaxGained}/${maxSanGain}）`);
+				} else if (newThresholdCount > prevThresholdCount) {
+					addLog('骑行效果', gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车',
+						`累计骑行消耗${gameState.bikeSanSpent}SAN，但已达上限增益最大值+${maxSanGain}`);
 				}
 
 				// ★★★ 黑市：理智护身符检查 ★★★
@@ -407,9 +429,52 @@
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
 
+			// ★★★ 新增：重置每月GPU租用数量 ★★★
+			gameState.gpuRentedThisMonth = 0;
+
+			// ★★★ 新增：重置每月冰美式购买计数 ★★★
+			gameState.coffeeBoughtThisMonth = 0;
+
 			// ★★★ 处理预购订阅（月初金钱结算后自动购买冰美式）★★★
 			processSubscriptions('nextMonth');
 
+			// ★★★ 新增：自动咖啡机效果 - 每月自动喝一次冰美式(-2金币, +3SAN) ★★★
+			if (gameState.coffeeMachineUpgrade === 'automatic' && gameState.gold >= 2) {
+				gameState.gold -= 2;
+				gameState.san = Math.min(gameState.sanMax, gameState.san + 3);
+				gameState.coffeeMachineCount = (gameState.coffeeMachineCount || 0) + 1;
+				gameState.coffeeBoughtCount = (gameState.coffeeBoughtCount || 0) + 1;
+				addLog('自动咖啡机', '自动冲泡冰美式', '金币-2，SAN+3');
+			}
+
+			// ★★★ 新增：双屏显示器效果 - 每月自动看一次论文(-2SAN, 获得buff) ★★★
+			if (gameState.monitorUpgrade === 'dual') {
+				// 扣除SAN
+				gameState.san = Math.max(0, gameState.san - 2);
+				// 增加看论文计数
+				gameState.readCount = (gameState.readCount || 0) + 1;
+				// 给予看论文buff（需要在papers.js中定义applyReadPaperBuff函数）
+				if (typeof applyReadPaperBuff === 'function') {
+					const buff = applyReadPaperBuff(true);  // true表示是自动阅读
+					addLog('双屏显示器', '自动浏览论文', `SAN-2，${buff}`);
+				} else {
+					// 备用：直接给予基础buff
+					gameState.buffs.temporary.push({
+						type: 'idea_bonus',
+						name: '论文灵感(自动)',
+						value: 3,
+						permanent: false,
+						thisMonthOnly: true
+					});
+					addLog('双屏显示器', '自动浏览论文', 'SAN-2，想idea分数+3');
+				}
+				// 护身符检查
+				checkAmuletEffects();
+				if (gameState.san < 0) {
+					triggerEnding('burnout');
+					return;
+				}
+			}
 
 			// ★★★ 修改：论文分数衰减（支持预见未来热点，期刊槽送审后不衰减）★★★
 			let decayLogs = [];
@@ -978,12 +1043,37 @@
 						gameState.citation1000Month = gameState.totalMonths;
 						addCareerMilestone('citation_1000', '总引用突破1000', `成为领域内的知名学者`);
 					}
+
+					// ★★★ 新增：大牛联培科研上限随引用增长 ★★★
+					if (gameState.bigBullCooperation) {
+						const newCitationBonus = Math.min(Math.floor(gameState.totalCitations / 500) * 2, 10);
+						const oldBonus = gameState.bigBullCitationBonusApplied || 0;
+						if (newCitationBonus > oldBonus) {
+							const bonusDiff = newCitationBonus - oldBonus;
+							gameState.researchMax = (gameState.researchMax || 20) + bonusDiff;
+							gameState.bigBullCitationBonusApplied = newCitationBonus;
+							addLog('联培加成', `引用达到${gameState.totalCitations}`, `科研上限+${bonusDiff}（联培累计+${newCitationBonus}）`);
+						}
+					}
 				}
 			});
 		}
 		
         // ==================== 毕业检查 ====================
         function checkGraduation() {
+            // ★★★ 安全机制：严格按照学位限制强制结束游戏 ★★★
+            // 注意：使用 > 而非 >=，确保在最后一个月时正常毕业逻辑能执行
+            const absoluteMaxMonths = gameState.degree === 'master' ? 36 : 72;
+            if (gameState.totalMonths > absoluteMaxMonths) {
+                console.error(`⚠️ 游戏超时：${gameState.degree}已超过${absoluteMaxMonths}个月，强制触发结局`);
+                addLog('系统', '已达到最大游戏时间', '强制触发结局');
+                // 清除可能卡住的状态
+                gameState.pendingPhDChoice = false;
+                gameState.pendingNatureExtension = false;
+                triggerEnding('delay');
+                return;
+            }
+
             if (gameState.pendingPhDChoice) {
                 return;
             }
@@ -1215,8 +1305,6 @@
 				// ★★★ 新增：往昔荣光效果 - 成就币翻倍 ★★★
 				const oldAchievementCoins = gameState.achievementCoins;
 				gameState.achievementCoins = gameState.achievementCoins * 2;
-				// ★★★ 成就商店刷新间隔变为2个月 ★★★
-				gameState.achievementShopRefreshInterval = 2;
 				gameState.trueNormalAwakened = true;
 
 				const html = `
@@ -1237,9 +1325,7 @@
 						</div>
 						<div style="background:white;border-radius:8px;padding:12px;text-align:center;">
 							<div style="font-size:0.9rem;color:var(--text-secondary);">
-								成就币翻倍：${oldAchievementCoins} → ${gameState.achievementCoins}<br>
-								成就商店刷新间隔：1月 → 2月<br>
-								更多机会获取强力道具！
+								成就币翻倍：${oldAchievementCoins} → ${gameState.achievementCoins}
 							</div>
 						</div>
 					</div>
@@ -1350,9 +1436,9 @@
 						effectName = '💸 金钱的力量';
 						effectDesc = '属性每月衰减，但金钱生金钱，消费金币提升属性';
 						gameState.goldSpentTotal = 0;
-						bonusDetails.push('✨ 每月SAN/科研/社交/好感降低15%（上取整）');
+						bonusDetails.push('✨ 每月SAN/科研/社交/好感降低20%');
 						bonusDetails.push('✨ 每花费4金币 → SAN+1, 科研+1, 社交+1, 好感+1');
-						bonusDetails.push('✨ 每月金钱+6%（上取整）');
+						bonusDetails.push('✨ 每月金钱+6%');
 						bonusDetails.push('💰 用钱生钱，对抗衰减！');
 						break;
 

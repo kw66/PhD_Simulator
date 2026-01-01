@@ -36,8 +36,8 @@
 				id: 'advisor_gap',
 				name: '师生隔阂',
 				icon: '🚫',
-				desc: '导师好感上限-9',
-				effect: { favorMaxReduction: 9 },
+				desc: '导师好感上限-8',
+				effect: { favorMaxReduction: 8 },
 				maxCount: 2,
 				pointCosts: [1, 2],
 				order: 4
@@ -66,8 +66,8 @@
 				id: 'high_phd_bar',
 				name: '卷王标准',
 				icon: '📊',
-				desc: '转博分数要求+2',
-				effect: { phdRequirementIncrease: 2 },
+				desc: '转博分数要求+50%',
+				effect: { phdRequirementPercent: 50 },
 				maxCount: 3,
 				pointCosts: [1, 2, 3],
 				order: 7
@@ -76,8 +76,8 @@
 				id: 'graduation_hell',
 				name: '毕业地狱',
 				icon: '🎓',
-				desc: '毕业分数要求+4',
-				effect: { graduationRequirementIncrease: 4 },
+				desc: '毕业分数要求+50%',
+				effect: { graduationRequirementPercent: 50 },
 				maxCount: 3,
 				pointCosts: [1, 2, 3],
 				order: 8
@@ -86,8 +86,8 @@
 				id: 'spending_trap',
 				name: '消费陷阱',
 				icon: '🛒',
-				desc: '每月花费+1',
-				effect: { monthlyExpenseIncrease: 1 },
+				desc: '硕士每月花费+0.5，博士+2',
+				effect: { monthlyExpenseMaster: 0.5, monthlyExpensePhd: 2 },
 				maxCount: 3,
 				pointCosts: [2, 4, 7],
 				order: 9
@@ -96,8 +96,8 @@
 				id: 'mental_drain',
 				name: '精神内耗',
 				icon: '🌀',
-				desc: '每月SAN-1',
-				effect: { monthlySanDrain: 1 },
+				desc: '硕士每月SAN-1，博士-2',
+				effect: { monthlySanDrainMaster: 1, monthlySanDrainPhd: 2 },
 				maxCount: 3,
 				pointCosts: [1, 3, 4],
 				order: 10
@@ -152,8 +152,8 @@
 				icon: '💰',
 				desc: '初始金币+5',
 				effect: { initialGoldBonus: 5 },
-				maxCount: 2,
-				pointCosts: [-1, -2],
+				maxCount: 4,
+				pointCosts: [-1, -2, -3, -4],
 				order: 2
 			},
 			compound_magic: {
@@ -162,8 +162,8 @@
 				icon: '💹',
 				desc: '每月金币+3%',
 				effect: { monthlyGoldPercent: 3 },
-				maxCount: 2,
-				pointCosts: [-3, -5],
+				maxCount: 1,
+				pointCosts: [-3],
 				order: 3
 			},
 			iron_will: {
@@ -243,7 +243,7 @@
 				desc: '每6月科研能力+10%',
 				effect: { researchGrowthPeriod: 6, researchGrowthPercent: 10 },
 				maxCount: 3,
-				pointCosts: [-1, -3, -4],
+				pointCosts: [-2, -3, -4],
 				order: 11
 			},
 			social_growth: {
@@ -736,24 +736,28 @@
 					appliedEffects.push(`${curse.name}: 金币上限${effect.goldMax}`);
 				}
 
-				if (effect.phdRequirementIncrease) {
-					gameState.phdRequirementBonus = (gameState.phdRequirementBonus || 0) + effect.phdRequirementIncrease * count;
-					appliedEffects.push(`${curse.name}×${count}: 转博要求+${effect.phdRequirementIncrease * count}`);
+				if (effect.phdRequirementPercent) {
+					gameState.phdRequirementPercent = (gameState.phdRequirementPercent || 0) + effect.phdRequirementPercent * count;
+					appliedEffects.push(`${curse.name}×${count}: 转博要求+${effect.phdRequirementPercent * count}%`);
 				}
 
-				if (effect.graduationRequirementIncrease) {
-					gameState.graduationRequirementBonus = (gameState.graduationRequirementBonus || 0) + effect.graduationRequirementIncrease * count;
-					appliedEffects.push(`${curse.name}×${count}: 毕业要求+${effect.graduationRequirementIncrease * count}`);
+				if (effect.graduationRequirementPercent) {
+					gameState.graduationRequirementPercent = (gameState.graduationRequirementPercent || 0) + effect.graduationRequirementPercent * count;
+					appliedEffects.push(`${curse.name}×${count}: 毕业要求+${effect.graduationRequirementPercent * count}%`);
 				}
 
-				if (effect.monthlyExpenseIncrease) {
-					gameState.monthlyExpenseBonus = (gameState.monthlyExpenseBonus || 0) + effect.monthlyExpenseIncrease * count;
-					appliedEffects.push(`${curse.name}×${count}: 月花费+${effect.monthlyExpenseIncrease * count}`);
+				// ★★★ 消费陷阱：硕士/博士区分 ★★★
+				if (effect.monthlyExpenseMaster !== undefined) {
+					gameState.monthlyExpenseMaster = (gameState.monthlyExpenseMaster || 0) + effect.monthlyExpenseMaster * count;
+					gameState.monthlyExpensePhd = (gameState.monthlyExpensePhd || 0) + effect.monthlyExpensePhd * count;
+					appliedEffects.push(`${curse.name}×${count}: 硕士月花费+${effect.monthlyExpenseMaster * count}，博士+${effect.monthlyExpensePhd * count}`);
 				}
 
-				if (effect.monthlySanDrain) {
-					gameState.monthlySanDrain = (gameState.monthlySanDrain || 0) + effect.monthlySanDrain * count;
-					appliedEffects.push(`${curse.name}×${count}: 每月SAN-${effect.monthlySanDrain * count}`);
+				// ★★★ 精神内耗：硕士/博士区分 ★★★
+				if (effect.monthlySanDrainMaster !== undefined) {
+					gameState.monthlySanDrainMaster = (gameState.monthlySanDrainMaster || 0) + effect.monthlySanDrainMaster * count;
+					gameState.monthlySanDrainPhd = (gameState.monthlySanDrainPhd || 0) + effect.monthlySanDrainPhd * count;
+					appliedEffects.push(`${curse.name}×${count}: 硕士每月SAN-${effect.monthlySanDrainMaster * count}，博士-${effect.monthlySanDrainPhd * count}`);
 				}
 
 				if (effect.researchDecayPeriod) {
@@ -862,7 +866,7 @@
 							grade: 'C',
 							acceptType: 'Poster',
 							score: 20,
-							researchScore: 2,
+							researchScore: 1,
 							citations: 0,
 							monthsSincePublish: 0,
 							pendingCitationFraction: 0,
@@ -873,7 +877,7 @@
 							writeScore: 5,
 							isStartingPaper: true  // 标记为初始论文
 						});
-						gameState.totalScore += 2;
+						gameState.totalScore += 1;
 						gameState.paperC++;
 					}
 					appliedEffects.push(`${blessing.name}×${count}: 自带${count}篇C会论文`);
@@ -924,16 +928,22 @@
 
 			// ==================== 诅咒效果 ====================
 			if (gameState.activeCurses) {
-				// 精神内耗：每月SAN-1
-				if (gameState.monthlySanDrain && gameState.monthlySanDrain > 0) {
-					gameState.san -= gameState.monthlySanDrain;
-					effects.push(`精神内耗: SAN-${gameState.monthlySanDrain}`);
+				// ★★★ 精神内耗：硕士SAN-1，博士-2 ★★★
+				const sanDrain = gameState.degree === 'phd'
+					? (gameState.monthlySanDrainPhd || 0)
+					: (gameState.monthlySanDrainMaster || 0);
+				if (sanDrain > 0) {
+					gameState.san -= sanDrain;
+					effects.push(`精神内耗: SAN-${sanDrain}`);
 				}
 
-				// 消费陷阱：每月花费+1
-				if (gameState.monthlyExpenseBonus && gameState.monthlyExpenseBonus > 0) {
-					gameState.gold -= gameState.monthlyExpenseBonus;
-					effects.push(`消费陷阱: 金币-${gameState.monthlyExpenseBonus}`);
+				// ★★★ 消费陷阱：硕士+0.5，博士+2 ★★★
+				const expense = gameState.degree === 'phd'
+					? (gameState.monthlyExpensePhd || 0)
+					: (gameState.monthlyExpenseMaster || 0);
+				if (expense > 0) {
+					gameState.gold -= expense;
+					effects.push(`消费陷阱: 金币-${expense}`);
 				}
 
 				// 周期性衰减（每4月）
@@ -1012,14 +1022,14 @@
 
 		// 获取修正后的转博要求
 		function getAdjustedPhdRequirement(baseReq) {
-			const bonus = gameState.phdRequirementBonus || 0;
-			return baseReq + bonus;
+			const percent = gameState.phdRequirementPercent || 0;
+			return Math.ceil(baseReq * (1 + percent / 100));
 		}
 
 		// 获取修正后的毕业要求
 		function getAdjustedGraduationRequirement(baseReq) {
-			const bonus = gameState.graduationRequirementBonus || 0;
-			return baseReq + bonus;
+			const percent = gameState.graduationRequirementPercent || 0;
+			return Math.ceil(baseReq * (1 + percent / 100));
 		}
 
 		// 重置难度设置（新游戏时）
