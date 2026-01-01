@@ -327,13 +327,17 @@
 				const sanCost = 1;
 				gameState.san -= sanCost;
 
-				const researchBonus = gameState.research;
-				gameState.totalCitations += researchBonus;
-				gameState.publishedPapers.forEach(paper => {
-					paper.citations += Math.floor(researchBonus / gameState.publishedPapers.length);
-				});
+				// ★★★ 修改：引用加成 = 关系网中师弟师妹数量 × 3 ★★★
+				const juniorCount = (gameState.relationships || []).filter(r => r.type === 'junior').length;
+				const citationBonus = juniorCount * 3;
+				gameState.totalCitations += citationBonus;
+				if (citationBonus > 0 && gameState.publishedPapers.length > 0) {
+					gameState.publishedPapers.forEach(paper => {
+						paper.citations += Math.floor(citationBonus / gameState.publishedPapers.length);
+					});
+				}
 
-				addLog('长期合作', '指导师弟师妹的成果', `SAN-${sanCost}，总引用+${researchBonus}`);
+				addLog('长期合作', '指导师弟师妹的成果', `SAN-${sanCost}，总引用+${citationBonus}（师弟师妹×${juniorCount}）`);
 			}
 
 			// ★★★ 新增：自行车每月效果（-SAN类）★★★

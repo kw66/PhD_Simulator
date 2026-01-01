@@ -965,13 +965,18 @@
 			gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 			gameState.readCount++;
 
+			// ★★★ 修改：智能显示器累积计数 - 只有拥有智能显示器时才累计 ★★★
+			if (gameState.monitorUpgrade === 'smart') {
+				gameState.smartMonitorReadCount = (gameState.smartMonitorReadCount || 0) + 1;
+			}
+
 			// ★★★ 修改：每看论文10次，idea bonus效果+1（1-10次基础，11-20次+1）★★★
 			let ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
 
-			// ★★★ 新增：智能显示器加成 - 每10次看论文buff效果额外+1 ★★★
+			// ★★★ 修改：智能显示器加成 - 使用单独的计数器，只有拥有时才累计 ★★★
 			let smartMonitorBonus = 0;
 			if (gameState.monitorUpgrade === 'smart') {
-				smartMonitorBonus = Math.floor(gameState.readCount / 10);
+				smartMonitorBonus = Math.floor((gameState.smartMonitorReadCount || 0) / 10);
 				ideaBonus += smartMonitorBonus;
 			}
 			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次想idea分数+${ideaBonus}`, value: ideaBonus, permanent: false });
@@ -980,6 +985,12 @@
 			const currentTier = Math.floor((gameState.readCount - 1) / 10);
 			const nextMilestone = (currentTier + 1) * 10 + 1;
 			const nextBonus = ideaBonus + 1;
+
+			// ★★★ 新增：智能显示器专用里程碑计算 ★★★
+			const smartCount = gameState.smartMonitorReadCount || 0;
+			const smartCurrentTier = Math.floor(smartCount / 10);
+			const smartNextMilestone = (smartCurrentTier + 1) * 10;
+			const smartNextBonus = smartMonitorBonus + 1;
 
 			let result = `SAN值-${actualCost}`;
 			// ★★★ 修改：显示正确的显示器类型 ★★★
@@ -995,7 +1006,11 @@
 			if (gameState.isReversed && gameState.character === 'normal') {
 				result += `（怠惰×${gameState.reversedAwakened ? 3 : 2}）`;
 			}
-			result += `，获得临时buff：下次想idea分数+${ideaBonus}（${gameState.readCount}/${nextMilestone}次时+${nextBonus}）`;
+			// ★★★ 修改：智能显示器里程碑使用专用计数器 ★★★
+			const milestoneText = gameState.monitorUpgrade === 'smart'
+				? `（${smartCount}/${smartNextMilestone}次时+${smartNextBonus}）`
+				: '';
+			result += `，获得临时buff：下次想idea分数+${ideaBonus}${milestoneText}`;
 
 			// ★★★ 新增：显示行动次数 ★★★
 			if (gameState.actionLimit > 1) {

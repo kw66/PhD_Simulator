@@ -1461,14 +1461,17 @@
 			// 如果已经升级过，不能再升级
 			if (currentUpgrade) {
 				const upgrade = MONITOR_UPGRADES[currentUpgrade];
-				const readCount = gameState.readCount || 0;
-				const bonusLevel = Math.floor(readCount / 10);
+				// ★★★ 修改：智能显示器使用专用计数器 ★★★
+				const isSmartMonitor = currentUpgrade === 'smart';
+				const displayCount = isSmartMonitor ? (gameState.smartMonitorReadCount || 0) : (gameState.readCount || 0);
+				const bonusLevel = isSmartMonitor ? Math.floor(displayCount / 10) : 0;
+				const bonusText = isSmartMonitor ? `已累计：${displayCount}次 | 当前加成：+${bonusLevel}` : '';
 				showModal('🖥️ 显示器升级',
 					`<div style="text-align:center;">
 						<div style="font-size:3rem;margin-bottom:10px;">${upgrade.icon}</div>
 						<div style="font-weight:600;font-size:1.1rem;">${upgrade.name}</div>
 						<div style="font-size:0.9rem;color:var(--text-secondary);margin-top:8px;">效果：${upgrade.desc}</div>
-						<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">已看论文：${readCount}次 | 当前加成：+${bonusLevel}</div>
+						${bonusText ? `<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">${bonusText}</div>` : ''}
 						<div style="margin-top:15px;padding:12px;background:var(--light-bg);border-radius:8px;">
 							<p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
 								<i class="fas fa-info-circle"></i> 显示器已升级完成<br>
@@ -2097,6 +2100,7 @@
 								// ★★★ 重置升级状态，再次购买可重新选择升级方向 ★★★
 								gameState.monitorUpgrade = null;
 								// 注意：累计看论文次数（readCount）保留，不重置
+								// 注意：智能显示器专用计数（smartMonitorReadCount）保留，再次购买智能显示器时恢复累积效果
 								const monitorItem = shopItems.find(i => i.id === 'monitor');
 								if (monitorItem) monitorItem.bought = false;
 								break;
@@ -2359,9 +2363,14 @@
 					item.bought = true;
 					gameState.hasCoffeeMachine = true;
 					gameState.coffeeMachineUpgrade = null;  // 未升级
-					gameState.coffeeMachineCount = 0;  // 重置计数（但不清零累计）
-					gameState.coffeeMachineBonusLevel = 0;  // 加成等级
+					// ★★★ 修改：不清零累计，恢复之前的计数 ★★★
+					// coffeeMachineCount 保留之前的值，再次购买后继续累计
+					gameState.coffeeMachineBonusLevel = 0;  // 加成等级需要重新升级后才生效
 					result += '，获得咖啡机-可在商店第3页升级';
+					// 如果之前有累计，显示恢复信息
+					if ((gameState.coffeeMachineCount || 0) > 0) {
+						result += `（累计喝咖啡${gameState.coffeeMachineCount}杯已恢复）`;
+					}
 					// ★★★ 购买咖啡机后检查豪华工位成就 ★★★
 					if (gameState.furnitureBought &&
 						gameState.furnitureBought.chair &&

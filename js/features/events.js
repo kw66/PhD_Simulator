@@ -819,7 +819,7 @@
 
         function showRandomEvent8() {
 			// 预计算用于按钮显示
-			const gpuText = gameState.favor >= 12 ? '好感≥12：50%永久实验+3次' : (gameState.favor >= 6 ? '好感6-11：50%永久实验+2次' : '好感≤5：50%永久实验+1次');
+			const gpuText = gameState.favor >= 12 ? '好感≥12：50%永久实验+3分+3次' : (gameState.favor >= 6 ? '好感6-11：50%永久实验+2分+2次' : '好感≤5：50%永久实验+1分+1次');
 			const salaryText = gameState.favor >= 12 ? '好感≥12：金钱+6' : (gameState.favor >= 6 ? '好感6-11：金钱+4' : '好感<6：金钱+2');
 
             showModal('💰 随机事件', '<p>导师科研经费充足，你建议。</p>', [
@@ -832,16 +832,19 @@
                         let gpuCount, buffText;
                         if (gameState.favor <= 5) {
                             gpuCount = 1;
-                            buffText = '【好感<=5】分到了1张显卡，永久buff-每次做实验多做一次';
+                            buffText = '【好感<=5】分到了1张显卡，永久buff-每次做实验+1分+1次';
                         } else if (gameState.favor <= 11) {
                             gpuCount = 2;
-                            buffText = '【好感6-11】分到了2张显卡，永久buff-每次做实验多做两次';
+                            buffText = '【好感6-11】分到了2张显卡，永久buff-每次做实验+2分+2次';
                         } else {
                             gpuCount = 3;
-                            buffText = '【好感>=12】分到了3张显卡，永久buff-每次做实验多做三次';
+                            buffText = '【好感>=12】分到了3张显卡，永久buff-每次做实验+3分+3次';
                         }
                         for (let i = 0; i < gpuCount; i++) {
-                            gameState.buffs.permanent.push({ type: 'exp_times', name: '每次做实验多做一次', value: 1, permanent: true });
+                            gameState.buffs.permanent.push(
+                                { type: 'exp_bonus', name: '每次做实验分数+1', value: 1, permanent: true },
+                                { type: 'exp_times', name: '每次做实验多做一次', value: 1, permanent: true }
+                            );
                         }
                         addLog('随机事件', '导师科研经费充足 - 购买高性能GPU服务器', buffText);
                         updateBuffs();
@@ -1212,7 +1215,7 @@
 						showAddToNetworkModal(juniorPerson);
 					}, 300);
 				}},
-                { text: '展开长期合作（每月SAN-1，每月引用+科研÷3）', class: 'btn-success', action: () => {
+                { text: '展开长期合作（每月SAN-1，每月引用+师弟师妹数×3）', class: 'btn-success', action: () => {
 					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
 					if (!gameState.firstMentoringMonth) {
 						gameState.firstMentoringMonth = gameState.totalMonths;
@@ -1221,10 +1224,10 @@
                     gameState.buffs.permanent.push({
                         type: 'mentorship',
                         name: '指导师弟师妹',
-                        desc: `${sanDescText}，总引用+科研能力值`,
+                        desc: `${sanDescText}，每月引用+师弟师妹数×3`,
                         permanent: true
                     });
-                    addLog('随机事件', '指导师弟师妹 - 展开长期合作', `${sanDescText}，总引用+科研能力值`);
+                    addLog('随机事件', '指导师弟师妹 - 展开长期合作', `${sanDescText}，每月引用+师弟师妹数×3`);
                     closeModal();
                     updateBuffs();
 
