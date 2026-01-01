@@ -428,11 +428,19 @@
 				}
 			});
 
-			// 为新成就添加奖励
+			// 为新成就添加奖励（根据稀有度）
 			newAchievements.forEach(ach => {
 				gameState.earnedAchievementsThisGame.push(ach);
-				gameState.achievementCoins = (gameState.achievementCoins || 0) + 5;
-				addLog('🏆 成就达成', ach, '获得5成就币！');
+				// ★★★ 修改：根据全球统计稀有度计算奖励 ★★★
+				// 完成率 > 5%: 5成就币
+				// 完成率 2%-5%: 10成就币
+				// 完成率 0.4%-2%: 15成就币
+				// 完成率 < 0.4%: 20成就币
+				const reward = typeof getAchievementRarityReward === 'function'
+					? getAchievementRarityReward(ach)
+					: 5;
+				gameState.achievementCoins = (gameState.achievementCoins || 0) + reward;
+				addLog('🏆 成就达成', ach, `获得${reward}成就币！`);
 			});
 
 			return newAchievements;

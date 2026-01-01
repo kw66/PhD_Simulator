@@ -150,6 +150,17 @@
                 pendingConferenceInfo: null,      // 待开会议信息
 				achievementCoins: 0,  // 成就币
 				earnedAchievementsThisGame: [],  // 本局游戏中获得的成就
+				// ★★★ 新增：成就点数商店状态 ★★★
+				achievementPointShop: {
+					purchaseCount: 0,              // 已购买次数（用于计算下次购买成本）
+					accumulated: {                 // 累积的小数部分（满1提现）
+						san: 0,
+						research: 0,
+						social: 0,
+						favor: 0,
+						gold: 0
+					}
+				},
 				// ★★★ 新增：预购订阅状态 ★★★
 				subscriptions: {
 					coffee: false,      // 冰美式订阅

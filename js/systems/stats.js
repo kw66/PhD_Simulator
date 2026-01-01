@@ -1352,6 +1352,65 @@
 			}
 		}
 
+		// ★★★ 新增：根据成就稀有度计算奖励成就币 ★★★
+		// 完成率 > 5%: 5成就币
+		// 完成率 2%-5%: 10成就币
+		// 完成率 0.4%-2%: 15成就币
+		// 完成率 < 0.4%: 20成就币
+		function getAchievementRarityReward(achievementName) {
+			// 默认奖励（无数据时）
+			const defaultReward = 5;
+
+			// 尝试从缓存获取统计数据
+			if (!statsCache) {
+				console.log('统计缓存不可用，使用默认奖励');
+				return defaultReward;
+			}
+
+			// 合并正位和逆位的成就统计
+			let totalCount = 0;
+			let achievementCount = 0;
+
+			['normal', 'reversed'].forEach(mode => {
+				if (statsCache[mode]) {
+					// 使用成就计数
+					const count = statsCache[mode].achievements[achievementName] || 0;
+					achievementCount += count;
+				}
+			});
+
+			// 使用全局UV作为分母（与显示统计一致）
+			const denominator = globalUVCount > 0 ? globalUVCount : 1;
+
+			// 计算完成率
+			const percent = (achievementCount / denominator) * 100;
+
+			// 根据完成率返回奖励
+			if (percent > 5) {
+				return 5;   // 常见成就
+			} else if (percent > 2) {
+				return 10;  // 较少成就
+			} else if (percent > 0.4) {
+				return 15;  // 稀有成就
+			} else {
+				return 20;  // 极稀有成就
+			}
+		}
+
+		// ★★★ 新增：批量获取多个成就的稀有度奖励 ★★★
+		function getAchievementsRarityRewards(achievementNames) {
+			const rewards = {};
+			let totalReward = 0;
+
+			achievementNames.forEach(name => {
+				const reward = getAchievementRarityReward(name);
+				rewards[name] = reward;
+				totalReward += reward;
+			});
+
+			return { rewards, totalReward };
+		}
+
 		// ==================== 全局函数暴露（供onclick和其他模块调用）====================
 		window.initStats = initStats;
 		window.recordVisit = recordVisit;
@@ -1375,3 +1434,5 @@
 		window.renderDifficultyStars = renderDifficultyStars;
 		window.getDifficultyBadge = getDifficultyBadge;
 		window.calculateCharacterDifficulty = calculateCharacterDifficulty;  // ★★★ 新增：暴露难度计算函数 ★★★
+		window.getAchievementRarityReward = getAchievementRarityReward;      // ★★★ 新增：成就稀有度奖励 ★★★
+		window.getAchievementsRarityRewards = getAchievementsRarityRewards;  // ★★★ 新增：批量获取稀有度奖励 ★★★

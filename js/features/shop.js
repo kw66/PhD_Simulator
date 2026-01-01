@@ -1084,14 +1084,16 @@
 
 			let html = '<div>';
 
-			// ★★★ 第三页：出售和升级 ★★★
+			// ★★★ 第三页：出售和升级，第四页：成就商店 ★★★
 			if (page === 3) {
 				html += renderSellAndUpgradePage();
+			} else if (page === 4) {
+				html += renderAchievementPointShopPage();
 			} else {
 				// 原有购买区域
 				html += `<div style="font-weight:600;margin-bottom:8px;">
 					<i class="fas fa-shopping-cart"></i> 购买物品
-					<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第${shopCurrentPage}页/共3页)</span>
+					<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第${shopCurrentPage}页/共4页)</span>
 				</div>`;
 
 				// ★★★ 分页按钮 ★★★
@@ -1104,6 +1106,9 @@
 					</button>
 					<button class="btn ${shopCurrentPage === 3 ? 'btn-primary' : 'btn-secondary'}" onclick="openShop(3)" style="flex:1;padding:6px;">
 						出售/升级
+					</button>
+					<button class="btn ${shopCurrentPage === 4 ? 'btn-warning' : 'btn-secondary'}" onclick="openShop(4)" style="flex:1;padding:6px;">
+						🏆成就
 					</button>
 				</div>`;
 
@@ -1260,7 +1265,7 @@
 
 			html += `<div style="font-weight:600;margin-bottom:8px;">
 				<i class="fas fa-store"></i> 出售和升级
-				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第3页/共3页)</span>
+				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第3页/共4页)</span>
 			</div>`;
 
 			// ★★★ 分页按钮 ★★★
@@ -1273,6 +1278,9 @@
 				</button>
 				<button class="btn btn-primary" onclick="openShop(3)" style="flex:1;padding:6px;">
 					出售/升级
+				</button>
+				<button class="btn btn-secondary" onclick="openShop(4)" style="flex:1;padding:6px;">
+					🏆成就
 				</button>
 			</div>`;
 
@@ -2553,6 +2561,249 @@
             });
         }
 
+		// ==================== 成就点数商店 ====================
+		// ★★★ 成就点数商店页面渲染 ★★★
+		function renderAchievementPointShopPage() {
+			let html = '';
+
+			html += `<div style="font-weight:600;margin-bottom:8px;">
+				<i class="fas fa-trophy"></i> 成就点数商店
+				<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:10px;">(第4页/共4页)</span>
+			</div>`;
+
+			// ★★★ 分页按钮 ★★★
+			html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
+				<button class="btn btn-secondary" onclick="openShop(1)" style="flex:1;padding:6px;">
+					消耗品
+				</button>
+				<button class="btn btn-secondary" onclick="openShop(2)" style="flex:1;padding:6px;">
+					永久物品
+				</button>
+				<button class="btn btn-secondary" onclick="openShop(3)" style="flex:1;padding:6px;">
+					出售/升级
+				</button>
+				<button class="btn btn-warning" onclick="openShop(4)" style="flex:1;padding:6px;">
+					🏆成就
+				</button>
+			</div>`;
+
+			// 初始化商店状态
+			if (!gameState.achievementPointShop) {
+				gameState.achievementPointShop = {
+					purchaseCount: 0,
+					accumulated: { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+				};
+			}
+			const shop = gameState.achievementPointShop;
+			const achievementCoins = gameState.achievementCoins || 0;
+
+			// 计算下次购买成本：n² + n + 2，n为已购买次数（从0开始）
+			// 序列：2, 4, 8, 14, 22, 32, 44...（涨价幅度为等差数列2,4,6,8...）
+			const n = shop.purchaseCount;
+			const nextCost = n * n + n + 2;
+
+			// 年份倍率：第1-5年为1-5倍，第6年（延毕）也是5倍
+			const yearMultiplier = Math.min(gameState.year || 1, 5);
+
+			// 成就币和购买信息
+			html += `
+				<div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg,rgba(243,156,18,0.15),rgba(230,126,34,0.15));border-radius:10px;border:1px solid rgba(243,156,18,0.4);">
+					<div style="display:flex;justify-content:space-between;align-items:center;">
+						<div>
+							<span style="font-size:1.2rem;">🏆</span>
+							<span style="font-weight:600;color:var(--warning-color);">成就币</span>
+						</div>
+						<div style="font-size:1.3rem;font-weight:700;color:var(--warning-color);">${achievementCoins}</div>
+					</div>
+					<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:8px;display:flex;justify-content:space-between;">
+						<span>📊 已购买 ${shop.purchaseCount} 次</span>
+						<span>💰 下次消耗 ${nextCost} 成就币</span>
+					</div>
+					<div style="font-size:0.8rem;color:var(--success-color);margin-top:4px;">
+						⚡ 当前倍率：×${yearMultiplier}（第${gameState.year}年）
+					</div>
+				</div>
+			`;
+
+			// 属性选项定义
+			const options = [
+				{ type: 'san', name: 'SAN值', icon: '🧠', base: 1, color: 'var(--primary-color)' },
+				{ type: 'research', name: '科研能力', icon: '🔬', base: 0.2, color: 'var(--info-color)' },
+				{ type: 'social', name: '社交能力', icon: '👥', base: 0.2, color: 'var(--accent-color)' },
+				{ type: 'favor', name: '导师好感', icon: '❤️', base: 0.25, color: 'var(--danger-color)' },
+				{ type: 'gold', name: '金币', icon: '💰', base: 0.5, color: 'var(--warning-color)' }
+			];
+
+			const canAfford = achievementCoins >= nextCost;
+
+			html += `<div style="margin-bottom:10px;">`;
+
+			options.forEach(opt => {
+				const actualGain = opt.base * yearMultiplier;
+				const accumulated = shop.accumulated[opt.type] || 0;
+				const totalAfterPurchase = accumulated + actualGain;
+				const integerPart = Math.floor(totalAfterPurchase);
+				const decimalPart = totalAfterPurchase - integerPart;
+
+				// 显示获得量说明
+				let gainText = '';
+				if (opt.type === 'san') {
+					gainText = `+${actualGain}`;
+				} else {
+					gainText = `+${actualGain.toFixed(2)}`;
+					if (accumulated > 0) {
+						gainText += ` (累计${accumulated.toFixed(2)}→${totalAfterPurchase.toFixed(2)})`;
+					}
+					if (integerPart > 0) {
+						gainText += ` 🎉实得+${integerPart}`;
+					}
+				}
+
+				html += `
+					<div class="shop-item ${!canAfford ? 'disabled' : ''}" style="margin-bottom:8px;">
+						<div class="shop-item-info">
+							<div class="shop-item-name">
+								<span style="font-size:1.2rem;margin-right:6px;">${opt.icon}</span>
+								${opt.name}
+							</div>
+							<div class="shop-item-desc" style="color:${opt.color};">
+								基础 +${opt.base}${opt.type !== 'san' ? ' (×' + yearMultiplier + '倍率)' : ''} = ${gainText}
+							</div>
+						</div>
+						<div class="shop-item-action">
+							<span class="shop-item-price" style="color:var(--warning-color);">🏆${nextCost}</span>
+							<button class="btn btn-warning" onclick="purchaseAchievementPointShopItem('${opt.type}')" ${!canAfford ? 'disabled' : ''}>
+								${canAfford ? '购买' : '成就币不足'}
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			html += `</div>`;
+
+			// 累积进度显示
+			html += `
+				<div style="padding:10px;background:var(--light-bg);border-radius:8px;font-size:0.75rem;color:var(--text-secondary);">
+					<div style="font-weight:600;margin-bottom:5px;">📈 累积进度（满1实得）</div>
+					<div style="display:flex;flex-wrap:wrap;gap:8px;">
+						<span>🔬 科研: ${(shop.accumulated.research || 0).toFixed(2)}</span>
+						<span>👥 社交: ${(shop.accumulated.social || 0).toFixed(2)}</span>
+						<span>❤️ 好感: ${(shop.accumulated.favor || 0).toFixed(2)}</span>
+						<span>💰 金币: ${(shop.accumulated.gold || 0).toFixed(2)}</span>
+					</div>
+				</div>
+			`;
+
+			// 机制说明
+			html += `
+				<div style="margin-top:10px;padding:10px;background:rgba(52,152,219,0.1);border-radius:8px;font-size:0.75rem;color:var(--text-secondary);">
+					<div style="font-weight:600;margin-bottom:5px;">💡 机制说明</div>
+					<div>• 每次购买成本递增：2→4→8→14→22→32→44→...</div>
+					<div>• 年份倍率：第N年=×N倍（最高×5）</div>
+					<div>• 小数部分累积，满1时自动获得整数部分</div>
+				</div>
+			`;
+
+			return html;
+		}
+
+		// ★★★ 成就点数商店购买函数 ★★★
+		function purchaseAchievementPointShopItem(type) {
+			// 初始化商店状态
+			if (!gameState.achievementPointShop) {
+				gameState.achievementPointShop = {
+					purchaseCount: 0,
+					accumulated: { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+				};
+			}
+			const shop = gameState.achievementPointShop;
+			const achievementCoins = gameState.achievementCoins || 0;
+
+			// 计算购买成本：n² + n + 2，n为已购买次数
+			const n = shop.purchaseCount;
+			const cost = n * n + n + 2;
+
+			if (achievementCoins < cost) {
+				showModal('❌ 购买失败', `<p>成就币不足！需要${cost}成就币，当前只有${achievementCoins}成就币。</p>`,
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			// 扣除成就币
+			gameState.achievementCoins -= cost;
+
+			// 年份倍率
+			const yearMultiplier = Math.min(gameState.year || 1, 5);
+
+			// 属性基础值
+			const baseValues = {
+				san: 1,
+				research: 0.2,
+				social: 0.2,
+				favor: 0.25,
+				gold: 0.5
+			};
+
+			const baseValue = baseValues[type];
+			const actualGain = baseValue * yearMultiplier;
+
+			let resultText = '';
+			let integerGain = 0;
+
+			if (type === 'san') {
+				// SAN值直接加整数
+				integerGain = actualGain;
+				gameState.san = Math.min(gameState.sanMax, gameState.san + integerGain);
+				resultText = `SAN+${integerGain}`;
+			} else {
+				// 其他属性需要累积
+				shop.accumulated[type] = (shop.accumulated[type] || 0) + actualGain;
+				const total = shop.accumulated[type];
+				integerGain = Math.floor(total);
+
+				if (integerGain > 0) {
+					// 有整数部分，实际获得
+					shop.accumulated[type] = total - integerGain;
+
+					switch (type) {
+						case 'research':
+							gameState.research = Math.min(gameState.researchMax || 20, gameState.research + integerGain);
+							checkResearchUnlock();
+							resultText = `科研+${integerGain}（累积剩余${shop.accumulated[type].toFixed(2)}）`;
+							break;
+						case 'social':
+							gameState.social = Math.min(gameState.socialMax || 20, gameState.social + integerGain);
+							checkSocialUnlock();
+							resultText = `社交+${integerGain}（累积剩余${shop.accumulated[type].toFixed(2)}）`;
+							break;
+						case 'favor':
+							gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + integerGain);
+							resultText = `好感+${integerGain}（累积剩余${shop.accumulated[type].toFixed(2)}）`;
+							break;
+						case 'gold':
+							gameState.gold += integerGain;
+							clampGold();
+							resultText = `金币+${integerGain}（累积剩余${shop.accumulated[type].toFixed(2)}）`;
+							break;
+					}
+				} else {
+					// 只累积，还没有整数部分
+					const typeNames = { research: '科研', social: '社交', favor: '好感', gold: '金币' };
+					resultText = `${typeNames[type]}累积+${actualGain.toFixed(2)}（当前${shop.accumulated[type].toFixed(2)}）`;
+				}
+			}
+
+			// 增加购买次数
+			shop.purchaseCount++;
+
+			addLog('成就商店', `购买了属性提升`, `成就币-${cost}，${resultText}`);
+
+			closeModal();
+			openShop(4);
+			updateAllUI();
+		}
+
 		// ==================== 全局函数暴露（供onclick调用）====================
 		window.openShop = openShop;
 		window.buyItem = buyItem;
@@ -2575,3 +2826,5 @@
 		window.showCurrentAchievements = showCurrentAchievements;
 		window.showAllAchievements = showAllAchievements;
 		window.showAchievementDetail = showAchievementDetail;
+		window.renderAchievementPointShopPage = renderAchievementPointShopPage;
+		window.purchaseAchievementPointShopItem = purchaseAchievementPointShopItem;
