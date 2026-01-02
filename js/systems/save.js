@@ -434,7 +434,12 @@
 				internshipAPaperCount: gameState.internshipAPaperCount || 0,
 				goldMax: gameState.goldMax,
 				slothAwakened: gameState.slothAwakened || false,
-				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0
+				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0,
+				// ★★★ 修复：保存成就点数商店状态 ★★★
+				achievementPointShop: gameState.achievementPointShop ? {
+					purchaseCount: gameState.achievementPointShop.purchaseCount || 0,
+					accumulated: gameState.achievementPointShop.accumulated ? {...gameState.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+				} : null
             };
             
             saves[slot] = saveData;
@@ -751,6 +756,13 @@
 						gameState.goldMax = save.goldMax;
 						gameState.slothAwakened = save.slothAwakened || false;
 						gameState.beautifulLoverExtraRecoveryRate = save.beautifulLoverExtraRecoveryRate || 0;
+						// ★★★ 修复：恢复成就点数商店状态 ★★★
+						if (save.achievementPointShop) {
+							gameState.achievementPointShop = {
+								purchaseCount: save.achievementPointShop.purchaseCount || 0,
+								accumulated: save.achievementPointShop.accumulated ? {...save.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+							};
+						}
 
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
@@ -1095,7 +1107,12 @@
 				internshipAPaperCount: gameState.internshipAPaperCount || 0,
 				goldMax: gameState.goldMax,
 				slothAwakened: gameState.slothAwakened || false,
-				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0
+				beautifulLoverExtraRecoveryRate: gameState.beautifulLoverExtraRecoveryRate || 0,
+				// ★★★ 修复：保存成就点数商店状态到自动存档 ★★★
+				achievementPointShop: gameState.achievementPointShop ? {
+					purchaseCount: gameState.achievementPointShop.purchaseCount || 0,
+					accumulated: gameState.achievementPointShop.accumulated ? {...gameState.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+				} : null
 			};
 		}
 
@@ -1516,6 +1533,13 @@
 			gameState.goldMax = save.goldMax;
 			gameState.slothAwakened = save.slothAwakened || false;
 			gameState.beautifulLoverExtraRecoveryRate = save.beautifulLoverExtraRecoveryRate || 0;
+			// ★★★ 修复：恢复成就点数商店状态（自动存档）★★★
+			if (save.achievementPointShop) {
+				gameState.achievementPointShop = {
+					purchaseCount: save.achievementPointShop.purchaseCount || 0,
+					accumulated: save.achievementPointShop.accumulated ? {...save.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
+				};
+			}
 
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';
