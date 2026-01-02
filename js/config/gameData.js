@@ -743,8 +743,8 @@
 			finance: {
 				name: '财经大学',
 				icon: '💹',
-				bonus: { gold: 1 },
-				desc: '金钱+1'
+				bonus: { gold: 2 },
+				desc: '金钱+2'
 			}
 		};
 

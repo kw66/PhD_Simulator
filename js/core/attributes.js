@@ -334,7 +334,16 @@
                     const multiplier = gameState.reversedAwakened ? 3 : 2;
                     sanDelta = sanDelta * multiplier;
                 }
-                
+
+                // ★★★ 修复：应用季节buff（对扣SAN操作生效）★★★
+                if (sanDelta < 0) {
+                    const seasonMod = getSeasonSanModifier();
+                    if (seasonMod !== 0) {
+                        sanDelta = sanDelta + seasonMod;  // 春季-1（减少扣除），夏季+1（增加扣除）
+                        if (sanDelta > 0) sanDelta = 0;   // 最低扣0
+                    }
+                }
+
                 if (sanDelta > 0) {
                     gameState.san = Math.min(gameState.sanMax, gameState.san + sanDelta);
                 } else {

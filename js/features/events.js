@@ -1369,6 +1369,7 @@
 						name: '学术不端',
 						desc: '所有论文引用速度÷2',
 						value: 0.5,
+						multiply: true,
 						permanent: true
 					});
 					addLog('随机事件', '数据丢失 - 胡编乱造', '伪造数据，永久debuff-所有论文引用速度÷2');

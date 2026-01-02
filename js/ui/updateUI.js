@@ -809,7 +809,8 @@
 					'lover_extra_write': '写论文',
 					'read_san_reduce': '看论文SAN',
 					'write_san_reduce': '写论文SAN',
-					'citation_multiply': '中稿引用'
+					'citation_multiply': '中稿引用',
+					'citation_halved': '引用速度'
 				};
 
 				const typeName = typeNames[buff.type] || buff.type;
