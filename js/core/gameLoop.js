@@ -1986,8 +1986,12 @@
 					effectName = '🔥 我命由我不由天';
 					effectDesc = '平凡之人爆发出惊人潜力，全面突破自我极限！';
 					const oldR = gameState.research, oldS = gameState.social, oldF = gameState.favor, oldG = gameState.gold;
-					gameState.research = Math.min(20, gameState.research * 2);
-					gameState.social = Math.min(20, gameState.social * 2);
+
+					// ★★★ 标记大多数觉醒，用于后续溢出转上限效果 ★★★
+					gameState.normalAwakened = true;
+
+					gameState.research = Math.min(gameState.researchMax || 20, gameState.research * 2);
+					gameState.social = Math.min(gameState.socialMax || 20, gameState.social * 2);
 					gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor * 2);
 					bonusDetails.push(`科研能力 ${oldR} → ${gameState.research} (×2)`);
 					bonusDetails.push(`社交能力 ${oldS} → ${gameState.social} (×2)`);

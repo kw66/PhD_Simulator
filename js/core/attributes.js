@@ -189,7 +189,15 @@
 			
 			// 非导师子女的原有逻辑
 			if (delta > 0) {
-				gameState.favor = Math.min(favorMax, gameState.favor + delta);
+				const newValue = gameState.favor + delta;
+
+				// ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+				if (gameState.normalAwakened && newValue > favorMax) {
+					gameState.favorMax = favorMax + 1;
+					gameState.favor = Math.min(gameState.favorMax, newValue);
+				} else {
+					gameState.favor = Math.min(favorMax, newValue);
+				}
 			} else {
 				gameState.favor += delta;
 			}
@@ -247,7 +255,15 @@
 			if (delta > 0) {
 				// ★★★ 修改：使用动态上限 ★★★
 				const maxResearch = gameState.researchMax || 20;
-				gameState.research = Math.min(maxResearch, gameState.research + delta);
+				const newValue = gameState.research + delta;
+
+				// ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+				if (gameState.normalAwakened && newValue > maxResearch) {
+					gameState.researchMax = maxResearch + 1;
+					gameState.research = Math.min(gameState.researchMax, newValue);
+				} else {
+					gameState.research = Math.min(maxResearch, newValue);
+				}
 				checkResearchUnlock();
 			} else {
 				gameState.research = Math.max(0, gameState.research + delta);
@@ -261,7 +277,15 @@
 			const socialMax = gameState.socialMax || 20;
 
 			if (delta > 0) {
-				gameState.social = Math.min(socialMax, gameState.social + delta);
+				const newValue = gameState.social + delta;
+
+				// ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+				if (gameState.normalAwakened && newValue > socialMax) {
+					gameState.socialMax = socialMax + 1;
+					gameState.social = Math.min(gameState.socialMax, newValue);
+				} else {
+					gameState.social = Math.min(socialMax, newValue);
+				}
 				// ★★★ 新增：社交能力提升时检查解锁 ★★★
 				checkSocialUnlock();
 			} else {
@@ -404,7 +428,15 @@
 				} else {
 					// 非导师子女的原有逻辑
 					if (changes.favor > 0) {
-						gameState.favor = Math.min(favorMax, gameState.favor + changes.favor);
+						const newValue = gameState.favor + changes.favor;
+
+						// ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+						if (gameState.normalAwakened && newValue > favorMax) {
+							gameState.favorMax = favorMax + 1;
+							gameState.favor = Math.min(gameState.favorMax, newValue);
+						} else {
+							gameState.favor = Math.min(favorMax, newValue);
+						}
 					} else {
 						gameState.favor += changes.favor;
 					}
@@ -434,7 +466,16 @@
 					gameState.research = 0;
 				} else {
                     if (changes.research > 0) {
-                        gameState.research = Math.min(20, gameState.research + changes.research);
+                        const maxResearch = gameState.researchMax || 20;
+                        const newValue = gameState.research + changes.research;
+
+                        // ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+                        if (gameState.normalAwakened && newValue > maxResearch) {
+                            gameState.researchMax = maxResearch + 1;
+                            gameState.research = Math.min(gameState.researchMax, newValue);
+                        } else {
+                            gameState.research = Math.min(maxResearch, newValue);
+                        }
                         checkResearchUnlock();
                     } else {
                         gameState.research = Math.max(0, gameState.research + changes.research);
@@ -446,7 +487,15 @@
 				const oldSocial = gameState.social;
 				const socialMax = gameState.socialMax || 20;  // ★★★ 新增 ★★★
 				if (changes.social > 0) {
-					gameState.social = Math.min(socialMax, gameState.social + changes.social);  // ★★★ 修改 ★★★
+					const newValue = gameState.social + changes.social;
+
+					// ★★★ 大多数觉醒效果：溢出时上限+1 ★★★
+					if (gameState.normalAwakened && newValue > socialMax) {
+						gameState.socialMax = socialMax + 1;
+						gameState.social = Math.min(gameState.socialMax, newValue);
+					} else {
+						gameState.social = Math.min(socialMax, newValue);
+					}
 					// ★★★ 新增：社交能力提升时检查解锁 ★★★
 					checkSocialUnlock();
 				} else {

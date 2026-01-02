@@ -8,7 +8,7 @@
 			desc: '芸芸众生中的普通一员',
 			bonus: '无特殊能力',
 			awakenName: '我命由我不由天',
-			awakenDesc: '转博时所有属性×2',
+			awakenDesc: '转博时所有属性×2，之后属性溢出时上限+1',
 			// 隐藏觉醒
 			hiddenAwakenName: '勤能补拙',
 			hiddenAwakenIcon: '💪',
