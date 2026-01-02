@@ -706,9 +706,9 @@
 				'write_block': '✏️ 无从下笔：下次写论文总分÷2',
 				'slack_debuff': '😴 松懈：下月所有操作总分÷2',
 				'idea_stolen': '😈 被偷idea：下次想idea总分÷2',
-				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+4',
-				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+4',
-				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+4'
+				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+5',
+				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+5',
+				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+5'
 			};
 			
 			const mergedMap = {};

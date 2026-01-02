@@ -1263,7 +1263,7 @@
 				if (skillUsed) {
 					result += `（${skillSource}生效！）`;
 				}
-				if (hasGeminiSub) result += '（Gemini: 每次+4）';
+				if (hasGeminiSub) result += '（Gemini: 每次+5）';
 				if (hasExhaustion) result += '（首次灵感枯竭÷2）';
 				if (hasStolen) result += '（首次被偷idea÷2）';
 				if (hasSlack) result += '（首次松懈÷2）';
@@ -1448,7 +1448,7 @@
 				if (skillUsed) {
 					result += `（${skillSource}生效！）`;
 				}
-				if (hasGptSub) result += '（GPT: 每次+4）';
+				if (hasGptSub) result += '（GPT: 每次+5）';
 				if (hasOverheat) result += '（首次主机发烫÷2）';
 				if (hasSlack) result += '（首次松懈÷2）';
 				if (times > 1) result += `（做${times}次）`;
@@ -1636,7 +1636,7 @@
 				if (hasKeyboard) {
 					result += '（机械键盘生效）';
 				}
-				if (hasClaudeSub) result += '（Claude: 每次+4）';
+				if (hasClaudeSub) result += '（Claude: 每次+5）';
 				if (hasWritersBlock) result += '（首次无从下笔÷2）';
 				if (hasSlack) result += '（首次松懈÷2）';
 				if (times > 1) result += `（写${times}次）`;

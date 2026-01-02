@@ -1,6 +1,9 @@
 ﻿		// ==================== 黑市系统 ====================
+		// ★★★ 注意：这是"黑市"系统，用成就币购买各种特殊道具 ★★★
+		// ★★★ 这不是"成就商店"！成就商店在本文件下方的 renderAchievementPointShopPage 和 purchaseAchievementPointShopItem 函数 ★★★
+		// ★★★ 成就商店只有5种基础属性购买选项（SAN/科研/社交/好感/金币），没有任何道具 ★★★
 
-		// 黑市商品定义
+		// 黑市商品定义（通过 openBlackMarket 函数访问）
 		const blackMarketItems = [
 			{
 				id: 'research_note_1',
@@ -2578,6 +2581,9 @@
         }
 
 		// ==================== 成就点数商店 ====================
+		// ★★★ 这才是真正的"成就商店"！只有5种基础属性购买选项 ★★★
+		// ★★★ 不要与上方的 blackMarketItems（黑市系统）混淆 ★★★
+		// ★★★ 成就商店购买选项：SAN值(+1)、科研能力(+0.2)、社交能力(+0.2)、导师好感(+0.25)、金币(+0.5) ★★★
 		// ★★★ 成就点数商店页面渲染 ★★★
 		function renderAchievementPointShopPage() {
 			let html = '';
@@ -2683,7 +2689,7 @@
 								${opt.name}
 							</div>
 							<div class="shop-item-desc" style="color:${opt.color};">
-								基础 +${opt.base}${opt.type !== 'san' ? ' (×' + yearMultiplier + '倍率)' : ''} = ${gainText}
+								基础 +${opt.base} (×${yearMultiplier}倍率) = ${gainText}
 							</div>
 						</div>
 						<div class="shop-item-action">

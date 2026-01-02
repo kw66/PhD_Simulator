@@ -26,7 +26,7 @@
 					<strong>🧠 SAN值（精神状态）</strong>
 					<div style="font-size:0.8rem;color:var(--text-secondary);">
 						• 初始值：20/20<br>
-						• 每月自然恢复：+1（逆位大多数+3/+4）<br>
+						• 每月自然恢复：+1（逆位大多数+3，觉醒后+已损SAN的10%）<br>
 						• <span style="color:var(--danger-color);">降为负数触发"不堪重负"结局</span><br>
 						• 设计思路：模拟研究生的精神压力，需要平衡科研强度和休息
 					</div>
@@ -58,7 +58,7 @@
 					<strong>❤️ 导师好感度</strong>
 					<div style="font-size:0.8rem;color:var(--text-secondary);">
 						• 初始值：1，上限：20<br>
-						• 达到<strong>6级</strong>：开会报销只扣1好感、导师更容易被说服<br>
+						• 达到<strong>6级</strong>：国内开会导师报销免费、导师更容易被说服<br>
 						• 达到<strong>12级</strong>：获得更多资源支持<br>
 						• <span style="color:var(--danger-color);">降为负数触发"逐出师门"结局</span><br>
 						• 设计思路：模拟导学关系，影响资源获取和事件结果
@@ -85,8 +85,8 @@
 						<th style="padding:6px;text-align:center;border-bottom:1px solid var(--border-color);">消耗</th>
 						<th style="padding:6px;text-align:left;border-bottom:1px solid var(--border-color);">效果</th>
 					</tr>
-					<tr><td style="padding:6px;">📖 看论文</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">下次想idea+1分，每5次科研+1</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">💼 打工</td><td style="padding:6px;text-align:center;">SAN-5</td><td style="padding:6px;">金钱+2</td></tr>
+					<tr><td style="padding:6px;">📖 看论文</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">下次想idea+1分，每10次科研+1</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">💼 打工</td><td style="padding:6px;text-align:center;">SAN-5起</td><td style="padding:6px;">金钱+2起，每8次升1档（SAN消耗+1，收益+1）</td></tr>
 					<tr><td style="padding:6px;">💡 想idea</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">增加论文idea分数</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">🔬 做实验</td><td style="padding:6px;text-align:center;">SAN-3</td><td style="padding:6px;">增加论文实验分数</td></tr>
 					<tr><td style="padding:6px;">✍️ 写论文</td><td style="padding:6px;text-align:center;">SAN-4</td><td style="padding:6px;">增加论文写作分数</td></tr>
@@ -151,7 +151,7 @@
 			<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:12px;">
 				<h4 style="color:var(--danger-color);margin:0 0 8px 0;">⏳ 分数衰减机制</h4>
 				<div style="background:var(--card-bg);border-radius:8px;padding:10px;font-family:monospace;font-size:0.85rem;">
-					每月衰减：idea分数-1，实验分数-1（写作不衰减）<br>
+					每月衰减：idea和实验分数各衰减当前值的10%（最少1，写作不衰减）<br>
 					最低衰减至：1
 				</div>
 				<div style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);">
@@ -331,19 +331,23 @@
 				<h4 style="color:var(--primary-color);margin:0 0 8px 0;">📐 核心公式</h4>
 				<div style="background:var(--card-bg);border-radius:8px;padding:12px;font-family:monospace;font-size:0.85rem;">
 					<div style="color:var(--success-color);margin-bottom:8px;">// 每月引用增长计算</div>
-					
-					<strong>① 基础增速</strong><br>
-					baseScore = max(0, 论文分数 - 2 × 发表月数)<br>
-					baseGrowth = baseScore × 0.1<br><br>
-					
-					<strong>② 会议影响因子</strong><br>
+
+					<strong>① 有效分数衰减</strong><br>
+					effectiveScore 初始值 = 中稿时论文分数<br>
+					每月衰减 = ceil(effectiveScore × 5%)<br>
+					effectiveScore = max(0, effectiveScore - 衰减)<br><br>
+
+					<strong>② 基础增速</strong><br>
+					baseGrowth = effectiveScore × 0.1<br><br>
+
+					<strong>③ 会议影响因子</strong><br>
 					impactFactor = (该会议中稿均分/平均中稿均分) × (该会议投稿数/平均投稿数)<br>
 					<span style="color:var(--text-secondary);">// 范围限制在 0.2 ~ 4.0</span><br><br>
-					
-					<strong>③ 推广倍率（加法叠加）</strong><br>
+
+					<strong>④ 推广倍率（加法叠加）</strong><br>
 					promotionMultiplier = 1 + 各项加成之和<br><br>
-					
-					<strong>④ 最终增速</strong><br>
+
+					<strong>⑤ 最终增速</strong><br>
 					finalGrowth = baseGrowth × impactFactor × promotionMultiplier
 				</div>
 			</div>
@@ -386,18 +390,19 @@
 			</div>
 			
 			<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:12px;">
-				<h4 style="color:var(--info-color);margin:0 0 8px 0;">📉 分数衰减对引用的影响</h4>
+				<h4 style="color:var(--info-color);margin:0 0 8px 0;">📉 有效分数衰减机制</h4>
 				<div style="font-size:0.8rem;color:var(--text-secondary);">
-					<p>公式中 <code>baseScore = max(0, 论文分数 - 2 × 发表月数)</code> 表示：</p>
+					<p>有效分数按5%比例递减，而非固定值：</p>
 					<ul style="margin:5px 0;padding-left:20px;">
-						<li>论文发表后，基础分每月减少2点</li>
-						<li>当基础分降到0时，引用增长停止</li>
-						<li>高分论文的引用增长持续时间更长</li>
+						<li>每月衰减 = ceil(当前有效分 × 5%)</li>
+						<li>高分论文前期衰减快，后期变慢</li>
+						<li>当有效分降到0时，引用增长停止</li>
 					</ul>
 					<div style="margin-top:8px;padding:8px;background:var(--card-bg);border-radius:6px;">
 						<strong>例：论文分数60</strong><br>
-						可持续增长月数 = 60 ÷ 2 = 30个月<br>
-						前10个月基础增速 = (60-20) × 0.1 = 4引用/月
+						第1月衰减 = ceil(60×5%) = 3，剩余57<br>
+						第5月衰减 = ceil(49×5%) = 3，剩余46<br>
+						约45个月后有效分归0
 					</div>
 				</div>
 			</div>
@@ -407,12 +412,13 @@
 				<div style="background:var(--card-bg);border-radius:8px;padding:10px;font-size:0.8rem;">
 					<strong>假设：A类Oral论文，分数80，会议影响因子1.2</strong><br>
 					推广：arxiv + GitHub开源<br><br>
-					
+
 					第1个月计算：<br>
-					• baseScore = 80 - 2×1 = 78<br>
-					• baseGrowth = 78 × 0.1 = 7.8<br>
+					• 衰减 = ceil(80 × 5%) = 4<br>
+					• 有效分 = 80 - 4 = 76<br>
+					• baseGrowth = 76 × 0.1 = 7.6<br>
 					• promotionMultiplier = 1 + 0.5(Oral) + 0.25(arxiv) + 0.5(GitHub) = 2.25<br>
-					• finalGrowth = 7.8 × 1.2 × 2.25 = <strong style="color:var(--success-color);">21.06</strong> 引用
+					• finalGrowth = 7.6 × 1.2 × 2.25 = <strong style="color:var(--success-color);">20.52</strong> 引用
 				</div>
 			</div>
 			
@@ -445,10 +451,10 @@
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">2月</td><td style="padding:6px;text-align:center;">10月</td><td style="padding:6px;">🎁 教师节</td></tr>
 					<tr><td style="padding:6px;text-align:center;">3月（第3年）</td><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;">💬 留言板</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">3月（第4年）</td><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;">👨‍🏫 指派师弟师妹 👥</td></tr>
-					<tr><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;text-align:center;">1月</td><td style="padding:6px;">❄️ 寒假（压岁钱+1，SAN+2）</td></tr>
+					<tr><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;text-align:center;">1月</td><td style="padding:6px;">❄️ 寒假（压岁钱+1，SAN+10%已损失）</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">7月</td><td style="padding:6px;text-align:center;">3月</td><td style="padding:6px;">🎲 随机事件</td></tr>
 					<tr><td style="padding:6px;text-align:center;">9月</td><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;">🏛️ CCIG领域年会 👥</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;text-align:center;">7月</td><td style="padding:6px;">☀️ 暑假（SAN+3）</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;text-align:center;">7月</td><td style="padding:6px;">☀️ 暑假（SAN+20%已损失）</td></tr>
 					<tr><td style="padding:6px;text-align:center;">12月</td><td style="padding:6px;text-align:center;">8月</td><td style="padding:6px;">📝 学年总结（四选一奖励）</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">偶数月</td><td style="padding:6px;text-align:center;">-</td><td style="padding:6px;">🎲 随机事件</td></tr>
 				</table>
@@ -504,7 +510,7 @@
 					<p>论文中稿后需要参加会议，选择参会方式：</p>
 					<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0;">
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;text-align:center;">
-							💰 自费<br><span style="color:var(--danger-color);">金钱-4</span>
+							💰 自费<br><span style="color:var(--danger-color);">金钱-2/4/6</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;text-align:center;">
 							👨‍🏫 导师报销<br><span style="color:var(--danger-color);">好感-1/-2</span>
@@ -551,9 +557,9 @@
 						<th style="padding:6px;text-align:left;">效果</th>
 					</tr>
 					<tr><td style="padding:6px;">🪑 人体工学椅（10金）</td><td style="padding:6px;">每月SAN+1</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">⌨️ 机械键盘（8金）</td><td style="padding:6px;">写论文SAN消耗-1</td></tr>
-					<tr><td style="padding:6px;">🖥️ 4K显示器（8金）</td><td style="padding:6px;">看论文SAN消耗-1</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">🖥️ GPU服务器（12金）</td><td style="padding:6px;">每次做实验多做1次</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">⌨️ 机械键盘（8金）</td><td style="padding:6px;">写论文SAN消耗-1，分数+1</td></tr>
+					<tr><td style="padding:6px;">🖥️ 2K显示器（8金）</td><td style="padding:6px;">看论文SAN消耗-1</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">🖥️ GPU服务器（10金）</td><td style="padding:6px;">每次做实验多做1次，分数+1</td></tr>
 					<tr><td style="padding:6px;">🌟 联合培养（大牛深入合作）</td><td style="padding:6px;">想idea+5分，做实验+5分</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">🏢 AI Lab实习（企业交流3次）</td><td style="padding:6px;">做实验×1.25，每月金+2，SAN-2</td></tr>
 					<tr><td style="padding:6px;">💕 恋人-活泼型</td><td style="padding:6px;">SAN回满，SAN上限+4，每月回复10%已损SAN，金-2</td></tr>
@@ -589,10 +595,10 @@
 						<th style="padding:6px;">价格</th>
 						<th style="padding:6px;">效果</th>
 					</tr>
-					<tr><td style="padding:6px;">Gemini订阅</td><td style="padding:6px;text-align:center;">2金</td><td style="padding:6px;">本月想idea SAN-1，+4分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">GPT订阅</td><td style="padding:6px;text-align:center;">4金</td><td style="padding:6px;">本月做实验 SAN-1，+4分</td></tr>
-					<tr><td style="padding:6px;">Claude订阅</td><td style="padding:6px;text-align:center;">3金</td><td style="padding:6px;">本月写论文 SAN-1，+4分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">租GPU服务器</td><td style="padding:6px;text-align:center;">2金</td><td style="padding:6px;">本月做实验多做1次</td></tr>
+					<tr><td style="padding:6px;">Gemini订阅</td><td style="padding:6px;text-align:center;">2金</td><td style="padding:6px;">本月想idea SAN-1，+5分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">GPT订阅</td><td style="padding:6px;text-align:center;">3金</td><td style="padding:6px;">本月做实验 SAN-1，+5分</td></tr>
+					<tr><td style="padding:6px;">Claude订阅</td><td style="padding:6px;text-align:center;">3金</td><td style="padding:6px;">本月写论文 SAN-1，+5分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">租GPU服务器</td><td style="padding:6px;text-align:center;">2金</td><td style="padding:6px;">本月做实验多做1次且分数+1</td></tr>
 				</table>
 			</div>
 			
@@ -674,10 +680,10 @@
 						<th style="padding:6px;text-align:left;">角色</th>
 						<th style="padding:6px;text-align:left;">隐藏觉醒条件</th>
 					</tr>
-					<tr><td style="padding:6px;">大多数</td><td style="padding:6px;">转博时科研、社交、好感都≤3</td></tr>
+					<tr><td style="padding:6px;">大多数</td><td style="padding:6px;">转博时科研、社交、好感都≤5</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">院士转世</td><td style="padding:6px;">转博时无A类和B类论文</td></tr>
 					<tr><td style="padding:6px;">社交达人</td><td style="padding:6px;">转博时社交≤9</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">富可敌国</td><td style="padding:6px;">转博时金币≤2</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">富可敌国</td><td style="padding:6px;">转博时金币≤3</td></tr>
 					<tr><td style="padding:6px;">导师子女</td><td style="padding:6px;">转博时好感度≤9</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">天选之人</td><td style="padding:6px;">转博时科研=社交=好感（三项相等）</td></tr>
 				</table>
@@ -697,8 +703,8 @@
 						• 一切靠自己<br><br>
 						<strong>🏆 专属真实结局</strong>：<br>
 						• 真·博士毕业：博士毕业且发表≥3篇论文<br>
-						• 真·献身科研：博士毕业且总引用>1000<br>
-						• 真·感受生活：博士毕业且总引用<=1000且达成>=10成就
+						• 真·投身科研：博士毕业且总引用>1000<br>
+						• 真·感受生活：博士毕业且总引用<=1000且达成>=12成就
 					</div>
 				</div>
 			</div>
@@ -801,19 +807,19 @@
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
 							<strong>🎯 百发百中</strong><br>
-							<span style="font-size:0.75rem;">从不被拒稿（可只投C类保稳）</span>
+							<span style="font-size:0.75rem;">前5次投稿全部命中</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
-							<strong>☕ 咖啡爱好者</strong><br>
-							<span style="font-size:0.75rem;">每月都买冰美式</span>
+							<strong>☕ 绝世咖啡</strong><br>
+							<span style="font-size:0.75rem;">冰美式效果达到SAN+6（需购买45杯）</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
 							<strong>🏆 全收集</strong><br>
-							<span style="font-size:0.75rem;">9种论文类型各中一篇</span>
+							<span style="font-size:0.75rem;">中稿A,B,C的poster和oral共6类</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
 							<strong>🧒 天才少年</strong><br>
-							<span style="font-size:0.75rem;">转博时科研分已≥7</span>
+							<span style="font-size:0.75rem;">转博时就达到博士毕业要求</span>
 						</div>
 						<div style="padding:6px;background:var(--card-bg);border-radius:4px;">
 							<strong>🔥 火力全开</strong><br>
@@ -853,7 +859,7 @@
 				<h4 style="color:#9b59b6;margin:0 0 8px 0;">🌑 逆位模式攻略</h4>
 				<div style="font-size:0.8rem;">
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
-						<strong>怠惰之大多数</strong>：SAN减少翻倍，但每月回复+3<br>
+						<strong>怠惰之大多数</strong>：SAN减少2倍（觉醒后3倍），但每月回复+3（觉醒后+已损SAN的10%）<br>
 						策略：减少消耗大的操作，利用高回复平衡
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
@@ -861,8 +867,8 @@
 						策略：靠转化获得金钱和SAN，多写论文获取转化收益
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
-						<strong>贪求之富可敌国</strong>：每月属性重置为2<br>
-						策略：觉醒后变为半年重置+消费涨属性，疯狂花钱
+						<strong>贪求之富可敌国</strong>：每月属性重置为1，变化转为金钱<br>
+						策略：觉醒后每6金消费属性+1，疯狂花钱
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">
 						<strong>空想之天选之人</strong>：每月属性随机交换<br>
@@ -911,11 +917,11 @@
 						<th style="padding:4px;">博士毕业</th>
 						<th style="padding:4px;">工资(硕/博)</th>
 					</tr>
-					<tr><td style="padding:4px;">📚 副教授</td><td style="padding:4px;text-align:center;">40%</td><td style="padding:4px;text-align:center;">≥1分</td><td style="padding:4px;text-align:center;">≥7分</td><td style="padding:4px;text-align:center;">1/3</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🎓 四级教授</td><td style="padding:4px;text-align:center;">25%</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥9分</td><td style="padding:4px;text-align:center;">1.25/3</td></tr>
-					<tr><td style="padding:4px;">⭐ 三级教授(四青)</td><td style="padding:4px;text-align:center;">20%</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥12分</td><td style="padding:4px;text-align:center;">1.25/4</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🌟 二级教授(杰青)</td><td style="padding:4px;text-align:center;">10%</td><td style="padding:4px;text-align:center;">≥4分</td><td style="padding:4px;text-align:center;">≥16分</td><td style="padding:4px;text-align:center;">1.5/5</td></tr>
-					<tr><td style="padding:4px;color:#b8860b;">🏅 一级教授(院士)</td><td style="padding:4px;text-align:center;">5%</td><td style="padding:4px;text-align:center;">≥4分</td><td style="padding:4px;text-align:center;">≥20分</td><td style="padding:4px;text-align:center;">2/5</td></tr>
+					<tr><td style="padding:4px;">📚 副教授</td><td style="padding:4px;text-align:center;">40%</td><td style="padding:4px;text-align:center;">≥1分</td><td style="padding:4px;text-align:center;">≥7分</td><td style="padding:4px;text-align:center;">1/2.5</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🎓 四级教授</td><td style="padding:4px;text-align:center;">25%</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥9分</td><td style="padding:4px;text-align:center;">1/2.75</td></tr>
+					<tr><td style="padding:4px;">⭐ 三级教授(四青)</td><td style="padding:4px;text-align:center;">20%</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥11分</td><td style="padding:4px;text-align:center;">1.25/3</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🌟 二级教授(杰青)</td><td style="padding:4px;text-align:center;">10%</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥13分</td><td style="padding:4px;text-align:center;">1.5/3.25</td></tr>
+					<tr><td style="padding:4px;color:#b8860b;">🏅 一级教授(院士)</td><td style="padding:4px;text-align:center;">5%</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥15分</td><td style="padding:4px;text-align:center;">1.75/3.5</td></tr>
 				</table>
 				<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">
 					💡 工资1.25=每4个月发2元，1.5=每2个月发2元
@@ -931,10 +937,10 @@
 						<th style="padding:4px;">第3年转博</th>
 					</tr>
 					<tr><td style="padding:4px;">📚 副教授</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥3分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🎓 四级教授</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥4分</td></tr>
-					<tr><td style="padding:4px;">⭐ 三级教授</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥5分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🌟 二级教授</td><td style="padding:4px;text-align:center;">≥4分</td><td style="padding:4px;text-align:center;">≥6分</td></tr>
-					<tr><td style="padding:4px;color:#b8860b;">🏅 一级教授</td><td style="padding:4px;text-align:center;">≥5分</td><td style="padding:4px;text-align:center;">≥7分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🎓 四级教授</td><td style="padding:4px;text-align:center;">≥2分</td><td style="padding:4px;text-align:center;">≥3分</td></tr>
+					<tr><td style="padding:4px;">⭐ 三级教授</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥4分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🌟 二级教授</td><td style="padding:4px;text-align:center;">≥3分</td><td style="padding:4px;text-align:center;">≥5分</td></tr>
+					<tr><td style="padding:4px;color:#b8860b;">🏅 一级教授</td><td style="padding:4px;text-align:center;">≥4分</td><td style="padding:4px;text-align:center;">≥6分</td></tr>
 				</table>
 			</div>
 
@@ -977,78 +983,73 @@
 						<th style="padding:4px;">效果</th>
 					</tr>
 					<tr><td style="padding:4px;">☕ 冰美式</td><td style="padding:4px;text-align:center;">2金</td><td style="padding:4px;">SAN+3起，每15杯+1（每月限1）</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🤖 Gemini订阅</td><td style="padding:4px;text-align:center;">2金</td><td style="padding:4px;">本月想idea SAN-1，+4分</td></tr>
-					<tr><td style="padding:4px;">🤖 GPT订阅</td><td style="padding:4px;text-align:center;">4金</td><td style="padding:4px;">本月做实验 SAN-1，+4分</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🤖 Claude订阅</td><td style="padding:4px;text-align:center;">3金</td><td style="padding:4px;">本月写论文 SAN-1，+4分</td></tr>
-					<tr><td style="padding:4px;">💻 租GPU</td><td style="padding:4px;text-align:center;">2金</td><td style="padding:4px;">本月做实验多做1次</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🖥️ 买GPU</td><td style="padding:4px;text-align:center;">12金</td><td style="padding:4px;">永久每次做实验多做1次（可叠加）</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🤖 Gemini订阅</td><td style="padding:4px;text-align:center;">2金</td><td style="padding:4px;">本月想idea SAN-1，+5分</td></tr>
+					<tr><td style="padding:4px;">🤖 GPT订阅</td><td style="padding:4px;text-align:center;">3金</td><td style="padding:4px;">本月做实验 SAN-1，+5分</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🤖 Claude订阅</td><td style="padding:4px;text-align:center;">3金</td><td style="padding:4px;">本月写论文 SAN-1，+5分</td></tr>
+					<tr><td style="padding:4px;">💻 租GPU</td><td style="padding:4px;text-align:center;">2金</td><td style="padding:4px;">本月做实验多做1次且分数+1</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🖥️ 买GPU</td><td style="padding:4px;text-align:center;">10金</td><td style="padding:4px;">永久每次做实验多做1次且分数+1（可叠加）</td></tr>
 					<tr><td style="padding:4px;">🪑 人体工学椅</td><td style="padding:4px;text-align:center;">10金</td><td style="padding:4px;">永久每月SAN+1</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">⌨️ 机械键盘</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">永久写论文SAN-3（原-4）</td></tr>
-					<tr><td style="padding:4px;">🖥️ 4K显示器</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">永久看论文SAN-1（原-2）</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">⌨️ 机械键盘</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">永久写论文SAN-3且分数+1</td></tr>
+					<tr><td style="padding:4px;">🖥️ 2K显示器</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">永久看论文SAN-1（原-2）</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">☕ 咖啡机</td><td style="padding:4px;text-align:center;">5金</td><td style="padding:4px;">每累计喝15杯冰美式，SAN+1（最多+2）</td></tr>
+					<tr><td style="padding:4px;">🚴 平把公路车</td><td style="padding:4px;text-align:center;">10金</td><td style="padding:4px;">每月SAN-1，累计减少6后SAN上限+1</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:4px;">🧥 羽绒服</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">使冬季"寒风刺骨"debuff无效</td></tr>
+					<tr><td style="padding:4px;">☂️ 遮阳伞</td><td style="padding:4px;text-align:center;">8金</td><td style="padding:4px;">使夏季"烈日当空"debuff无效</td></tr>
 				</table>
 				<div style="margin-top:6px;font-size:0.75rem;color:var(--text-secondary);">
 					💡 永久物品可半价出售，预购功能可自动购买订阅类物品
 				</div>
 			</div>
 
-			<div style="background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(231,76,60,0.15));border-radius:10px;padding:12px;margin-bottom:12px;">
-				<h4 style="color:#9b59b6;margin:0 0 8px 0;">🌙 成就商店（成就币）</h4>
+			<div style="background:linear-gradient(135deg,rgba(243,156,18,0.15),rgba(230,126,34,0.15));border-radius:10px;padding:12px;margin-bottom:12px;">
+				<h4 style="color:var(--warning-color);margin:0 0 8px 0;">🏆 成就商店（成就币）</h4>
 				<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;">
-					使用<strong>成就币</strong>购买特殊道具。每局开始时根据历史成就数获得成就币。
+					使用<strong>成就币</strong>购买属性提升。每局开始时根据历史成就数获得成就币。
 				</div>
 				<div style="font-size:0.8rem;">
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>📘 启研札记</strong>（6成就币）：科研≤3时，科研+1
+					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:8px;">
+						<strong>📊 可购买属性</strong>
+						<table style="width:100%;border-collapse:collapse;margin-top:6px;">
+							<tr style="background:var(--light-bg);">
+								<th style="padding:4px;text-align:left;">属性</th>
+								<th style="padding:4px;text-align:center;">基础值</th>
+								<th style="padding:4px;text-align:left;">说明</th>
+							</tr>
+							<tr><td style="padding:4px;">🧠 SAN值</td><td style="padding:4px;text-align:center;">+1</td><td style="padding:4px;">直接获得整数</td></tr>
+							<tr style="background:var(--light-bg);"><td style="padding:4px;">🔬 科研能力</td><td style="padding:4px;text-align:center;">+0.2</td><td style="padding:4px;">小数累积，满1实得</td></tr>
+							<tr><td style="padding:4px;">👥 社交能力</td><td style="padding:4px;text-align:center;">+0.2</td><td style="padding:4px;">小数累积，满1实得</td></tr>
+							<tr style="background:var(--light-bg);"><td style="padding:4px;">❤️ 导师好感</td><td style="padding:4px;text-align:center;">+0.25</td><td style="padding:4px;">小数累积，满1实得</td></tr>
+							<tr><td style="padding:4px;">💰 金币</td><td style="padding:4px;text-align:center;">+0.5</td><td style="padding:4px;">小数累积，满1实得</td></tr>
+						</table>
 					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>📗 研思进阶录</strong>（8成就币）：科研≤6时，科研+1
+					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:8px;">
+						<strong>⚡ 年份倍率</strong>
+						<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:4px;">
+							第N年 = 基础值 × N倍（最高×5倍）<br>
+							例：第3年购买科研 = 0.2 × 3 = +0.6
+						</div>
 					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>📕 格物精要</strong>（10成就币）：科研≤10时，科研+1
-					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>🔥 燃智术</strong>（5成就币）：科研上限-3，科研+1
-					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>💀 燃躯术</strong>（5成就币）：SAN上限-3，SAN+6
-					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>🌀 万象清零令</strong>（7成就币）：清除所有临时buff和debuff
-					</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;margin-bottom:4px;">
-						<strong>✨ 晦厄净除符</strong>（10成就币）：只清除所有debuff
+					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">
+						<strong>💰 购买成本</strong>
+						<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:4px;">
+							成本公式：n² + n + 2（n为已购买次数）<br>
+							序列：2 → 4 → 8 → 14 → 22 → 32 → 44 → ...<br>
+							<span style="color:var(--warning-color);">⚠️ 每次购买后成本递增！</span>
+						</div>
 					</div>
 				</div>
 				<div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">
-					💡 商品每4个月自动刷新，可花费递增成就币手动刷新，可锁定商品
-				</div>
-			</div>
-
-			<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:12px;">
-				<h4 style="color:var(--warning-color);margin:0 0 8px 0;">🛡️ 护身符系统</h4>
-				<table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
-					<tr style="background:var(--card-bg);">
-						<th style="padding:4px;">护身符</th>
-						<th style="padding:4px;">价格</th>
-						<th style="padding:4px;">效果</th>
-					</tr>
-					<tr><td style="padding:4px;">🛡️ 理智护身符</td><td style="padding:4px;text-align:center;">8成就币</td><td style="padding:4px;">SAN≤0时触发，+n（n=持有数）</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">💰 零钱护身符</td><td style="padding:4px;text-align:center;">12成就币</td><td style="padding:4px;">金币≤0时触发，+n（n=持有数）</td></tr>
-					<tr><td style="padding:4px;">🎁 好感护身符</td><td style="padding:4px;text-align:center;">18成就币</td><td style="padding:4px;">好感≤0时触发，+n（n=持有数）</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:4px;">🤝 社交护身符</td><td style="padding:4px;text-align:center;">18成就币</td><td style="padding:4px;">社交≤0时触发，+n（n=持有数）</td></tr>
-				</table>
-				<div style="margin-top:6px;font-size:0.75rem;color:var(--text-secondary);">
-					⚠️ 护身符永久持有不消失，每种每月只触发1次，持有n个则触发时+n
+					💡 建议：在高年份时购买更划算（倍率更高）
 				</div>
 			</div>
 
 			<div style="background:linear-gradient(135deg,rgba(0,184,148,0.1),rgba(85,239,196,0.1));border-radius:10px;padding:12px;">
 				<h4 style="color:var(--success-color);margin:0 0 8px 0;">💡 购买建议</h4>
 				<ul style="font-size:0.8rem;margin:0;padding-left:20px;">
-					<li><strong>优先购买</strong>：理智护身符（最便宜，最常用）</li>
-					<li><strong>逆位角色</strong>：必备多个理智护身符和零钱护身符</li>
-					<li><strong>科研提升</strong>：根据当前科研等级选择对应的研究札记</li>
-					<li><strong>应急道具</strong>：燃躯术可快速回SAN但会降低上限</li>
+					<li><strong>成就商店</strong>：优先在第4-5年购买，倍率最高</li>
+					<li><strong>SAN值</strong>：直接获得整数，适合应急</li>
+					<li><strong>其他属性</strong>：需要累积满1才实得，适合长期规划</li>
+					<li><strong>成本控制</strong>：前几次购买较便宜，后期成本急剧增加</li>
 				</ul>
 			</div>
 		</div>`;

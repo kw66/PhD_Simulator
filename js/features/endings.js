@@ -21,7 +21,7 @@
 					if (gameState.isTrueNormal) {
 						const tempAchievements = collectAchievements('master');
 						const achievementCount = tempAchievements.length;
-						if (achievementCount >= 10 && gameState.totalCitations < 1000) {
+						if (achievementCount >= 12 && gameState.totalCitations < 1000) {
 							title = '真·感受生活';
 							desc = '科研不是全部，你体验了丰富多彩的研究生生活。';
 							emoji = '🌈';
