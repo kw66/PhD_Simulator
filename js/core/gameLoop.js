@@ -96,38 +96,104 @@
 			// ★★★ 贪求之富可敌国：月初属性变化 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
 				if (gameState.reversedAwakened) {
-					// ★★★ 觉醒后：每月属性降低20%（上取整）★★★
+					// ★★★ 觉醒后：SAN重置为1，属性降低20%（下取整），属性变化转为金钱 ★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					const sanLoss = Math.ceil(gameState.san * 0.20);
-					const researchLoss = Math.ceil(gameState.research * 0.20);
-					const socialLoss = Math.ceil(gameState.social * 0.20);
-					const favorLoss = Math.ceil(gameState.favor * 0.20);
+					// SAN重置为1
+					const sanLoss = oldSan - 1;
+					gameState.san = 1;
 
-					gameState.san = Math.max(1, gameState.san - sanLoss);
+					// 属性降低20%（下取整）
+					const researchLoss = Math.floor(gameState.research * 0.20);
+					const socialLoss = Math.floor(gameState.social * 0.20);
+					const favorLoss = Math.floor(gameState.favor * 0.20);
+
 					gameState.research = Math.max(1, gameState.research - researchLoss);
 					gameState.social = Math.max(1, gameState.social - socialLoss);
 					gameState.favor = Math.max(1, gameState.favor - favorLoss);
 
+					// 属性变化转为金钱
+					const totalLoss = sanLoss + researchLoss + socialLoss + favorLoss;
+					if (totalLoss > 0) {
+						gameState.gold += totalLoss;
+					}
+
 					addLog('逆位效果', '贪求之月度衰减',
-						`SAN ${oldSan}→${gameState.san}(-${sanLoss}), 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})`);
+						`SAN ${oldSan}→1, 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})，属性转金+${totalLoss}`);
 				} else {
-					// 觉醒前：每月重置为1
+					// ★★★ 未觉醒：每月重置为1，属性变化转为金钱 ★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
+
+					// 计算属性变化（减少的量）
+					const sanChange = oldSan - 1;
+					const researchChange = oldResearch - 1;
+					const socialChange = oldSocial - 1;
+					const favorChange = oldFavor - 1;
+					const totalChange = sanChange + researchChange + socialChange + favorChange;
 
 					gameState.san = 1;
 					gameState.research = 1;
 					gameState.social = 1;
 					gameState.favor = 1;
 
+					// 属性变化转为金钱
+					if (totalChange > 0) {
+						gameState.gold += totalChange;
+					}
+
 					addLog('逆位效果', '贪求之每月重置',
-						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1`);
+						`SAN ${oldSan}→1, 科研 ${oldResearch}→1, 社交 ${oldSocial}→1, 好感 ${oldFavor}→1，属性转金+${totalChange}`);
+				}
+			}
+
+			// ★★★ 天选之人：第3年、第5年1月月初属性+1（隐藏效果）★★★
+			if (!gameState.isReversed && gameState.character === 'chosen') {
+				if (gameState.month === 1 && (gameState.year === 3 || gameState.year === 5)) {
+					const researchMax = gameState.researchMax || 20;
+					const socialMax = gameState.socialMax || 20;
+					const favorMax = gameState.favorMax || 20;
+					gameState.research = Math.min(researchMax, gameState.research + 1);
+					gameState.social = Math.min(socialMax, gameState.social + 1);
+					gameState.favor = Math.min(favorMax, gameState.favor + 1);
+					gameState.gold += 1;
+				}
+			}
+
+			// ★★★ 导师子女：第2,3,4,5,6年1月月初好感度+1（隐藏效果）★★★
+			if (!gameState.isReversed && gameState.character === 'teacher-child') {
+				if (gameState.month === 1 && gameState.year >= 2 && gameState.year <= 6) {
+					const favorMax = gameState.favorMax || 20;
+					gameState.favor = Math.min(favorMax, gameState.favor + 1);
+				}
+			}
+
+			// ★★★ 院士转世：第2,3,4,5,6年1月月初科研+1（隐藏效果）★★★
+			if (!gameState.isReversed && gameState.character === 'genius') {
+				if (gameState.month === 1 && gameState.year >= 2 && gameState.year <= 6) {
+					const researchMax = gameState.researchMax || 20;
+					gameState.research = Math.min(researchMax, gameState.research + 1);
+				}
+			}
+
+			// ★★★ 社交达人：第2,3,4,5,6年1月月初社交+1（隐藏效果）★★★
+			if (!gameState.isReversed && gameState.character === 'social') {
+				if (gameState.month === 1 && gameState.year >= 2 && gameState.year <= 6) {
+					const socialMax = gameState.socialMax || 20;
+					gameState.social = Math.min(socialMax, gameState.social + 1);
+				}
+			}
+
+			// ★★★ 富可敌国：第5月（寒假/春节）获得压岁钱+3 ★★★
+			if (!gameState.isReversed && gameState.character === 'rich') {
+				if (gameState.month === 5) {
+					gameState.gold += 3;
+					addLog('压岁钱', '家人的心意', '金币+3');
 				}
 			}
 
@@ -149,11 +215,11 @@
 			// ★★★ 修改：工资就是导师提供的 ★★★
 			const salary = getAdvisorSalary(gameState.degree);
 
-			// ★★★ 贪求之富可敌国：每月加金（未觉醒+3，觉醒后+6%上取整）★★★
+			// ★★★ 贪求之富可敌国：每月加金（未觉醒+3，觉醒后+5%上取整）★★★
 			let extraGold = 0;
 			if (gameState.isReversed && gameState.character === 'rich') {
 				if (gameState.reversedAwakened) {
-					extraGold = Math.ceil(gameState.gold * 0.06);
+					extraGold = Math.ceil(gameState.gold * 0.05);
 				} else {
 					extraGold = 3;
 				}
@@ -253,8 +319,8 @@
 				if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened) {
 					gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + 1;
 
-					const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
-					const previousGains = Math.floor((gameState.goldSpentTotal - 1) / 4);
+					const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+					const previousGains = Math.floor((gameState.goldSpentTotal - 1) / 6);
 					const newGains = attributeGains - previousGains;
 
 					if (newGains > 0) {
@@ -676,7 +742,9 @@
 					} else if (gameState.month === 7) {
 						triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
 					} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
-						triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
+						triggerFeedbackEvent();  // ★★★ 第3年第3月留言事件 ★★★
+					} else if (gameState.month === 3 && gameState.year === 4) {
+						triggerMentorAssignJuniorEvent();  // ★★★ 第4年第3月导师指派师弟师妹事件 ★★★
 					} else if (gameState.month === 9) {
 						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
 					} else if (gameState.month === 11) {
@@ -1408,11 +1476,11 @@
 						effectName = '🎭 大智若愚';
 						effectDesc = '真正的智慧不在于科研数值';
 						bonusDetails.push('科研提升转化效果升级');
-						bonusDetails.push('每1点科研提升 → 好感+2, SAN+8, 社交+2, 金+8');
+						bonusDetails.push('每1点科研提升 → 好感+1, SAN+4, 社交+1, 金+4, 上限+1');
 						break;
 						
 					case 'social': // 嫉妒之社交达人
-						effectName = '👁️ 嫉妒重置';
+						effectName = '👁️ 嫉妒升级';
 						effectDesc = '社交能力重置，触发连带效果';
 						const oldSocialVal = gameState.social;
 						const socialResetResearchMax = gameState.researchMax || 20;
@@ -1434,6 +1502,7 @@
 							bonusDetails.push('社交已经是5，无变化');
 						}
 						gameState.social = 5;
+						bonusDetails.push('✨ 关系栏换人时（科研/好感/SAN）上限+3');
 						break;
 						
 					case 'rich':
@@ -1873,10 +1942,29 @@
 				case 'teacher-child':
 					effectName = '👑 血脉共鸣';
 					effectDesc = '导师子女的血脉联系加深，每月自动与导师交流！';
-					// ★★★ 修改：每月自动和导师交流一次 ★★★
+					// ★★★ 修改：每6好感度赠送1篇C类论文 ★★★
+					const giftPaperCount = Math.floor(gameState.favor / 6);
+					if (giftPaperCount > 0) {
+						for (let i = 0; i < giftPaperCount; i++) {
+							gameState.papers.push({
+								type: 'C',
+								title: generatePaperTitle(),
+								status: 'published',
+								publishMonth: gameState.month,
+								publishYear: gameState.year,
+								citations: 0,
+								quality: 30,
+								promotions: { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
+								citationMultiplier: 1
+							});
+							gameState.paperC++;
+							gameState.totalScore += 1;
+						}
+						bonusDetails.push(`🎁 血脉馈赠：获得${giftPaperCount}篇C类论文`);
+					}
+					// ★★★ 每月自动和导师交流一次 ★★★
 					gameState.autoAdvisorChat = true;
 					bonusDetails.push('✨ 每月自动和导师交流一次');
-					bonusDetails.push('（相当于每月自动获得导师交流的收益）');
 					break;
 					
 				case 'chosen':

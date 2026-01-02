@@ -81,14 +81,14 @@
 
         // ★★★ 关键修改：changeGold函数 ★★★
 		function changeGold(delta) {
-			// ★★★ 修改：贪求之富可敌国觉醒后每花费4金币属性各+1 ★★★
+			// ★★★ 修改：贪求之富可敌国觉醒后每花费6金币属性各+1 ★★★
 			if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened && delta < 0) {
 				const spent = Math.abs(delta);
 				gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
 
-				// ★★★ 修改：每消费4金币，SAN/科研/社交/好感各+1 ★★★
-				const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
-				const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 4);
+				// ★★★ 修改：每消费6金币，SAN/科研/社交/好感各+1 ★★★
+				const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+				const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
 				const newGains = attributeGains - previousGains;
 
 				if (newGains > 0) {
@@ -137,18 +137,48 @@
 
 				// 好感度归零检测
 				if (gameState.favor <= 0) {
-					// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4，但不超过上限 ★★★
-					const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
-					gameState.favor = Math.min(favorMax, resetValue);
-					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-					gameState.gold += 2;
-					clampGold();  // ★★★ 赤贫学子诅咒 ★★★
+					if (gameState.reversedAwakened === true) {
+						// ★★★ 觉醒后：重置为4，金币重置为5，轮流触发 ★★★
+						gameState.favor = Math.min(favorMax, 4);
+						gameState.gold = 5;
 
-					if (gameState.reversedAwakened) {
-						addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
+						// 初始化轮流计数器
+						if (gameState.rebelCycleCount === undefined) {
+							gameState.rebelCycleCount = 0;
+						}
+
+						// 轮流效果：社交+1 → 科研+1 → 社交上限+1 → 科研上限+1
+						const cycleIndex = gameState.rebelCycleCount % 4;
+						let effectDesc = '';
+						switch (cycleIndex) {
+							case 0:
+								gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+								effectDesc = '社交+1';
+								break;
+							case 1:
+								gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+								effectDesc = '科研+1';
+								break;
+							case 2:
+								gameState.socialMax = (gameState.socialMax || 20) + 1;
+								effectDesc = '社交上限+1';
+								break;
+							case 3:
+								gameState.researchMax = (gameState.researchMax || 20) + 1;
+								effectDesc = '科研上限+1';
+								break;
+						}
+						gameState.rebelCycleCount++;
+
+						addLog('逆位效果', '变本加厉（觉醒）', `好感归零→重置为${Math.min(favorMax, 4)}，金币重置为5，${effectDesc}`);
 					} else {
-						addLog('逆位效果', '变本加厉', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
+						// ★★★ 未觉醒：重置为6，社交/科研+1，金币重置为4 ★★★
+						gameState.favor = Math.min(favorMax, 6);
+						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+						gameState.gold = 4;
+
+						addLog('逆位效果', '变本加厉', `好感归零→重置为${Math.min(favorMax, 6)}，社交+1，科研+1，金币重置为4`);
 					}
 				}
 
@@ -180,17 +210,21 @@
 				if (delta > 0) {
 					gameState.blockedResearchGains += delta;
 					if (gameState.reversedAwakened === true) {
-						// ★★★ 修改：觉醒后金+8，SAN+8，社交+2，好感+2 ★★★
-						const sanGain = delta * 8;
-						const goldGain = delta * 8;
-						const favorGain = delta * 2;
-						const socialGain = delta * 2;
+						// ★★★ 修改：觉醒后金+4，SAN+4，社交+1，好感+1，上限+1 ★★★
+						const sanGain = delta * 4;
+						const goldGain = delta * 4;
+						const favorGain = delta * 1;
+						const socialGain = delta * 1;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + favorGain);
 						gameState.social = Math.min(20, gameState.social + socialGain);
-						addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
+						// ★★★ 觉醒额外效果：社交/好感/SAN上限+1 ★★★
+						gameState.socialMax = (gameState.socialMax || 20) + delta;
+						gameState.favorMax = (gameState.favorMax || 20) + delta;
+						gameState.sanMax = (gameState.sanMax || 100) + delta;
+						addLog('逆位效果', '大智若愚', `科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}, 上限+${delta}`);
 					} else {
 						// ★★★ 修改：未觉醒时金+4，SAN+4，社交+1，好感+1 ★★★
 						const sanGain = delta * 4;
@@ -286,16 +320,16 @@
             }
             
 			if (changes.gold) {
-				// ★★★ 修改：贪求之富可敌国觉醒后每花费4金币属性各+1 ★★★
+				// ★★★ 修改：贪求之富可敌国觉醒后每花费6金币属性各+1 ★★★
 				if (gameState.isReversed && gameState.character === 'rich' && gameState.reversedAwakened && changes.gold < 0) {
 					const spent = Math.abs(changes.gold);
 					gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
-					
-					// ★★★ 修改：6改为4 ★★★
-					const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
-					const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 4);
+
+					// ★★★ 修改：每消费6金币，属性各+1 ★★★
+					const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+					const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
 					const newGains = attributeGains - previousGains;
-					
+
 					if (newGains > 0) {
 						gameState.san = Math.min(gameState.sanMax, gameState.san + newGains);
 						gameState.research = Math.min(20, gameState.research + newGains);
@@ -322,18 +356,48 @@
 
 					// ✅ 添加归零条件判断
 					if (gameState.favor <= 0) {
-						// ★★★ 修改：未觉醒时重置为6，觉醒后重置为4，但不超过上限 ★★★
-						const resetValue = (gameState.reversedAwakened === true) ? 4 : 6;
-						gameState.favor = Math.min(favorMax, resetValue);
-						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
-						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
-						gameState.gold += 2;
-						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
+						if (gameState.reversedAwakened === true) {
+							// ★★★ 觉醒后：重置为4，金币重置为5，轮流触发 ★★★
+							gameState.favor = Math.min(favorMax, 4);
+							gameState.gold = 5;
 
-						if (gameState.reversedAwakened) {
-							addLog('逆位效果', '变本加厉（觉醒）', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
+							// 初始化轮流计数器
+							if (gameState.rebelCycleCount === undefined) {
+								gameState.rebelCycleCount = 0;
+							}
+
+							// 轮流效果：社交+1 → 科研+1 → 社交上限+1 → 科研上限+1
+							const cycleIndex = gameState.rebelCycleCount % 4;
+							let effectDesc = '';
+							switch (cycleIndex) {
+								case 0:
+									gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+									effectDesc = '社交+1';
+									break;
+								case 1:
+									gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+									effectDesc = '科研+1';
+									break;
+								case 2:
+									gameState.socialMax = (gameState.socialMax || 20) + 1;
+									effectDesc = '社交上限+1';
+									break;
+								case 3:
+									gameState.researchMax = (gameState.researchMax || 20) + 1;
+									effectDesc = '科研上限+1';
+									break;
+							}
+							gameState.rebelCycleCount++;
+
+							addLog('逆位效果', '变本加厉（觉醒）', `好感归零→重置为${Math.min(favorMax, 4)}，金币重置为5，${effectDesc}`);
 						} else {
-							addLog('逆位效果', '变本加厉', `好感度归零，重置为${Math.min(favorMax, resetValue)} → 社交+1, 科研+1, 金币+2`);
+							// ★★★ 未觉醒：重置为6，社交/科研+1，金币重置为4 ★★★
+							gameState.favor = Math.min(favorMax, 6);
+							gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
+							gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
+							gameState.gold = 4;
+
+							addLog('逆位效果', '变本加厉', `好感归零→重置为${Math.min(favorMax, 6)}，社交+1，科研+1，金币重置为4`);
 						}
 					}
 					// 玩世之导师子女不会因好感度触发退学

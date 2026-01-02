@@ -13,13 +13,17 @@
 					if (gs.isReversed && gs.character === 'genius') {
 						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
 						if (gs.reversedAwakened === true) {
-							gs.san = Math.min(gs.sanMax, gs.san + 8);
-							gs.gold += 8;
-							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
-							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
 							// ★★★ 修复：社交增加时检查解锁 ★★★
 							checkSocialUnlock();
-							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+							// ★★★ 觉醒额外效果：上限+1 ★★★
+							gs.socialMax = (gs.socialMax || 20) + 1;
+							gs.favorMax = (gs.favorMax || 20) + 1;
+							gs.sanMax = (gs.sanMax || 100) + 1;
+							return '愚钝转化(觉醒)：SAN+4, 金+4, 好感+1, 社交+1, 上限+1';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
@@ -47,13 +51,17 @@
 					if (gs.isReversed && gs.character === 'genius') {
 						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
 						if (gs.reversedAwakened === true) {
-							gs.san = Math.min(gs.sanMax, gs.san + 8);
-							gs.gold += 8;
-							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
-							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
 							// ★★★ 修复：社交增加时检查解锁 ★★★
 							checkSocialUnlock();
-							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+							// ★★★ 觉醒额外效果：上限+1 ★★★
+							gs.socialMax = (gs.socialMax || 20) + 1;
+							gs.favorMax = (gs.favorMax || 20) + 1;
+							gs.sanMax = (gs.sanMax || 100) + 1;
+							return '愚钝转化(觉醒)：SAN+4, 金+4, 好感+1, 社交+1, 上限+1';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
@@ -81,13 +89,17 @@
 					if (gs.isReversed && gs.character === 'genius') {
 						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
 						if (gs.reversedAwakened === true) {
-							gs.san = Math.min(gs.sanMax, gs.san + 8);
-							gs.gold += 8;
-							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
-							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
 							// ★★★ 修复：社交增加时检查解锁 ★★★
 							checkSocialUnlock();
-							return '愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2';
+							// ★★★ 觉醒额外效果：上限+1 ★★★
+							gs.socialMax = (gs.socialMax || 20) + 1;
+							gs.favorMax = (gs.favorMax || 20) + 1;
+							gs.sanMax = (gs.sanMax || 100) + 1;
+							return '愚钝转化(觉醒)：SAN+4, 金+4, 好感+1, 社交+1, 上限+1';
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
@@ -116,13 +128,17 @@
 					if (gs.isReversed && gs.character === 'genius') {
 						gs.blockedResearchGains = (gs.blockedResearchGains || 0) + 1;
 						if (gs.reversedAwakened === true) {
-							gs.san = Math.min(gs.sanMax, gs.san + 8);
-							gs.gold += 8;
-							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 2);
-							gs.social = Math.min(gs.socialMax || 20, gs.social + 2);
+							gs.san = Math.min(gs.sanMax, gs.san + 4);
+							gs.gold += 4;
+							gs.favor = Math.min(gs.favorMax || 20, gs.favor + 1);
+							gs.social = Math.min(gs.socialMax || 20, gs.social + 1);
 							// ★★★ 修复：社交增加时检查解锁 ★★★
 							checkSocialUnlock();
-							return `上限降至${gs.researchMax}，愚钝转化(觉醒)：SAN+8, 金+8, 好感+2, 社交+2`;
+							// ★★★ 觉醒额外效果：上限+1 ★★★
+							gs.socialMax = (gs.socialMax || 20) + 1;
+							gs.favorMax = (gs.favorMax || 20) + 1;
+							gs.sanMax = (gs.sanMax || 100) + 1;
+							return `上限降至${gs.researchMax}，愚钝转化(觉醒)：SAN+4, 金+4, 好感+1, 社交+1, 上限+1`;
 						} else {
 							gs.san = Math.min(gs.sanMax, gs.san + 4);
 							gs.gold += 4;
@@ -2255,8 +2271,8 @@
                 const spent = actualPrice;
                 gameState.goldSpentTotal = (gameState.goldSpentTotal || 0) + spent;
 
-                const attributeGains = Math.floor(gameState.goldSpentTotal / 4);
-                const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 4);
+                const attributeGains = Math.floor(gameState.goldSpentTotal / 6);
+                const previousGains = Math.floor((gameState.goldSpentTotal - spent) / 6);
                 const newGains = attributeGains - previousGains;
                 
                 if (newGains > 0) {

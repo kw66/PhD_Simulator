@@ -443,13 +443,18 @@
 					</tr>
 					<tr><td style="padding:6px;text-align:center;">1月（第2年起）</td><td style="padding:6px;text-align:center;">9月</td><td style="padding:6px;">🎓 奖学金评定</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">2月</td><td style="padding:6px;text-align:center;">10月</td><td style="padding:6px;">🎁 教师节</td></tr>
+					<tr><td style="padding:6px;text-align:center;">3月（第3年）</td><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;">💬 留言板</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">3月（第4年）</td><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;">👨‍🏫 指派师弟师妹 👥</td></tr>
 					<tr><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;text-align:center;">1月</td><td style="padding:6px;">❄️ 寒假（压岁钱+1，SAN+2）</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">7月</td><td style="padding:6px;text-align:center;">3月</td><td style="padding:6px;">🎲 随机事件</td></tr>
-					<tr><td style="padding:6px;text-align:center;">9月</td><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;">🏛️ CCIG领域年会</td></tr>
+					<tr><td style="padding:6px;text-align:center;">9月</td><td style="padding:6px;text-align:center;">5月</td><td style="padding:6px;">🏛️ CCIG领域年会 👥</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">11月</td><td style="padding:6px;text-align:center;">7月</td><td style="padding:6px;">☀️ 暑假（SAN+3）</td></tr>
 					<tr><td style="padding:6px;text-align:center;">12月</td><td style="padding:6px;text-align:center;">8月</td><td style="padding:6px;">📝 学年总结（四选一奖励）</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;text-align:center;">偶数月</td><td style="padding:6px;text-align:center;">-</td><td style="padding:6px;">🎲 随机事件</td></tr>
 				</table>
+				<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);">
+					👥 标记表示可能增加关系网角色
+				</div>
 			</div>
 			
 			<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:12px;">
@@ -480,15 +485,16 @@
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">8. 导师经费充足</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">9. 学习新知识</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">10. 同门找你合作</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">11. 师兄师姐合作（社交≥6）</div>
+					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">11. 师兄师姐合作 👥</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">12. 导师抢一作</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">13. 服务器坏了</div>
-					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">14. 指导师弟师妹（有论文后）</div>
+					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">14. 指导师弟师妹 👥</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">15. 玩游戏放松</div>
 					<div style="padding:6px;background:var(--card-bg);border-radius:4px;">16. 数据丢失（有进行中论文）</div>
 				</div>
 				<div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">
-					每年事件池重置，每个事件每年只触发一次
+					每年事件池重置，每个事件每年只触发一次<br>
+					👥 标记表示可能增加关系网角色
 				</div>
 			</div>
 			
@@ -670,9 +676,9 @@
 					</tr>
 					<tr><td style="padding:6px;">大多数</td><td style="padding:6px;">转博时科研、社交、好感都≤3</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">院士转世</td><td style="padding:6px;">转博时无A类和B类论文</td></tr>
-					<tr><td style="padding:6px;">社交达人</td><td style="padding:6px;">转博时社交≤6</td></tr>
+					<tr><td style="padding:6px;">社交达人</td><td style="padding:6px;">转博时社交≤9</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">富可敌国</td><td style="padding:6px;">转博时金币≤2</td></tr>
-					<tr><td style="padding:6px;">导师子女</td><td style="padding:6px;">转博时好感度≤6</td></tr>
+					<tr><td style="padding:6px;">导师子女</td><td style="padding:6px;">转博时好感度≤9</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">天选之人</td><td style="padding:6px;">转博时科研=社交=好感（三项相等）</td></tr>
 				</table>
 				<div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">

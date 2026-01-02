@@ -403,7 +403,7 @@
                     closeModal();
                     changeFavor(-1);
                 }},
-                { text: `亲力亲为（SAN${actualSanCost}，50%科研+1）`, class: 'btn-primary', action: () => {
+                { text: `👥 亲力亲为（SAN${actualSanCost}，50%科研+1）`, class: 'btn-primary', action: () => {
                     closeModal();
                     const sanText = (gameState.isReversed && gameState.character === 'normal') ? `SAN值${actualSanCost}（怠惰×${gameState.reversedAwakened ? 3 : 2}）` : `SAN值${actualSanCost}`;
 
@@ -958,7 +958,7 @@
                     addLog('随机事件', '同门找你合作论文 - 婉拒合作', '无事发生');
                     closeModal();
                 }},
-                { text: `开展全面合作（${coopText}）`, class: 'btn-success', action: () => {
+                { text: `👥 开展全面合作（${coopText}）`, class: 'btn-success', action: () => {
                     closeModal();
                     if (gameState.social < 6) {
                         const baseSanCost = -2;
@@ -1012,7 +1012,7 @@
                     changeSan(baseSanCost);
                     updateBuffs();
                 }},
-                { text: `深入合作（SAN${seniorSanCost}，科研+1）`, class: 'btn-warning', action: () => {
+                { text: `👥 深入合作（SAN${seniorSanCost}，科研+1）`, class: 'btn-warning', action: () => {
                     closeModal();
                     // ★★★ 修改：新增SAN-2，删除idea buff ★★★
                     const baseSanCost = -2;
@@ -1030,7 +1030,7 @@
                         showAddToNetworkModal(seniorPerson);
                     }, 300);
                 }},
-                { text: `拜入门下（SAN${seniorSanCost}，永久论文+5）`, class: 'btn-success', action: () => {
+                { text: `👥 拜入门下（SAN${seniorSanCost}，永久论文+5）`, class: 'btn-success', action: () => {
                     closeModal();
                     // ★★★ 修改：不增加科研，buff+5，新增SAN-2 ★★★
                     const baseSanCost = -2;
@@ -1188,7 +1188,7 @@
                     addLog('随机事件', '指导师弟师妹 - 精力有限算了', '无事发生');
                     closeModal();
                 }},
-                { text: `最近有个idea可以合作一波（SAN${ideaSanCost}，社交+1）`, class: 'btn-primary', action: () => {
+                { text: `👥 最近有个idea可以合作一波（SAN${ideaSanCost}，社交+1）`, class: 'btn-primary', action: () => {
 					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
 					if (!gameState.firstMentoringMonth) {
 						gameState.firstMentoringMonth = gameState.totalMonths;
@@ -1215,7 +1215,7 @@
 						showAddToNetworkModal(juniorPerson);
 					}, 300);
 				}},
-                { text: '展开长期合作（每月SAN-1，每月引用+师弟师妹数×3）', class: 'btn-success', action: () => {
+                { text: '👥 展开长期合作（每月SAN-1，每月引用+师弟师妹数×3）', class: 'btn-success', action: () => {
 					// ★★★ 新增：记录第一次指导师弟师妹 ★★★
 					if (!gameState.firstMentoringMonth) {
 						gameState.firstMentoringMonth = gameState.totalMonths;
@@ -1533,3 +1533,75 @@
 		// 导出函数
 		window.triggerMidtermMessageEvent = triggerMidtermMessageEvent;
 		window.submitMidtermMessage = submitMidtermMessage;
+
+		// ==================== 第四年第三月导师指派师弟师妹事件 ====================
+		function triggerMentorAssignJuniorEvent() {
+			// 生成4个候选师弟师妹
+			const juniors = [];
+			const names = ['小明', '小红', '小华', '小刚', '小丽', '小强', '小芳', '小伟', '小燕', '小杰', '小雪', '小龙'];
+			const shuffledNames = names.sort(() => Math.random() - 0.5).slice(0, 4);
+
+			for (let i = 0; i < 4; i++) {
+				juniors.push({
+					name: shuffledNames[i],
+					research: Math.floor(Math.random() * 6) + 1,  // 1-6
+					affinity: Math.floor(Math.random() * 6) + 1   // 1-6
+				});
+			}
+
+			let optionsHtml = juniors.map((junior, idx) => `
+				<div class="junior-option" onclick="selectAssignedJunior(${idx})"
+					style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;cursor:pointer;border:2px solid transparent;transition:all 0.2s;"
+					onmouseover="this.style.borderColor='var(--primary-color)';this.style.background='var(--card-bg)';"
+					onmouseout="this.style.borderColor='transparent';this.style.background='var(--light-bg)';">
+					<div style="display:flex;align-items:center;gap:10px;">
+						<span style="font-size:1.5rem;">👤</span>
+						<span style="font-weight:600;font-size:1rem;">${junior.name}</span>
+					</div>
+					<div style="display:flex;gap:15px;font-size:0.85rem;">
+						<span style="color:var(--primary-color);">🔬 科研: ${junior.research}</span>
+						<span style="color:var(--success-color);">💕 亲和: ${junior.affinity}</span>
+					</div>
+				</div>
+			`).join('');
+
+			// 保存候选数据
+			window._pendingJuniors = juniors;
+
+			showModal('👨‍🏫 导师指派',
+				`<div style="text-align:center;margin-bottom:15px;">
+					<div style="font-size:1.2rem;margin-bottom:8px;">导师让你带一位新入学的师弟师妹</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">请选择一位加入你的关系网</div>
+				</div>
+				<div style="margin-top:15px;">
+					${optionsHtml}
+				</div>`,
+				[]  // 无按钮，必须选择一个
+			);
+		}
+
+		// 选择导师指派的师弟师妹
+		function selectAssignedJunior(index) {
+			const juniors = window._pendingJuniors;
+			if (!juniors || !juniors[index]) return;
+
+			const junior = juniors[index];
+
+			// 创建关系人物
+			const newPerson = createRelationshipPerson('junior', {
+				name: junior.name,
+				research: junior.research,
+				affinity: junior.affinity
+			});
+
+			// 添加到关系网
+			showAddToNetworkModal(newPerson);
+
+			window._pendingJuniors = null;
+			closeModal();
+
+			addLog('固定事件', '导师指派师弟师妹', `${junior.name}加入了你的关系网（科研${junior.research}，亲和${junior.affinity}）`);
+		}
+
+		window.triggerMentorAssignJuniorEvent = triggerMentorAssignJuniorEvent;
+		window.selectAssignedJunior = selectAssignedJunior;

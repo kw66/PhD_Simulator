@@ -751,6 +751,15 @@
                 gameState.relationships[realIndex] = newPerson;
                 // ★★★ 新增：替换也算认识新人 ★★★
                 gameState.totalRelationshipsMet = (gameState.totalRelationshipsMet || 0) + 1;
+
+                // ★★★ 嫉妒升级效果：换人时科研/好感/SAN上限+3 ★★★
+                if (gameState.isReversed && gameState.character === 'social' && gameState.reversedAwakened) {
+                    gameState.researchMax = (gameState.researchMax || 20) + 3;
+                    gameState.favorMax = (gameState.favorMax || 20) + 3;
+                    gameState.sanMax = (gameState.sanMax || 20) + 3;
+                    addLog('嫉妒升级', '换人奖励', `科研上限+3（现${gameState.researchMax}），好感上限+3（现${gameState.favorMax}），SAN上限+3（现${gameState.sanMax}）`);
+                }
+
                 addLog('人际关系', `${newPerson.name}替换了${oldPerson.name}`, `${oldDisplayName} → ${newDisplayName}`);
             }
 

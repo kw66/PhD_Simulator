@@ -20,9 +20,9 @@
 				icon: '😴',
 				awakenIcon: '💀',
 				desc: '懒惰是原罪，也是护盾',
-				bonus: 'SAN减少翻倍，初始属性全5（金币为1），每月SAN+3',
+				bonus: 'SAN减少翻倍，初始属性全5，每月SAN+3',
 				awakenName: '极致怠惰',
-				awakenDesc: '转博时属性翻倍，SAN上限+50%（上取整）。SAN减少3倍，每月SAN+已损SAN的10%（上取整）',
+				awakenDesc: '转博时属性翻倍，SAN上限+50%。SAN减少3倍，每月SAN+已损SAN的10%',
 				stats: { research: 4, social: 4, favor: 4, gold: 0 }
 			}
 		},
@@ -32,7 +32,7 @@
 			icon: '🔬', 
 			awakenIcon: '🧬',
 			desc: '天生就是做科研的料', 
-			bonus: '科研能力初始+5', 
+			bonus: '初始科研能力+5，每年+1', 
 			awakenName: '学术天赋觉醒',
 			awakenDesc: '转博时每有1篇A类论文，科研+2，上限+4（3篇B类折算1篇A类）',
 			// 隐藏觉醒
@@ -46,9 +46,9 @@
 				icon: '🤡',
 				awakenIcon: '🎭',
 				desc: '科研是什么？能吃吗？',
-				bonus: '科研固定0，全论文槽，科研提升→金+4,SAN+4,社交+1,好感+1',
+				bonus: '科研固定0，全论文槽，科研提升→金/SAN+4，社交/好感+1',
 				awakenName: '大智若愚',
-				awakenDesc: '科研提升→金+8,SAN+8,社交+2,好感+2',
+				awakenDesc: '科研提升→金/SAN+4，社交/好感+1，（社交/好感/SAN）上限+1',
 				stats: {}
 			}
 		},
@@ -58,23 +58,23 @@
 			icon: '🤝',
 			awakenIcon: '🌐',
 			desc: '八面玲珑的社交高手',
-			bonus: '社交能力初始+5',
+			bonus: '初始社交能力+5，每年+1',
 			awakenName: '人脉网络激活',
 			awakenDesc: '转博时每认识过一人社交+1且上限+1，根据社交能力改变审稿人分布',
 			// 隐藏觉醒
 			hiddenAwakenName: '师兄师姐救我',
 			hiddenAwakenIcon: '🆘',
 			hiddenAwakenDesc: '社交变为6且获得主动技能（限用3次，之后每次使用社交-1）：下次生产论文时，科研能力视为科研+社交',
-			hiddenAwakenCondition: (gs) => gs.social <= 6,
+			hiddenAwakenCondition: (gs) => gs.social <= 9,
 			stats: { social: 5 },
 			reversed: {
 				name: '嫉妒之《社交达人》',
 				icon: '🐍',
 				awakenIcon: '👁️',
 				desc: '见不得别人好，也见不得自己差',
-				bonus: '社交初始5，社交-1→科研+1,好感+1 | 社交+1→SAN+1,金+1',
-				awakenName: '嫉妒重置',
-				awakenDesc: '转博时社交能力变为5',
+				bonus: '社交初始5，社交-1→科研/好感+1 | 社交+1→SAN/金+1',
+				awakenName: '嫉妒升级',
+				awakenDesc: '关系栏换人（科研/好感/SAN）上限+3',
 				stats: { social: 4 }
 			}
 		},
@@ -84,7 +84,7 @@
 			icon: '💰', 
 			awakenIcon: '💎',
 			desc: '家境殷实无忧无虑', 
-			bonus: '金币值初始+8', 
+			bonus: '金币值初始+8，压岁钱+3', 
 			awakenName: '财富倍增术',
 			awakenDesc: '转博时金币×3',
 			// 隐藏觉醒
@@ -98,9 +98,9 @@
 				icon: '🏴‍☠️',
 				awakenIcon: '💸',
 				desc: '除了钱一无所有',
-				bonus: '每月SAN/科研/社交/好感重置为1，每月金钱+3',
+				bonus: '每月SAN/属性重置为1，属性变化转为金钱，每月金钱+3',
 				awakenName: '金钱的力量',
-				awakenDesc: '每月属性降低20%，每花费4金币属性各+1，每月金钱+6%',
+				awakenDesc: '每月SAN重置为1，属性降低20%，属性变化转为金钱，每花费6金币SAN/属性+1，每月金钱+5%',
 				stats: {}
 			}
 		},
@@ -110,23 +110,23 @@
 			icon: '👨‍👧',
 			awakenIcon: '👑',
 			desc: '近水楼台先得月',
-			bonus: '导师好感度初始+5',
+			bonus: '初始导师好感度+5，每年+1',
 			awakenName: '血脉共鸣',
-			awakenDesc: '每月自动和导师交流一次',
+			awakenDesc: '每6好感度赠送1篇C类论文，每月自动和导师交流一次',
 			// 隐藏觉醒
 			hiddenAwakenName: '导师救我',
 			hiddenAwakenIcon: '🛡️',
 			hiddenAwakenDesc: '好感度变为6且获得主动技能（限用3次，之后每次使用好感度-1）：下次生产论文时，科研能力视为科研+好感度',
-			hiddenAwakenCondition: (gs) => gs.favor <= 6,
+			hiddenAwakenCondition: (gs) => gs.favor <= 9,
 			stats: { favor: 5 },
 			reversed: {
 				name: '玩世之《导师子女》',
 				icon: '🎪',
 				awakenIcon: '🃏',
 				desc: '叛逆是我的代名词',
-				bonus: '好感不会低于0，好感归0→重置为6，社交+1，科研+1，金+2',
+				bonus: '好感不会低于0，好感归0→重置为6，社交/科研+1，金币重置为4',
 				awakenName: '变本加厉',
-				awakenDesc: '好感归0→重置为4，社交+1，科研+1，金+2',
+				awakenDesc: '好感归0→重置为4，金币重置为5，轮流触发社交/科研/社交上限/科研上限+1',
 				stats: { favor: 0 }
 			}
 		},
@@ -136,7 +136,7 @@
 			icon: '⭐', 
 			awakenIcon: '✨',
 			desc: '命运的宠儿全面发展', 
-			bonus: '科研+2 社交+2 好感+2 金币+2', 
+			bonus: '初始科研/社交/好感/金币+2，每2年+1', 
 			awakenName: '查缺补漏',
 			awakenDesc: '转博时补齐所有短板',
 			// 隐藏觉醒
@@ -769,17 +769,21 @@
 					const delta = bonus.research;
 					gameState.blockedResearchGains = (gameState.blockedResearchGains || 0) + delta;
 					if (gameState.reversedAwakened === true) {
-						// 觉醒后金+8，SAN+8，社交+2，好感+2
-						const sanGain = delta * 8;
-						const goldGain = delta * 8;
-						const favorGain = delta * 2;
-						const socialGain = delta * 2;
+						// 觉醒后金+4，SAN+4，社交+1，好感+1，上限+1
+						const sanGain = delta * 4;
+						const goldGain = delta * 4;
+						const favorGain = delta * 1;
+						const socialGain = delta * 1;
 						gameState.san = Math.min(gameState.sanMax, gameState.san + sanGain);
 						gameState.gold += goldGain;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.favor = Math.min(20, gameState.favor + favorGain);
 						gameState.social = Math.min(20, gameState.social + socialGain);
-						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}`);
+						// ★★★ 觉醒额外效果：上限+1 ★★★
+						gameState.socialMax = (gameState.socialMax || 20) + delta;
+						gameState.favorMax = (gameState.favorMax || 20) + delta;
+						gameState.sanMax = (gameState.sanMax || 100) + delta;
+						changes.push(`科研提升被转化 → SAN+${sanGain}, 金+${goldGain}, 好感+${favorGain}, 社交+${socialGain}, 上限+${delta}`);
 					} else {
 						// 未觉醒时金+4，SAN+4，社交+1，好感+1
 						const sanGain = delta * 4;
