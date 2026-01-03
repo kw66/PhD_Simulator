@@ -189,14 +189,6 @@
 				}
 			}
 
-			// ★★★ 富可敌国：第5月（寒假/春节）获得压岁钱+3 ★★★
-			if (!gameState.isReversed && gameState.character === 'rich') {
-				if (gameState.month === 5) {
-					gameState.gold += 3;
-					addLog('压岁钱', '家人的心意', '金币+3');
-				}
-			}
-
 			if (gameState.month > 12) {
 				gameState.month = 1;
 				gameState.year++;
@@ -359,12 +351,12 @@
 
 			// ★★★ AILab 实习效果（-SAN类）★★★
 			if (gameState.ailabInternship) {
-				// ★★★ 实习收入 = 基础2 + A会×0.5 + 每500引用×0.5，上限6（实时计算）★★★
+				// ★★★ 实习收入 = 基础1 + A会×0.5 + 每500引用×0.5，上限6（实时计算）★★★
 				const aPaperCount = (gameState.publishedPapers || []).filter(p => p.grade === 'A').length;
 				const totalCitations = gameState.totalCitations || 0;
 				const aPaperBonus = aPaperCount * 0.5;
 				const citationBonus = Math.floor(totalCitations / 500) * 0.5;
-				const baseIncome = Math.min(2 + aPaperBonus + citationBonus, 6);
+				const baseIncome = Math.min(1 + aPaperBonus + citationBonus, 6);
 				// ★★★ 修改：白手起家术 - 实习收入翻倍 ★★★
 				const internshipIncome = gameState.incomeDoubled ? baseIncome * 2 : baseIncome;
 				gameState.gold += internshipIncome;  // 实习收入
@@ -386,16 +378,16 @@
 				}
 			}
 
-			// ★★★ 指导师弟师妹效果（-SAN类）★★★
-			const mentorshipBuff = gameState.buffs.permanent.find(b => b.type === 'mentorship');
-			if(mentorshipBuff) {
-				// ★★★ 修改：被动效果不受季节buff影响，固定扣1 SAN ★★★
-				const sanCost = 1;
+			// ★★★ 指导师弟师妹效果（-SAN类，可叠加）★★★
+			const mentorshipBuffs = gameState.buffs.permanent.filter(b => b.type === 'mentorship');
+			if (mentorshipBuffs.length > 0) {
+				// ★★★ 修改：每个buff都扣1 SAN，可叠加 ★★★
+				const sanCost = mentorshipBuffs.length;
 				gameState.san -= sanCost;
 
-				// ★★★ 修改：引用加成 = 关系网中师弟师妹数量 × 3 ★★★
+				// ★★★ 修改：引用加成 = 关系网中师弟师妹数量 × 3 × buff数量 ★★★
 				const juniorCount = (gameState.relationships || []).filter(r => r.type === 'junior').length;
-				const citationBonus = juniorCount * 3;
+				const citationBonus = juniorCount * 3 * mentorshipBuffs.length;
 				gameState.totalCitations += citationBonus;
 				if (citationBonus > 0 && gameState.publishedPapers.length > 0) {
 					gameState.publishedPapers.forEach(paper => {
@@ -403,7 +395,7 @@
 					});
 				}
 
-				addLog('长期合作', '指导师弟师妹的成果', `SAN-${sanCost}，总引用+${citationBonus}（师弟师妹×${juniorCount}）`);
+				addLog('长期合作', '指导师弟师妹的成果', `SAN-${sanCost}（×${mentorshipBuffs.length}），总引用+${citationBonus}（师弟师妹×${juniorCount}×${mentorshipBuffs.length}）`);
 			}
 
 			// ★★★ 新增：自行车每月效果（-SAN类）★★★
@@ -625,6 +617,11 @@
 
 			// ★★★ 新增：更新人际关系进度 ★★★
 			updateRelationshipProgress();
+
+			// ★★★ 新增：实验室互帮互助天赋 - 每12月成长效果 ★★★
+			if (typeof applyLabTalentGrowth === 'function') {
+				applyLabTalentGrowth();
+			}
 
 			// ★★★ 新增：导师子女觉醒 - 每月自动和导师交流一次 ★★★
 			if (gameState.autoAdvisorChat) {
@@ -1075,22 +1072,31 @@
 					promotionRate += 4.0;  // best paper提供400%倍率
 				}
 
-				// 推广加成
-				if (paper.promotions?.arxiv) promotionRate += 0.25;
-				if (paper.promotions?.github) promotionRate += 0.5;
-				if (paper.promotions?.xiaohongshu) promotionRate += 0.25;
-
-				// 同门合作加成（期刊论文不享受，因为不是所有人都能中S类）
+				// ★★★ 修复：推广加成和同门合作加成都已包含在 citationMultiplier 中 ★★★
+				// citationMultiplier = 1 + arxiv(0.25) + github(0.5) + xiaohongshu(0.25) + 同门合作(1.0)
+				// 期刊论文不享受同门合作加成
 				if (paper.grade !== 'S') {
-					const fellowBonus = ((paper.citationMultiplier || 1) - 1) * 100 / 100;
-					promotionRate += fellowBonus;
+					const citationBonus = ((paper.citationMultiplier || 1) - 1);
+					promotionRate += citationBonus;
+				} else {
+					// S类论文只享受推广加成，不享受同门合作
+					if (paper.promotions?.arxiv) promotionRate += 0.25;
+					if (paper.promotions?.github) promotionRate += 0.5;
+					if (paper.promotions?.xiaohongshu) promotionRate += 0.25;
 				}
 
 				// 最终推广倍率 = 1 + 累加的所有加成
 				const promotionMultiplier = 1 + promotionRate;
 
-				// 最终增速 = 基础增速 × 影响因子 × 推广倍率
-				const finalGrowth = baseGrowth * impactFactor * promotionMultiplier;
+				// ★★★ 胡编乱造debuff：每个citation_halved乘以0.5，可叠加 ★★★
+				const citationHalvedBuffs = gameState.buffs.permanent.filter(b => b.type === 'citation_halved');
+				let citationPenalty = 1;
+				for (let i = 0; i < citationHalvedBuffs.length; i++) {
+					citationPenalty *= 0.5;
+				}
+
+				// 最终增速 = 基础增速 × 影响因子 × 推广倍率 × 胡编乱造惩罚
+				const finalGrowth = baseGrowth * impactFactor * promotionMultiplier * citationPenalty;
 
 				// 加上之前累积的小数部分
 				const totalGrowth = finalGrowth + paper.pendingCitationFraction;

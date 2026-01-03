@@ -151,7 +151,7 @@
 		}
 
 		// ★★★ 天赋弹窗分页状态 ★★★
-		let talentTreePage = 'character'; // 'character', 'relationship', 'equipment'
+		let talentTreePage = 'character'; // 'character', 'relationship1', 'relationship2', 'equipment'
 
 
 
@@ -203,9 +203,13 @@
 					background: ${page === 'character' ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'rgba(102,126,234,0.15)'};
 					color: ${page === 'character' ? 'white' : '#667eea'};
 				}
-				.talent-tab.relation-tab {
-					background: ${page === 'relationship' ? 'linear-gradient(135deg,#e91e63,#c2185b)' : 'rgba(233,30,99,0.15)'};
-					color: ${page === 'relationship' ? 'white' : '#e91e63'};
+				.talent-tab.relation1-tab {
+					background: ${page === 'relationship1' ? 'linear-gradient(135deg,#e91e63,#c2185b)' : 'rgba(233,30,99,0.15)'};
+					color: ${page === 'relationship1' ? 'white' : '#e91e63'};
+				}
+				.talent-tab.relation2-tab {
+					background: ${page === 'relationship2' ? 'linear-gradient(135deg,#00bcd4,#0097a7)' : 'rgba(0,188,212,0.15)'};
+					color: ${page === 'relationship2' ? 'white' : '#00bcd4'};
 				}
 				.talent-tab.equip-tab {
 					background: ${page === 'equipment' ? 'linear-gradient(135deg,#f39c12,#e67e22)' : 'rgba(243,156,18,0.15)'};
@@ -336,8 +340,11 @@
 					<button class="talent-tab char-tab" onclick="showTalentTree('character')">
 						👤 角色
 					</button>
-					<button class="talent-tab relation-tab" onclick="showTalentTree('relationship')">
-						💕 关系
+					<button class="talent-tab relation1-tab" onclick="showTalentTree('relationship1')">
+						💕 关系1
+					</button>
+					<button class="talent-tab relation2-tab" onclick="showTalentTree('relationship2')">
+						🏠 关系2
 					</button>
 					<button class="talent-tab equip-tab" onclick="showTalentTree('equipment')">
 						🛠️ 装备
@@ -450,10 +457,10 @@
 			html += `</div>`;
 			} // end if (page === 'character')
 
-			// ========== 关系天赋区 ==========
-			if (page === 'relationship') {
+			// ========== 关系天赋1区（导师+大牛+实习）==========
+			if (page === 'relationship1') {
 			html += `<div class="talent-section">
-				<div class="talent-section-title"><i class="fas fa-heart"></i> 关系天赋</div>`;
+				<div class="talent-section-title"><i class="fas fa-handshake"></i> 外部关系天赋</div>`;
 
 			// ★★★ 导师关系天赋 ★★★
 			const advisorPerson = gameState.relationships?.find(r => r.type === 'advisor');
@@ -520,53 +527,137 @@
 				</div>
 			`;
 
-			// 聪慧恋人
+			html += `</div>`;
+			} // end if (page === 'relationship1')
+
+			// ========== 关系天赋2区（实验室+恋人）==========
+			if (page === 'relationship2') {
+			html += `<div class="talent-section">
+				<div class="talent-section-title"><i class="fas fa-users"></i> 实验室与恋人天赋</div>`;
+
+			// ★★★ 实验室互帮互助天赋 ★★★
+			const labTalentActive = (typeof isLabTalentActive === 'function') ? isLabTalentActive() : false;
+			const teamSize = (typeof getTeamSize === 'function') ? getTeamSize() : 0;
+			const labBonus = (typeof getLabTalentBonus === 'function') ? getLabTalentBonus() : 0;
+			const relationshipCount = gameState.relationships?.filter(r => r.type !== 'advisor').length || 0;
+			html += `
+				<div class="talent-item ${labTalentActive ? 'active color-blue' : 'inactive'}">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">🤝</span>
+							<span class="talent-item-name">实验室互帮互助</span>
+							<span class="talent-item-status ${labTalentActive ? 'active' : 'inactive'}">${labTalentActive ? '已激活' : '未激活'}</span>
+						</div>
+						<div class="talent-item-desc">效果：想idea/做实验/写论文分数+团队人数</div>
+						<div class="talent-item-current">成长：每12月，恋人及同门科研+(组内科研>TA的人数)/2</div>
+						<div class="talent-item-next">当前：团队${teamSize}人，每次操作+${labBonus}分</div>
+						${!labTalentActive ? `<div class="talent-item-how">获取：同时拥有导师、师兄/师姐、师弟/师妹</div>` : ''}
+					</div>
+				</div>
+			`;
+
+			// ★★★ 恋人天赋（已激活的排在前面）★★★
 			const hasSmartLover = gameState.hasLover && gameState.loverType === 'smart';
+			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
 			const smartLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
 			const smartTasksCompleted = smartLoverPerson?.loverTasksCompleted || 0;
 			const smartIdeaTimes = 1 + Math.floor((smartTasksCompleted + 2) / 3);
 			const smartExpTimes = 1 + Math.floor((smartTasksCompleted + 1) / 3);
 			const smartWriteTimes = 1 + Math.floor(smartTasksCompleted / 3);
-			html += `
-				<div class="talent-item ${hasSmartLover ? 'active color-purple' : 'inactive'}">
-					<div class="talent-item-info">
-						<div class="talent-item-header">
-							<span class="talent-item-icon">💕</span>
-							<span class="talent-item-name">聪慧恋人</span>
-							<span class="talent-item-status ${hasSmartLover ? 'active' : 'inactive'}">${hasSmartLover ? '已激活' : '未激活'}</span>
-						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
-						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，想idea+${smartIdeaTimes}次，做实验+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
-						${!hasSmartLover ? `<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>` : ''}
-					</div>
-				</div>
-			`;
-
-			// 活泼恋人
-			const hasBeautifulLover = gameState.hasLover && gameState.loverType === 'beautiful';
 			const beautifulLoverPerson = gameState.relationships?.find(r => r.type === 'lover');
 			const beautifulTasksCompleted = beautifulLoverPerson?.loverTasksCompleted || 0;
 			const beautifulSanMaxBonus = 4 + Math.floor((beautifulTasksCompleted + 1) / 3);
 			const beautifulRecoveryRate = 10 + Math.floor(beautifulTasksCompleted / 3) * 2;
-			html += `
-				<div class="talent-item ${hasBeautifulLover ? 'active color-purple' : 'inactive'}">
+
+			// 根据激活状态决定显示顺序
+			if (hasSmartLover) {
+				// 聪慧恋人激活 - 先显示聪慧，后显示活泼
+				html += `
+				<div class="talent-item active color-purple">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">聪慧恋人</span>
+							<span class="talent-item-status active">已激活</span>
+						</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
+						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，想idea+${smartIdeaTimes}次，做实验+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
+					</div>
+				</div>
+				<div class="talent-item inactive">
 					<div class="talent-item-info">
 						<div class="talent-item-header">
 							<span class="talent-item-icon">💕</span>
 							<span class="talent-item-name">活泼恋人</span>
-							<span class="talent-item-status ${hasBeautifulLover ? 'active' : 'inactive'}">${hasBeautifulLover ? '已激活' : '未激活'}</span>
+							<span class="talent-item-status inactive">未激活</span>
+						</div>
+						<div class="talent-item-desc">效果：获得时SAN回满、SAN上限+4，每月金币-2，每月回复SAN</div>
+						<div class="talent-item-current">循环：回复10%已损SAN→SAN上限+1→月回复+2%</div>
+						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
+					</div>
+				</div>
+				`;
+			} else if (hasBeautifulLover) {
+				// 活泼恋人激活 - 先显示活泼，后显示聪慧
+				html += `
+				<div class="talent-item active color-purple">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">活泼恋人</span>
+							<span class="talent-item-status active">已激活</span>
 						</div>
 						<div class="talent-item-desc">效果：获得时SAN回满、SAN上限+4，每月金币-2，每月回复SAN</div>
 						<div class="talent-item-current">循环：回复10%已损SAN→SAN上限+1→月回复+2%</div>
 						<div class="talent-item-next">累计：已约会${beautifulTasksCompleted}次，SAN上限+${beautifulSanMaxBonus}，每月回复${beautifulRecoveryRate}%已损SAN</div>
-						${!hasBeautifulLover ? `<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>` : ''}
 					</div>
 				</div>
-			`;
+				<div class="talent-item inactive">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">聪慧恋人</span>
+							<span class="talent-item-status inactive">未激活</span>
+						</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
+						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
+					</div>
+				</div>
+				`;
+			} else {
+				// 都未激活 - 按原顺序显示
+				html += `
+				<div class="talent-item inactive">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">聪慧恋人</span>
+							<span class="talent-item-status inactive">未激活</span>
+						</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
+						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
+					</div>
+				</div>
+				<div class="talent-item inactive">
+					<div class="talent-item-info">
+						<div class="talent-item-header">
+							<span class="talent-item-icon">💕</span>
+							<span class="talent-item-name">活泼恋人</span>
+							<span class="talent-item-status inactive">未激活</span>
+						</div>
+						<div class="talent-item-desc">效果：获得时SAN回满、SAN上限+4，每月金币-2，每月回复SAN</div>
+						<div class="talent-item-current">循环：回复10%已损SAN→SAN上限+1→月回复+2%</div>
+						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
+					</div>
+				</div>
+				`;
+			}
 
 			html += `</div>`;
-			} // end if (page === 'relationship')
+			} // end if (page === 'relationship2')
 
 			// ========== 装备天赋区 ==========
 			if (page === 'equipment') {
@@ -642,7 +733,9 @@
 
 			html += `</div>`; // talent-container结束
 
-			const titleText = page === 'character' ? '👤 角色天赋' : (page === 'relationship' ? '💕 关系天赋' : '🛠️ 装备天赋');
+			const titleText = page === 'character' ? '👤 角色天赋' :
+				(page === 'relationship1' ? '💕 外部关系天赋' :
+				(page === 'relationship2' ? '🏠 实验室天赋' : '🛠️ 装备天赋'));
 			showModal(titleText, html, [{ text: '关闭', class: 'btn-primary', action: closeModal }]);
 		}
 		window.showTalentTree = showTalentTree;
@@ -1433,12 +1526,15 @@
 
 				// ★★★ 修改：第6年（延毕年）没有寒暑假和奖学金 ★★★
 				const isYear6 = year === 6;
+				// ★★★ 富可敌国：寒假压岁钱+4 ★★★
+				const isRichCharacter = !gameState.isReversed && gameState.character === 'rich';
+				const winterMoneyDesc = isRichCharacter ? '压岁钱+4' : '压岁钱+1';
 
 				if (month === 5) {
 					if (isYear6) {
 						events.push({ icon: '🔬', name: '全力科研', desc: '延毕年没有寒假，专心冲击Nature', color: 'rgba(155,89,182,0.25)' });
 					} else {
-						events.push({ icon: '❄️', name: '寒假', desc: '回家过年，压岁钱+1，SAN+2', color: 'rgba(116,185,255,0.25)' });
+						events.push({ icon: '❄️', name: '寒假', desc: `回家过年，${winterMoneyDesc}，SAN+2`, color: 'rgba(116,185,255,0.25)' });
 					}
 				}
 				if (month === 9) {

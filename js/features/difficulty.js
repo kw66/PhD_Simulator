@@ -843,12 +843,16 @@
 				if (effect.initialResearchBonus) {
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + effect.initialResearchBonus * count);
 					appliedEffects.push(`${blessing.name}×${count}: 科研+${effect.initialResearchBonus * count}`);
+					// ★★★ 修复：检测论文槽解锁 ★★★
+					if (typeof checkResearchUnlock === 'function') checkResearchUnlock(true);
 				}
 
 				// 自来熟：初始社交能力+3
 				if (effect.initialSocialBonus) {
 					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + effect.initialSocialBonus * count);
 					appliedEffects.push(`${blessing.name}×${count}: 社交+${effect.initialSocialBonus * count}`);
+					// ★★★ 修复：检测关系栏解锁 ★★★
+					if (typeof checkSocialUnlock === 'function') checkSocialUnlock(true);
 				}
 
 				// 一见如故：初始导师好感+4
@@ -920,6 +924,14 @@
 
 			// 保存祝福到gameState
 			gameState.activeBlessings = { ...difficultySettings.selectedBlessings };
+
+			// ★★★ 修复：检测局内成就（开局祝福可能直接达成某些成就）★★★
+			if (typeof checkInGameAchievements === 'function') {
+				// 延迟执行，确保UI已准备好
+				setTimeout(() => {
+					checkInGameAchievements();
+				}, 100);
+			}
 		}
 
 		// 每月应用诅咒效果（在nextMonth中调用）
@@ -989,11 +1001,16 @@
 
 			// 周期性成长（每6月）
 			if (gameState.totalMonths > 0 && gameState.totalMonths % 6 === 0) {
+				let hasGrowth = false;
+
 				// 厚积薄发：科研能力+10%
 				if (gameState.researchGrowthPercent && gameState.researchGrowthPercent > 0) {
 					const growth = Math.max(1, Math.floor(gameState.research * gameState.researchGrowthPercent / 100));
 					gameState.research = Math.min(gameState.researchMax || 20, gameState.research + growth);
 					effects.push(`厚积薄发: 科研+${growth}`);
+					// ★★★ 修复：检测论文槽解锁 ★★★
+					if (typeof checkResearchUnlock === 'function') checkResearchUnlock();
+					hasGrowth = true;
 				}
 
 				// 广结善缘：社交能力+10%
@@ -1001,6 +1018,9 @@
 					const growth = Math.max(1, Math.floor(gameState.social * gameState.socialGrowthPercent / 100));
 					gameState.social = Math.min(gameState.socialMax || 20, gameState.social + growth);
 					effects.push(`广结善缘: 社交+${growth}`);
+					// ★★★ 修复：检测关系栏解锁 ★★★
+					if (typeof checkSocialUnlock === 'function') checkSocialUnlock();
+					hasGrowth = true;
 				}
 
 				// 师恩渐深：导师好感+10%
@@ -1008,6 +1028,12 @@
 					const growth = Math.max(1, Math.floor(gameState.favor * gameState.favorGrowthPercent / 100));
 					gameState.favor = Math.min(gameState.favorMax || 20, gameState.favor + growth);
 					effects.push(`师恩渐深: 好感+${growth}`);
+					hasGrowth = true;
+				}
+
+				// ★★★ 修复：检测局内成就 ★★★
+				if (hasGrowth && typeof checkInGameAchievements === 'function') {
+					checkInGameAchievements();
 				}
 			}
 

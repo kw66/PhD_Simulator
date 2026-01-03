@@ -5,7 +5,8 @@
 			if (paper.ideaScore <= 0 || paper.expScore <= 0 || paper.writeScore <= 0) return;
 
 			const confInfo = getConferenceInfo(gameState.month, grade, gameState.year);
-			const location = getConferenceLocationByHash(paper.title);
+			// ★★★ 修复：使用与UI显示一致的地点，确保投稿时地点固定 ★★★
+			const location = getConferenceLocation(gameState.month, grade);
 
 			paper.reviewing = true;
 			paper.reviewMonths = 4;
@@ -897,7 +898,7 @@
 			const totalCitations = gameState.totalCitations || 0;
 			const bonusFromA = aPaperCount * 0.5;
 			const bonusFromCitations = Math.floor(totalCitations / 500) * 0.5;
-			const baseIncome = 2;
+			const baseIncome = 1;
 			const totalIncome = Math.min(baseIncome + bonusFromA + bonusFromCitations, 6);
 
 			// 显示拒绝次数警告
@@ -910,7 +911,7 @@
 			}
 
 			// ★★★ 收入说明 ★★★
-			const incomeExplain = `每月金钱 +${totalIncome}（基础2 + A会×0.5 + 每500引用×0.5，上限6）`;
+			const incomeExplain = `每月金钱 +${totalIncome}（基础1 + A会×0.5 + 每500引用×0.5，上限6）`;
 
 			showModal('🏢 实习邀请',
 				`<div style="text-align:center;margin-bottom:15px;">

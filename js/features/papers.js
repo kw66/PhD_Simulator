@@ -1195,10 +1195,18 @@
 				// ★★★ 新增：4K显示器加成（每10次看论文+1分）★★★
 				const monitorBonus = (typeof getMonitorIdeaBonus === 'function') ? getMonitorIdeaBonus() : 0;
 
+				// ★★★ 新增：实验室互帮互助天赋加成 ★★★
+				const labBonus = (typeof getLabTalentBonus === 'function') ? getLabTalentBonus() : 0;
+
 				for (let i = 0; i < times; i++) {
 					// ★★★ 第一次使用所有buff，后续只使用永久buff ★★★
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('idea', effectiveResearch, permanentOnly);
+
+					// ★★★ 实验室互帮互助天赋加成：每次都生效 ★★★
+					if (labBonus > 0) {
+						gen += labBonus;
+					}
 
 					// ★★★ 4K显示器加成：每次都生效 ★★★
 					if (monitorBonus > 0) {
@@ -1393,9 +1401,17 @@
 				const luxuryDivisor2 = 5;  // 豪华工位：每5点永久buff增加1点保底
 				const expFloor = 1 + (hasLuxuryWorkstation2 ? Math.floor(permanentExpBonus / luxuryDivisor2) : 0);
 
+				// ★★★ 新增：实验室互帮互助天赋加成 ★★★
+				const labBonus = (typeof getLabTalentBonus === 'function') ? getLabTalentBonus() : 0;
+
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('exp', effectiveResearch, permanentOnly);  // ★ 使用新函数
+
+					// ★★★ 实验室互帮互助天赋加成：每次都生效 ★★★
+					if (labBonus > 0) {
+						gen += labBonus;
+					}
 
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasGptSub && gptSub.bonusScore) {
@@ -1578,9 +1594,17 @@
 				const luxuryDivisor3 = 5;  // 豪华工位：每5点永久buff增加1点保底
 				const writeFloor = 1 + (hasLuxuryWorkstation3 ? Math.floor(permanentWriteBonus / luxuryDivisor3) : 0);
 
+				// ★★★ 新增：实验室互帮互助天赋加成 ★★★
+				const labBonus = (typeof getLabTalentBonus === 'function') ? getLabTalentBonus() : 0;
+
 				for (let i = 0; i < times; i++) {
 					const permanentOnly = (i > 0);
 					let gen = calculateScoreWithResearch('write', effectiveResearch, permanentOnly);  // ★ 使用新函数
+
+					// ★★★ 实验室互帮互助天赋加成：每次都生效 ★★★
+					if (labBonus > 0) {
+						gen += labBonus;
+					}
 
 					// ★★★ 订阅加成：每次都生效 ★★★
 					if (hasClaudeSub && claudeSub.bonusScore) {
@@ -1791,7 +1815,8 @@
 			if (!state) return;
 			
 			const confInfo = paper.conferenceInfo || getConferenceInfo(paper.submittedMonth || gameState.month, grade, gameState.year);
-			const confLocation = paper.conferenceLocation || getConferenceLocationByHash(paper.title);
+			// ★★★ 修复：兜底时使用与UI一致的地点获取方式 ★★★
+			const confLocation = paper.conferenceLocation || getConferenceLocation(paper.submittedMonth || gameState.month, grade);
 			
 			// 生成会议唯一标识
 			const confKey = `${confInfo.name}_${confInfo.year}`;

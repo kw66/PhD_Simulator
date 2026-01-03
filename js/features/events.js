@@ -5,18 +5,23 @@
 			const sanRecovery = Math.ceil(lostSan * 0.1);
 			const finalSan = Math.min(gameState.sanMax, gameState.san + sanRecovery);
 
+			// ★★★ 富可敌国：压岁钱+4（其他角色+1）★★★
+			const isRichCharacter = !gameState.isReversed && gameState.character === 'rich';
+			const moneyGain = isRichCharacter ? 4 : 1;
+			const moneyDesc = isRichCharacter ? '压岁钱+4（富可敌国）' : '压岁钱+1';
+
             showModal('❄️ 寒假',
                 `<p>寒假到了！回家过年，收到了长辈的压岁钱，好好休息一下吧～</p>
-				 <p style="font-size:0.85rem;color:var(--text-secondary);">已损失SAN: ${lostSan}，恢复10%: +${sanRecovery}</p>
+				 <p style="font-size:0.85rem;color:var(--text-secondary);">已损失SAN: ${lostSan}，恢复10%: +${sanRecovery}${isRichCharacter ? '，家境殷实压岁钱更多！' : ''}</p>
                  <div style="text-align:center;font-size:2rem;margin:15px 0;">🧧🏠🎆</div>`,
                 [{
                     text: '🎊 新年快乐！',
                     class: 'btn-accent',
 					action: () => {
-						gameState.gold += 1;
+						gameState.gold += moneyGain;
 						clampGold();  // ★★★ 赤贫学子诅咒 ★★★
 						gameState.san = finalSan;
-						addLog('❄️ 寒假', '回家过年', `压岁钱+1，SAN值+${sanRecovery}（恢复已损失的10%）`);
+						addLog('❄️ 寒假', '回家过年', `${moneyDesc}，SAN值+${sanRecovery}（恢复已损失的10%）`);
 						closeModal();
 						updateAllUI();
 					}
@@ -924,16 +929,16 @@
 			const mutualSanCost = getActualSanChange(-2);
 			const coopText = gameState.social < 6 ? `社交<6：SAN${mutualSanCost}，想+1次写+1次` : '社交≥6：想+1次写+1次';
 
-            showModal('🤝 随机事件', '<p>同门找你合作论文，你会选择。</p>', [
+            showModal('🤝 随机事件', '<p>同级找你合作论文，你会选择。</p>', [
                 { text: `学术交流（${exchangeText}）`, class: 'btn-primary', action: () => {
                     closeModal();
 					if (gameState.social < 6) {
 						gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
 						gameState.buffs.temporary.push({ type: 'idea_stolen', name: '下次想idea总分÷2', value: 0.5, multiply: true, permanent: false });
-						addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交<6】被同门窃取合作的idea，临时buff-下次想idea分数+5，临时debuff-下次想idea总分÷2');
+						addLog('随机事件', '同级找你合作论文 - 学术交流', '【社交<6】被同级窃取合作的idea，临时buff-下次想idea分数+5，临时debuff-下次想idea总分÷2');
 					} else {
                         gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数+5', value: 5, permanent: false });
-                        addLog('随机事件', '同门找你合作论文 - 学术交流', '【社交>=6】共同进步，临时buff-下次想idea分数+5');
+                        addLog('随机事件', '同级找你合作论文 - 学术交流', '【社交>=6】共同进步，临时buff-下次想idea分数+5');
                     }
                     updateAllUI();
                     updateBuffs();
@@ -947,15 +952,15 @@
 
 					if (Math.random() < 0.5) {
 						gameState.buffs.temporary.push({ type: 'citation_multiply', name: '下一篇中稿论文引用速度+100%', value: 2, permanent: false });
-						addLog('随机事件', '同门找你合作论文 - 约定互挂论文', `运气好，你们一起中了论文，${sanText}，临时buff-下一篇中稿的论文引用速度+100%（与其他推广加成叠加）`);
+						addLog('随机事件', '同级找你合作论文 - 约定互挂论文', `运气好，你们一起中了论文，${sanText}，临时buff-下一篇中稿的论文引用速度+100%（与其他推广加成叠加）`);
 					} else {
-                        addLog('随机事件', '同门找你合作论文 - 约定互挂论文', `同门太菜了，一直没中论文，${sanText}`);
+                        addLog('随机事件', '同级找你合作论文 - 约定互挂论文', `同级太菜了，一直没中论文，${sanText}`);
                     }
                     changeSan(baseSanCost);
                     updateBuffs();
                 }},
                 { text: '婉拒合作（无）', class: 'btn-info', action: () => {
-                    addLog('随机事件', '同门找你合作论文 - 婉拒合作', '无事发生');
+                    addLog('随机事件', '同级找你合作论文 - 婉拒合作', '无事发生');
                     closeModal();
                 }},
                 { text: `👥 开展全面合作（${coopText}）`, class: 'btn-success', action: () => {
@@ -968,7 +973,7 @@
                             { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
                             { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
                         );
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', `【社交<6】艰难合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次，${sanText}`);
+                        addLog('随机事件', '同级找你合作论文 - 开展全面合作', `【社交<6】艰难合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次，${sanText}`);
                         changeSan(baseSanCost);
                         updateBuffs();
                     } else {
@@ -976,13 +981,13 @@
                             { type: 'idea_times', name: '下次想idea多想1次', value: 1, permanent: false },
                             { type: 'write_times', name: '下次写论文多写1次', value: 1, permanent: false }
                         );
-                        addLog('随机事件', '同门找你合作论文 - 开展全面合作', '【社交>=6】深入合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次');
+                        addLog('随机事件', '同级找你合作论文 - 开展全面合作', '【社交>=6】深入合作，临时buff-下次想idea多想1次，临时buff-下次写论文多写1次');
                         updateAllUI();
                         updateBuffs();
 
                         // ★★★ 修改：只有社交>=6时才能加入关系网 ★★★
                         const peerPerson = createRelationshipPerson('peer', {
-                            description: '一起合作论文的同门，共同成长'
+                            description: '一起合作论文的同级，共同成长'
                         });
                         setTimeout(() => {
                             showAddToNetworkModal(peerPerson);

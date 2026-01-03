@@ -169,10 +169,10 @@
 			if (gameState.achievementConditions && gameState.achievementConditions.twoInOneConference) a.push('🏹 一箭双雕');
 			if (gameState.achievementConditions && gameState.achievementConditions.savedByPC) a.push('🎣 力挽狂澜');
 			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
-			if (rejectedLoverTwice && gameState.hasLover) { a.push('💕 我在等你');}
-			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
-			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
-			if (rejectedBigBullTwice && rejectedInternshipTwice) { a.push('🏠 偏安一隅');}
+			// ★★★ 修改：偏安一隅 - 拒绝过大牛联培和企业实习（拒绝一次也算）★★★
+			const rejectedBigBull = (gameState.rejectedBigBullCoopCount >= 1) || gameState.permanentlyBlockedBigBullCoop;
+			const rejectedInternship = (gameState.rejectedInternshipCount >= 1) || gameState.permanentlyBlockedInternship;
+			if (rejectedBigBull && rejectedInternship) { a.push('🏠 偏安一隅');}
 
 			// ★★★ 以下成就结局时判定（不需要顺利毕业）★★★
 			if (gameState.san > 20) a.push('⚡ 精力满满');
@@ -182,7 +182,8 @@
 			// ★★★ 修改：S类论文也算高端论文 ★★★
 			const paperS_achievement = (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
 			if ((gameState.paperA > 0 || paperS_achievement > 0) && gameState.paperB === 0 && gameState.paperC === 0) a.push('🎻 曲高和寡');
-			if (rejectedLoverTwice && !gameState.hasLover) { a.push('💔 不入爱河');}
+			// ★★★ 修改：不入爱河 - 两次拒绝聪慧恋人或活泼恋人（不再要求没有恋爱）★★★
+			if (rejectedLoverTwice) { a.push('💔 不入爱河');}
 			// 强身健体：打羽毛球后成功规避了感冒事件
 			if (gameState.achievementConditions && gameState.achievementConditions.badmintonAvoidedCold) a.push('💪 强身健体');
 			// 躲过一劫：数据丢失时没有正在进行的论文
@@ -364,11 +365,12 @@
 
 			// 社交事件相关
 			const rejectedLoverTwice = (gameState.rejectedBeautifulLoverCount >= 2) || (gameState.rejectedSmartLoverCount >= 2);
-			if (rejectedLoverTwice && gameState.hasLover) achievementsToCheck.push('💕 我在等你');
-			if (rejectedLoverTwice && !gameState.hasLover) achievementsToCheck.push('💔 不入爱河');
-			const rejectedBigBullTwice = (gameState.rejectedBigBullCoopCount >= 2);
-			const rejectedInternshipTwice = (gameState.rejectedInternshipCount >= 2);
-			if (rejectedBigBullTwice && rejectedInternshipTwice) achievementsToCheck.push('🏠 偏安一隅');
+			// ★★★ 修改：不入爱河 - 两次拒绝聪慧恋人或活泼恋人（不再要求没有恋爱）★★★
+			if (rejectedLoverTwice) achievementsToCheck.push('💔 不入爱河');
+			// ★★★ 修改：偏安一隅 - 拒绝过大牛联培和企业实习（拒绝一次也算）★★★
+			const rejectedBigBull_check = (gameState.rejectedBigBullCoopCount >= 1) || gameState.permanentlyBlockedBigBullCoop;
+			const rejectedInternship_check = (gameState.rejectedInternshipCount >= 1) || gameState.permanentlyBlockedInternship;
+			if (rejectedBigBull_check && rejectedInternship_check) achievementsToCheck.push('🏠 偏安一隅');
 
 			// ★★★ 新增5个成就检测 ★★★
 			if ((gameState.paperNature || 0) >= 1) achievementsToCheck.push('📰 Nature在手');
@@ -537,21 +539,8 @@
 			}
 
 			// ★★★ 调整顺序：生涯总结在前 ★★★
-			// 生涯总结 - 浅粉黄渐变背景
+			// 生涯总结 - 浅粉黄渐变背景（成就整合到此栏目底部）
 			html += `<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;margin-bottom:12px;">
-				<div style="text-align:center;margin-bottom:12px;">
-					<button onclick="showCareerSummary()"
-							style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;
-								   background:linear-gradient(135deg,#667eea,#764ba2);
-								   color:white;border:none;border-radius:25px;font-size:0.9rem;font-weight:600;
-								   cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4);
-								   transition:all 0.3s ease;font-family:inherit;"
-							onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102,126,234,0.5)'"
-							onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102,126,234,0.4)'">
-						<i class="fas fa-book-open"></i>
-						回顾我的研究生生涯
-					</button>
-				</div>
 				<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:0.8rem;color:#374151;">
 					<div>👤 角色：${gameState.characterName}</div>
 					<div>📅 历时：${gameState.totalMonths}个月</div>
@@ -577,27 +566,18 @@
 						🏢 实习${gameState.ailabInternship ? ' ✓' : ' ✗'}
 					</span>
 				</div>
+				${achievements.length > 0 ? `
+				<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.1);">
+					${achievements.map(a => `
+						<span style="padding:6px 12px;background:white;border-radius:20px;font-size:0.8rem;color:#374151;border:1px solid #e5e7eb;cursor:pointer;transition:all 0.2s ease;"
+							  onclick="showSingleAchievementRequirement('${a}')"
+							  onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'"
+							  onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+							${a}
+						</span>
+					`).join('')}
+				</div>` : ''}
 			</div>`;
-
-			if (achievements.length > 0) {
-				// 成就卡片 - 浅粉黄渐变背景
-				html += `
-					<div style="background:linear-gradient(180deg,rgba(254,215,170,0.5) 0%,rgba(252,165,165,0.4) 100%);border-radius:16px;padding:15px;margin-bottom:12px;">
-						<div style="font-weight:600;margin-bottom:10px;color:#d97706;">
-							<i class="fas fa-trophy"></i> 达成成就 (${achievements.length})
-						</div>
-						<div style="display:flex;flex-wrap:wrap;gap:8px;">
-							${achievements.map(a => `
-								<span style="padding:6px 12px;background:white;border-radius:20px;font-size:0.8rem;color:#374151;border:1px solid #e5e7eb;cursor:pointer;transition:all 0.2s ease;"
-									  onclick="showSingleAchievementRequirement('${a}')"
-									  onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'"
-									  onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
-									${a}
-								</span>
-							`).join('')}
-						</div>
-					</div>`;
-			}
 
 			// ★★★ 作者广告（在成就下方）★★★
 			if (isFailed) {
@@ -632,11 +612,22 @@
 				</div>`;
 			}
 
-			// ★★★ 重开和回溯按钮（同一行）★★★
+			// ★★★ 生涯回顾、重开和回溯按钮（同一行）★★★
 			html += `
 			<div style="display:flex;justify-content:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+				<button onclick="showCareerSummary()"
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
+							   background:linear-gradient(135deg,#667eea,#764ba2);
+							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+							   cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.35);
+							   transition:all 0.3s ease;font-family:inherit;"
+						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(102,126,234,0.45)'"
+						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102,126,234,0.35)'">
+					<i class="fas fa-book-open"></i>
+					生涯回顾
+				</button>
 				<button onclick="restartGame()"
-						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 30px;
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
 							   background:linear-gradient(135deg,#8b5cf6,#a78bfa);
 							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
 							   cursor:pointer;box-shadow:0 4px 15px rgba(139,92,246,0.35);
@@ -647,7 +638,7 @@
 					我要重开
 				</button>
 				<button onclick="closeModal();openAutoSaveModal()"
-						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 30px;
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
 							   background:linear-gradient(135deg,#f59e0b,#fbbf24);
 							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
 							   cursor:pointer;box-shadow:0 4px 15px rgba(245,158,11,0.35);
