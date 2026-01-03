@@ -767,7 +767,11 @@
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
                         document.getElementById('mobile-quick-bar').classList.add('game-active');
-                        
+
+                        // ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
+                        if (typeof resetAttributeTracking === 'function') {
+                            resetAttributeTracking();
+                        }
                         updateAllUI();
                         renderPaperSlots();
                         
@@ -1545,6 +1549,10 @@
 			document.getElementById('game-screen').style.display = 'block';
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
 
+			// ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
+			if (typeof resetAttributeTracking === 'function') {
+				resetAttributeTracking();
+			}
 			updateAllUI();
 			renderPaperSlots();
 			closeModal();

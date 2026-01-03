@@ -295,95 +295,197 @@
 				`;
 			}
 
+			// ★★★ 根据卡牌类型选择背面符号和样式 ★★★
+			let backSymbol = '🎴';
+			let backText = 'DESTINY';
+			let backClass = 'card-back normal-back';
+			let particleClass = 'normal-particle';
+			if (isTrueNormalAvailable) {
+				backSymbol = '👑';
+				backText = 'LEGEND';
+				backClass = 'card-back gold-back';
+				particleClass = 'gold-particle';
+			} else if (isReversedSide) {
+				backSymbol = '🌑';
+				backText = 'REVERSED';
+				backClass = 'card-back reversed-back';
+				particleClass = 'reversed-particle';
+			} else {
+				backSymbol = '☀️';
+				backText = 'UPRIGHT';
+				backClass = 'card-back normal-back';
+				particleClass = 'normal-particle';
+			}
+
+			// ★★★ 生成带翻转动画的卡牌HTML ★★★
 			previewContainer.innerHTML = `
-				<div class="${cardClass}" style="max-width:280px;">
-					<!-- 1. 角落装饰 -->
-					<div class="corner-decoration top-left"></div>
-					<div class="corner-decoration top-right"></div>
-					<div class="corner-decoration bottom-left"></div>
-					<div class="corner-decoration bottom-right"></div>
-
-					<!-- 头部 -->
-					<div class="preview-header">
-						<span class="preview-icon">${displayIcon}</span>
-						<div class="preview-title-row">
-							<span class="preview-name">${displayName}</span>
-							${modeTag}
+				<div class="card-flip-container">
+					<!-- 粒子容器 -->
+					<div class="card-particles-container" id="card-particles"></div>
+					<div class="card-flip-inner flipping">
+						<!-- 卡牌背面 -->
+						<div class="${backClass}" style="position:absolute;top:0;left:0;width:100%;">
+							<div class="card-back-pattern"></div>
+							<div class="card-back-stars">
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+							</div>
+							<div class="card-back-corner top-left"></div>
+							<div class="card-back-corner top-right"></div>
+							<div class="card-back-corner bottom-left"></div>
+							<div class="card-back-corner bottom-right"></div>
+							<div class="card-back-center">
+								<div class="card-back-symbol">${backSymbol}</div>
+								<div class="card-back-text">${backText}</div>
+							</div>
+							<div class="card-back-shine"></div>
 						</div>
-					</div>
+						<!-- 卡牌正面 -->
+						<div class="${cardClass}" style="max-width:280px;">
+							<!-- 1. 角落装饰 -->
+							<div class="corner-decoration top-left"></div>
+							<div class="corner-decoration top-right"></div>
+							<div class="corner-decoration bottom-left"></div>
+							<div class="corner-decoration bottom-right"></div>
 
-					<!-- 描述 -->
-					<div class="preview-desc">${displayDesc}</div>
+							<!-- 头部 -->
+							<div class="preview-header">
+								<span class="preview-icon">${displayIcon}</span>
+								<div class="preview-title-row">
+									<span class="preview-name">${displayName}</span>
+									${modeTag}
+								</div>
+							</div>
 
-					<!-- 加成 -->
-					<div class="preview-bonus ${bonusClass}">${displayBonus}</div>
+							<!-- 描述 -->
+							<div class="preview-desc">${displayDesc}</div>
 
-					<!-- 觉醒 -->
-					<div class="preview-awaken ${awakenClass}">
-						<div class="awaken-title">
-							<span>⚡ 转博觉醒:</span>
-							<span>${displayAwaken.icon} ${displayAwaken.name}</span>
-						</div>
-						<div class="awaken-desc">${displayAwaken.desc}</div>
-					</div>
-					
-					<!-- ★★★ 隐藏觉醒 ★★★ -->
-					${hiddenAwakenHtml}
+							<!-- 加成 -->
+							<div class="preview-bonus ${bonusClass}">${displayBonus}</div>
 
-					<!-- 记录统计 -->
-					<div class="meta-records" style="margin-top:10px;padding:8px;border-radius:8px;">
-						<table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
-							<thead>
-								<tr>
-									<th style="text-align:left;padding:2px 4px;font-weight:700;"></th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">科研分</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">引用</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">成就</th>
-									<th style="text-align:center;padding:2px 4px;font-weight:700;">难度</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td style="padding:3px 4px;font-weight:600;">我的最佳</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? localRecord.maxDifficulty : '-'}</td>
-								</tr>
-								<tr>
-									<td style="padding:3px 4px;font-weight:600;">今日全球</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? globalRecord.today.maxDifficulty : '-'}</td>
-								</tr>
-								<tr>
-									<td style="padding:3px 4px;font-weight:600;">历史全球</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
-									<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? globalRecord.history.maxDifficulty : '-'}</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+							<!-- 觉醒 -->
+							<div class="preview-awaken ${awakenClass}">
+								<div class="awaken-title">
+									<span>⚡ 转博觉醒:</span>
+									<span>${displayAwaken.icon} ${displayAwaken.name}</span>
+								</div>
+								<div class="awaken-desc">${displayAwaken.desc}</div>
+							</div>
 
-					<!-- 难度 -->
-					<div class="difficulty-container" style="margin-top:10px;">
-						<div>
-							<span class="difficulty-label">难度</span>
-							<div class="difficulty-stars">${starsHtml}</div>
-							${difficultyNote}
-						</div>
-						<div style="text-align:right;">
-							${badgeHtml}
-							<div class="difficulty-rate">
-								博士率:${rateText} (${totalGames}局)
+							<!-- ★★★ 隐藏觉醒 ★★★ -->
+							${hiddenAwakenHtml}
+
+							<!-- 记录统计 -->
+							<div class="meta-records" style="margin-top:10px;padding:8px;border-radius:8px;">
+								<table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+									<thead>
+										<tr>
+											<th style="text-align:left;padding:2px 4px;font-weight:700;"></th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">科研分</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">引用</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">成就</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">难度</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">我的最佳</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? localRecord.maxDifficulty : '-'}</td>
+										</tr>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">今日全球</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? globalRecord.today.maxDifficulty : '-'}</td>
+										</tr>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">历史全球</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? globalRecord.history.maxDifficulty : '-'}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<!-- 难度 -->
+							<div class="difficulty-container" style="margin-top:10px;">
+								<div>
+									<span class="difficulty-label">难度</span>
+									<div class="difficulty-stars">${starsHtml}</div>
+									${difficultyNote}
+								</div>
+								<div style="text-align:right;">
+									${badgeHtml}
+									<div class="difficulty-rate">
+										博士率:${rateText} (${totalGames}局)
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			`;
+
+			// ★★★ 延迟触发粒子效果（在背面展示阶段结束时） ★★★
+			setTimeout(() => {
+				createCardParticles(particleClass);
+			}, 300); // 0.3秒后（背面展示阶段结束时）触发粒子
+		}
+
+		// ★★★ 生成卡牌粒子效果 ★★★
+		function createCardParticles(particleClass) {
+			const container = document.getElementById('card-particles');
+			if (!container) return;
+
+			const particleCount = 20; // 粒子数量
+			const sizes = ['size-small', 'size-medium', 'size-large'];
+			const symbols = ['✦', '✧', '◆', '★', '✴'];
+
+			for (let i = 0; i < particleCount; i++) {
+				const particle = document.createElement('div');
+
+				// 随机决定是圆形粒子还是星形粒子
+				const isStar = Math.random() > 0.6;
+
+				if (isStar) {
+					particle.className = `card-particle star-particle ${particleClass} sparkle`;
+					particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+				} else {
+					const size = sizes[Math.floor(Math.random() * sizes.length)];
+					particle.className = `card-particle ${size} ${particleClass}`;
+				}
+
+				// 随机方向和距离
+				const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+				const distance = 80 + Math.random() * 100; // 80-180px
+				const tx = Math.cos(angle) * distance;
+				const ty = Math.sin(angle) * distance;
+
+				particle.style.setProperty('--tx', `${tx}px`);
+				particle.style.setProperty('--ty', `${ty}px`);
+
+				// 随机延迟
+				particle.style.animationDelay = `${Math.random() * 0.2}s`;
+
+				container.appendChild(particle);
+			}
+
+			// 1.5秒后清理粒子
+			setTimeout(() => {
+				if (container) {
+					container.innerHTML = '';
+				}
+			}, 1500);
 		}
 
 		// 选中角色并滚动到卡片位置（保留用于兼容）
@@ -1049,7 +1151,17 @@
 			document.getElementById('game-screen').style.display = 'block';
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
 
+			// ★★★ 停止开始页面粒子效果，启动游戏季节效果 ★★★
+			if (typeof SeasonEffects !== 'undefined') {
+				SeasonEffects.stopStartPageParticles();
+				SeasonEffects.updateTheme(gameState.month);
+			}
+
 			document.getElementById('log-content').innerHTML = '';
+			// ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
+			if (typeof resetAttributeTracking === 'function') {
+				resetAttributeTracking();
+			}
 			// ★★★ 修改：游戏开始时检查初始解锁状态（科研和社交）★★★
 			checkResearchUnlock(true);
 			checkSocialUnlock(true);

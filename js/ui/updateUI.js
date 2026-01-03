@@ -1,4 +1,62 @@
 ﻿        // ==================== UI更新 ====================
+		// ★★★ 属性变化追踪（用于动画） ★★★
+		let prevAttributes = {
+			san: null,
+			research: null,
+			social: null,
+			favor: null,
+			gold: null,
+			achievementCoins: null
+		};
+
+		// ★★★ 首次渲染标志（避免从0开始动画） ★★★
+		let isFirstRender = true;
+
+		// ★★★ 重置属性追踪状态（开始新游戏时调用） ★★★
+		function resetAttributeTracking() {
+			prevAttributes = {
+				san: null,
+				research: null,
+				social: null,
+				favor: null,
+				gold: null,
+				achievementCoins: null
+			};
+			isFirstRender = true;
+		}
+		window.resetAttributeTracking = resetAttributeTracking;
+
+		// ★★★ 设置进度条宽度（首次渲染时禁用transition） ★★★
+		function setProgressBarWidth(barEl, widthPercent) {
+			if (!barEl) return;
+			if (isFirstRender) {
+				// 首次渲染时禁用transition，直接设置宽度
+				barEl.style.transition = 'none';
+				barEl.style.width = widthPercent;
+				// 强制重绘后恢复transition
+				void barEl.offsetWidth;
+				barEl.style.transition = '';
+			} else {
+				barEl.style.width = widthPercent;
+			}
+		}
+
+		// ★★★ 月初状态保存（用于月末动画触发）★★★
+		let preMonthAttributes = null;
+
+		// ★★★ 保存月初前的属性状态 ★★★
+		function savePreMonthAttributes() {
+			preMonthAttributes = {
+				san: gameState.san,
+				research: gameState.research,
+				social: gameState.social,
+				favor: gameState.favor,
+				gold: gameState.gold,
+				achievementCoins: gameState.achievementCoins || 0
+			};
+		}
+		window.savePreMonthAttributes = savePreMonthAttributes;  // ★★★ 暴露到全局 ★★★
+
         function updateAllUI() {
             updateTimeDisplay();
             updateAttributes();
@@ -10,6 +68,9 @@
             renderRelationshipPanel();  // ★★★ 新增：更新人际关系面板 ★★★
             updatePeakStats();          // ★★★ 新增：更新峰值/谷值记录 ★★★
         }
+
+		// ★★★ 月份变化追踪（用于动画） ★★★
+		let prevMonth = null;
 
 		// ==================== 年月时间显示 ====================
 		function updateTimeDisplay() {
@@ -32,12 +93,32 @@
 				timeYearEl.textContent = `第${gameState.year}年`;
 			}
 			if (timeMonthEl) {
-				timeMonthEl.textContent = `第${gameState.month}月`;
+				// ★★★ 新增：月份变化时触发翻转动画 ★★★
+				const newMonthText = `第${gameState.month}月`;
+				if (prevMonth !== null && prevMonth !== gameState.month) {
+					// 月份变化，触发动画
+					timeMonthEl.classList.remove('month-change');
+					void timeMonthEl.offsetWidth; // 强制重绘
+					timeMonthEl.classList.add('month-change');
+					// 动画结束后移除类
+					setTimeout(() => {
+						timeMonthEl.classList.remove('month-change');
+					}, 500);
+				}
+				timeMonthEl.textContent = newMonthText;
+				prevMonth = gameState.month;
 			}
 			if (timeRemainingEl) {
 				const maxMonths = gameState.maxYears * 12;
 				const remaining = maxMonths - gameState.totalMonths;
 				timeRemainingEl.textContent = `剩余${remaining}月`;
+
+				// ★★★ 新增：时间紧迫时添加警告样式 ★★★
+				if (remaining <= 6) {
+					timeRemainingEl.classList.add('urgent');
+				} else {
+					timeRemainingEl.classList.remove('urgent');
+				}
 			}
 			// ★★★ 新增：更新季节显示（只显示单个汉字）★★★
 			if (timeSeasonEl) {
@@ -49,28 +130,209 @@
 					timeSeasonEl.title = `${season.icon}${season.name} - ${season.buff}：${season.desc}`;
 				}
 			}
+
+			// ★★★ 新增：更新季节主题效果 ★★★
+			if (typeof SeasonEffects !== 'undefined' && SeasonEffects.updateTheme) {
+				SeasonEffects.updateTheme(gameState.month);
+			}
+		}
+
+		// ★★★ 属性条动画触发函数 ★★★
+		function triggerAttributeAnimation(barEl, progressEl, valueEl, delta, attrName) {
+			if (!barEl || !progressEl) return;
+
+			// 移除之前的动画类
+			progressEl.classList.remove('pulse-increase', 'pulse-decrease', 'full-glow', 'low-warning', 'danger-flash');
+			barEl.classList.remove('wave-increase', 'wave-decrease');
+			if (valueEl) valueEl.classList.remove('value-increase', 'value-decrease');
+
+			// 强制重绘以重置动画
+			void progressEl.offsetWidth;
+
+			if (delta > 0) {
+				// 属性增加动画
+				progressEl.classList.add('pulse-increase');
+				barEl.classList.add('wave-increase');
+				if (valueEl) valueEl.classList.add('value-increase');
+				createFloatingChange(barEl.closest('.attribute-bar'), `+${delta}`, true);
+			} else if (delta < 0) {
+				// 属性减少动画
+				progressEl.classList.add('pulse-decrease');
+				barEl.classList.add('wave-decrease');
+				if (valueEl) valueEl.classList.add('value-decrease');
+				createFloatingChange(barEl.closest('.attribute-bar'), `${delta}`, false);
+			}
+
+			// 移除动画类（延迟后）
+			setTimeout(() => {
+				progressEl.classList.remove('pulse-increase', 'pulse-decrease');
+				barEl.classList.remove('wave-increase', 'wave-decrease');
+				if (valueEl) valueEl.classList.remove('value-increase', 'value-decrease');
+			}, 600);
+		}
+
+		// ★★★ 创建浮动数字变化提示 ★★★
+		function createFloatingChange(container, text, isPositive) {
+			if (!container) return;
+
+			const floater = document.createElement('div');
+			floater.className = `floating-change ${isPositive ? 'positive' : 'negative'}`;
+			floater.textContent = text;
+			container.appendChild(floater);
+
+			// 动画结束后移除
+			setTimeout(() => {
+				if (floater.parentNode) {
+					floater.parentNode.removeChild(floater);
+				}
+			}, 1000);
+		}
+
+		// ★★★ 货币动画触发函数（金币/成就币） ★★★
+		function triggerCurrencyAnimation(containerEl, valueEl, delta, type) {
+			if (!containerEl) return;
+
+			// 移除之前的动画类
+			containerEl.classList.remove('currency-increase', 'currency-decrease', 'gold-sparkle');
+			if (valueEl) valueEl.classList.remove('value-increase', 'value-decrease');
+
+			// 强制重绘
+			void containerEl.offsetWidth;
+
+			if (delta > 0) {
+				containerEl.classList.add('currency-increase');
+				if (type === 'gold') containerEl.classList.add('gold-sparkle');
+				if (valueEl) valueEl.classList.add('value-increase');
+				createFloatingCurrency(containerEl, `+${delta}`, true);
+			} else if (delta < 0) {
+				containerEl.classList.add('currency-decrease');
+				if (valueEl) valueEl.classList.add('value-decrease');
+				createFloatingCurrency(containerEl, `${delta}`, false);
+			}
+
+			// 移除动画类
+			setTimeout(() => {
+				containerEl.classList.remove('currency-increase', 'currency-decrease', 'gold-sparkle');
+				if (valueEl) valueEl.classList.remove('value-increase', 'value-decrease');
+			}, 600);
+		}
+
+		// ★★★ 创建浮动货币变化提示 ★★★
+		function createFloatingCurrency(container, text, isPositive) {
+			if (!container) return;
+
+			const floater = document.createElement('div');
+			floater.className = `floating-currency ${isPositive ? 'positive' : 'negative'}`;
+			floater.textContent = text;
+			container.appendChild(floater);
+
+			setTimeout(() => {
+				if (floater.parentNode) {
+					floater.parentNode.removeChild(floater);
+				}
+			}, 800);
+		}
+
+		// ★★★ 更新属性条状态效果（满值/低值/危险） ★★★
+		function updateAttributeStatusEffects() {
+			const attrs = [
+				{ bar: 'san-bar', valueId: 'san-value', value: gameState.san, max: gameState.sanMax, lowThreshold: 5, dangerThreshold: 2 },
+				{ bar: 'research-bar', valueId: 'research-value', value: gameState.research, max: gameState.researchMax || 20, lowThreshold: 0, dangerThreshold: 0 },
+				{ bar: 'social-bar', valueId: 'social-value', value: gameState.social, max: gameState.socialMax || 20, lowThreshold: 3, dangerThreshold: 1 },
+				{ bar: 'favor-bar', valueId: 'favor-value', value: gameState.favor, max: gameState.favorMax || 20, lowThreshold: 3, dangerThreshold: 1 }
+			];
+
+			attrs.forEach(attr => {
+				const progressEl = document.getElementById(attr.bar);
+				const barContainer = progressEl?.parentElement;
+				if (!progressEl || !barContainer) return;
+
+				// 移除进度条所有状态类
+				progressEl.classList.remove('full-glow', 'low-warning', 'danger-flash');
+
+				const ratio = attr.value / attr.max;
+
+				if (ratio >= 1) {
+					// 满值呼吸光效
+					progressEl.classList.add('full-glow');
+				} else if (attr.dangerThreshold > 0 && attr.value <= attr.dangerThreshold) {
+					// ★★★ 危险值：属性条快速闪烁 ★★★
+					progressEl.classList.add('danger-flash');
+				} else if (attr.lowThreshold > 0 && attr.value <= attr.lowThreshold) {
+					// ★★★ 低值警告：属性条慢速闪烁 ★★★
+					progressEl.classList.add('low-warning');
+				}
+			});
 		}
 
 		function updateAttributes() {
+			// ★★★ 如果有保存的月初状态，使用它来计算变化 ★★★
+			const compareState = preMonthAttributes || prevAttributes;
+
 			// ★★★ 修复：添加null检查避免错误 ★★★
 			const sanValueEl = document.getElementById('san-value');
 			const sanMaxEl = document.getElementById('san-max');
 			const sanBarEl = document.getElementById('san-bar');
+
+			// ★★★ 检测SAN变化并触发动画 ★★★
+			if (compareState.san !== null && compareState.san !== gameState.san) {
+				const delta = gameState.san - compareState.san;
+				triggerAttributeAnimation(
+					sanBarEl?.parentElement,
+					sanBarEl,
+					sanValueEl?.parentElement,
+					delta,
+					'san'
+				);
+			}
+			prevAttributes.san = gameState.san;
+
 			if (sanValueEl) sanValueEl.textContent = gameState.san;
 			if (sanMaxEl) sanMaxEl.textContent = gameState.sanMax;
-			if (sanBarEl) sanBarEl.style.width = `${Math.max(0, (gameState.san / gameState.sanMax) * 100)}%`;
+			// ★★★ 修改：使用setProgressBarWidth避免从0开始动画 ★★★
+			setProgressBarWidth(sanBarEl, `${((gameState.san + 1) / (gameState.sanMax + 1)) * 100}%`);
 
 			const researchMax = gameState.researchMax || 20;
 			const researchValueEl = document.getElementById('research-value');
 			const researchMaxEl = document.getElementById('research-max');
 			const researchBarEl = document.getElementById('research-bar');
+
+			// ★★★ 检测科研变化并触发动画 ★★★
+			if (compareState.research !== null && compareState.research !== gameState.research) {
+				const delta = gameState.research - compareState.research;
+				triggerAttributeAnimation(
+					researchBarEl?.parentElement,
+					researchBarEl,
+					researchValueEl?.parentElement,
+					delta,
+					'research'
+				);
+			}
+			prevAttributes.research = gameState.research;
+
 			if (researchValueEl) researchValueEl.textContent = gameState.research;
 			if (researchMaxEl) researchMaxEl.textContent = researchMax;
-			if (researchBarEl) researchBarEl.style.width = `${(gameState.research / researchMax) * 100}%`;
+			// ★★★ 修改：使用setProgressBarWidth避免从0开始动画 ★★★
+			setProgressBarWidth(researchBarEl, `${((gameState.research + 1) / (researchMax + 1)) * 100}%`);
 
 			// ★★★ 修改：支持动态社交上限，修复nth-child选择器(3而非4) ★★★
 			const socialMax = gameState.socialMax || 20;
 			const socialValueEl2 = document.getElementById('social-value');
+
+			// ★★★ 检测社交变化并触发动画 ★★★
+			if (compareState.social !== null && compareState.social !== gameState.social) {
+				const delta = gameState.social - compareState.social;
+				const socialBarEl = document.getElementById('social-bar');
+				triggerAttributeAnimation(
+					socialBarEl?.parentElement,
+					socialBarEl,
+					socialValueEl2?.parentElement,
+					delta,
+					'social'
+				);
+			}
+			prevAttributes.social = gameState.social;
+
 			if (socialValueEl2) socialValueEl2.textContent = gameState.social;
 			// 需要在HTML中添加social-max元素，或者修改显示方式
 			const socialValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(3) .value');
@@ -78,27 +340,72 @@
 				socialValueEl.innerHTML = `<span id="social-value">${gameState.social}</span>/${socialMax}`;
 			}
 			const socialBarEl = document.getElementById('social-bar');
-			if (socialBarEl) socialBarEl.style.width = `${(gameState.social / socialMax) * 100}%`;
+			// ★★★ 修改：使用setProgressBarWidth避免从0开始动画 ★★★
+			setProgressBarWidth(socialBarEl, `${((gameState.social + 1) / (socialMax + 1)) * 100}%`);
 
 			// ★★★ 修改：支持动态好感上限，修复nth-child选择器(4而非5) ★★★
 			const favorMax = gameState.favorMax || 20;
 			const favorValueEl2 = document.getElementById('favor-value');
+
+			// ★★★ 检测好感变化并触发动画 ★★★
+			if (compareState.favor !== null && compareState.favor !== gameState.favor) {
+				const delta = gameState.favor - compareState.favor;
+				const favorBarEl = document.getElementById('favor-bar');
+				triggerAttributeAnimation(
+					favorBarEl?.parentElement,
+					favorBarEl,
+					favorValueEl2?.parentElement,
+					delta,
+					'favor'
+				);
+			}
+			prevAttributes.favor = gameState.favor;
+
 			if (favorValueEl2) favorValueEl2.textContent = gameState.favor;
 			const favorValueEl = document.querySelector('#attributes-panel .attribute-bar:nth-child(4) .value');
 			if (favorValueEl) {
 				favorValueEl.innerHTML = `<span id="favor-value">${gameState.favor}</span>/${favorMax}`;
 			}
 			const favorBarEl = document.getElementById('favor-bar');
-			if (favorBarEl) favorBarEl.style.width = `${Math.max(0, (gameState.favor / favorMax) * 100)}%`;
+			// ★★★ 修改：使用setProgressBarWidth避免从0开始动画 ★★★
+			setProgressBarWidth(favorBarEl, `${((gameState.favor + 1) / (favorMax + 1)) * 100}%`);
 
 			const goldValueEl = document.getElementById('gold-value');
+			const goldCurrencyItem = document.getElementById('gold-currency-item');
+
+			// ★★★ 检测金币变化并触发动画 ★★★
+			if (compareState.gold !== null && compareState.gold !== gameState.gold) {
+				const delta = gameState.gold - compareState.gold;
+				triggerCurrencyAnimation(goldCurrencyItem, goldValueEl, delta, 'gold');
+			}
+			prevAttributes.gold = gameState.gold;
+
 			if (goldValueEl) goldValueEl.textContent = gameState.gold;
 			updateCharacterDisplay();
 
 			const achievementCoinsDisplay = document.getElementById('achievement-coins-display');
-			if (achievementCoinsDisplay) {
-				achievementCoinsDisplay.textContent = gameState.achievementCoins || 0;
+			const achievementCurrencyItem = document.getElementById('achievement-currency-item');
+
+			// ★★★ 检测成就币变化并触发动画 ★★★
+			const currentAchievementCoins = gameState.achievementCoins || 0;
+			if (compareState.achievementCoins !== null && compareState.achievementCoins !== currentAchievementCoins) {
+				const delta = currentAchievementCoins - compareState.achievementCoins;
+				triggerCurrencyAnimation(achievementCurrencyItem, achievementCoinsDisplay, delta, 'achievement');
 			}
+			prevAttributes.achievementCoins = currentAchievementCoins;
+
+			if (achievementCoinsDisplay) {
+				achievementCoinsDisplay.textContent = currentAchievementCoins;
+			}
+
+			// ★★★ 更新属性状态效果（满值/低值/危险） ★★★
+			updateAttributeStatusEffects();
+
+			// ★★★ 清除月初状态，避免后续非月末调用时重复触发动画 ★★★
+			preMonthAttributes = null;
+
+			// ★★★ 首次渲染完成后，后续更新使用transition动画 ★★★
+			isFirstRender = false;
 		}
 
 		function updateCharacterDisplay() {

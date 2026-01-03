@@ -930,6 +930,11 @@
             // 游戏结束返回时不刷新留言板/全球统计，等用户刷新页面时再更新（节省数据库流量）
             // loadGlobalStatsDisplay();
             // updateAllStatsDisplay();
+
+            // 启动开始页面数学符号粒子效果（清除季节效果）
+            if (typeof SeasonEffects !== 'undefined') {
+                SeasonEffects.startStartPageParticles();
+            }
         }
 
 		// ==================== Meta进度系统 ====================

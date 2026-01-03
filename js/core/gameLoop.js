@@ -20,6 +20,11 @@
 		}
 
 		function nextMonthInternal() {
+			// ★★★ 保存月初状态（用于动画触发）★★★
+			if (typeof savePreMonthAttributes === 'function') {
+				savePreMonthAttributes();
+			}
+
 			// ★★★ 安全机制：严格按照学位限制强制结束游戏 ★★★
 			// 硕士最多36个月，博士最多60个月，延毕最多72个月
 			// 注意：使用 > 而非 >=，确保在最后一个月时正常毕业逻辑能执行

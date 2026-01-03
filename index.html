@@ -299,15 +299,15 @@
 							<div class="progress-bar"><div class="progress-fill favor" id="favor-bar"></div></div>
 						</div>
 						<div class="currency-display">
-							<div class="currency-item">
+							<div class="currency-item" id="gold-currency-item">
 								<i class="fas fa-coins"></i>
 								<span>金币</span>
-								<span id="gold-value">1</span>
+								<span id="gold-value" class="currency-value">1</span>
 							</div>
-							<div class="currency-item achievement-currency">
+							<div class="currency-item achievement-currency" id="achievement-currency-item">
 								<i class="fas fa-trophy"></i>
 								<span>成就币</span>
-								<span id="achievement-coins-display">0</span>
+								<span id="achievement-coins-display" class="currency-value">0</span>
 							</div>
 						</div>
 					</div>
@@ -466,6 +466,8 @@
 
     <!-- Game Scripts (load in order) -->
     <script src="js/ui/panels.js"></script>
+    <script src="js/ui/seasonEffects.js"></script>
+    <script src="js/ui/uiEffects.js"></script>
     <script src="js/config/gameData.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/systems/stats.js"></script>

@@ -1,14 +1,112 @@
 ﻿        // ==================== 弹窗系统 ====================
         let modalCallbacks = [];
 
-        function showModal(title, content, buttons) {
+        // ★★★ 弹窗类型检测（基于标题关键词）★★★
+        function detectModalType(title) {
+            const titleLower = title.toLowerCase();
+
+            // 成就相关
+            if (titleLower.includes('成就') || titleLower.includes('🏆') || titleLower.includes('解锁')) {
+                return 'achievement';
+            }
+
+            // 毕业相关
+            if (titleLower.includes('毕业') || titleLower.includes('🎓')) {
+                return 'graduation';
+            }
+
+            // 论文中稿
+            if ((titleLower.includes('中稿') || titleLower.includes('录用') || titleLower.includes('接收')) &&
+                !titleLower.includes('拒稿')) {
+                return 'paper-accepted';
+            }
+
+            // 拒稿
+            if (titleLower.includes('拒稿') || titleLower.includes('被拒')) {
+                return 'rejected';
+            }
+
+            // 转博
+            if (titleLower.includes('转博') || titleLower.includes('博士')) {
+                return 'phd-upgrade';
+            }
+
+            // 里程碑事件
+            if (titleLower.includes('里程碑') || titleLower.includes('觉醒') ||
+                titleLower.includes('nature') || titleLower.includes('best paper')) {
+                return 'milestone';
+            }
+
+            // 好事件
+            if (titleLower.includes('恭喜') || titleLower.includes('成功') ||
+                titleLower.includes('获得') || titleLower.includes('奖') ||
+                titleLower.includes('✨') || titleLower.includes('🎉') ||
+                titleLower.includes('💰') || titleLower.includes('好感+')) {
+                return 'good';
+            }
+
+            // 坏事件
+            if (titleLower.includes('警告') || titleLower.includes('失败') ||
+                titleLower.includes('危险') || titleLower.includes('惩罚') ||
+                titleLower.includes('⚠') || titleLower.includes('❌') ||
+                titleLower.includes('损失') || titleLower.includes('扣')) {
+                return 'bad';
+            }
+
+            // 随机事件
+            if (titleLower.includes('随机') || titleLower.includes('🎲') ||
+                titleLower.includes('意外')) {
+                return 'random';
+            }
+
+            // 选择事件
+            if (titleLower.includes('选择') || titleLower.includes('⚖') ||
+                titleLower.includes('决定')) {
+                return 'choice';
+            }
+
+            return ''; // 默认无特殊主题
+        }
+
+        function showModal(title, content, buttons, options = {}) {
+            const modalEl = document.getElementById('modal');
+            const overlayEl = document.getElementById('modal-overlay');
+
+            // 移除所有主题类
+            modalEl.className = 'modal';
+
+            // 检测并应用主题
+            const modalType = options.type || detectModalType(title);
+            if (modalType) {
+                modalEl.classList.add('modal-' + modalType);
+            }
+
+            // 特殊效果：坏事件震动
+            if (modalType === 'bad' && options.shake !== false) {
+                setTimeout(() => {
+                    modalEl.classList.add('modal-shake');
+                    setTimeout(() => modalEl.classList.remove('modal-shake'), 500);
+                }, 100);
+            }
+
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-content').innerHTML = content;
             modalCallbacks = buttons.map(b => b.action);
             document.getElementById('modal-buttons').innerHTML = buttons.map((b, i) =>
                 `<button class="btn ${b.class}" onclick="modalCallbacks[${i}]()">${b.text}</button>`
             ).join('');
-            document.getElementById('modal-overlay').classList.add('active');
+            overlayEl.classList.add('active');
+
+            // 触发庆祝特效
+            if (typeof SeasonEffects !== 'undefined') {
+                if (modalType === 'paper-accepted' || modalType === 'achievement') {
+                    SeasonEffects.celebrateGoldBurst();
+                } else if (modalType === 'milestone') {
+                    SeasonEffects.celebrateConfetti();
+                } else if (modalType === 'graduation') {
+                    SeasonEffects.celebrateGraduation();
+                }
+            }
         }
 
         function closeModal() {
@@ -71,8 +169,58 @@
             const dateStr = `${degreeText}${gameState.year}-${gameState.month}月 剩${remaining}月`;
             const isNegative = result && (result.includes('-') || result.includes('拒稿') || result.includes('不满') || result.includes('失败') || result.includes('落选'));
             const isAchievement = event.includes('成就') || event.includes('🏆');
+
+            // ★★★ 日志分类系统 ★★★
+            const fullText = `${event} ${detail} ${result}`.toLowerCase();
+            let logType = '';
+            let isImportant = false;
+
+            // 警告类（最高优先级）
+            if (fullText.includes('警告') || fullText.includes('危险') || fullText.includes('注意') ||
+                fullText.includes('破产') || fullText.includes('退学') || fullText.includes('崩溃') ||
+                fullText.includes('san') && (fullText.includes('过低') || fullText.includes('归零'))) {
+                logType = 'log-warning';
+                isImportant = true;
+            }
+            // 成就/里程碑类
+            else if (isAchievement || fullText.includes('毕业') || fullText.includes('解锁') ||
+                     fullText.includes('升级') || fullText.includes('里程碑')) {
+                logType = 'log-milestone';
+                isImportant = true;
+            }
+            // 论文类
+            else if (fullText.includes('论文') || fullText.includes('投稿') || fullText.includes('中稿') ||
+                     fullText.includes('拒稿') || fullText.includes('审稿') || fullText.includes('期刊') ||
+                     fullText.includes('会议') || fullText.includes('paper') || fullText.includes('投递') ||
+                     fullText.includes('写作') || fullText.includes('实验') || fullText.includes('idea')) {
+                logType = 'log-paper';
+                // 中稿是重要事件
+                if (fullText.includes('中稿') || fullText.includes('接收') || fullText.includes('录用')) {
+                    isImportant = true;
+                }
+            }
+            // 金钱类
+            else if (fullText.includes('金币') || fullText.includes('金钱') || fullText.includes('打工') ||
+                     fullText.includes('购买') || fullText.includes('消费') || fullText.includes('报酬') ||
+                     fullText.includes('收入') || fullText.includes('支出') || fullText.includes('商店') ||
+                     result.includes('💰') || result.includes('¥')) {
+                logType = 'log-money';
+            }
+            // 关系类
+            else if (fullText.includes('好感') || fullText.includes('关系') || fullText.includes('导师') ||
+                     fullText.includes('师兄') || fullText.includes('师姐') || fullText.includes('恋人') ||
+                     fullText.includes('交流') || fullText.includes('约会') || fullText.includes('任务') ||
+                     fullText.includes('师弟') || fullText.includes('师妹') || fullText.includes('💕')) {
+                logType = 'log-relationship';
+            }
+            // 系统类（时间、入学等）
+            else if (fullText.includes('入学') || fullText.includes('开学') || fullText.includes('学期') ||
+                     fullText.includes('新的一年') || fullText.includes('月份') || event.includes('📅')) {
+                logType = 'log-system';
+            }
+
             const entry = document.createElement('div');
-            entry.className = `log-entry ${isNegative ? 'negative' : ''} ${isAchievement ? 'achievement' : ''}`;
+            entry.className = `log-entry ${isNegative ? 'negative' : ''} ${isAchievement ? 'achievement' : ''} ${logType} ${isImportant ? 'log-important' : ''}`;
             entry.style.position = 'relative';
             entry.style.overflow = 'hidden';
             entry.innerHTML = `<div class="date">[${dateStr}] ${event}</div><div class="event">${detail}</div>${result ? `<div class="result">→ ${result}</div>` : ''}`;
