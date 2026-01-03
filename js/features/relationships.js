@@ -840,15 +840,16 @@
             const unlockThresholds = [0, 0, 6, 12, 18];  // 每个槽位的解锁条件
 
             let html = `
-                <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <span><i class="fas fa-users"></i> 人际关系</span>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:400;">${relationships.length}/${unlockedSlots}</span>
-                        <button class="btn btn-info" onclick="showRelationshipHelp()" style="padding:3px 8px;font-size:0.75rem;">
+                <div class="panel-title collapsible" onclick="toggleCollapse('relationship-panel')">
+                    <i class="fas fa-users"></i> 人际关系
+                    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+                        <button class="btn btn-info" onclick="event.stopPropagation();showRelationshipHelp()" style="padding:3px 8px;font-size:0.75rem;">
                             <i class="fas fa-question-circle"></i> 说明
                         </button>
+                        <i class="fas fa-chevron-down collapse-icon" id="relationship-panel-collapse-icon"></i>
                     </div>
                 </div>
+                <div class="collapsible-content" id="relationship-panel-content">
             `;
 
             // 渲染所有槽位（包括未解锁的）
@@ -1021,6 +1022,8 @@
                     }
                 }
             }
+
+            html += '</div>';  // 关闭 collapsible-content
 
             container.innerHTML = html;
         }

@@ -478,7 +478,6 @@
 			const isTrueNormalAwakened = isTrueNormal && gameState.trueNormalAwakened;
 
 			// 获取装备信息
-			const amulets = gameState.amulets || {};
 			const furniture = gameState.furnitureBought || {};
 			const chairUpgrade = gameState.chairUpgrade;
 			const bikeUpgrade = gameState.bikeUpgrade;

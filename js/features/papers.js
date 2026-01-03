@@ -310,11 +310,9 @@
 
 				if (!unlocked) {
 					const req = [0, 6, 12, 18][i];
-					html += `<div class="paper-slot locked">
-						<div class="slot-header">
-							<span class="slot-title">论文槽${i + 1}</span>
-							<span class="reviewing-badge"><i class="fas fa-lock"></i> 科研${req}</span>
-						</div>
+					html += `<div class="paper-slot locked"
+						style="display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(0,0,0,0.05);border-radius:10px;border:2px dashed var(--border-color);min-height:50px;opacity:0.6;">
+						<span style="font-size:0.85rem;color:var(--text-secondary);">🔒 科研≥${req}解锁</span>
 					</div>`;
 				} else if (!paper) {
 					// ★★★ 升级槽位的空槽显示特殊样式 ★★★

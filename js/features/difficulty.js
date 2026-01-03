@@ -1041,9 +1041,6 @@
 			if (effects.length > 0) {
 				addLog('难度效果', effects.join('，'));
 			}
-
-			// 检查护身符
-			checkAmuletEffects();
 		}
 
 		// 获取修正后的转博要求

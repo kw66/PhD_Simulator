@@ -36,12 +36,13 @@
 				return;
 			}
 
-			// ★★★ 新增：重置行动次数 ★★★
+			// ★★★ 自动存档（每3个月，在月份增加前保存当前状态）★★★
+			// 注意：必须在重置actionCount之前调用，否则回溯时总是actionCount=0
+			autoSave();
+
+			// ★★★ 重置行动次数（在自动存档之后）★★★
 			gameState.actionCount = 0;
 			gameState.actionUsed = false;
-
-			// ★★★ 自动存档（每3个月，在月份增加前保存当前状态）★★★
-			autoSave();
 
 			// ★★★ 全力以赴成就：在进入毕业月之前记录状态 ★★★
 			const maxMonthsForAllOut = gameState.maxYears * 12;
@@ -55,9 +56,6 @@
 
 			gameState.month++;
 			gameState.totalMonths++;
-
-			// ★★★ 黑市：重置护身符每月使用记录 ★★★
-			resetAmuletMonthlyUsage();
 
 			// ============================================
 			// ★★★ 月初结算顺序优化：先重置类 ★★★
@@ -332,9 +330,6 @@
 					}
 				}
 
-				// ★★★ 黑市：零钱护身符检查 ★★★
-				checkAmuletEffects();
-
 				if (gameState.gold < 0) {
 					// ★★★ 修复：记录月度开销日志（用于失败结局显示）★★★
 					addLog('月度结算', '生活开销', `基础开销-1，恋人约会-2，金币不足`);
@@ -373,9 +368,6 @@
 
 				// ★★★ 修复：记录实习效果日志（用于失败结局显示）★★★
 				addLog('月度结算', 'AILab实习', `金币+${internshipIncome}，SAN-${sanCost}`);
-
-				// ★★★ 黑市：理智护身符检查 ★★★
-				checkAmuletEffects();
 
 				if (gameState.san < 0) {
 					triggerEnding('burnout');
@@ -437,9 +429,6 @@
 						`累计骑行消耗${gameState.bikeSanSpent}SAN，但已达上限增益最大值+${maxSanGain}`);
 				}
 
-				// ★★★ 黑市：理智护身符检查 ★★★
-				checkAmuletEffects();
-
 				if (gameState.san < 0) {
 					// ★★★ 修复：记录骑行效果日志（用于失败结局显示）★★★
 					const bikeType = gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车';
@@ -455,9 +444,6 @@
 			if (typeof applyMonthlyCurseEffects === 'function') {
 				applyMonthlyCurseEffects();
 			}
-
-			// ★★★ 诅咒效果后护身符检查 ★★★
-			checkAmuletEffects();
 
 			// ★★★ 诅咒效果后检查游戏结局 ★★★
 			if (gameState.san < 0) {
@@ -535,8 +521,6 @@
 					});
 					addLog('双屏显示器', '自动浏览论文', 'SAN-2，想idea分数+3');
 				}
-				// 护身符检查
-				checkAmuletEffects();
 				if (gameState.san < 0) {
 					triggerEnding('burnout');
 					return;

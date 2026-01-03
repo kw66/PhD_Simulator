@@ -70,8 +70,6 @@
                 gameState.san += delta;
             }
             updateAllUI();
-            // ★★★ 黑市：理智护身符检查 ★★★
-            checkAmuletEffects();
             if (gameState.san < 0) {
                 triggerEnding('burnout');
                 return false;
@@ -107,8 +105,6 @@
 			// ★★★ 新增：赤贫学子诅咒 - 金币上限检查 ★★★
 			clampGold();
 			updateAllUI();
-			// ★★★ 黑市：零钱护身符检查 ★★★
-			checkAmuletEffects();
 			if (gameState.gold < 0) {
 				triggerEnding('poor');
 				return false;
@@ -203,8 +199,6 @@
 			}
 
 			updateAllUI();
-			// ★★★ 黑市：好感护身符检查 ★★★
-			checkAmuletEffects();
 			if (gameState.favor < 0) {
 				triggerEnding('expelled');
 				return false;
@@ -291,9 +285,6 @@
 			} else {
 				gameState.social += delta;
 			}
-
-			// ★★★ 黑市：社交护身符检查 ★★★
-			checkAmuletEffects();
 
 			// 检查社交能力是否为负数
 			if (gameState.social < 0) {
@@ -529,9 +520,6 @@
 			}
             
             updateAllUI();
-
-            // ★★★ 黑市：护身符效果检查（可能重置属性归零状态）★★★
-            checkAmuletEffects();
 
             // ★★★ 重新检查是否还需要触发结局 ★★★
             gameOver = false;

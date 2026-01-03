@@ -4,20 +4,21 @@
 
 		// ==================== 自动存档系统 ====================
 		const AUTO_SAVE_KEY = 'graduateSimulatorAutoSaves';
+		const LATEST_SAVE_KEY = 'graduateSimulatorLatestSave';  // ★★★ 新增：最近月份存档 ★★★
 		const MAX_AUTO_SAVES = 20;  // 最多保存20个自动存档
 
         function getSaves() {
             const saves = localStorage.getItem(SAVE_KEY);
             return saves ? JSON.parse(saves) : [];
         }
-		
+
 		// 检查存档是否在有效时间范围内（北京时间2025年12月13日8点之后）
 		function isValidSaveTime(saveTime) {
 			if (!saveTime) return false;
-			
+
 			// 截止时间：北京时间 2025-12-13 08:00
 			const cutoffTimeStr = '2025-12-15 08:00';
-			
+
 			// 直接字符串比较（存档时间格式: "YYYY-MM-DD HH:mm"）
 			return saveTime >= cutoffTimeStr;
 		}
@@ -329,18 +330,6 @@
 				favorMax: gameState.favorMax || 20,
 				achievementCoins: gameState.achievementCoins || 0,
 				earnedAchievementsThisGame: [...(gameState.earnedAchievementsThisGame || [])],  // ★★★ 新增 ★★★
-				// ★★★ 修复：保存黑市状态 ★★★
-				blackMarketState: blackMarketState ? {
-					currentItems: blackMarketState.currentItems.map(item => ({
-						id: item.item.id,
-						locked: item.locked
-					})),
-					refreshCount: blackMarketState.refreshCount || 0,
-					lastAutoRefreshMonth: blackMarketState.lastAutoRefreshMonth || 0,
-					amuletUsedThisMonth: {...(blackMarketState.amuletUsedThisMonth || {})}
-				} : null,
-				// ★★★ 修复：保存护身符状态 ★★★
-				amulets: gameState.amulets ? {...gameState.amulets} : null,
 				// ★★★ 新增：商店机制字段 ★★★
 				freeRefreshTickets: gameState.freeRefreshTickets || 0,
 				refreshDiscount: gameState.refreshDiscount || 0,
@@ -439,9 +428,42 @@
 				achievementPointShop: gameState.achievementPointShop ? {
 					purchaseCount: gameState.achievementPointShop.purchaseCount || 0,
 					accumulated: gameState.achievementPointShop.accumulated ? {...gameState.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
-				} : null
+				} : null,
+				// ★★★ 补全遗漏的字段 ★★★
+				yearEndSummaryTriggeredThisYear: gameState.yearEndSummaryTriggeredThisYear || 0,
+				bikeSanMaxGained: gameState.bikeSanMaxGained || 0,
+				submissionHistory: gameState.submissionHistory ? [...gameState.submissionHistory] : [],
+				maliciousReviewerCount: gameState.maliciousReviewerCount || 0,
+				thirtyNineQuestionsCount: gameState.thirtyNineQuestionsCount || 0,
+				gamePlayCount: gameState.gamePlayCount || 0,
+				scholarshipCount: gameState.scholarshipCount || 0,
+				serverCrashCount: gameState.serverCrashCount || 0,
+				dataLossCount: gameState.dataLossCount || 0,
+				firstOralMonth: gameState.firstOralMonth || 0,
+				firstJournalMonth: gameState.firstJournalMonth || 0,
+				firstMentoringMonth: gameState.firstMentoringMonth || 0,
+				firstWorkMonth: gameState.firstWorkMonth || 0,
+				firstLoverMonth: gameState.firstLoverMonth || 0,
+				startYear: gameState.startYear || new Date().getFullYear(),
+				badmintonChampionCount: gameState.badmintonChampionCount || 0,
+				totalSoldCoins: gameState.totalSoldCoins || 0,
+				naturallyDried: gameState.naturallyDried || false,
+				consecutiveLowSanMonths: gameState.consecutiveLowSanMonths || 0,
+				normalAwakened: gameState.normalAwakened || false,
+				lastIdeaScore: gameState.lastIdeaScore || 0,
+				lastExpScore: gameState.lastExpScore || 0,
+				lastWriteScore: gameState.lastWriteScore || 0,
+				// ★★★ 新增：商店系统遗漏字段 ★★★
+				coffeeBoughtThisMonth: gameState.coffeeBoughtThisMonth || 0,
+				gpuRentedThisMonth: gameState.gpuRentedThisMonth || 0,
+				hasCoffeeMachine: gameState.hasCoffeeMachine || false,
+				coffeeMachineUpgrade: gameState.coffeeMachineUpgrade || null,
+				coffeeMachineCount: gameState.coffeeMachineCount || 0,
+				coffeeMachineBonusLevel: gameState.coffeeMachineBonusLevel || 0,
+				monitorUpgrade: gameState.monitorUpgrade || null,
+				smartMonitorReadCount: gameState.smartMonitorReadCount || 0
             };
-            
+
             saves[slot] = saveData;
             saveSaves(saves);
             closeModal();
@@ -693,19 +715,7 @@
                             document.body.classList.remove('reversed-theme');
                             isReversedMode = false;
                         }
-						
-						// ★★★ 修复：恢复黑市状态 ★★★
-						if (save.blackMarketState) {
-							blackMarketState.currentItems = save.blackMarketState.currentItems.map(savedItem => {
-								const item = blackMarketItems.find(i => i.id === savedItem.id);
-								return item ? { item, locked: savedItem.locked } : null;
-							}).filter(Boolean);
-							blackMarketState.refreshCount = save.blackMarketState.refreshCount || 0;
-							blackMarketState.lastAutoRefreshMonth = save.blackMarketState.lastAutoRefreshMonth || 0;
-							blackMarketState.amuletUsedThisMonth = save.blackMarketState.amuletUsedThisMonth || {};
-						}
-						// ★★★ 修复：恢复护身符状态 ★★★
-						gameState.amulets = save.amulets ? {...save.amulets} : null;
+
 						gameState.achievementCoins = save.achievementCoins || 0;
 						gameState.earnedAchievementsThisGame = save.earnedAchievementsThisGame ? [...save.earnedAchievementsThisGame] : [];
 						// ★★★ 新增：恢复商店机制字段 ★★★
@@ -763,6 +773,38 @@
 								accumulated: save.achievementPointShop.accumulated ? {...save.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
 							};
 						}
+
+						// ★★★ 补全遗漏的字段 ★★★
+						gameState.yearEndSummaryTriggeredThisYear = save.yearEndSummaryTriggeredThisYear || 0;
+						gameState.bikeSanMaxGained = save.bikeSanMaxGained || 0;
+						gameState.submissionHistory = save.submissionHistory ? [...save.submissionHistory] : [];
+						gameState.maliciousReviewerCount = save.maliciousReviewerCount || 0;
+						gameState.thirtyNineQuestionsCount = save.thirtyNineQuestionsCount || 0;
+						gameState.gamePlayCount = save.gamePlayCount || 0;
+						gameState.scholarshipCount = save.scholarshipCount || 0;
+						gameState.serverCrashCount = save.serverCrashCount || 0;
+						gameState.dataLossCount = save.dataLossCount || 0;
+						gameState.firstOralMonth = save.firstOralMonth || 0;
+						gameState.firstJournalMonth = save.firstJournalMonth || 0;
+						gameState.firstMentoringMonth = save.firstMentoringMonth || 0;
+						gameState.firstWorkMonth = save.firstWorkMonth || 0;
+						gameState.firstLoverMonth = save.firstLoverMonth || 0;
+						gameState.startYear = save.startYear || new Date().getFullYear();
+						gameState.badmintonChampionCount = save.badmintonChampionCount || 0;
+						gameState.totalSoldCoins = save.totalSoldCoins || 0;
+						gameState.naturallyDried = save.naturallyDried || false;
+						gameState.consecutiveLowSanMonths = save.consecutiveLowSanMonths || 0;
+						gameState.normalAwakened = save.normalAwakened || false;
+
+						// ★★★ 新增：恢复商店系统遗漏字段 ★★★
+						gameState.coffeeBoughtThisMonth = save.coffeeBoughtThisMonth || 0;
+						gameState.gpuRentedThisMonth = save.gpuRentedThisMonth || 0;
+						gameState.hasCoffeeMachine = save.hasCoffeeMachine || false;
+						gameState.coffeeMachineUpgrade = save.coffeeMachineUpgrade || null;
+						gameState.coffeeMachineCount = save.coffeeMachineCount || 0;
+						gameState.coffeeMachineBonusLevel = save.coffeeMachineBonusLevel || 0;
+						gameState.monitorUpgrade = save.monitorUpgrade || null;
+						gameState.smartMonitorReadCount = save.smartMonitorReadCount || 0;
 
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
@@ -845,6 +887,20 @@
 
 		function clearAutoSaves() {
 			localStorage.removeItem(AUTO_SAVE_KEY);
+		}
+
+		// ★★★ 新增：最近月份存档相关函数 ★★★
+		function getLatestSave() {
+			const save = localStorage.getItem(LATEST_SAVE_KEY);
+			return save ? JSON.parse(save) : null;
+		}
+
+		function saveLatestSave(save) {
+			localStorage.setItem(LATEST_SAVE_KEY, JSON.stringify(save));
+		}
+
+		function clearLatestSave() {
+			localStorage.removeItem(LATEST_SAVE_KEY);
 		}
 
 		// 创建存档数据（复用逻辑）
@@ -1009,18 +1065,6 @@
 				favorMax: gameState.favorMax || 20,
 				achievementCoins: gameState.achievementCoins || 0,
 				earnedAchievementsThisGame: [...(gameState.earnedAchievementsThisGame || [])],
-				// ★★★ 修复：保存黑市状态到自动存档 ★★★
-				blackMarketState: blackMarketState ? {
-					currentItems: blackMarketState.currentItems.map(item => ({
-						id: item.item.id,
-						locked: item.locked
-					})),
-					refreshCount: blackMarketState.refreshCount || 0,
-					lastAutoRefreshMonth: blackMarketState.lastAutoRefreshMonth || 0,
-					amuletUsedThisMonth: {...(blackMarketState.amuletUsedThisMonth || {})}
-				} : null,
-				// ★★★ 修复：保存护身符状态 ★★★
-				amulets: gameState.amulets ? {...gameState.amulets} : null,
 				// ★★★ 新增：商店机制字段 ★★★
 				freeRefreshTickets: gameState.freeRefreshTickets || 0,
 				refreshDiscount: gameState.refreshDiscount || 0,
@@ -1067,6 +1111,12 @@
 				paperNature: gameState.paperNature || 0,
 				paperNatureSub: gameState.paperNatureSub || 0,
 				upgradedSlots: gameState.upgradedSlots ? [...gameState.upgradedSlots] : [],
+				// ★★★ 新增：槽位发表A类记录 ★★★
+				slotPublishedA: gameState.slotPublishedA ? [...gameState.slotPublishedA] : [false, false, false, false],
+				// ★★★ 新增：学校信息 ★★★
+				university: gameState.university ? {...gameState.university} : null,
+				// ★★★ 新增：转博选择标志 ★★★
+				phdChoiceMadeThisYear: gameState.phdChoiceMadeThisYear || false,
 				// ★★★ 新增：永久解锁记录 ★★★
 				paperSlotsUnlocked: gameState.paperSlotsUnlocked || gameState.paperSlots || 1,
 				relationshipSlotsUnlocked: gameState.relationshipSlotsUnlocked || 2,
@@ -1116,69 +1166,127 @@
 				achievementPointShop: gameState.achievementPointShop ? {
 					purchaseCount: gameState.achievementPointShop.purchaseCount || 0,
 					accumulated: gameState.achievementPointShop.accumulated ? {...gameState.achievementPointShop.accumulated} : { san: 0, research: 0, social: 0, favor: 0, gold: 0 }
-				} : null
+				} : null,
+				// ★★★ 补全遗漏的字段 ★★★
+				yearEndSummaryTriggeredThisYear: gameState.yearEndSummaryTriggeredThisYear || 0,
+				bikeSanMaxGained: gameState.bikeSanMaxGained || 0,
+				submissionHistory: gameState.submissionHistory ? [...gameState.submissionHistory] : [],
+				maliciousReviewerCount: gameState.maliciousReviewerCount || 0,
+				thirtyNineQuestionsCount: gameState.thirtyNineQuestionsCount || 0,
+				gamePlayCount: gameState.gamePlayCount || 0,
+				scholarshipCount: gameState.scholarshipCount || 0,
+				serverCrashCount: gameState.serverCrashCount || 0,
+				dataLossCount: gameState.dataLossCount || 0,
+				firstOralMonth: gameState.firstOralMonth || 0,
+				firstJournalMonth: gameState.firstJournalMonth || 0,
+				firstMentoringMonth: gameState.firstMentoringMonth || 0,
+				firstWorkMonth: gameState.firstWorkMonth || 0,
+				firstLoverMonth: gameState.firstLoverMonth || 0,
+				startYear: gameState.startYear || new Date().getFullYear(),
+				badmintonChampionCount: gameState.badmintonChampionCount || 0,
+				totalSoldCoins: gameState.totalSoldCoins || 0,
+				naturallyDried: gameState.naturallyDried || false,
+				consecutiveLowSanMonths: gameState.consecutiveLowSanMonths || 0,
+				normalAwakened: gameState.normalAwakened || false,
+				lastIdeaScore: gameState.lastIdeaScore || 0,
+				lastExpScore: gameState.lastExpScore || 0,
+				lastWriteScore: gameState.lastWriteScore || 0,
+				// ★★★ 新增：商店系统遗漏字段 ★★★
+				coffeeBoughtThisMonth: gameState.coffeeBoughtThisMonth || 0,
+				gpuRentedThisMonth: gameState.gpuRentedThisMonth || 0,
+				hasCoffeeMachine: gameState.hasCoffeeMachine || false,
+				coffeeMachineUpgrade: gameState.coffeeMachineUpgrade || null,
+				coffeeMachineCount: gameState.coffeeMachineCount || 0,
+				coffeeMachineBonusLevel: gameState.coffeeMachineBonusLevel || 0,
+				monitorUpgrade: gameState.monitorUpgrade || null,
+				smartMonitorReadCount: gameState.smartMonitorReadCount || 0
 			};
 		}
 
-		// 自动存档（每3个月触发一次，从第3月开始）
+		// 自动存档（每3个月触发一次，从第3月开始）+ 最近月份存档（每月）
 		function autoSave() {
-			// 检查是否应该自动存档：第3, 6, 9, 12月...
-			if (gameState.totalMonths < 3 || gameState.totalMonths % 3 !== 0) {
-				return;
-			}
-
-			const autoSaves = getAutoSaves();
 			const saveData = createSaveData();
-
-			// 添加自动存档标签
 			saveData.autoSaveLabel = `第${gameState.year}年第${gameState.month}月`;
 			saveData.isAutoSave = true;
-			// 添加唯一标识符用于去重
 			saveData.saveKey = `${gameState.year}-${gameState.month}`;
 
-			// ★★★ 去重逻辑：同一时间点只保留一个存档 ★★★
-			// 查找是否已存在同一时间点的存档
-			const existingIndex = autoSaves.findIndex(save =>
-				save && save.saveKey === saveData.saveKey
-			);
+			// ★★★ 新增：每月保存最近月份存档（固定覆盖）★★★
+			const latestSaveData = {...saveData};
+			latestSaveData.isLatestSave = true;  // 标记为最近存档
+			saveLatestSave(latestSaveData);
 
-			if (existingIndex !== -1) {
-				// 已存在同一时间点的存档，覆盖它
-				autoSaves[existingIndex] = saveData;
-				addLog('系统', '自动存档', `已覆盖 ${saveData.autoSaveLabel} 的存档`);
-			} else {
-				// 不存在同一时间点的存档，插入到最前面
-				autoSaves.unshift(saveData);
-				addLog('系统', '自动存档', `已保存 ${saveData.autoSaveLabel} 的进度`);
+			// ★★★ 每3个月保存常规自动存档 ★★★
+			if (gameState.totalMonths >= 3 && gameState.totalMonths % 3 === 0) {
+				const autoSaves = getAutoSaves();
+
+				// 去重逻辑：同一时间点只保留一个存档
+				const existingIndex = autoSaves.findIndex(save =>
+					save && save.saveKey === saveData.saveKey
+				);
+
+				if (existingIndex !== -1) {
+					autoSaves[existingIndex] = saveData;
+					addLog('系统', '自动存档', `已覆盖 ${saveData.autoSaveLabel} 的存档`);
+				} else {
+					autoSaves.unshift(saveData);
+					addLog('系统', '自动存档', `已保存 ${saveData.autoSaveLabel} 的进度`);
+				}
+
+				// 保留最近20个
+				while (autoSaves.length > MAX_AUTO_SAVES) {
+					autoSaves.pop();
+				}
+
+				saveAutoSaves(autoSaves);
 			}
-
-			// 保留最近20个
-			while (autoSaves.length > MAX_AUTO_SAVES) {
-				autoSaves.pop();
-			}
-
-			saveAutoSaves(autoSaves);
 		}
 
 		// 打开自动存档读取弹窗
 		function openAutoSaveModal() {
+			const latestSave = getLatestSave();
 			const autoSaves = getAutoSaves();
 
-			if (autoSaves.length === 0) {
+			if (!latestSave && autoSaves.length === 0) {
 				showModal('🔄 自动存档',
 					`<p style="text-align:center;color:var(--text-secondary);">暂无自动存档</p>
-					 <p style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">游戏每3个月（第3、6、9、12月...）自动保存一次</p>`,
+					 <p style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">游戏每月自动保存最近进度，每3个月保存历史存档</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
 
 			let html = `
 				<div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.8rem;">
-					<i class="fas fa-info-circle"></i> 自动存档每3个月保存一次，开始新游戏后清空
+					<i class="fas fa-info-circle"></i> 第一个位置保存最近月份（每月覆盖），其余每3个月保存
 				</div>
 				<div style="max-height:400px;overflow-y:auto;">
 			`;
 
+			// ★★★ 第一位：最近月份存档（特殊样式）★★★
+			if (latestSave) {
+				const modeIcon = latestSave.isReversed ? '🌑' : '☀️';
+				html += `
+					<div style="display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(135deg,rgba(52,152,219,0.15),rgba(155,89,182,0.15));border-radius:8px;margin-bottom:8px;border:2px solid rgba(52,152,219,0.4);">
+						<div style="flex:1;">
+							<div style="font-weight:600;font-size:0.9rem;">
+								${modeIcon} ${latestSave.autoSaveLabel || `第${latestSave.year}年第${latestSave.month}月`}
+								<span style="font-size:0.65rem;color:#3498db;margin-left:5px;background:rgba(52,152,219,0.2);padding:1px 5px;border-radius:3px;">📌 最近</span>
+								<span style="font-size:0.7rem;color:var(--text-secondary);margin-left:5px;">${latestSave.characterName}</span>
+							</div>
+							<div style="font-size:0.75rem;color:var(--text-secondary);">
+								${latestSave.degree === 'master' ? '硕士' : '博士'} | 科研分:${latestSave.totalScore} | A:${latestSave.paperA} B:${latestSave.paperB} C:${latestSave.paperC}
+							</div>
+							<div style="font-size:0.7rem;color:var(--text-secondary);">
+								SAN:${latestSave.san} 科研:${latestSave.research} 社交:${latestSave.social} 好感:${latestSave.favor} 金:${latestSave.gold}
+							</div>
+						</div>
+						<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadLatestAutoSave()">
+							<i class="fas fa-undo"></i> 回溯
+						</button>
+					</div>
+				`;
+			}
+
+			// ★★★ 其余位置：常规每3个月存档 ★★★
 			autoSaves.forEach((save, index) => {
 				const modeIcon = save.isReversed ? '🌑' : '☀️';
 				html += `
@@ -1213,11 +1321,14 @@
 		// 确认清空自动存档
 		function confirmClearAutoSaves() {
 			showModal('⚠️ 确认清空',
-				`<p>确定要清空所有自动存档吗？</p><p style="color:var(--danger-color);font-size:0.85rem;">此操作不可恢复！</p>`,
+				`<p>确定要清空所有自动存档吗？</p>
+				 <p style="font-size:0.85rem;color:var(--text-secondary);">包括最近月份存档和每3个月存档</p>
+				 <p style="color:var(--danger-color);font-size:0.85rem;">此操作不可恢复！</p>`,
 				[
 					{ text: '取消', class: 'btn-info', action: openAutoSaveModal },
 					{ text: '确定清空', class: 'btn-danger', action: () => {
 						clearAutoSaves();
+						clearLatestSave();  // ★★★ 新增：同时清空最近月份存档 ★★★
 						closeModal();
 						showModal('✅ 已清空', '<p style="text-align:center;">所有自动存档已清空</p>',
 							[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -1254,16 +1365,49 @@
 			);
 		}
 
+		// ★★★ 新增：读取最近月份存档 ★★★
+		function loadLatestAutoSave() {
+			const save = getLatestSave();
+
+			if (!save) {
+				showModal('❌ 读取失败', '<p>最近月份存档不存在！</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			showModal('⚠️ 确认回溯',
+				`<p>确定要回溯到 <strong>${save.autoSaveLabel || `第${save.year}年第${save.month}月`}</strong> 吗？</p>
+				 <p style="color:var(--warning-color);font-size:0.85rem;">当前游戏进度将丢失！</p>
+				 <div style="background:linear-gradient(135deg,rgba(52,152,219,0.1),rgba(155,89,182,0.1));padding:10px;border-radius:8px;margin-top:10px;font-size:0.8rem;border:1px solid rgba(52,152,219,0.3);">
+					<div style="color:#3498db;font-weight:600;margin-bottom:5px;">📌 最近月份存档</div>
+					<div>科研分: ${save.totalScore} | SAN: ${save.san}</div>
+					<div>论文: A×${save.paperA} B×${save.paperB} C×${save.paperC}</div>
+				 </div>`,
+				[
+					{ text: '取消', class: 'btn-info', action: openAutoSaveModal },
+					{ text: '确定回溯', class: 'btn-warning', action: () => {
+						loadGameFromSave(save);
+						addLog('系统', '回溯成功', `已回溯到最近存档 ${save.autoSaveLabel || `第${save.year}年第${save.month}月`}`);
+					}}
+				]
+			);
+		}
+
 		// 通用的从存档数据加载游戏（复用逻辑）
 		function loadGameFromSave(save) {
-			if (save.shopState) {
-				save.shopState.forEach(savedItem => {
-					const item = shopItems.find(i => i.id === savedItem.id);
-					if (item) {
-						item.bought = savedItem.bought;
-						item.boughtThisMonth = savedItem.boughtThisMonth;
-					}
-				});
+			// ★★★ 修复：防御性检查shopItems是否存在 ★★★
+			if (save.shopState && typeof shopItems !== 'undefined' && Array.isArray(shopItems)) {
+				try {
+					save.shopState.forEach(savedItem => {
+						const item = shopItems.find(i => i.id === savedItem.id);
+						if (item) {
+							item.bought = savedItem.bought;
+							item.boughtThisMonth = savedItem.boughtThisMonth;
+						}
+					});
+				} catch (e) {
+					console.warn('恢复商店状态失败:', e);
+				}
 			}
 
 			gameState = {
@@ -1281,12 +1425,12 @@
 				favor: save.favor,
 				gold: save.gold,
 
-				paperA: save.paperA,
-				paperB: save.paperB,
-				paperC: save.paperC,
-				totalScore: save.totalScore,
-				totalCitations: save.totalCitations,
-				publishedPapers: save.publishedPapers.map(p => ({
+				paperA: save.paperA || 0,
+				paperB: save.paperB || 0,
+				paperC: save.paperC || 0,
+				totalScore: save.totalScore || 0,
+				totalCitations: save.totalCitations || 0,
+				publishedPapers: (save.publishedPapers || []).map(p => ({
 					...p,
 					promotions: p.promotions ? { ...p.promotions } : { arxiv: false, github: false, xiaohongshu: false, quantumbit: false },
 					citationMultiplier: p.citationMultiplier || 1,
@@ -1298,9 +1442,9 @@
 					journalType: p.journalType || null,
 					journalName: p.journalName || null
 				})),
-				paperSlots: save.paperSlots,
+				paperSlots: save.paperSlots || 1,
 
-				papers: save.papers.map(p => {
+				papers: (save.papers || [null, null, null, null]).map(p => {
 					if (p === null) return null;
 					return {
 						title: p.title,
@@ -1324,8 +1468,8 @@
 				}),
 
 				buffs: {
-					permanent: save.buffs.permanent.map(b => ({ ...b })),
-					temporary: save.buffs.temporary.map(b => ({ ...b }))
+					permanent: (save.buffs && save.buffs.permanent) ? save.buffs.permanent.map(b => ({ ...b })) : [],
+					temporary: (save.buffs && save.buffs.temporary) ? save.buffs.temporary.map(b => ({ ...b })) : []
 				},
 
 				actionUsed: save.actionUsed,
@@ -1450,6 +1594,12 @@
 				paperNature: save.paperNature || 0,
 				paperNatureSub: save.paperNatureSub || 0,
 				upgradedSlots: save.upgradedSlots ? [...save.upgradedSlots] : [],
+				// ★★★ 新增：槽位发表A类记录恢复 ★★★
+				slotPublishedA: save.slotPublishedA ? [...save.slotPublishedA] : [false, false, false, false],
+				// ★★★ 新增：学校信息恢复 ★★★
+				university: save.university ? {...save.university} : null,
+				// ★★★ 新增：转博选择标志恢复 ★★★
+				phdChoiceMadeThisYear: save.phdChoiceMadeThisYear || false,
 				// ★★★ 新增：永久解锁记录恢复 ★★★
 				paperSlotsUnlocked: save.paperSlotsUnlocked || save.paperSlots || 1,
 				relationshipSlotsUnlocked: save.relationshipSlotsUnlocked || 2,
@@ -1475,18 +1625,6 @@
 				isReversedMode = false;
 			}
 
-			// ★★★ 修复：恢复黑市状态 ★★★
-			if (save.blackMarketState) {
-				blackMarketState.currentItems = save.blackMarketState.currentItems.map(savedItem => {
-					const item = blackMarketItems.find(i => i.id === savedItem.id);
-					return item ? { item, locked: savedItem.locked } : null;
-				}).filter(Boolean);
-				blackMarketState.refreshCount = save.blackMarketState.refreshCount || 0;
-				blackMarketState.lastAutoRefreshMonth = save.blackMarketState.lastAutoRefreshMonth || 0;
-				blackMarketState.amuletUsedThisMonth = save.blackMarketState.amuletUsedThisMonth || {};
-			}
-			// ★★★ 修复：恢复护身符状态 ★★★
-			gameState.amulets = save.amulets ? {...save.amulets} : null;
 			gameState.achievementCoins = save.achievementCoins || 0;
 			gameState.earnedAchievementsThisGame = save.earnedAchievementsThisGame ? [...save.earnedAchievementsThisGame] : [];
 			// ★★★ 新增：恢复商店机制字段 ★★★
@@ -1545,17 +1683,71 @@
 				};
 			}
 
+			// ★★★ 补全遗漏的字段 ★★★
+			gameState.yearEndSummaryTriggeredThisYear = save.yearEndSummaryTriggeredThisYear || 0;
+			gameState.bikeSanMaxGained = save.bikeSanMaxGained || 0;
+			gameState.submissionHistory = save.submissionHistory ? [...save.submissionHistory] : [];
+			gameState.maliciousReviewerCount = save.maliciousReviewerCount || 0;
+			gameState.thirtyNineQuestionsCount = save.thirtyNineQuestionsCount || 0;
+			gameState.gamePlayCount = save.gamePlayCount || 0;
+			gameState.scholarshipCount = save.scholarshipCount || 0;
+			gameState.serverCrashCount = save.serverCrashCount || 0;
+			gameState.dataLossCount = save.dataLossCount || 0;
+			gameState.firstOralMonth = save.firstOralMonth || 0;
+			gameState.firstJournalMonth = save.firstJournalMonth || 0;
+			gameState.firstMentoringMonth = save.firstMentoringMonth || 0;
+			gameState.firstWorkMonth = save.firstWorkMonth || 0;
+			gameState.firstLoverMonth = save.firstLoverMonth || 0;
+			gameState.startYear = save.startYear || new Date().getFullYear();
+			gameState.badmintonChampionCount = save.badmintonChampionCount || 0;
+			gameState.totalSoldCoins = save.totalSoldCoins || 0;
+			gameState.naturallyDried = save.naturallyDried || false;
+			gameState.consecutiveLowSanMonths = save.consecutiveLowSanMonths || 0;
+			gameState.normalAwakened = save.normalAwakened || false;
+
+			// ★★★ 新增：恢复商店系统遗漏字段（自动存档）★★★
+			gameState.coffeeBoughtThisMonth = save.coffeeBoughtThisMonth || 0;
+			gameState.gpuRentedThisMonth = save.gpuRentedThisMonth || 0;
+			gameState.hasCoffeeMachine = save.hasCoffeeMachine || false;
+			gameState.coffeeMachineUpgrade = save.coffeeMachineUpgrade || null;
+			gameState.coffeeMachineCount = save.coffeeMachineCount || 0;
+			gameState.coffeeMachineBonusLevel = save.coffeeMachineBonusLevel || 0;
+			gameState.monitorUpgrade = save.monitorUpgrade || null;
+			gameState.smartMonitorReadCount = save.smartMonitorReadCount || 0;
+
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
+
+			// ★★★ 停止开始页面粒子效果，启动游戏季节效果 ★★★
+			if (typeof SeasonEffects !== 'undefined') {
+				SeasonEffects.stopStartPageParticles();
+				SeasonEffects.updateTheme(gameState.month);
+			}
 
 			// ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
 			if (typeof resetAttributeTracking === 'function') {
 				resetAttributeTracking();
 			}
+
+			// ★★★ 清空日志并添加恢复提示 ★★★
+			document.getElementById('log-content').innerHTML = '';
+			addLog('系统', '游戏已恢复', `第${gameState.year}年${gameState.month}月`);
+
 			updateAllUI();
 			renderPaperSlots();
-			closeModal();
+			// ★★★ 新增：渲染人际关系面板 ★★★
+			if (typeof renderRelationshipPanel === 'function') {
+				renderRelationshipPanel();
+			}
+			// ★★★ 新增：应用折叠状态 ★★★
+			if (typeof applyCollapseStates === 'function') {
+				setTimeout(() => applyCollapseStates(), 100);
+			}
+			// ★★★ 修复：防御性关闭模态框 ★★★
+			if (typeof closeModal === 'function') {
+				try { closeModal(); } catch (e) { /* 忽略 */ }
+			}
 
 			// 处理待审稿结果
 			let pendingReviews = [];
@@ -1581,6 +1773,7 @@
 		window.loadGame = loadGame;
 		window.deleteSave = deleteSave;
 		window.loadAutoSave = loadAutoSave;
+		window.loadLatestAutoSave = loadLatestAutoSave;  // ★★★ 新增：最近月份存档读取 ★★★
 		window.openLoadModalFromStart = openLoadModalFromStart;
 		window.openAutoSaveModal = openAutoSaveModal;
 

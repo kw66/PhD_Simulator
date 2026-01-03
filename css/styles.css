@@ -6061,22 +6061,6 @@ body.season-winter .time-display-panel {
     }
 }
 
-/* 关系面板标题美化 */
-#relationship-panel .panel-title {
-    position: relative;
-}
-
-#relationship-panel .panel-title::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, var(--primary-color), transparent);
-    border-radius: 2px;
-}
-
 /* 导师特殊样式 */
 .relationship-slot.advisor-slot {
     background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(162, 155, 254, 0.05));

@@ -971,7 +971,7 @@
 					break;
 
 				case 'shop':
-					title = '🛒 成就商店与黑市';
+					title = '🛒 商店系统';
 					content = `
 		<div style="max-height:60vh;overflow-y:auto;font-size:0.85rem;line-height:1.6;">
 			<div style="background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.1));border-radius:10px;padding:12px;margin-bottom:12px;">

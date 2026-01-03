@@ -69,8 +69,8 @@
 
 		// 展开所有面板
 		function expandAllPanels() {
-			const panelIds = ['graduation-panel', 'attributes-panel', 'research-panel', 
-							  'log-panel', 'buff-panel', 'action-panel', 'workstation-panel'];
+			const panelIds = ['graduation-panel', 'attributes-panel', 'research-panel',
+							  'log-panel', 'buff-panel', 'action-panel', 'workstation-panel', 'relationship-panel'];
 			
 			panelIds.forEach(panelId => {
 				const content = document.getElementById(`${panelId}-content`);
@@ -94,8 +94,8 @@
 
 		// 收起所有面板
 		function collapseAllPanels() {
-			const panelIds = ['graduation-panel', 'attributes-panel', 'research-panel', 
-							  'log-panel', 'buff-panel', 'action-panel', 'workstation-panel'];
+			const panelIds = ['graduation-panel', 'attributes-panel', 'research-panel',
+							  'log-panel', 'buff-panel', 'action-panel', 'workstation-panel', 'relationship-panel'];
 			
 			panelIds.forEach(panelId => {
 				const content = document.getElementById(`${panelId}-content`);
