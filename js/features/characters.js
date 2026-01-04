@@ -1165,6 +1165,8 @@
 			// ★★★ 修改：游戏开始时检查初始解锁状态（科研和社交）★★★
 			checkResearchUnlock(true);
 			checkSocialUnlock(true);
+			// ★★★ 修复：游戏开始时为第一个月生成会议地点，避免地点随机变化 ★★★
+			generateMonthlyConferenceLocations();
 			updateAllUI();
 			renderPaperSlots();
 			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★

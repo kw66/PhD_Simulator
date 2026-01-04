@@ -461,7 +461,9 @@
 				coffeeMachineCount: gameState.coffeeMachineCount || 0,
 				coffeeMachineBonusLevel: gameState.coffeeMachineBonusLevel || 0,
 				monitorUpgrade: gameState.monitorUpgrade || null,
-				smartMonitorReadCount: gameState.smartMonitorReadCount || 0
+				smartMonitorReadCount: gameState.smartMonitorReadCount || 0,
+				// ★★★ 修复：保存会议地点，避免加载后地点随机变化 ★★★
+				monthlyConferenceLocations: gameState.monthlyConferenceLocations ? JSON.parse(JSON.stringify(gameState.monthlyConferenceLocations)) : {}
             };
 
             saves[slot] = saveData;
@@ -805,6 +807,13 @@
 						gameState.coffeeMachineBonusLevel = save.coffeeMachineBonusLevel || 0;
 						gameState.monitorUpgrade = save.monitorUpgrade || null;
 						gameState.smartMonitorReadCount = save.smartMonitorReadCount || 0;
+
+						// ★★★ 修复：恢复会议地点，避免加载后地点随机变化 ★★★
+						gameState.monthlyConferenceLocations = save.monthlyConferenceLocations ? JSON.parse(JSON.stringify(save.monthlyConferenceLocations)) : {};
+						// 如果存档中没有当前月份的会议地点，立即生成
+						if (!gameState.monthlyConferenceLocations[gameState.month]) {
+							generateMonthlyConferenceLocations();
+						}
 
                         document.getElementById('start-screen').classList.add('hidden');
                         document.getElementById('game-screen').style.display = 'block';
@@ -1714,6 +1723,13 @@
 			gameState.coffeeMachineBonusLevel = save.coffeeMachineBonusLevel || 0;
 			gameState.monitorUpgrade = save.monitorUpgrade || null;
 			gameState.smartMonitorReadCount = save.smartMonitorReadCount || 0;
+
+			// ★★★ 修复：恢复会议地点，避免加载后地点随机变化 ★★★
+			gameState.monthlyConferenceLocations = save.monthlyConferenceLocations ? JSON.parse(JSON.stringify(save.monthlyConferenceLocations)) : {};
+			// 如果存档中没有当前月份的会议地点，立即生成
+			if (!gameState.monthlyConferenceLocations[gameState.month]) {
+				generateMonthlyConferenceLocations();
+			}
 
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';
