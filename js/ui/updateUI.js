@@ -23,6 +23,12 @@
 				achievementCoins: null
 			};
 			isFirstRender = true;
+			// ★★★ 重置论文筛选状态和按钮样式 ★★★
+			paperFilterState = { A: false, B: false, C: false, S: false };
+			['A', 'B', 'C', 'S'].forEach(grade => {
+				const btn = document.querySelector(`.research-stat.filter-btn[data-grade="${grade}"]`);
+				if (btn) btn.classList.remove('active');
+			});
 		}
 		window.resetAttributeTracking = resetAttributeTracking;
 
@@ -1531,6 +1537,34 @@
 			updateAllUI();
 		}
 
+		// ★★★ 论文筛选状态（初始全部不选中）★★★
+		let paperFilterState = { A: false, B: false, C: false, S: false };
+		let paperFilterInitialized = false;
+
+		function togglePaperFilter(grade) {
+			paperFilterState[grade] = !paperFilterState[grade];
+
+			// 更新按钮样式
+			const btn = document.querySelector(`.research-stat.filter-btn[data-grade="${grade}"]`);
+			if (btn) {
+				btn.classList.toggle('active', paperFilterState[grade]);
+			}
+
+			// 重新渲染论文列表
+			updateResearchResults();
+		}
+
+		// ★★★ 首次中稿时激活对应按钮 ★★★
+		function activatePaperFilter(grade) {
+			if (!paperFilterState[grade]) {
+				paperFilterState[grade] = true;
+				const btn = document.querySelector(`.research-stat.filter-btn[data-grade="${grade}"]`);
+				if (btn) {
+					btn.classList.add('active');
+				}
+			}
+		}
+
 		function updateResearchResults() {
 			document.getElementById('paper-a-count').textContent = gameState.paperA;
 			document.getElementById('paper-b-count').textContent = gameState.paperB;
@@ -1560,10 +1594,17 @@
 			if (paperSEl) paperSEl.textContent = paperS;
 
 			const paperList = document.getElementById('published-papers');
-			if (gameState.publishedPapers.length === 0) {
-				paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>';
+			// ★★★ 根据筛选状态过滤论文 ★★★
+			const filteredPapers = gameState.publishedPapers.filter(p => paperFilterState[p.grade]);
+
+			if (filteredPapers.length === 0) {
+				if (gameState.publishedPapers.length === 0) {
+					paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">暂无已发表论文</p>';
+				} else {
+					paperList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;">无匹配的论文（请选择筛选条件）</p>';
+				}
 			} else {
-				paperList.innerHTML = gameState.publishedPapers.map((p, index) => {
+				paperList.innerHTML = filteredPapers.map((p, index) => {
 					// ★★★ 获取会议名称 ★★★
 					const confName = p.conferenceInfo 
 						? `${p.conferenceInfo.name} ${p.conferenceInfo.year} (${p.grade}类)` 
@@ -2171,3 +2212,5 @@
 
 		// 全局函数暴露
 		window.showCurseBlessingModal = showCurseBlessingModal;
+		window.togglePaperFilter = togglePaperFilter;
+		window.activatePaperFilter = activatePaperFilter;

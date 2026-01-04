@@ -750,15 +750,15 @@ body {
 }
 
 @keyframes pulseIncrease {
-    0% { filter: brightness(1); }
-    30% { filter: brightness(1.8) drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); }
-    100% { filter: brightness(1); }
+    0% { filter: brightness(1.1); }
+    30% { filter: brightness(2.0) drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); }
+    100% { filter: brightness(1.1); }
 }
 
 @keyframes pulseDecrease {
-    0% { filter: brightness(1); }
-    30% { filter: brightness(1.5) drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
-    100% { filter: brightness(1); }
+    0% { filter: brightness(1.1); }
+    30% { filter: brightness(1.7) drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
+    100% { filter: brightness(1.1); }
 }
 
 /* 增加时的绿色光波 */
@@ -1181,7 +1181,34 @@ body {
 .research-stat .label { font-size: 0.65rem; color: var(--text-secondary); }
 .research-stat .value { font-size: 0.95rem; font-weight: 700; color: var(--primary-color); }
 
-.paper-list { max-height: 150px; overflow-y: auto; }
+/* 论文筛选按钮 */
+.research-stat.filter-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
+    background: var(--light-bg);
+}
+
+.research-stat.filter-btn:hover {
+    transform: scale(1.08);
+    z-index: 10;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.08));
+    border-color: var(--secondary-color);
+}
+
+.research-stat.filter-btn.active {
+    border-color: rgba(59, 130, 246, 0.4);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08));
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
+}
+
+.research-stat.filter-btn:not(.active) {
+    opacity: 0.6;
+    background: var(--light-bg);
+}
+
+.paper-list { max-height: 220px; overflow-y: auto; }
 
 .paper-item {
     padding: 8px;
@@ -1678,24 +1705,121 @@ body {
 .paper-slots { display: flex; flex-direction: column; gap: 10px; }
 
 .paper-slot {
-    padding: 10px;
+    padding: 12px 10px;
     background: var(--light-bg);
     border-radius: 10px;
     border: 2px dashed var(--border-color);
+    position: relative;
+    overflow: hidden;
 }
 
-.paper-slot.active { border-style: solid; border-color: var(--primary-color); }
+.paper-slot.active {
+    border-style: solid;
+    border-color: var(--primary-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+/* 论文槽全息闪光效果 */
+.paper-slot.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.25),
+        transparent
+    );
+    transform: skewX(-15deg);
+    transition: left 0.6s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.paper-slot.active:hover::after {
+    left: 150%;
+}
+
+.paper-slot.active:hover {
+    transform: translateY(-4px) rotateX(2deg) scale(1.01);
+    box-shadow:
+        0 12px 24px rgba(37, 99, 235, 0.12),
+        0 0 15px rgba(37, 99, 235, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    z-index: 10;
+    position: relative;
+}
+
 .paper-slot.locked { opacity: 0.5; }
+
+/* 期刊槽（升级槽位）悬浮效果 */
+.paper-slot.upgraded-slot {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.paper-slot.upgraded-slot::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(167, 139, 250, 0.3),
+        transparent
+    );
+    transform: skewX(-15deg);
+    transition: left 0.6s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.paper-slot.upgraded-slot:hover::after {
+    left: 150%;
+}
+
+.paper-slot.upgraded-slot:hover {
+    transform: translateY(-4px) rotateX(2deg) scale(1.01);
+    box-shadow:
+        0 12px 24px rgba(167, 139, 250, 0.15),
+        0 0 15px rgba(167, 139, 250, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    z-index: 10;
+    position: relative;
+}
+
+/* 投稿详细信息显示 */
+.reviewing-detail-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.08));
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
 
 .paper-slot .slot-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    min-height: 0;
 }
 
 .paper-slot .slot-title { font-weight: 600; color: var(--primary-color); font-size: 0.85rem; }
-.paper-slot .paper-title { font-size: 0.75rem; font-weight: 500; margin-bottom: 6px; word-break: break-word; }
+.paper-slot .paper-title { font-size: 0.75rem; font-weight: 500; margin: 0 0 8px 0; word-break: break-word; line-height: 1.2; }
 
 .paper-scores {
     display: grid;
@@ -1732,8 +1856,8 @@ body {
 .paper-scores-compact {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin: 6px 0;
+    gap: 6px;
+    margin: 4px 0;
     font-size: 0.75rem;
     flex-wrap: wrap;
 }
@@ -1771,13 +1895,87 @@ body {
     color: var(--primary-color);
 }
 
+/* 论文进度箭头和点亮效果（合并分数显示）*/
+.paper-progress-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    margin: 8px 0 10px 0;
+    font-size: 0.7rem;
+}
+
+.paper-progress-flow .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.paper-progress-flow .step-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 42px;
+}
+
+.paper-progress-flow .step-label .step-name {
+    font-size: 0.55rem;
+    opacity: 0.8;
+}
+
+.paper-progress-flow .step-label .step-score {
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.paper-progress-flow .step-label.completed {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.15));
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.paper-progress-flow .step-label.completed .step-score {
+    color: #16a34a;
+}
+
+.paper-progress-flow .step-label.ready {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(59, 130, 246, 0.15));
+    color: var(--primary-color);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    animation: readyPulse 1.5s ease-in-out infinite;
+}
+
+.paper-progress-flow .step-label.ready .step-score {
+    color: var(--primary-color);
+}
+
+@keyframes readyPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
+    50% { box-shadow: 0 0 8px 2px rgba(37, 99, 235, 0.5); }
+}
+
+.paper-progress-flow .step-arrow {
+    color: var(--border-color);
+    font-size: 0.75rem;
+}
+
+.paper-progress-flow .step-arrow.active {
+    color: #16a34a;
+}
+
 /* 会议信息栏样式 */
 .conference-info-bar {
     padding: 10px 12px;
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.05));
     border: 1px solid rgba(37, 99, 235, 0.15);
     border-radius: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
 }
 
 .conference-info-title {
@@ -2515,7 +2713,7 @@ body.season-winter .time-display-panel {
 
 /* 折叠内容区域 */
 .collapsible-content {
-    overflow: hidden;
+    overflow: visible;
     transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
     max-height: 2000px;
     opacity: 1;
@@ -2528,6 +2726,7 @@ body.season-winter .time-display-panel {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
+    overflow: hidden !important;
     margin-bottom: 0 !important;
 }
 
@@ -5776,6 +5975,270 @@ body.season-winter .time-display-panel {
     }
 }
 
+/* ==================== 论文槽卡牌背面样式（学术神秘风）==================== */
+
+/* 论文卡牌背面基础样式 */
+.paper-card-back {
+    position: relative;
+    min-height: 120px;
+    padding: 15px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 深蓝紫学术神秘背景 */
+    background: linear-gradient(145deg,
+        #0a1628 0%,
+        #102040 25%,
+        #0a1628 50%,
+        #081020 75%,
+        #0a1628 100%);
+    border: 2px solid #3b82f6;
+    box-shadow:
+        0 0 20px rgba(59, 130, 246, 0.25),
+        0 0 40px rgba(96, 165, 250, 0.15),
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        inset 0 0 30px rgba(59, 130, 246, 0.08);
+}
+
+/* 锁定状态特殊样式 */
+.paper-card-back.locked-card {
+    background: linear-gradient(145deg,
+        #1a1a2e 0%,
+        #16213e 25%,
+        #1a1a2e 50%,
+        #0f0f23 75%,
+        #1a1a2e 100%);
+    border: 2px solid rgba(100, 116, 139, 0.5);
+    box-shadow:
+        0 0 15px rgba(100, 116, 139, 0.2),
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        inset 0 0 25px rgba(100, 116, 139, 0.05);
+    opacity: 0.85;
+}
+
+/* 卡牌背面装饰边框 */
+.paper-card-back::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.paper-card-back.locked-card::before {
+    border-color: rgba(100, 116, 139, 0.2);
+}
+
+/* 卡牌背面四角装饰 */
+.paper-card-corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.paper-card-corner.top-left {
+    top: 12px;
+    left: 12px;
+    border-top: 2px solid rgba(96, 165, 250, 0.4);
+    border-left: 2px solid rgba(96, 165, 250, 0.4);
+    border-radius: 4px 0 0 0;
+}
+
+.paper-card-corner.top-right {
+    top: 12px;
+    right: 12px;
+    border-top: 2px solid rgba(96, 165, 250, 0.4);
+    border-right: 2px solid rgba(96, 165, 250, 0.4);
+    border-radius: 0 4px 0 0;
+}
+
+.paper-card-corner.bottom-left {
+    bottom: 12px;
+    left: 12px;
+    border-bottom: 2px solid rgba(96, 165, 250, 0.4);
+    border-left: 2px solid rgba(96, 165, 250, 0.4);
+    border-radius: 0 0 0 4px;
+}
+
+.paper-card-corner.bottom-right {
+    bottom: 12px;
+    right: 12px;
+    border-bottom: 2px solid rgba(96, 165, 250, 0.4);
+    border-right: 2px solid rgba(96, 165, 250, 0.4);
+    border-radius: 0 0 4px 0;
+}
+
+.paper-card-back.locked-card .paper-card-corner {
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* 中心学术符号 */
+.paper-card-symbol {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    color: rgba(96, 165, 250, 0.25);
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    animation: paperSymbolPulse 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+.paper-card-back.locked-card .paper-card-symbol {
+    color: rgba(100, 116, 139, 0.2);
+    text-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+    animation: none;
+}
+
+@keyframes paperSymbolPulse {
+    0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* 学术公式装饰 */
+.paper-card-formulas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.paper-formula {
+    position: absolute;
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    color: rgba(96, 165, 250, 0.15);
+    font-size: 0.7rem;
+    animation: formulaFloat 8s ease-in-out infinite;
+}
+
+.paper-formula:nth-child(1) { top: 20%; left: 15%; animation-delay: 0s; }
+.paper-formula:nth-child(2) { top: 70%; left: 20%; animation-delay: 2s; }
+.paper-formula:nth-child(3) { top: 30%; right: 15%; animation-delay: 4s; }
+.paper-formula:nth-child(4) { top: 75%; right: 18%; animation-delay: 6s; }
+
+@keyframes formulaFloat {
+    0%, 100% { opacity: 0.15; transform: translateY(0); }
+    50% { opacity: 0.25; transform: translateY(-5px); }
+}
+
+.paper-card-back.locked-card .paper-formula {
+    color: rgba(100, 116, 139, 0.1);
+    animation: none;
+}
+
+/* 光效扫过 */
+.paper-card-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.1), transparent);
+    animation: paperCardShine 5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes paperCardShine {
+    0%, 100% { left: -100%; opacity: 0; }
+    50% { left: 150%; opacity: 1; }
+}
+
+.paper-card-back.locked-card .paper-card-shine {
+    display: none;
+}
+
+/* 底部文字 */
+.paper-card-text {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(150, 200, 255, 0.6);
+    letter-spacing: 2px;
+    z-index: 2;
+}
+
+.paper-card-back.locked-card .paper-card-text {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+/* 锁定图标 */
+.paper-card-lock {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1rem;
+    color: rgba(148, 163, 184, 0.6);
+    z-index: 2;
+}
+
+/* 悬停效果 */
+.paper-card-back:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+        0 0 30px rgba(59, 130, 246, 0.35),
+        0 0 50px rgba(96, 165, 250, 0.2),
+        0 12px 25px rgba(0, 0, 0, 0.35),
+        inset 0 0 35px rgba(59, 130, 246, 0.12);
+}
+
+.paper-card-back.locked-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 20px rgba(100, 116, 139, 0.25),
+        0 6px 18px rgba(0, 0, 0, 0.3),
+        inset 0 0 28px rgba(100, 116, 139, 0.08);
+}
+
+/* 星点装饰 */
+.paper-card-stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.paper-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(200, 220, 255, 0.6);
+    border-radius: 50%;
+    animation: paperStarTwinkle 2.5s ease-in-out infinite;
+}
+
+.paper-star:nth-child(1) { top: 25%; left: 25%; animation-delay: 0s; }
+.paper-star:nth-child(2) { top: 35%; left: 75%; animation-delay: 0.5s; }
+.paper-star:nth-child(3) { top: 65%; left: 20%; animation-delay: 1s; }
+.paper-star:nth-child(4) { top: 55%; left: 80%; animation-delay: 1.5s; }
+
+@keyframes paperStarTwinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.3); }
+}
+
+.paper-card-back.locked-card .paper-star {
+    background: rgba(148, 163, 184, 0.4);
+    animation-duration: 4s;
+}
+
 /* ==================== 人际关系面板美化 ==================== */
 
 /* 关系槽位基础样式 */
@@ -5960,6 +6423,43 @@ body.season-winter .time-display-panel {
     border-radius: 3px;
     transition: width 0.5s ease-out;
     position: relative;
+    overflow: hidden;
+}
+
+/* 关系条流动光泽效果 */
+.relationship-bar-fill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.15) 25%,
+        rgba(255,255,255,0.4) 50%,
+        rgba(255,255,255,0.15) 75%,
+        transparent 100%);
+    animation: relationshipFlow 2.5s linear infinite;
+    pointer-events: none;
+}
+
+/* 关系条顶部光泽 */
+.relationship-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+    border-radius: 3px 3px 0 0;
+    pointer-events: none;
+}
+
+@keyframes relationshipFlow {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); }
 }
 
 /* 任务进度条 - 金色 */
@@ -5986,18 +6486,47 @@ body.season-winter .time-display-panel {
     }
 }
 
-/* 进度条变化时闪烁 */
-.relationship-bar-fill.changing {
-    animation: barChange 0.5s ease-out;
+/* 进度条变化时闪烁 - 增加时绿色 */
+.relationship-bar-fill.pulse-increase {
+    animation: relationPulseIncrease 0.6s ease-out;
 }
 
-@keyframes barChange {
-    0% {
-        filter: brightness(1.5);
-    }
-    100% {
-        filter: brightness(1);
-    }
+/* 进度条变化时闪烁 - 减少时红色 */
+.relationship-bar-fill.pulse-decrease {
+    animation: relationPulseDecrease 0.6s ease-out;
+}
+
+@keyframes relationPulseIncrease {
+    0% { filter: brightness(1.1); }
+    30% { filter: brightness(2.0) drop-shadow(0 0 6px rgba(34, 197, 94, 0.8)); }
+    100% { filter: brightness(1.1); }
+}
+
+@keyframes relationPulseDecrease {
+    0% { filter: brightness(1.1); }
+    30% { filter: brightness(1.7) drop-shadow(0 0 6px rgba(239, 68, 68, 0.8)); }
+    100% { filter: brightness(1.1); }
+}
+
+/* 数值跳动动画 */
+.relationship-bar-value.value-change {
+    animation: valueJump 0.5s ease-out;
+}
+
+@keyframes valueJump {
+    0% { transform: scale(1); color: var(--text-secondary); }
+    30% { transform: scale(1.3); color: var(--success-color); }
+    100% { transform: scale(1); color: var(--text-secondary); }
+}
+
+.relationship-bar-value.value-decrease {
+    animation: valueJumpDecrease 0.5s ease-out;
+}
+
+@keyframes valueJumpDecrease {
+    0% { transform: scale(1); color: var(--text-secondary); }
+    30% { transform: scale(1.3); color: var(--danger-color); }
+    100% { transform: scale(1); color: var(--text-secondary); }
 }
 
 .relationship-bar-value {
@@ -6006,6 +6535,45 @@ body.season-winter .time-display-panel {
     font-weight: 600;
     font-size: 0.65rem;
     color: var(--text-secondary);
+    position: relative;
+}
+
+/* 关系条飞出数字效果 */
+.relation-floating-change {
+    position: absolute;
+    right: 0;
+    top: -10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    pointer-events: none;
+    animation: relationFloatUp 1s ease-out forwards;
+    z-index: 20;
+    white-space: nowrap;
+}
+
+.relation-floating-change.positive {
+    color: #22c55e;
+    text-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.relation-floating-change.negative {
+    color: #ef4444;
+    text-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes relationFloatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-15px) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-25px) scale(0.8);
+    }
 }
 
 /* 关系操作按钮 */

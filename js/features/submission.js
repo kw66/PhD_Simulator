@@ -91,6 +91,11 @@
 
 
 		function handlePaperAccepted(paper, grade, acceptType, slot, extraInfo) {
+			// ★★★ 新增：激活对应等级的论文筛选按钮 ★★★
+			if (typeof activatePaperFilter === 'function') {
+				activatePaperFilter(grade);
+			}
+
 			// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
 			gameState.submissionHistory = gameState.submissionHistory || [];
 			gameState.submissionHistory.push({

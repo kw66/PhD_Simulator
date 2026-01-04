@@ -818,6 +818,7 @@
 					r.reviewer.type === 'hostile' || r.reviewer.type === 'questions'
 				).length,
 				hasExpert: results.some(r => r.reviewer.type === 'expert'),
+				expertCount: results.filter(r => r.reviewer.type === 'expert').length,  // ★★★ 新增：资深大牛数量 ★★★
 				// ★★★ 新增：分别统计恶意审稿人和39个问题审稿人 ★★★
 				hostileCount: results.filter(r => r.reviewer.type === 'hostile').length,
 				questionsCount: results.filter(r => r.reviewer.type === 'questions').length
@@ -1159,15 +1160,21 @@
 							}
 							
 							if (extraInfo.hasExpert) {
-								const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name === '指点迷津：每次想idea分数+1');
-								if (!existingBuff) {
-									gameState.buffs.permanent.push({ 
-										type: 'idea_bonus', 
-										name: '指点迷津：每次想idea分数+1', 
-										value: 1, 
-										permanent: true 
+								const expertCount = extraInfo.expertCount || 1;
+								const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name && b.name.includes('指点迷津'));
+								if (existingBuff) {
+									// 已有buff，累加数值
+									existingBuff.value += expertCount;
+									existingBuff.name = `指点迷津：每次想idea分数+${existingBuff.value}`;
+									addLog('因祸得福', '资深大牛的指点迷津', `永久buff升级-每次想idea分数+${existingBuff.value}`);
+								} else {
+									gameState.buffs.permanent.push({
+										type: 'idea_bonus',
+										name: `指点迷津：每次想idea分数+${expertCount}`,
+										value: expertCount,
+										permanent: true
 									});
-									addLog('因祸得福', '资深大牛的指点迷津', '永久buff-每次想idea分数+1');
+									addLog('因祸得福', '资深大牛的指点迷津', `永久buff-每次想idea分数+${expertCount}`);
 								}
 							}
 							

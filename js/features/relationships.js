@@ -950,10 +950,6 @@
                         attrHtml = `<span style="font-size:0.75rem;color:var(--text-secondary);margin-left:auto;">🔬${person.research} 💖${person.affinity}</span>`;
                     }
 
-                    // ★★★ 进度条样式：使用斜线条纹，增强对比度 ★★★
-                    const taskBarStyle = `background:repeating-linear-gradient(135deg,var(--primary-color) 0px,var(--primary-color) 4px,rgba(108,92,231,0.35) 4px,rgba(108,92,231,0.35) 8px);`;
-                    const relationBarStyle = `background:repeating-linear-gradient(135deg,var(--love-color) 0px,var(--love-color) 4px,rgba(233,30,99,0.35) 4px,rgba(233,30,99,0.35) 8px);`;
-
                     // ★★★ 交流按钮状态：根据 canInteract 标志判断 ★★★
                     const canInteract = person.canInteract || false;
                     const interactBtnClass = canInteract ? 'btn-success' : 'btn-info';
@@ -972,19 +968,19 @@
                             <!-- 任务进度：标签+简短奖励提示+数值在第一行，进度条在第二行 -->
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                                 <span style="font-size:0.7rem;color:var(--primary-color);font-weight:500;">📋 任务 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(满后: ${taskReward})</span></span>
-                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.taskProgress}/${person.taskMax} 🎁</span>
+                                <span class="relationship-bar-value" id="task-value-${person.id}" style="font-size:0.7rem;">${person.taskProgress}/${person.taskMax}</span>
                             </div>
-                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:8px;">
-                                <div style="width:${taskPercent}%;height:100%;${taskBarStyle}transition:width 0.3s;"></div>
+                            <div class="relationship-bar-track" style="height:8px;margin-bottom:8px;">
+                                <div class="relationship-bar-fill task" id="task-bar-${person.id}" style="width:${taskPercent}%;"></div>
                             </div>
 
                             <!-- 关系积累：标签+数值在第一行，进度条在第二行 -->
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                                 <span style="font-size:0.7rem;color:var(--love-color);font-weight:500;">💞 关系 <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:400;">(+${relationGrowthPerMonth}/月)</span></span>
-                                <span style="font-size:0.7rem;color:var(--text-secondary);">${person.relationProgress}/${person.relationMax} ⚡</span>
+                                <span class="relationship-bar-value" id="relation-value-${person.id}" style="font-size:0.7rem;">${person.relationProgress}/${person.relationMax}</span>
                             </div>
-                            <div style="height:8px;background:var(--border-color);border-radius:4px;overflow:hidden;margin-bottom:10px;">
-                                <div style="width:${relationPercent}%;height:100%;${relationBarStyle}transition:width 0.3s;"></div>
+                            <div class="relationship-bar-track" style="height:8px;margin-bottom:10px;">
+                                <div class="relationship-bar-fill relation" id="relation-bar-${person.id}" style="width:${relationPercent}%;"></div>
                             </div>
 
                             <!-- 操作按钮 -->
@@ -1026,6 +1022,13 @@
             html += '</div>';  // 关闭 collapsible-content
 
             container.innerHTML = html;
+
+            // 播放待处理的关系动画
+            setTimeout(() => {
+                if (typeof playPendingRelationAnimations === 'function') {
+                    playPendingRelationAnimations();
+                }
+            }, 50);
         }
 
         // 统一的任务推进入口
@@ -1270,6 +1273,9 @@
 
             updateAllUI();
             renderRelationshipPanel();
+
+            // 触发动画效果（在渲染后），传入变化量
+            setTimeout(() => animateTaskProgress(personId, growth), 50);
         }
 
         // 师兄师姐/同级/师弟师妹任务
@@ -1334,6 +1340,9 @@
 
             updateAllUI();
             renderRelationshipPanel();
+
+            // 触发动画效果（在渲染后），传入变化量
+            setTimeout(() => animateTaskProgress(personId, growth), 50);
         }
 
         // 恋人任务：恋爱
@@ -1383,6 +1392,9 @@
 
             updateAllUI();
             renderRelationshipPanel();
+
+            // 触发动画效果（在渲染后），传入变化量
+            setTimeout(() => animateTaskProgress(personId, growth), 50);
         }
 
         // 检查任务完成
@@ -1692,6 +1704,9 @@
 
         // 每月更新关系进度
         function updateRelationshipProgress() {
+            // 保存待播放动画的数据
+            gameState._pendingRelationAnimations = [];
+
             gameState.relationships.forEach(person => {
                 // 重置本月任务使用状态
                 person.taskUsedThisMonth = false;
@@ -1712,6 +1727,12 @@
                 if (relationGrowth > 0 && person.relationMax) {
                     person.relationProgress = (person.relationProgress || 0) + relationGrowth;
 
+                    // 保存动画数据
+                    gameState._pendingRelationAnimations.push({
+                        personId: person.id,
+                        growth: relationGrowth
+                    });
+
                     // ★★★ 关系条满时：立即重置为溢出值，设置可交流标志 ★★★
                     if (person.relationProgress >= person.relationMax) {
                         const overflow = person.relationProgress - person.relationMax;
@@ -1720,6 +1741,19 @@
                     }
                 }
             });
+        }
+
+        // 播放待处理的关系动画
+        function playPendingRelationAnimations() {
+            if (!gameState._pendingRelationAnimations || gameState._pendingRelationAnimations.length === 0) return;
+
+            gameState._pendingRelationAnimations.forEach((anim, index) => {
+                setTimeout(() => {
+                    animateRelationProgress(anim.personId, anim.growth);
+                }, index * 100); // 错开动画时间
+            });
+
+            gameState._pendingRelationAnimations = [];
         }
 
         // ★★★ 交流按钮：检查可交流标志，推进任务 ★★★
@@ -1843,8 +1877,81 @@
             });
         }
 
+        // ==================== 关系条动画效果 ====================
+
+        // 触发任务进度条动画
+        function animateTaskProgress(personId, changeAmount = 0) {
+            const barEl = document.getElementById(`task-bar-${personId}`);
+            const valueEl = document.getElementById(`task-value-${personId}`);
+            const isIncrease = changeAmount >= 0;
+
+            if (barEl) {
+                barEl.classList.remove('pulse-increase', 'pulse-decrease');
+                void barEl.offsetWidth; // 触发重绘
+                barEl.classList.add(isIncrease ? 'pulse-increase' : 'pulse-decrease');
+                setTimeout(() => {
+                    barEl.classList.remove('pulse-increase', 'pulse-decrease');
+                }, 600);
+            }
+
+            if (valueEl) {
+                valueEl.classList.remove('value-change', 'value-decrease');
+                void valueEl.offsetWidth;
+                valueEl.classList.add(isIncrease ? 'value-change' : 'value-decrease');
+                setTimeout(() => {
+                    valueEl.classList.remove('value-change', 'value-decrease');
+                }, 500);
+
+                // 添加飞出数字效果
+                if (changeAmount !== 0) {
+                    const floatingEl = document.createElement('span');
+                    floatingEl.className = `relation-floating-change ${isIncrease ? 'positive' : 'negative'}`;
+                    floatingEl.textContent = isIncrease ? `+${changeAmount}` : `${changeAmount}`;
+                    valueEl.appendChild(floatingEl);
+                    setTimeout(() => floatingEl.remove(), 1000);
+                }
+            }
+        }
+
+        // 触发关系进度条动画
+        function animateRelationProgress(personId, changeAmount = 0) {
+            const barEl = document.getElementById(`relation-bar-${personId}`);
+            const valueEl = document.getElementById(`relation-value-${personId}`);
+            const isIncrease = changeAmount >= 0;
+
+            if (barEl) {
+                barEl.classList.remove('pulse-increase', 'pulse-decrease');
+                void barEl.offsetWidth;
+                barEl.classList.add(isIncrease ? 'pulse-increase' : 'pulse-decrease');
+                setTimeout(() => {
+                    barEl.classList.remove('pulse-increase', 'pulse-decrease');
+                }, 600);
+            }
+
+            if (valueEl) {
+                valueEl.classList.remove('value-change', 'value-decrease');
+                void valueEl.offsetWidth;
+                valueEl.classList.add(isIncrease ? 'value-change' : 'value-decrease');
+                setTimeout(() => {
+                    valueEl.classList.remove('value-change', 'value-decrease');
+                }, 500);
+
+                // 添加飞出数字效果
+                if (changeAmount !== 0) {
+                    const floatingEl = document.createElement('span');
+                    floatingEl.className = `relation-floating-change ${isIncrease ? 'positive' : 'negative'}`;
+                    floatingEl.textContent = isIncrease ? `+${changeAmount}` : `${changeAmount}`;
+                    valueEl.appendChild(floatingEl);
+                    setTimeout(() => floatingEl.remove(), 1000);
+                }
+            }
+        }
+
         // 暴露全局函数
         window.isLabTalentActive = isLabTalentActive;
         window.getTeamSize = getTeamSize;
         window.getLabTalentBonus = getLabTalentBonus;
         window.applyLabTalentGrowth = applyLabTalentGrowth;
+        window.animateTaskProgress = animateTaskProgress;
+        window.animateRelationProgress = animateRelationProgress;
+        window.playPendingRelationAnimations = playPendingRelationAnimations;

@@ -38,6 +38,11 @@ let particleInterval = null;
 let activeParticles = [];
 const MAX_PARTICLES = 15;
 
+// 移动端检测
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 // 开始页面科研符号配置
 const StartPageSymbols = ['🔬', '📚', '🎓', '💡', '📖', '🧪', '⚗️', '📝', '🔭', '💻', '📊', '🧬'];
 const RainbowColors = [
@@ -161,6 +166,11 @@ function createParticle(season) {
 
 // 启动粒子效果
 function startParticleEffect(season) {
+    // 移动端不显示季节粒子效果
+    if (isMobileDevice()) {
+        return;
+    }
+
     // 初始创建几个粒子
     for (let i = 0; i < 5; i++) {
         setTimeout(() => createParticle(season), i * 500);
@@ -201,28 +211,19 @@ function createStartPageParticle() {
     particle.style.color = color;
     particle.style.textShadow = `0 0 8px ${color}, 0 0 15px ${color}40`;
 
-    // 只在边缘区域生成（避开中心白色卡片区域）
-    // 随机选择出现在哪个边缘区域：上、下、左、右
-    const zone = Math.floor(Math.random() * 4);
+    // 只在左右两侧边缘区域生成（避开中心白色卡片区域和上下区域）
+    // 随机选择出现在左侧或右侧
+    const zone = Math.floor(Math.random() * 2);
     let left, top;
 
-    switch(zone) {
-        case 0: // 上方区域
-            left = Math.random() * 100;
-            top = Math.random() * 12;
-            break;
-        case 1: // 下方区域
-            left = Math.random() * 100;
-            top = 88 + Math.random() * 12;
-            break;
-        case 2: // 左侧区域
-            left = Math.random() * 10;
-            top = 12 + Math.random() * 76;
-            break;
-        case 3: // 右侧区域
-            left = 90 + Math.random() * 10;
-            top = 12 + Math.random() * 76;
-            break;
+    if (zone === 0) {
+        // 左侧区域
+        left = Math.random() * 10;
+        top = 10 + Math.random() * 80;
+    } else {
+        // 右侧区域
+        left = 90 + Math.random() * 10;
+        top = 10 + Math.random() * 80;
     }
 
     particle.style.left = left + '%';
@@ -254,6 +255,11 @@ function createStartPageParticle() {
 function startStartPageParticles() {
     // 先清除所有季节效果
     clearSeasonEffects();
+
+    // 移动端不显示粒子效果
+    if (isMobileDevice()) {
+        return;
+    }
 
     // 停止之前的开始页面粒子
     if (startPageParticleInterval) {

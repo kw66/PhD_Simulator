@@ -348,10 +348,25 @@
 					const canSubmit = paper.ideaScore > 0 && paper.expScore > 0 && paper.writeScore > 0 && !paper.reviewing;
 					const reviewingBadgeClass = paper.reviewing ? `reviewing-badge grade-${paper.submittedGrade}` : '';
 
+					// ★★★ 投稿状态详细信息 ★★★
 					let reviewingInfo = '';
 					if (paper.reviewing) {
-						const confName = paper.conferenceInfo ? paper.conferenceInfo.name : paper.submittedGrade + '类';
-						reviewingInfo = `<span class="${reviewingBadgeClass}">${paper.submittedGrade}-${confName} ${paper.reviewMonths}月</span>`;
+						const confInfo = paper.conferenceInfo;
+						const confName = confInfo ? confInfo.name : paper.submittedGrade + '类会议';
+						const locObj = paper.conferenceLocation;
+						// 根据region显示区域类别
+						const regionMap = { 'domestic': '国内', 'asia': '亚太', 'west': '欧美' };
+						const confRegion = locObj && locObj.region ? regionMap[locObj.region] || '海外' : '待定';
+						const remainingMonths = paper.reviewMonths;
+						const gradeLabel = paper.submittedGrade;
+
+						reviewingInfo = `
+							<div class="reviewing-detail-info">
+								<span class="${reviewingBadgeClass}" style="margin-right:6px;">${gradeLabel}</span>
+								<span style="font-weight:600;">${confName}</span>
+								<span style="color:var(--text-secondary);font-size:0.65rem;margin-left:4px;">📍${confRegion}</span>
+								<span style="color:var(--primary-color);font-size:0.65rem;margin-left:4px;">⏱️${remainingMonths}月</span>
+							</div>`;
 					}
 
 					// ★★★ 升级槽位显示期刊投稿按钮 ★★★
@@ -406,18 +421,42 @@
 								</button>`;
 						}
 
+						// ★★★ 期刊槽合并分数和进度流显示 ★★★
+						const jIdeaCompleted = paper.ideaScore > 0;
+						const jExpCompleted = paper.expScore > 0;
+						const jWriteCompleted = paper.writeScore > 0;
+						const jAllCompleted = jIdeaCompleted && jExpCompleted && jWriteCompleted;
+
+						const journalProgressFlowHtml = `
+							<div class="paper-progress-flow">
+								<span class="step-label ${jIdeaCompleted ? 'completed' : ''}">
+									<span class="step-name">idea</span>
+									<span class="step-score">${paper.ideaScore}</span>
+								</span>
+								<span class="step-arrow ${jIdeaCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${jExpCompleted ? 'completed' : ''}">
+									<span class="step-name">实验</span>
+									<span class="step-score">${paper.expScore}</span>
+								</span>
+								<span class="step-arrow ${jExpCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${jWriteCompleted ? 'completed' : ''}">
+									<span class="step-name">写作</span>
+									<span class="step-score">${paper.writeScore}</span>
+								</span>
+								<span class="step-arrow ${jWriteCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${jAllCompleted ? 'ready' : ''}" style="${jAllCompleted ? 'background:linear-gradient(135deg,#c4b5fd,#a78bfa);color:white;border:none;' : ''}">
+									<span class="step-name">总分</span>
+									<span class="step-score" style="${jAllCompleted ? 'color:white;' : ''}">${total}</span>
+								</span>
+							</div>`;
+
 						html += `<div class="paper-slot active upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
 							<div class="slot-header">
 								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽</span>
 								${statusBadge}
 							</div>
 							<div class="paper-title">${paper.title}</div>
-							<div class="paper-scores-compact">
-								<span class="score-box-inline"><span class="score-label">idea</span><span class="score-value">${paper.ideaScore}</span></span>
-								<span class="score-box-inline"><span class="score-label">实验</span><span class="score-value">${paper.expScore}</span></span>
-								<span class="score-box-inline"><span class="score-label">写作</span><span class="score-value">${paper.writeScore}</span></span>
-								<span class="score-box-inline total" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa);"><span class="score-label">总分</span><span class="score-value">${total}</span></span>
-							</div>
+							${journalProgressFlowHtml}
 							<div class="paper-actions-compact">
 								${actionButtons}
 								<button class="submit-btn abandon" onclick="abandonPaper(${i})" title="放弃论文">
@@ -434,17 +473,43 @@
 							</button>`;
 						}
 
+						// ★★★ 合并分数和进度流显示 ★★★
+						const ideaCompleted = paper.ideaScore > 0;
+						const expCompleted = paper.expScore > 0;
+						const writeCompleted = paper.writeScore > 0;
+						const allCompleted = ideaCompleted && expCompleted && writeCompleted;
+						// 投稿状态时不闪烁
+						const showReadyPulse = allCompleted && !paper.reviewing;
+
+						const progressFlowHtml = `
+							<div class="paper-progress-flow">
+								<span class="step-label ${ideaCompleted ? 'completed' : ''}">
+									<span class="step-name">idea</span>
+									<span class="step-score">${paper.ideaScore}</span>
+								</span>
+								<span class="step-arrow ${ideaCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${expCompleted ? 'completed' : ''}">
+									<span class="step-name">实验</span>
+									<span class="step-score">${paper.expScore}</span>
+								</span>
+								<span class="step-arrow ${expCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${writeCompleted ? 'completed' : ''}">
+									<span class="step-name">写作</span>
+									<span class="step-score">${paper.writeScore}</span>
+								</span>
+								<span class="step-arrow ${writeCompleted ? 'active' : ''}">→</span>
+								<span class="step-label ${showReadyPulse ? 'ready' : (allCompleted ? 'completed' : '')}">
+									<span class="step-name">总分</span>
+									<span class="step-score">${simpleTotal}</span>
+								</span>
+							</div>`;
+
 						html += `<div class="paper-slot active">
 							<div class="slot-header">
 								${reviewingInfo}
 							</div>
 							<div class="paper-title">${paper.title}</div>
-							<div class="paper-scores-compact">
-								<span class="score-box-inline"><span class="score-label">idea</span><span class="score-value">${paper.ideaScore}</span></span>
-								<span class="score-box-inline"><span class="score-label">实验</span><span class="score-value">${paper.expScore}</span></span>
-								<span class="score-box-inline"><span class="score-label">写作</span><span class="score-value">${paper.writeScore}</span></span>
-								<span class="score-box-inline total"><span class="score-label">总分</span><span class="score-value">${simpleTotal}</span></span>
-							</div>
+							${progressFlowHtml}
 							<div class="paper-actions-compact">
 								<button class="submit-btn grade-a" onclick="submitPaper(${i},'A')" ${!canSubmit?'disabled':''}>
 									投A会
