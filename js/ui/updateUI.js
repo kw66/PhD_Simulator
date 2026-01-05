@@ -29,6 +29,17 @@
 				const btn = document.querySelector(`.research-stat.filter-btn[data-grade="${grade}"]`);
 				if (btn) btn.classList.remove('active');
 			});
+
+			// ★★★ 修复：根据已发表论文恢复按钮状态 ★★★
+			if (gameState && gameState.publishedPapers && gameState.publishedPapers.length > 0) {
+				gameState.publishedPapers.forEach(paper => {
+					if (paper && paper.grade && !paperFilterState[paper.grade]) {
+						paperFilterState[paper.grade] = true;
+						const btn = document.querySelector(`.research-stat.filter-btn[data-grade="${paper.grade}"]`);
+						if (btn) btn.classList.add('active');
+					}
+				});
+			}
 		}
 		window.resetAttributeTracking = resetAttributeTracking;
 

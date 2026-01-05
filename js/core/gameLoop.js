@@ -1967,8 +1967,9 @@
 					effectDesc = '天选之人的命运齿轮转动，短板瞬间补齐！';
 					const maxStat = Math.max(gameState.research, gameState.social, gameState.favor);
 					const oldStats = { research: gameState.research, social: gameState.social, favor: gameState.favor };
-					gameState.research = Math.min(20, maxStat);
-					gameState.social = Math.min(20, maxStat);
+					// ★★★ 修复：使用动态上限而非固定的20 ★★★
+					gameState.research = Math.min(gameState.researchMax || 20, maxStat);
+					gameState.social = Math.min(gameState.socialMax || 20, maxStat);
 					gameState.favor = Math.min(gameState.favorMax || 20, maxStat);
 					if (oldStats.research !== maxStat) bonusDetails.push(`科研能力 ${oldStats.research} → ${gameState.research}`);
 					if (oldStats.social !== maxStat) bonusDetails.push(`社交能力 ${oldStats.social} → ${gameState.social}`);
