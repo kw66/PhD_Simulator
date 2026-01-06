@@ -867,7 +867,7 @@
 						策略：靠转化获得金钱和SAN，多写论文获取转化收益
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:6px;">
-						<strong>贪求之富可敌国</strong>：每月属性重置为1，变化转为金钱<br>
+						<strong>贪求之富可敌国</strong>：每月SAN/属性重置为1，重置的属性变化转为金钱<br>
 						策略：觉醒后每6金消费属性+1，疯狂花钱
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">

@@ -99,14 +99,13 @@
 			// ★★★ 贪求之富可敌国：月初属性变化 ★★★
 			if (gameState.isReversed && gameState.character === 'rich') {
 				if (gameState.reversedAwakened) {
-					// ★★★ 觉醒后：SAN重置为1，属性降低20%（下取整），属性变化转为金钱 ★★★
+					// ★★★ 觉醒后：SAN重置为1，属性降低20%（下取整），属性变化转为金钱（SAN不算属性）★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
 					// SAN重置为1
-					const sanLoss = oldSan - 1;
 					gameState.san = 1;
 
 					// 属性降低20%（下取整）
@@ -118,8 +117,8 @@
 					gameState.social = Math.max(1, gameState.social - socialLoss);
 					gameState.favor = Math.max(1, gameState.favor - favorLoss);
 
-					// 属性变化转为金钱
-					const totalLoss = sanLoss + researchLoss + socialLoss + favorLoss;
+					// 属性变化转为金钱（SAN不算属性）
+					const totalLoss = researchLoss + socialLoss + favorLoss;
 					if (totalLoss > 0) {
 						gameState.gold += totalLoss;
 					}
@@ -127,18 +126,17 @@
 					addLog('逆位效果', '贪求之月度衰减',
 						`SAN ${oldSan}→1, 科研 ${oldResearch}→${gameState.research}(-${researchLoss}), 社交 ${oldSocial}→${gameState.social}(-${socialLoss}), 好感 ${oldFavor}→${gameState.favor}(-${favorLoss})，属性转金+${totalLoss}`);
 				} else {
-					// ★★★ 未觉醒：每月重置为1，属性变化转为金钱 ★★★
+					// ★★★ 未觉醒：每月重置为1，重置的属性变化转为金钱（SAN不算属性）★★★
 					const oldSan = gameState.san;
 					const oldResearch = gameState.research;
 					const oldSocial = gameState.social;
 					const oldFavor = gameState.favor;
 
-					// 计算属性变化（减少的量）
-					const sanChange = oldSan - 1;
-					const researchChange = oldResearch - 1;
-					const socialChange = oldSocial - 1;
-					const favorChange = oldFavor - 1;
-					const totalChange = sanChange + researchChange + socialChange + favorChange;
+					// 计算重置时的属性变化（取绝对值），SAN不算属性所以不转金
+					const researchChange = Math.abs(oldResearch - 1);
+					const socialChange = Math.abs(oldSocial - 1);
+					const favorChange = Math.abs(oldFavor - 1);
+					const totalChange = researchChange + socialChange + favorChange;
 
 					gameState.san = 1;
 					gameState.research = 1;

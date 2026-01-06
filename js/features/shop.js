@@ -278,8 +278,19 @@
 								itemDesc = `SAN值+3 (本月已购${coffeeBoughtThisMonth}杯，本杯${nextPrice}金币)`;
 							}
 						} else if (gameState.hasCoffeeMachine) {
-							// 有咖啡机但未升级
-							itemDesc = `SAN值+3 (可在出售/升级页升级咖啡机)`;
+							// 有咖啡机但未升级：显示基础累计加成
+							const coffeeBonus = getCoffeeMachineBonus();
+							const totalBonus = 3 + coffeeBonus;
+							const threshold = COFFEE_MACHINE_BASE.threshold;  // 15
+							const maxBonus = COFFEE_MACHINE_BASE.maxBonus;    // 2
+							const nextLevel = coffeeBonus + 1;
+							const nextCount = nextLevel * threshold;
+
+							if (coffeeBonus >= maxBonus) {
+								itemDesc = `SAN值+${totalBonus} (咖啡机已满级+${maxBonus})`;
+							} else {
+								itemDesc = `SAN值+${totalBonus} (${count}/${nextCount}杯→+${nextLevel})`;
+							}
 						} else {
 							// 无咖啡机：基础效果
 							itemDesc = `SAN值+3 (购买咖啡机可提升效果)`;
@@ -885,6 +896,11 @@
 		}
 
 		// ==================== 咖啡机升级系统 ====================
+		// 基础咖啡机参数
+		const COFFEE_MACHINE_BASE = {
+			threshold: 15,  // 每15杯+1
+			maxBonus: 2     // 最多+2
+		};
 		const COFFEE_MACHINE_UPGRADES = {
 			automatic: {
 				name: '自动咖啡机',
@@ -914,27 +930,44 @@
 		// 获取咖啡机提供的SAN加成
 		function getCoffeeMachineBonus() {
 			if (!gameState.hasCoffeeMachine) return 0;
-			// ★★★ 只有高级咖啡机才有累计加成效果 ★★★
+			// ★★★ 高级咖啡机：使用高级参数 ★★★
 			if (gameState.coffeeMachineUpgrade === 'advanced') {
 				return gameState.coffeeMachineBonusLevel || 0;
 			}
+			// ★★★ 基础咖啡机（未升级）：使用基础参数 ★★★
+			if (!gameState.coffeeMachineUpgrade) {
+				return gameState.coffeeMachineBonusLevel || 0;
+			}
+			// 自动咖啡机/无限咖啡机：无累计加成
 			return 0;
 		}
 
 		// 更新咖啡机加成等级
 		function updateCoffeeMachineBonus() {
 			if (!gameState.hasCoffeeMachine) return;
-			// ★★★ 只有高级咖啡机才计算累计加成 ★★★
-			if (gameState.coffeeMachineUpgrade !== 'advanced') return;
 
 			const count = gameState.coffeeMachineCount || 0;
-			const threshold = COFFEE_MACHINE_UPGRADES.advanced.threshold;  // 12
-			const maxBonus = COFFEE_MACHINE_UPGRADES.advanced.maxBonus;    // 5
+			let threshold, maxBonus, logTitle;
+
+			if (gameState.coffeeMachineUpgrade === 'advanced') {
+				// ★★★ 高级咖啡机：每12杯+1，最多+5 ★★★
+				threshold = COFFEE_MACHINE_UPGRADES.advanced.threshold;  // 12
+				maxBonus = COFFEE_MACHINE_UPGRADES.advanced.maxBonus;    // 5
+				logTitle = '高级咖啡机';
+			} else if (!gameState.coffeeMachineUpgrade) {
+				// ★★★ 基础咖啡机：每15杯+1，最多+2 ★★★
+				threshold = COFFEE_MACHINE_BASE.threshold;  // 15
+				maxBonus = COFFEE_MACHINE_BASE.maxBonus;    // 2
+				logTitle = '咖啡机';
+			} else {
+				// 自动咖啡机/无限咖啡机：无累计加成
+				return;
+			}
 
 			const newLevel = Math.min(maxBonus, Math.floor(count / threshold));
 			if (newLevel > (gameState.coffeeMachineBonusLevel || 0)) {
 				gameState.coffeeMachineBonusLevel = newLevel;
-				addLog('高级咖啡机', '咖啡机效果提升', `冰美式SAN回复+${newLevel}（累计${count}杯）`);
+				addLog(logTitle, '咖啡机效果提升', `冰美式SAN回复+${newLevel}（累计${count}杯）`);
 			}
 		}
 
@@ -971,13 +1004,15 @@
 			}
 
 			const count = gameState.coffeeMachineCount || 0;
+			const currentBonus = getCoffeeMachineBonus();
+			const bonusInfo = currentBonus > 0 ? ` | 当前加成：+${currentBonus}` : '';
 
 			let html = `
 				<div style="text-align:center;margin-bottom:15px;">
 					<div style="font-size:2rem;margin-bottom:8px;">☕</div>
 					<div style="font-weight:600;">当前：咖啡机</div>
-					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：购买冰美式回复SAN值</div>
-					<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">累计喝咖啡：${count}杯</div>
+					<div style="font-size:0.85rem;color:var(--text-secondary);">效果：每累计喝${COFFEE_MACHINE_BASE.threshold}杯冰美式，SAN回复+1（最多+${COFFEE_MACHINE_BASE.maxBonus}）</div>
+					<div style="font-size:0.85rem;color:var(--success-color);margin-top:4px;">累计喝咖啡：${count}杯${bonusInfo}</div>
 				</div>
 				<div style="font-weight:600;margin-bottom:10px;">选择升级方向（只能选择一次）：</div>
 			`;
@@ -1439,18 +1474,20 @@
 					gameState.coffeeBoughtCount = (gameState.coffeeBoughtCount || 0) + 1;
 					// ★★★ 咖啡机升级决定SAN恢复效果 ★★★
 					// 自动咖啡机/无限咖啡机：固定+3SAN
-					// 高级咖啡机：+3+累计加成
+					// 高级咖啡机：+3+累计加成（每12杯+1，最多+5）
+					// 基础咖啡机：+3+累计加成（每15杯+1，最多+2）
 					// 无咖啡机：+3
 					let coffeeBonus = 3;
-					if (gameState.coffeeMachineUpgrade === 'advanced') {
+					if (gameState.coffeeMachineUpgrade === 'advanced' || !gameState.coffeeMachineUpgrade && gameState.hasCoffeeMachine) {
 						coffeeBonus = 3 + getCoffeeMachineBonus();
 					}
 					gameState.san = Math.min(gameState.sanMax, gameState.san + coffeeBonus);
 					result += `，SAN值+${coffeeBonus}`;
-					// 如果有咖啡机，增加累计计数用于高级咖啡机升级加成
+					// 如果有咖啡机，增加累计计数用于加成
 					if (gameState.hasCoffeeMachine) {
 						gameState.coffeeMachineCount = (gameState.coffeeMachineCount || 0) + 1;
-						if (gameState.coffeeMachineUpgrade === 'advanced') {
+						// 基础咖啡机和高级咖啡机都有累计加成效果
+						if (gameState.coffeeMachineUpgrade === 'advanced' || !gameState.coffeeMachineUpgrade) {
 							updateCoffeeMachineBonus();
 						}
 					}
@@ -1460,13 +1497,18 @@
 					item.bought = true;
 					gameState.hasCoffeeMachine = true;
 					gameState.coffeeMachineUpgrade = null;  // 未升级
-					// ★★★ 修改：不清零累计，恢复之前的计数 ★★★
-					// coffeeMachineCount 保留之前的值，再次购买后继续累计
-					gameState.coffeeMachineBonusLevel = 0;  // 加成等级需要重新升级后才生效
+					// ★★★ 修改：根据之前累计计算加成等级 ★★★
+					const prevCount = gameState.coffeeMachineCount || 0;
+					const prevBonus = Math.min(COFFEE_MACHINE_BASE.maxBonus, Math.floor(prevCount / COFFEE_MACHINE_BASE.threshold));
+					gameState.coffeeMachineBonusLevel = prevBonus;
 					result += '，获得咖啡机-可在商店第3页升级';
 					// 如果之前有累计，显示恢复信息
-					if ((gameState.coffeeMachineCount || 0) > 0) {
-						result += `（累计喝咖啡${gameState.coffeeMachineCount}杯已恢复）`;
+					if (prevCount > 0) {
+						result += `（累计${prevCount}杯`;
+						if (prevBonus > 0) {
+							result += `，加成+${prevBonus}`;
+						}
+						result += '）';
 					}
 					// ★★★ 购买咖啡机后检查豪华工位成就 ★★★
 					if (gameState.furnitureBought &&

@@ -166,15 +166,15 @@
 						}
 						gameState.rebelCycleCount++;
 
-						addLog('逆位效果', '变本加厉（觉醒）', `好感归零→重置为${Math.min(favorMax, 4)}，金币<5则重置为5，${effectDesc}`);
+						addLog('逆位效果', '变本加厉（觉醒）', `好感归零→重置为${Math.min(favorMax, 4)}，金币补足到5，${effectDesc}`);
 					} else {
-						// ★★★ 未觉醒：重置为6，社交/科研+1，金币<3则重置为3 ★★★
+						// ★★★ 未觉醒：重置为6，社交/科研+1，金币补足到3 ★★★
 						gameState.favor = Math.min(favorMax, 6);
 						gameState.social = Math.min(gameState.socialMax || 20, gameState.social + 1);
 						gameState.research = Math.min(gameState.researchMax || 20, gameState.research + 1);
 						if (gameState.gold < 3) gameState.gold = 3;
 
-						addLog('逆位效果', '变本加厉', `好感归零→重置为${Math.min(favorMax, 6)}，社交+1，科研+1，金币<3则重置为3`);
+						addLog('逆位效果', '变本加厉', `好感归零→重置为${Math.min(favorMax, 6)}，社交+1，科研+1，金币补足到3`);
 					}
 				}
 
