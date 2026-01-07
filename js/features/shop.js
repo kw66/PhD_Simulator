@@ -1900,8 +1900,13 @@
 
 					switch (type) {
 						case 'research':
-							gameState.research = Math.min(gameState.researchMax || 20, gameState.research + integerGain);
-							checkResearchUnlock();
+							// ★★★ 修复：调用changeResearch以触发愚钝被动 ★★★
+							if (typeof changeResearch === 'function') {
+								changeResearch(integerGain);
+							} else {
+								gameState.research = Math.min(gameState.researchMax || 20, gameState.research + integerGain);
+								checkResearchUnlock();
+							}
 							resultText = `科研+${integerGain}（累积剩余${shop.accumulated[type].toFixed(2)}）`;
 							break;
 						case 'social':
