@@ -6,8 +6,8 @@
 2026.2.28———————————————————————————————
 
 后续用的都是在命令行里调用GPT和Claude或者Gemini，省去了网页端的复制粘贴，可以直接改本地文件，可以分段读取修改整个新项目（现在已经几万行代码了）
-Claude Opus4.5是最好用的，后面出了4.6。但也是最贵的，网上找了[中转](https://globalai.vip/register?aff=Wgrs)或者[中转](https://www.openclaudecode.cn/register?aff=dA1r)便宜一点。
-GPT5.2也不错，但是太慢了。后面出了GPT5.3codex便宜大碗，可以平替Claude Opus4.6，也是找了[中转](https://codex-for.me/?invite=1643)或者[中转](https://right.codes/register?aff=babe96da)。
+Claude Opus4.5是最好用的，后面出了4.6。但也是最贵的，网上找了[全球AI中转](https://globalai.vip/register?aff=Wgrs)或者[米醋中转](https://www.openclaudecode.cn/register?aff=dA1r)便宜一点。
+GPT5.2也不错，但是太慢了。后面出了GPT5.3codex便宜大碗，可以平替Claude Opus4.6，也是找了[codexfor中转](https://codex-for.me/?invite=1643)或者[rightcode中转](https://right.codes/register?aff=babe96da)。
 AI之间也可以相互调用，需要配置MCP，skill等，还装了[CCswitch](https://github.com/farion1231/cc-switch)来管理几个中转网站。
 PS，10天写完博士大论文全靠claude！
 
