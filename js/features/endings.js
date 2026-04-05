@@ -457,12 +457,7 @@
 			const locked = ALL_ACHIEVEMENTS.filter(x => !achievements.includes(x));
 
 			const failedEndings = ['quit', 'burnout', 'expelled', 'poor', 'delay', 'isolated'];  // ★★★ 修复：添加isolated ★★★
-			const successEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician'];
-			// ★★★ 新增：真大多数成功结局不显示AI Lab推广 ★★★
-			const trueNormalSuccessEndings = ['true_phd', 'true_devotion', 'true_life'];
 			const isFailed = failedEndings.includes(endingType);
-			const isSuccess = successEndings.includes(endingType);
-			const isTrueNormalSuccess = trueNormalSuccessEndings.includes(endingType);
 
 			// ★★★ 新增：生成失败原因信息 ★★★
 			let failReasonHtml = '';
@@ -584,22 +579,6 @@
 				html += `
 				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
 					<div style="font-size:0.9rem;color:#6b7280;">💪 不要灰心！科研之路漫漫，来日方长~</div>
-				</div>`;
-			}
-
-			if (isSuccess && !isTrueNormalSuccess) {
-				html += `
-				<div style="background:linear-gradient(135deg,rgba(254,249,195,0.7),rgba(254,240,138,0.7));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
-					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">🎉 恭喜毕业！新的征程即将开始~</div>
-					<a href="http://xhslink.com/o/AC6pvxkgOhv" target="_blank"
-					   style="display:inline-block;padding:10px 24px;
-							  background:linear-gradient(135deg,#10b981,#059669);
-							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
-							  box-shadow:0 4px 15px rgba(16,185,129,0.35);transition:all 0.3s ease;"
-					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
-					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(16,185,129,0.35)'">
-						<i class="fas fa-building"></i> 作者诚邀你来上海AI Lab实习
-					</a>
 				</div>`;
 			}
 

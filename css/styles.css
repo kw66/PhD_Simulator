@@ -30,9 +30,10 @@ html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     /* 使用稳定的视窗高度 */
-    height: 100%;
+    min-height: 100%;
     /* 防止滚动时地址栏隐藏导致的高度变化 */
     overflow-x: hidden;
+    overflow-y: scroll;
 }
 
 body {
@@ -44,10 +45,13 @@ body {
     color: var(--text-primary);
     /* 防止横向溢出导致的缩放 */
     overflow-x: hidden;
+    overflow-y: auto;
     /* 防止双击缩放 */
     touch-action: manipulation;
     /* 防止iOS橡皮筋效果导致的视觉跳动 */
     overscroll-behavior: none;
+    margin: 0;
+    padding: 0;
 }
 
 /* 角色显示 */
@@ -327,10 +331,6 @@ body {
     background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f7fa 100%);
     transition: background 0.5s ease;
     width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
 }
 
 .start-container {

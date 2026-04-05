@@ -1957,9 +1957,6 @@
 		window.showMonitorUpgradeModal = showMonitorUpgradeModal;
 		window.upgradeMonitor = upgradeMonitor;
 		window.getMonitorIdeaBonus = getMonitorIdeaBonus;
-		window.manualRefreshBlackMarket = manualRefreshBlackMarket;
-		window.toggleItemLock = toggleItemLock;
-		window.buyBlackMarketItem = buyBlackMarketItem;
 		window.showCurrentAchievements = showCurrentAchievements;
 		window.showAllAchievements = showAllAchievements;
 		window.showAchievementDetail = showAchievementDetail;

@@ -1,4 +1,50 @@
 ﻿
+		// ==================== 浏览器滚轮滚动修复 ====================
+
+		function isEdgeBrowser() {
+			return navigator.userAgent.indexOf('Edg') > -1;
+		}
+
+		function isChromeBrowser() {
+			return navigator.userAgent.indexOf('Chrome') > -1 && navigator.userAgent.indexOf('Edg') === -1;
+		}
+
+		function initWheelScrollFix() {
+			if ((!isEdgeBrowser() && !isChromeBrowser()) || document.body.dataset.wheelFixBound === 'true') {
+				return;
+			}
+
+			document.body.dataset.wheelFixBound = 'true';
+			console.log('🔧 启用滚轮滚动修复');
+
+			document.addEventListener('wheel', function(e) {
+				if (e.defaultPrevented) return;
+
+				let target = e.target;
+				while (target && target !== document.body && target !== document.documentElement) {
+					const style = getComputedStyle(target);
+					const overflowY = style.overflowY;
+
+					if ((overflowY === 'auto' || overflowY === 'scroll') &&
+						target.scrollHeight > target.clientHeight) {
+						const atTop = target.scrollTop === 0;
+						const atBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
+
+						if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+							return;
+						}
+					}
+
+					target = target.parentElement;
+				}
+
+				window.scrollBy({
+					top: e.deltaY,
+					behavior: 'auto'
+				});
+			}, { passive: true });
+		}
+
 		// ==================== 面板折叠功能（完整版）====================
 
 		// 折叠状态存储
