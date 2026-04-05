@@ -71,15 +71,6 @@
 | [gemini.html](./gemini.html) | 早期 AI 生成版本存档 |
 | [index_v0.5.html](./index_v0.5.html) / [index0.html](./index0.html) | 历史快照 |
 
-## 🔗 延伸内容
-
-| 类型 | 链接 |
-| --- | --- |
-| 🎨 科研绘图 | [research-figures](https://github.com/kw66/research-figures) |
-| 🏢 实习内容 | [小红书链接](http://xhslink.com/o/AC6pvxkgOhv) |
-| 📖 攻略 | [小红书链接](http://xhslink.com/o/7gUIADYbXNW) |
-| 📝 更新日志 | [小红书链接](http://xhslink.com/o/5nVtbWCM92S) |
-
 ## 🤖 AI 开发说明
 
 这个项目并不是“一次生成完”的静态产物，而是在 AI 辅助下反复迭代出来的可玩作品。
