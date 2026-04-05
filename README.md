@@ -19,7 +19,7 @@
 </div>
 
 <p align="center">
-  <img src="./assets/readme-preview.png" alt="PhD Simulator preview" width="88%">
+  <img src="./assets/readme-cover.jpg" alt="PhD Simulator cover" width="92%">
 </p>
 
 ## ✨ 项目简介
