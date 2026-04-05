@@ -3,11 +3,15 @@
 
 [将这段话输入ai中可以生成游戏的最初版本](https://github.com/kw66/PhD_Simulator/blob/main/promopt.txt)
 
+2026.4.5———————————————————————————————
+
+Gemini的生图功能可以进一步优化游戏，也借助一些ui优化的skills进一步补齐美工上的短板。中转站迭代的速度是很快的，很多都倒闭了，或者人多服务质量下降。目前opus系列不建议用了，贵且不稳定。gpt有很多羊毛渠道，的价格甚至低于电费，但是也没有前段时间稳定了。近期开发主要使用gpt5.4。
+
 2026.2.28———————————————————————————————
 
 后续用的都是在命令行里调用GPT和Claude或者Gemini，省去了网页端的复制粘贴，可以直接改本地文件，可以分段读取修改整个新项目（现在已经几万行代码了）
-Claude Opus4.5是最好用的，后面出了4.6。但也是最贵的，网上找了[全球AI中转](https://globalai.vip/register?aff=Wgrs)或者[米醋中转](https://www.openclaudecode.cn/register?aff=dA1r)便宜一点。
-GPT5.2也不错，但是太慢了。后面出了GPT5.3codex便宜大碗，可以平替Claude Opus4.6，也是找了[codexfor中转](https://codex-for.me/?invite=1643)或者[rightcode中转](https://right.codes/register?aff=babe96da)。
+Claude Opus4.5是最好用的，后面出了4.6。但也是最贵的，网上找了全球AI中转或者米醋中转便宜一点。
+GPT5.2也不错，但是太慢了。后面出了GPT5.3codex便宜大碗，可以平替Claude Opus4.6，也是找了codexfor中转或者rightcode中转。
 AI之间也可以相互调用，需要配置MCP，skill等，还装了[CCswitch](https://github.com/farion1231/cc-switch)来管理几个中转网站。
 PS，10天写完博士大论文全靠claude！
 
