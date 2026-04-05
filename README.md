@@ -11,10 +11,7 @@
 ![Status](https://img.shields.io/badge/Status-持续更新-8b5cf6?style=flat-square)
 
 [🎮 点击即玩](https://kw66.github.io/PhD_Simulator/) ·
-[📝 初始 Prompt](./promopt.txt) ·
-[🎨 科研绘图](https://github.com/kw66/research-figures) ·
-[📖 攻略](http://xhslink.com/o/7gUIADYbXNW) ·
-[📝 更新日志](http://xhslink.com/o/5nVtbWCM92S)
+[📝 初始 Prompt](./promopt.txt)
 
 </div>
 

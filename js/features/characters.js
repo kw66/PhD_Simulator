@@ -57,10 +57,50 @@
         }
 
         // ==================== 初始化 ====================
+		function findScrollableStartScreenAncestor(node, startScreen, deltaY) {
+			let current = node instanceof Element ? node : null;
+			while (current && current !== startScreen) {
+				const style = window.getComputedStyle(current);
+				const overflowY = style.overflowY;
+				const isScrollable = (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay')
+					&& current.scrollHeight > current.clientHeight;
+
+				if (isScrollable) {
+					const canScrollDown = deltaY > 0 && current.scrollTop + current.clientHeight < current.scrollHeight - 1;
+					const canScrollUp = deltaY < 0 && current.scrollTop > 0;
+					if (canScrollDown || canScrollUp) {
+						return current;
+					}
+				}
+
+				current = current.parentElement;
+			}
+			return null;
+		}
+
+		function initStartScreenScrollFix() {
+			const startScreen = document.getElementById('start-screen');
+			if (!startScreen || startScreen.dataset.wheelFixBound === 'true') return;
+
+			startScreen.dataset.wheelFixBound = 'true';
+			startScreen.addEventListener('wheel', (event) => {
+				if (startScreen.classList.contains('hidden')) return;
+
+				const nestedScrollable = findScrollableStartScreenAncestor(event.target, startScreen, event.deltaY);
+				if (nestedScrollable) return;
+
+				if (startScreen.scrollHeight <= startScreen.clientHeight) return;
+
+				startScreen.scrollTop += event.deltaY;
+				event.preventDefault();
+			}, { passive: false });
+		}
+
 		function init() {
 			// 初始化折叠状态
 			initCollapseStates();
 			initStartSectionStates();
+			initStartScreenScrollFix();
 
 			renderCharacterGrid();
 			document.getElementById('start-btn').addEventListener('click', startGame);
@@ -1069,6 +1109,7 @@
 
 			// ★★★ 增加游戏局数计数 ★★★
 			incrementGamesPlayed();
+			recordGameStart();
 
 			// ★★★ 清空自动存档（开始新游戏时）★★★
 			clearAutoSaves();

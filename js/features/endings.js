@@ -583,16 +583,7 @@
 			if (isFailed) {
 				html += `
 				<div style="background:linear-gradient(135deg,rgba(251,207,232,0.6),rgba(245,208,254,0.6));border-radius:16px;padding:15px;margin-bottom:12px;text-align:center;">
-					<div style="font-size:0.9rem;margin-bottom:10px;color:#6b7280;">💪 不要灰心！科研之路漫漫，来日方长~</div>
-					<a href="http://xhslink.com/o/8czcPQfNziK" target="_blank"
-					   style="display:inline-block;padding:10px 24px;
-							  background:linear-gradient(135deg,#ec4899,#a855f7);
-							  color:white;text-decoration:none;border-radius:25px;font-size:0.85rem;font-weight:600;
-							  box-shadow:0 4px 15px rgba(236,72,153,0.35);transition:all 0.3s ease;"
-					   onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(236,72,153,0.45)'"
-					   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(236,72,153,0.35)'">
-						<i class="fas fa-palette"></i> 作者向你传授科研绘图心得
-					</a>
+					<div style="font-size:0.9rem;color:#6b7280;">💪 不要灰心！科研之路漫漫，来日方长~</div>
 				</div>`;
 			}
 
@@ -1025,7 +1016,7 @@
 
 				const { data, error } = await window.supabaseClient
 					.from('stats_character_records_cache')
-					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements, max_difficulty');
+					.select('character_id, is_reversed, record_type, max_score, max_citations, max_achievements');
 				
 				if (error) throw error;
 				
@@ -1059,7 +1050,7 @@
 							maxScore: row.max_score || 0,
 							maxCitations: row.max_citations || 0,
 							maxAchievements: row.max_achievements || 0,
-							maxDifficulty: row.max_difficulty || 0
+							maxDifficulty: 0
 						};
 					}
 				});

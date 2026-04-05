@@ -226,10 +226,11 @@
 						.select('*', { count: 'exact', head: true })
 						.eq('type', 'uv')
 						.gte('created_at', todayStart),
-					// 今日游戏数
+					// 今日游玩数（按开局统计，而不是按结局统计）
 					window.supabaseClient
-						.from('game_endings')
+						.from('site_visits')
 						.select('*', { count: 'exact', head: true })
+						.eq('type', 'game')
 						.gte('created_at', todayStart)
 				]);
 

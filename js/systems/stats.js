@@ -396,6 +396,22 @@
 			}
 		}
 
+		// 记录开局次数，供首页“今日游玩”统计使用
+		async function recordGameStart() {
+			if (!window.supabaseClient) {
+				console.warn('⚠️ recordGameStart: window.supabaseClient 未初始化，跳过记录');
+				return;
+			}
+
+			try {
+				const { error } = await window.supabaseClient.from('site_visits').insert({ type: 'game' });
+				if (error) throw error;
+				console.log('✅ 开局已记录');
+			} catch (e) {
+				console.error('❌ 记录开局失败:', e);
+			}
+		}
+
 		// 优化：从计数器表读取（避免全表 count 查询）
 		async function getVisitStats() {
 			// 先检查本地缓存
@@ -480,31 +496,6 @@
 			if (!window.supabaseClient) return;
 
 			try {
-				// 获取难度信息
-				const difficultyPoints = typeof getSavedDifficultyPoints === 'function' ? getSavedDifficultyPoints() : 0;
-				// ★★★ 优化：只存储激活的诅咒（过滤掉值为0的）★★★
-				let cursesData = null;
-				if (gameState.activeCurses) {
-					const activeCurses = {};
-					for (const [key, value] of Object.entries(gameState.activeCurses)) {
-						if (value > 0) activeCurses[key] = value;
-					}
-					if (Object.keys(activeCurses).length > 0) {
-						cursesData = JSON.stringify(activeCurses);
-					}
-				}
-				// ★★★ 新增：存储祝福数据 ★★★
-				let blessingsData = null;
-				if (gameState.activeBlessings) {
-					const activeBlessings = {};
-					for (const [key, value] of Object.entries(gameState.activeBlessings)) {
-						if (value > 0) activeBlessings[key] = value;
-					}
-					if (Object.keys(activeBlessings).length > 0) {
-						blessingsData = JSON.stringify(activeBlessings);
-					}
-				}
-
 				const { error } = await window.supabaseClient.from('game_endings').insert({
 					ending_type: endingType,
 					ending_title: endingTitle,
@@ -519,17 +510,16 @@
 					paper_nature_sub: gameState.paperNatureSub || 0,
 					total_citations: gameState.totalCitations,
 					achievements_count: achievementCount,
-					difficulty_points: difficultyPoints,
-					curses: cursesData,
-					blessings: blessingsData,
-					used_modifiers: usedCurseOrBlessing,
 					created_at: new Date().toISOString()
 				});
 
 				if (error) throw error;
 				console.log('✅ 结局已记录:', endingTitle, usedCurseOrBlessing ? '(使用了诅咒/祝福)' : '');
 
-				// 清除缓存
+				// 结局与成就统计依赖这些缓存，写库成功后立即失效
+				clearLocalCache(CACHE_KEYS.GAMES);
+				clearLocalCache(CACHE_KEYS.STATS);
+				clearLocalCache(CACHE_KEYS.CHARACTER_RECORDS);
 				globalCharacterRecords = null;
 			} catch (e) {
 				console.error('❌ 记录结局失败:', e);
@@ -554,9 +544,10 @@
                 }));
                 
                 const { error } = await window.supabaseClient.from('game_achievements').insert(records);
-                
+
                 if (error) throw error;
                 console.log('✅ 成就已记录:', achievements);
+				clearLocalCache(CACHE_KEYS.STATS);
             } catch (e) {
                 console.error('❌ 记录成就失败:', e);
             }
@@ -1414,6 +1405,7 @@
 		// ==================== 全局函数暴露（供onclick和其他模块调用）====================
 		window.initStats = initStats;
 		window.recordVisit = recordVisit;
+		window.recordGameStart = recordGameStart;
 		window.recordEnding = recordEnding;
 		window.recordAchievements = recordAchievements;
 		window.getGlobalStats = getGlobalStats;
