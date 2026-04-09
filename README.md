@@ -5,11 +5,6 @@
 一个从 0 开始用 AI 持续迭代的浏览器小游戏。  
 体验研究生生涯，在科研、导师、社交、金钱与 SAN 之间做平衡，努力顺利毕业。
 
-[![Play](https://img.shields.io/badge/Play-在线试玩-2563eb?style=flat-square)](https://kw66.github.io/PhD_Simulator/)
-![Genre](https://img.shields.io/badge/Genre-模拟经营-f59e0b?style=flat-square)
-![Platform](https://img.shields.io/badge/Platform-Web-10b981?style=flat-square)
-![Status](https://img.shields.io/badge/Status-持续更新-8b5cf6?style=flat-square)
-
 [🎮 点击即玩](https://kw66.github.io/PhD_Simulator/) ·
 [📝 初始 Prompt](./promopt.txt)
 
