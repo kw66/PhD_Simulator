@@ -1896,10 +1896,17 @@
 					}
 				}
 				if (month === 9) {
-					// ★★★ 新增：CCIG事件 ★★★
-					const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
-					const ccigLocation = ccigLocations[(year - 1) % 5];
-					events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
+					// ★★★ 文科版：使用文科版学术年会名称 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLAConferenceName === 'function') {
+						const laConfLocations = ['北京', '上海', '南京', '武汉', '成都', '广州', '西安', '杭州'];
+						const laConfLocation = laConfLocations[(year - 1) % laConfLocations.length];
+						const laConfName = getLAConferenceName();
+						events.push({ icon: '📚', name: '学术年会', desc: `${laConfName} @ ${laConfLocation}`, color: 'rgba(231,76,60,0.25)' });
+					} else {
+						const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
+						const ccigLocation = ccigLocations[(year - 1) % 5];
+						events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
+					}
 				}
 				if (month === 11) {
 					if (isYear6) {
