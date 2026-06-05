@@ -1101,7 +1101,9 @@
 
 			// ★★★ 文科版：应用学科配置 ★★★
 			if (IS_LIBERAL_ARTS && typeof applyDisciplineConfig === 'function') {
+				console.log('🔧 应用学科配置...');
 				applyDisciplineConfig();
+				console.log('✅ 学科配置已应用，ADVISOR_TYPES:', window.ADVISOR_TYPES ? '已导出' : '未导出');
 			}
 
 			// ★★★ 文科版：应用全局文本替换 ★★★
@@ -1263,7 +1265,10 @@
 			loadSubmissionStatsAsync();
 
 			// ★★★ 第一年第一月固定事件：选择导师 ★★★
+			console.log('⏰ 准备显示导师选择弹窗...');
 			setTimeout(() => {
+				console.log('📞 调用showAdvisorSelectionModal...');
+				console.log('  ADVISOR_TYPES:', window.ADVISOR_TYPES ? Object.keys(window.ADVISOR_TYPES).join(', ') : '未定义');
 				showAdvisorSelectionModal((selectedAdvisor) => {
 					// 选择导师后显示毕业目标
 					const requirements = getAdvisorRequirements();
