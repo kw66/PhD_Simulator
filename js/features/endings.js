@@ -65,6 +65,11 @@
             // ★★★ 游戏结束时批量写入投稿数据（节省数据库流量）★★★
             batchRecordSubmissions();
 
+            // ★★★ 文科版：记录在线统计 ★★★
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof recordLiberalArtsStats === 'function') {
+                recordLiberalArtsStats(gameState, endingType);
+            }
+
             showEndingModal(title, desc, emoji, endingType);
         }
 
@@ -624,6 +629,19 @@
 					<i class="fas fa-history"></i>
 					我要回溯
 				</button>
+				${typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof showShareModal === 'function' ? `
+				<button onclick="showShareModal(gameState, '${endingType}')"
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
+							   background:linear-gradient(135deg,#10b981,#34d399);
+							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+							   cursor:pointer;box-shadow:0 4px 15px rgba(16,185,129,0.35);
+							   transition:all 0.3s ease;font-family:inherit;"
+						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
+						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(16,185,129,0.35)'">
+					<i class="fas fa-share-alt"></i>
+					分享成绩
+				</button>
+				` : ''}
 			</div>`;
 
 			showModal('', html, []);
