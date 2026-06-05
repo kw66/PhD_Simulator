@@ -831,6 +831,12 @@
 
 			checkGraduation();
 			checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
+
+			// ★★★ 文科版：随机显示学科知识卡片 ★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof maybeShowKnowledgeCard === 'function') {
+				maybeShowKnowledgeCard();
+			}
+
 			updateAllUI();
 			renderPaperSlots();
 		}

@@ -1267,6 +1267,13 @@
 					addLog('游戏提示', '先专注自己论文，再完成关系任务。属性≥6解锁更多选项。发表A类后论文槽可升级投Nature系列');
 					renderRelationshipPanel();
 					updateAllUI();
+
+					// ★★★ 文科版：显示新手引导 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof shouldShowGuide === 'function' && typeof showLiberalArtsGuide === 'function') {
+						if (shouldShowGuide()) {
+							setTimeout(() => showLiberalArtsGuide(), 500);
+						}
+					}
 				});
 			}, 500);
 		}
