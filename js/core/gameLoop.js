@@ -749,7 +749,12 @@
 					} else if (gameState.month === 3 && gameState.year === 4) {
 						triggerMentorAssignJuniorEvent();  // ★★★ 第4年第3月导师指派师弟师妹事件 ★★★
 					} else if (gameState.month === 9) {
-						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
+						// ★★★ 文科版：使用文科版学术年会事件 ★★★
+						if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsConferenceEvent === 'function') {
+							triggerLiberalArtsConferenceEvent();
+						} else {
+							triggerCCIGEvent();
+						}
 					} else if (gameState.month === 11) {
 						// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
 						if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
@@ -812,7 +817,12 @@
 			} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
 				triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
 			} else if (gameState.month === 9) {
-				triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
+				// ★★★ 文科版：使用文科版学术年会事件 ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsConferenceEvent === 'function') {
+					triggerLiberalArtsConferenceEvent();
+				} else {
+					triggerCCIGEvent();
+				}
 			} else if (gameState.month === 11) {
 				// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
 				if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
