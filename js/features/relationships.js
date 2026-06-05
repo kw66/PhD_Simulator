@@ -337,7 +337,7 @@
             if (!advisor || !advisor.advisorType) {
                 return degree === 'phd' ? 3 : 1;
             }
-            const advisorType = ADVISOR_TYPES[advisor.advisorType];
+            const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[advisor.advisorType];
             const baseSalary = advisorType.salary[degree] || (degree === 'phd' ? 3 : 1);
 
             // 整数工资直接返回
@@ -612,7 +612,7 @@
         // 渲染人物属性
         function renderPersonStats(person) {
             if (person.type === 'advisor') {
-                const advisorType = ADVISOR_TYPES[person.advisorType];
+                const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[person.advisorType];
                 return `
                     <div style="background:var(--light-bg);border-radius:8px;padding:10px;margin:10px 0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -1061,7 +1061,7 @@
             // 导师特殊显示
             let advisorInfo = '';
             if (person.type === 'advisor' && person.advisorType) {
-                const advisorType = ADVISOR_TYPES[person.advisorType];
+                const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[person.advisorType];
                 const req = advisorType.requirements;
                 // 使用person.title而非advisorType.title，因为level2使用titles数组
                 const personTitle = person.title || advisorType.title || '';
@@ -1195,7 +1195,7 @@
             gameState.relationships = [selectedAdvisor];
             gameState.selectedAdvisor = selectedAdvisor;
 
-            const advisorType = ADVISOR_TYPES[selectedAdvisor.advisorType];
+            const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[selectedAdvisor.advisorType];
             // ★★★ 新增：学校信息 ★★★
             const uni = selectedAdvisor.university || { name: '理工大学', type: 'tech', desc: '科研上限+1' };
             gameState.university = uni;  // 保存学校信息到游戏状态
