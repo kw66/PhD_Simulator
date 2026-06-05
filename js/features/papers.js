@@ -110,7 +110,7 @@
 			const confInfo = getConferenceInfo(month, grade, gameState.year);
 			
 			// 计算影响因子
-			const impactFactor = getConferenceImpactFactor({ month: month }, grade);
+			const impactFactor = (window.getConferenceImpactFactor || getConferenceImpactFactor)({ month: month }, grade);
 			
 			// 计算中稿均分
 			let avgAcceptedScore = '-';
