@@ -75,15 +75,24 @@
 		window.savePreMonthAttributes = savePreMonthAttributes;  // ★★★ 暴露到全局 ★★★
 
         function updateAllUI() {
-            try { updateTimeDisplay(); } catch(e) { console.error('updateTimeDisplay错误:', e); }
-            try { updateAttributes(); } catch(e) { console.error('updateAttributes错误:', e); }
-            try { updateGraduation(); } catch(e) { console.error('updateGraduation错误:', e); }
-            try { updateBuffs(); } catch(e) { console.error('updateBuffs错误:', e); }
-            try { updateResearchResults(); } catch(e) { console.error('updateResearchResults错误:', e); }
-            try { updateActionButtons(); } catch(e) { console.error('updateActionButtons错误:', e); }
-            try { updateEventPreview(); } catch(e) { console.error('updateEventPreview错误:', e); }
-            try { renderRelationshipPanel(); } catch(e) { console.error('renderRelationshipPanel错误:', e); }
-            try { updatePeakStats(); } catch(e) { console.error('updatePeakStats错误:', e); }
+            const steps = [
+                ['updateTimeDisplay', updateTimeDisplay],
+                ['updateAttributes', updateAttributes],
+                ['updateGraduation', updateGraduation],
+                ['updateBuffs', updateBuffs],
+                ['updateResearchResults', updateResearchResults],
+                ['updateActionButtons', updateActionButtons],
+                ['updateEventPreview', updateEventPreview],
+                ['renderRelationshipPanel', renderRelationshipPanel],
+                ['updatePeakStats', updatePeakStats]
+            ];
+            for (const [name, fn] of steps) {
+                try {
+                    fn();
+                } catch(e) {
+                    console.error(`❌ ${name} 错误:`, e.message);
+                }
+            }
         }
 
 		// ★★★ 月份变化追踪（用于动画） ★★★
