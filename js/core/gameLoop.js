@@ -495,7 +495,7 @@
 			// ★★★ 月初结算完成，处理自动订阅 ★★★
 			// ============================================
 			// 重置月度商品
-			shopItems.forEach(item => {
+			(window.shopItems || shopItems).forEach(item => {
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
 

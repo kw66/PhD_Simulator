@@ -1139,7 +1139,7 @@
 				gameState.characterName = '真·大多数';
 			}
 
-			shopItems.forEach(item => {
+			(window.shopItems || shopItems).forEach(item => {
 				if (item.once) item.bought = false;
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});

@@ -167,8 +167,9 @@
 			shopCurrentPage = page;
 
 			// ★★★ 分页：第一页是消耗品，第二页是永久物品，第三页是出售和升级 ★★★
-			const page1Items = shopItems.filter(item => !item.once && item.id !== 'gpu_buy');  // 消耗品
-			const page2Items = shopItems.filter(item => item.once || item.id === 'gpu_buy');   // 永久物品（含GPU）
+			const currentShopItems = window.shopItems || shopItems;
+			const page1Items = currentShopItems.filter(item => !item.once && item.id !== 'gpu_buy');  // 消耗品
+			const page2Items = currentShopItems.filter(item => item.once || item.id === 'gpu_buy');   // 永久物品（含GPU）
 			const currentPageItems = page === 1 ? page1Items : page === 2 ? page2Items : [];
 
 			let html = '<div>';

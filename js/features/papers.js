@@ -929,7 +929,7 @@
 		}
 
         function generatePaperTitle() {
-            const w = paperTitleWords;
+            const w = window.paperTitleWords || paperTitleWords;
             const templates = [
                 () => `${rand(w.adjectives)} ${rand(w.nouns)} for ${rand(w.domains)} ${rand(w.verbs)}`,
                 () => `${rand(w.verbs)} ${rand(w.domains)} with ${rand(w.adjectives)} ${rand(w.nouns)}`,

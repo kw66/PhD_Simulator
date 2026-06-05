@@ -265,7 +265,7 @@
 
         // 获取会议信息
         function getConferenceInfo(gameMonth, grade, gameYear) {
-            const conf = CONFERENCES[gameMonth][grade];
+            const conf = (window.CONFERENCES || CONFERENCES)[gameMonth][grade];
             const realYear = getRealYear(gameYear, gameMonth);
             
             // 处理ICCV/ECCV轮换
