@@ -77,10 +77,20 @@
 				icon: '👨‍🏫',
 				typeName: '导师',
 				getDesc: (r) => {
+					// ★★★ 文科版：使用文科版导师描述 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsAdvisorDescription === 'function') {
+						const advisorInfo = getLiberalArtsAdvisorDescription(r.advisorType);
+						return advisorInfo.desc;
+					}
 					const advisorInfo = ADVISOR_DESCRIPTIONS[r.advisorType] || ADVISOR_DESCRIPTIONS['default'];
 					return advisorInfo.desc;
 				},
 				getQuote: (r) => {
+					// ★★★ 文科版：使用文科版导师描述 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsAdvisorDescription === 'function') {
+						const advisorInfo = getLiberalArtsAdvisorDescription(r.advisorType);
+						return advisorInfo.quote;
+					}
 					const advisorInfo = ADVISOR_DESCRIPTIONS[r.advisorType] || ADVISOR_DESCRIPTIONS['default'];
 					return advisorInfo.quote;
 				}
@@ -253,14 +263,19 @@
 			const endYearText = `${endYear}年${((gameState.month - 1 + 8) % 12) + 1}月`;
 
 			// ★★★ 判断是否为毕业结局 ★★★
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start', 'academic_newstar', 'university_teacher', 'field_expert', 'intellectual', 'national_scholar', 'writer_scholar', 'cultural_inheritor', 'independent_scholar', 'cultural_official', 'famous_journalist', 'think_tank_expert', 'social_activist', 'education_reformer', 'data_scientist', 'enterprise_consultant'];
 			const isGraduated = graduationEndings.includes(currentEndingData?.endingType);
 			const endActionText = isGraduated ? '毕业' : '结束';
 
-			// 获取角色自述
-			const charQuotes = CHARACTER_QUOTES[gameState.character] || CHARACTER_QUOTES['normal'];
+			// 获取角色自述（文科版使用学科特定引用）
 			const isPositiveEnding = graduationEndings.includes(currentEndingData?.endingType);
-			const characterQuote = isPositiveEnding ? charQuotes.positive : charQuotes.negative;
+			let characterQuote;
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsCharacterQuote === 'function') {
+				characterQuote = getLiberalArtsCharacterQuote(gameState.character, gameState.discipline, isPositiveEnding);
+			} else {
+				const charQuotes = CHARACTER_QUOTES[gameState.character] || CHARACTER_QUOTES['normal'];
+				characterQuote = isPositiveEnding ? charQuotes.positive : charQuotes.negative;
+			}
 
 			return `
 				<div class="slide-content journey-slide">
@@ -1078,7 +1093,7 @@
 			const gradMonth = ((gameState.month - 1 + 8) % 12) + 1;
 
 			// ★★★ 判断是否为毕业结局 ★★★
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_phd', 'true_devotion', 'true_life', 'true_nobel_start', 'academic_newstar', 'university_teacher', 'field_expert', 'intellectual', 'national_scholar', 'writer_scholar', 'cultural_inheritor', 'independent_scholar', 'cultural_official', 'famous_journalist', 'think_tank_expert', 'social_activist', 'education_reformer', 'data_scientist', 'enterprise_consultant'];
 			const isGraduated = graduationEndings.includes(currentEndingData?.endingType);
 
 			// ★★★ 新增：计算中稿率 ★★★

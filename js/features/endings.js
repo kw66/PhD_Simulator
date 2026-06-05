@@ -128,7 +128,7 @@
 			const a = [];
 
 			// 定义顺利毕业的结局类型
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life', 'academic_newstar', 'university_teacher', 'field_expert', 'intellectual', 'national_scholar', 'writer_scholar', 'cultural_inheritor', 'independent_scholar', 'cultural_official', 'famous_journalist', 'think_tank_expert', 'social_activist', 'education_reformer', 'data_scientist', 'enterprise_consultant'];
 			const isGraduated = graduationEndings.includes(endingType);
 
 			// ★★★ 以下成就不需要顺利毕业也可以获得 ★★★

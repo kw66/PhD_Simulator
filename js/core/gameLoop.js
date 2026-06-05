@@ -382,6 +382,16 @@
 				}
 			}
 
+			// ★★★ 文科版实习效果（-SAN类）★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && gameState.internship && typeof applyInternshipEffects === 'function') {
+				applyInternshipEffects();
+
+				if (gameState.san < 0) {
+					triggerEnding('burnout');
+					return;
+				}
+			}
+
 			// ★★★ 指导师弟师妹效果（-SAN类，可叠加）★★★
 			const mentorshipBuffs = gameState.buffs.permanent.filter(b => b.type === 'mentorship');
 			if (mentorshipBuffs.length > 0) {
