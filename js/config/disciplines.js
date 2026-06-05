@@ -304,6 +304,11 @@ function applyDisciplineConfig() {
     gameState.disciplineCategory = selectedDisciplineCategory;
     gameState.disciplineName = config.name;
     gameState.disciplineIcon = config.icon;
+
+    // ★★★ 文科版：应用导师系统 ★★★
+    if (typeof applyLiberalArtsAdvisorSystem === 'function') {
+        applyLiberalArtsAdvisorSystem();
+    }
 }
 
 // 获取学科配置
