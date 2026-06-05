@@ -248,6 +248,36 @@ const LA_BLESSINGS = {
     }
 };
 
+// ==================== 文科版难度调整 ====================
+function applyLiberalArtsDifficulty() {
+    if (!gameState) return;
+
+    // 调整初始属性
+    gameState.san = 25;        // 从20提高到25
+    gameState.sanMax = 30;     // 从20提高到30
+    gameState.gold = 3;        // 从1提高到3
+    gameState.research = 2;    // 从1提高到2
+
+    // 调整每月恢复
+    gameState.laMonthlySanRecovery = 2;  // 从1提高到2
+
+    // 调整操作消耗
+    gameState.laReadSanCost = 1;         // 从2降低到1
+    gameState.laIdeaSanCost = 1;         // 从2降低到1
+    gameState.laExpSanCost = 2;          // 从3降低到2
+    gameState.laWriteSanCost = 3;        // 从4降低到3
+    gameState.laWorkSanCost = 3;         // 从5降低到3
+
+    // 调整毕业要求（通过导师系统调整）
+    gameState.laGraduationBonus = -2;    // 毕业要求-2
+
+    // 调整录取率
+    gameState.laAcceptanceRateBonus = 0.10;  // 录取率+10%
+
+    addLog('难度调整', '文科版难度', 'SAN上限+10，初始金币+2，操作消耗降低');
+}
+
 // 全局导出
 window.LA_CURSES = LA_CURSES;
 window.LA_BLESSINGS = LA_BLESSINGS;
+window.applyLiberalArtsDifficulty = applyLiberalArtsDifficulty;

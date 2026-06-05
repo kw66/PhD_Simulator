@@ -1025,6 +1025,12 @@
 			const hasMonitor = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
 			let baseSanCost = hasMonitor ? 1 : 2;  // 默认: 有显示器1, 无显示器2
 
+			// ★★★ 文科版：使用文科版SAN消耗 ★★★
+			if (gameState.laReadSanCost !== undefined) {
+				baseSanCost = gameState.laReadSanCost;
+				if (hasMonitor) baseSanCost = Math.max(0, baseSanCost - 1);
+			}
+
 			if (gameState.monitorUpgrade === '4k') {
 				baseSanCost = 0;  // 4K显示器: 不消耗SAN
 			} else if (gameState.monitorUpgrade === 'smart' || gameState.monitorUpgrade === 'dual') {
@@ -1118,7 +1124,7 @@
 			// ★★★ 修改：先计算下次打工的档位，SAN消耗和金钱奖励都随档位提升 ★★★
 			const nextWorkCount = (gameState.workCount || 0) + 1;
 			const currentTier = Math.floor((nextWorkCount - 1) / 8);  // 1-8次=0档, 9-16次=1档...
-			const baseSanCost = 5 + currentTier;  // 5, 6, 7, 8...
+			const baseSanCost = (gameState.laWorkSanCost || 5) + currentTier;  // 文科版: 3, 4, 5, 6...
 			const goldReward = 2 + currentTier;   // 2, 3, 4, 5...
 			const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
 
@@ -1189,7 +1195,7 @@
 			const hasGeminiSub = !!geminiSub;
 			
 			// SAN消耗计算
-			let baseSanCost = 2;
+			let baseSanCost = gameState.laIdeaSanCost || 2;
 			if (hasGeminiSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}
@@ -1400,11 +1406,11 @@
 			const gptSub = gameState.buffs.temporary.find(b => b.type === 'exp_san_reduce');
 			const hasGptSub = !!gptSub;
 			
-			let baseSanCost = 3;
+			let baseSanCost = gameState.laExpSanCost || 3;
 			if (hasGptSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}
-			
+
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			const { actualCost: sanActualCost, explanation: sanExplanation } = getSanCostExplanation(baseSanCost);
@@ -1592,8 +1598,8 @@
 			const hasClaudeSub = !!claudeSub;
 			
 			const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-			let baseSanCost = hasKeyboard ? 3 : 4;
-			
+			let baseSanCost = gameState.laWriteSanCost || (hasKeyboard ? 3 : 4);
+
 			if (hasClaudeSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}

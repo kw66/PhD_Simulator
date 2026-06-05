@@ -238,7 +238,7 @@
 			// ============================================
 
 			// 基础SAN回复
-			let sanRecovery = 1;
+			let sanRecovery = gameState.laMonthlySanRecovery || 1;
 			if (gameState.isReversed && gameState.character === 'normal') {
 				if (gameState.slothAwakened) {
 					// ★★★ 修改：觉醒后每月SAN+已损SAN的10%（上取整）★★★

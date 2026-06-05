@@ -309,6 +309,11 @@ function applyDisciplineConfig() {
     if (typeof applyLiberalArtsAdvisorSystem === 'function') {
         applyLiberalArtsAdvisorSystem();
     }
+
+    // ★★★ 文科版：调整难度参数 ★★★
+    if (typeof applyLiberalArtsDifficulty === 'function') {
+        applyLiberalArtsDifficulty();
+    }
 }
 
 // 获取学科配置
