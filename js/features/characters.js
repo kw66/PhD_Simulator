@@ -1182,10 +1182,12 @@
 
 		// ★★★ 修改：进入游戏后触发导师选择事件 ★★★
 		function continueGameStart() {
+			console.log('🚀 continueGameStart 开始执行');
 			// ★★★ 先切换界面，不要等待数据加载 ★★★
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
+			console.log('✅ 界面切换完成');
 
 			// ★★★ 停止开始页面粒子效果，启动游戏季节效果 ★★★
 			if (typeof SeasonEffects !== 'undefined') {
@@ -1194,18 +1196,25 @@
 			}
 
 			document.getElementById('log-content').innerHTML = '';
+			console.log('✅ 日志清空完成');
 			// ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
 			if (typeof resetAttributeTracking === 'function') {
 				resetAttributeTracking();
 			}
 			// ★★★ 修改：游戏开始时检查初始解锁状态（科研和社交）★★★
+			console.log('🔓 检查解锁状态...');
 			checkResearchUnlock(true);
 			checkSocialUnlock(true);
+			console.log('✅ 解锁状态检查完成');
 			// ★★★ 修复：游戏开始时为第一个月生成会议地点，避免地点随机变化 ★★★
+			console.log('📍 生成会议地点...');
 			generateMonthlyConferenceLocations();
+			console.log('✅ 会议地点生成完成');
+			console.log('🔄 更新UI...');
 			updateAllUI();
 			renderPaperSlots();
 			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★
+			console.log('✅ UI更新完成');
 
 			// ★★★ 修改：合并游戏开始日志和难度诅咒/祝福日志 ★★★
 			let startLogDetail = `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`;
