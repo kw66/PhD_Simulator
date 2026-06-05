@@ -4,52 +4,111 @@
 // ==================== 论文标题生成器 ====================
 const LA_PAPER_TITLES = {
     chinese: {
-        adjectives: ['论', '试论', '再论', '浅析', '略论', '新论', '重读', '重探', '从...看', '以...为例'],
+        adjectives: ['论', '试论', '再论', '浅析', '略论', '新论', '重读', '重探'],
         nouns: ['《红楼梦》', '《史记》', '鲁迅', '李白', '杜甫', '唐诗', '宋词', '元曲', '现代小说', '网络文学', '女性写作', '乡土文学', '先锋文学', '朦胧诗', '散文'],
         verbs: ['叙事', '意象', '隐喻', '结构', '主题', '风格', '传承', '演变', '比较', '接受'],
-        domains: ['艺术特色', '文化意蕴', '美学价值', '当代意义', '接受史', '比较研究', '思想内涵', '文学史地位', '现代阐释', '跨文化传播']
+        domains: ['艺术特色', '文化意蕴', '美学价值', '当代意义', '接受史', '比较研究', '思想内涵', '文学史地位', '现代阐释', '跨文化传播'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}的${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.domains)}`,
+            `从${rand(w.verbs)}看${rand(w.nouns)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}研究`,
+            `${rand(w.nouns)}的${rand(w.verbs)}与${rand(w.domains)}`
+        ]
     },
     history: {
-        adjectives: ['论', '试析', '考辨', '新探', '再考察', '钩沉', '补证', '以...为中心'],
+        adjectives: ['论', '试析', '考辨', '新探', '再考察', '钩沉', '补证'],
         nouns: ['唐代科举', '宋代商业', '明清社会', '五四运动', '抗战时期', '改革开放', '丝绸之路', '海上贸易', '近代教育', '革命根据地', '土地制度', '科举制度', '宗族社会', '城市化'],
         verbs: ['演变', '发展', '变迁', '转型', '互动', '冲突', '融合', '建构', '解构', '重构'],
-        domains: ['的历史考察', '的社会影响', '的制度分析', '的文化意义', '的比较研究', '再探', '新证', '考论', '述评']
+        domains: ['历史考察', '社会影响', '制度分析', '文化意义', '比较研究', '新证', '考论', '述评'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}与${rand(w.domains)}`,
+            `以${rand(w.nouns)}为中心的${rand(w.domains)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}研究`
+        ]
     },
     philosophy: {
-        adjectives: ['论', '试论', '探析', '辨析', '新解', '重估', '从...看', '基于...的'],
+        adjectives: ['论', '试论', '探析', '辨析', '新解', '重估'],
         nouns: ['儒家仁学', '道家自然', '康德道德', '海德格尔存在', '后现代主义', '人工智能伦理', '生命政治', '技术哲学', '环境伦理', '心灵哲学', '知识论', '美学', '逻辑学', '政治哲学'],
-        verbs: ['的哲学意蕴', '的当代价值', '的逻辑分析', '的伦理反思', '的存在论基础', '的认识论考察', '的方法论意义', '的批判性审视', '的重构', '的诠释'],
-        domains: ['研究', '探微', '辨正', '商榷', '述评', '反思', '展望', '新论']
+        verbs: ['哲学意蕴', '当代价值', '逻辑分析', '伦理反思', '存在论基础', '认识论考察', '方法论意义', '批判性审视', '重构', '诠释'],
+        domains: ['研究', '探微', '辨正', '商榷', '述评', '反思', '展望', '新论'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}`,
+            `基于${rand(w.nouns)}的${rand(w.domains)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}${rand(w.domains)}`
+        ]
     },
     foreign_lang: {
-        adjectives: ['On', 'A Study of', 'Revisiting', 'Rethinking', 'Exploring', 'An Analysis of', 'Toward', 'Beyond'],
+        adjectives: ['On', 'A Study of', 'Revisiting', 'Rethinking', 'Exploring', 'An Analysis of'],
         nouns: ['Shakespeare', 'Hemingway', 'Postcolonialism', 'Translation', 'Discourse', 'Pragmatics', 'Cognitive Linguistics', 'Narratology', 'Feminism', 'Ecocriticism'],
         verbs: ['in the Context of', 'from the Perspective of', 'and Its Implications for', 'as a Framework for', 'Revisited', 'Reconsidered'],
-        domains: ['Literary Studies', 'Cultural Identity', 'Digital Age', 'Cross-Cultural Communication', 'Language Teaching', 'Translation Studies', 'Applied Linguistics']
+        domains: ['Literary Studies', 'Cultural Identity', 'Digital Age', 'Cross-Cultural Communication', 'Language Teaching', 'Translation Studies', 'Applied Linguistics'],
+        templates: (w) => [
+            `${rand(w.adjectives)} ${rand(w.nouns)} ${rand(w.verbs)}`,
+            `${rand(w.nouns)} ${rand(w.verbs)} ${rand(w.domains)}`,
+            `${rand(w.adjectives)} ${rand(w.domains)}: ${rand(w.nouns)}`,
+            `${rand(w.nouns)} in ${rand(w.domains)}`,
+            `${rand(w.adjectives)} ${rand(w.nouns)}`
+        ]
     },
     journalism: {
-        adjectives: ['论', '试析', '新媒体环境下', '融合传播视域下', '算法推荐时代', '全媒体背景下', '智媒时代'],
+        adjectives: ['论', '试析', '新媒体环境下', '融合传播视域下', '算法推荐时代', '全媒体背景下'],
         nouns: ['短视频传播', '社交媒体舆论', '新闻专业主义', '虚假信息治理', '县级融媒体', '国际传播', '数据新闻', '计算传播', '平台治理', '数字素养', '用户参与', '算法偏见', '媒介记忆'],
-        verbs: ['的机制研究', '的效果分析', '的路径探索', '的困境与出路', '的实证研究', '的影响因素', '的理论建构', '的实践创新', '的模式比较', '的策略优化'],
-        domains: ['传播学', '新闻学', '广告学', '新媒体', '舆论学', '国际传播']
+        verbs: ['机制研究', '效果分析', '路径探索', '困境与出路', '实证研究', '影响因素', '理论建构', '实践创新', '模式比较', '策略优化'],
+        domains: ['传播学', '新闻学', '广告学', '新媒体', '舆论学', '国际传播'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}${rand(w.domains)}`
+        ]
     },
     information: {
         adjectives: ['基于', '面向', '数字人文视域下', '大数据背景下', '智慧图书馆', '开放科学视角下'],
         nouns: ['知识图谱', '数字出版', '开放获取', '信息检索', '用户行为', '数据素养', '文献计量', '竞争情报', '档案数字化', '学术评价', '知识服务', '信息生态', '数字遗产'],
-        verbs: ['的模型构建', '的影响因素研究', '的服务创新', '的评价体系', '的发展策略', '的演化分析', '的框架设计', '的实证研究', '的比较研究', '的优化路径'],
-        domains: ['图书馆学', '情报学', '档案学', '出版学', '信息科学', '知识管理']
+        verbs: ['模型构建', '影响因素研究', '服务创新', '评价体系', '发展策略', '演化分析', '框架设计', '实证研究', '比较研究', '优化路径'],
+        domains: ['图书馆学', '情报学', '档案学', '出版学', '信息科学', '知识管理'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}${rand(w.domains)}`
+        ]
     },
     sociology: {
         adjectives: ['转型期', '城市化进程中', '乡村振兴背景下', '数字时代', '后疫情时代', '全球化语境下'],
         nouns: ['社会分层', '社区治理', '留守儿童', '老龄化', '网络社会', '消费文化', '社会信任', '数字劳动', '平台经济', '环境正义', '性别平等', '流动人口', '社会心态'],
-        verbs: ['的实证研究', '的社会机制', '的影响因素', '的质性研究', '的比较分析', '的理论反思', '的实践探索', '的治理路径', '的生成逻辑', '的再生产'],
-        domains: ['社会学研究', '社会工作', '人类学', '民俗学', '社会政策']
+        verbs: ['实证研究', '社会机制', '影响因素', '质性研究', '比较分析', '理论反思', '实践探索', '治理路径', '生成逻辑', '再生产'],
+        domains: ['社会学研究', '社会工作', '人类学', '民俗学', '社会政策'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}${rand(w.domains)}`
+        ]
     },
     education: {
         adjectives: ['核心素养导向下', '新课改背景下', '信息化环境中', '双减政策下', '深度学习视域下', '五育融合背景下'],
         nouns: ['课堂教学', '教师专业发展', '课程设计', '在线教育', '教育公平', 'STEM教育', '项目式学习', '教育评价', '家校合作', '教育治理', '课程思政', '拔尖创新人才培养'],
-        verbs: ['的行动研究', '的案例分析', '的效果评估', '的设计研究', '的比较研究', '的质性研究', '的实验研究', '的调查研究', '的混合研究', '的循证研究'],
-        domains: ['教育学', '课程论', '教学论', '高等教育', '职业教育', '学前教育']
+        verbs: ['行动研究', '案例分析', '效果评估', '设计研究', '比较研究', '质性研究', '实验研究', '调查研究', '混合研究', '循证研究'],
+        domains: ['教育学', '课程论', '教学论', '高等教育', '职业教育', '学前教育'],
+        templates: (w) => [
+            `${rand(w.adjectives)}${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.adjectives)}${rand(w.nouns)}${rand(w.domains)}`,
+            `${rand(w.nouns)}的${rand(w.verbs)}`,
+            `${rand(w.nouns)}${rand(w.verbs)}${rand(w.domains)}`
+        ]
     }
 };
 

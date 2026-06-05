@@ -930,6 +930,12 @@
 
         function generatePaperTitle() {
             const w = window.paperTitleWords || paperTitleWords;
+            // 如果配置了学科专属模板，使用学科模板
+            if (w.templates && typeof w.templates === 'function') {
+                const templates = w.templates(w);
+                return rand(templates);
+            }
+            // 默认英文模板（CS/理工科）
             const templates = [
                 () => `${rand(w.adjectives)} ${rand(w.nouns)} for ${rand(w.domains)} ${rand(w.verbs)}`,
                 () => `${rand(w.verbs)} ${rand(w.domains)} with ${rand(w.adjectives)} ${rand(w.nouns)}`,
