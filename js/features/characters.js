@@ -1211,9 +1211,21 @@
 			generateMonthlyConferenceLocations();
 			console.log('✅ 会议地点生成完成');
 			console.log('🔄 更新UI...');
-			updateAllUI();
-			renderPaperSlots();
-			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★
+			try {
+				updateAllUI();
+			} catch(e) {
+				console.error('❌ updateAllUI 错误:', e);
+			}
+			try {
+				renderPaperSlots();
+			} catch(e) {
+				console.error('❌ renderPaperSlots 错误:', e);
+			}
+			try {
+				renderRelationshipPanel();
+			} catch(e) {
+				console.error('❌ renderRelationshipPanel 错误:', e);
+			}
 			console.log('✅ UI更新完成');
 
 			// ★★★ 修改：合并游戏开始日志和难度诅咒/祝福日志 ★★★
