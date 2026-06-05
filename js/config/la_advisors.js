@@ -147,11 +147,11 @@ const LA_UNIVERSITY_TYPES = {
 
 // 替换导师系统
 function applyLiberalArtsAdvisorSystem() {
-    if (typeof ADVISOR_TYPES !== 'undefined') {
-        Object.assign(ADVISOR_TYPES, LA_ADVISOR_TYPES);
+    if (typeof window.ADVISOR_TYPES !== 'undefined') {
+        Object.assign(window.ADVISOR_TYPES, LA_ADVISOR_TYPES);
     }
-    if (typeof UNIVERSITY_TYPES !== 'undefined') {
-        Object.assign(UNIVERSITY_TYPES, LA_UNIVERSITY_TYPES);
+    if (typeof window.UNIVERSITY_TYPES !== 'undefined') {
+        Object.assign(window.UNIVERSITY_TYPES, LA_UNIVERSITY_TYPES);
     }
 }
 
