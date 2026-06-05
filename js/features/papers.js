@@ -1,4 +1,11 @@
 ﻿        // ==================== 论文推广功能 ====================
+		// ★★★ 兼容性：如果getConferenceImpactFactor未定义，提供默认实现 ★★★
+		if (typeof getConferenceImpactFactor === 'undefined') {
+			window.getConferenceImpactFactor = function(conferenceInfo, grade, journalType) {
+				return 1.0; // 默认影响因子
+			};
+		}
+
 		function promotePaper(index, type) {
 			const paper = gameState.publishedPapers[index];
 			if (!paper) return;
