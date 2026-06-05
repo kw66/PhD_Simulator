@@ -163,6 +163,13 @@
 
         // ==================== 日志系统 ====================
         function addLog(event, detail, result = '') {
+            // ★★★ 文科版：替换日志中的CS术语 ★★★
+            if (typeof replaceLATextInLog === 'function') {
+                event = replaceLATextInLog(event);
+                detail = replaceLATextInLog(detail);
+                result = replaceLATextInLog(result);
+            }
+
             const logContent = document.getElementById('log-content');
             const remaining = (gameState.maxYears * 12) - gameState.totalMonths;
             const degreeText = gameState.degree === 'master' ? '硕' : '博';

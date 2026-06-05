@@ -1104,6 +1104,11 @@
 				applyDisciplineConfig();
 			}
 
+			// ★★★ 文科版：应用全局文本替换 ★★★
+			if (IS_LIBERAL_ARTS && typeof applyAllLATextReplacements === 'function') {
+				applyAllLATextReplacements();
+			}
+
 			resetAchievementShop();
 			const achievementCount = getPlayerAchievementCount();
 			gameState.achievementCoins = achievementCount;
