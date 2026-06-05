@@ -56,12 +56,29 @@
             renderCharacterGrid();
         }
 
+		// 检测是否为文科版页面
+		const IS_LIBERAL_ARTS = window.location.pathname.includes('liberal_arts') || document.title.includes('文科');
+
+		// 获取当前角色列表（文科版使用学科配置，原版使用默认）
+		function getActiveCharacters() {
+			if (IS_LIBERAL_ARTS && selectedDiscipline) {
+				const config = LA_DISCIPLINE_CONFIGS[selectedDiscipline];
+				if (config && config.characters) return config.characters;
+			}
+			return characters;
+		}
+
 		function init() {
 			// 初始化折叠状态
 			initCollapseStates();
 			initStartSectionStates();
 			if (typeof initWheelScrollFix === 'function') {
 				initWheelScrollFix();
+			}
+
+			// ★★★ 文科版：初始化学科选择 ★★★
+			if (IS_LIBERAL_ARTS && typeof initDisciplineSelection === 'function') {
+				initDisciplineSelection();
 			}
 
 			renderCharacterGrid();
@@ -191,7 +208,7 @@
 				return;
 			}
 
-			const char = characters.find(c => c.id === charId);
+			const char = getActiveCharacters().find(c => c.id === charId);
 			if (!char) return;
 
 			const trueNormalUnlocked = isTrueNormalUnlocked();
@@ -730,7 +747,7 @@
 		}
 			
 			// 渲染角色卡片
-			grid.innerHTML = characters.map(char => {
+			grid.innerHTML = getActiveCharacters().map(char => {
 				const isTrueNormalAvailable = char.id === 'normal' && !isReversedMode && trueNormalUnlocked;
 				
 				let data, displayIcon, displayName, displayDesc, displayBonus, displayAwaken;
@@ -990,7 +1007,7 @@
 			const states = getCharacterCardCollapseStates();
 			const mode = isReversedMode ? 'reversed' : 'normal';
 			
-			characters.forEach(char => {
+			getActiveCharacters().forEach(char => {
 				const cardKey = `${char.id}_${mode}`;
 				states[cardKey] = collapse;
 			});
@@ -1045,7 +1062,7 @@
 		}
 
 		function selectCharacter(id) {
-			selectedCharacter = characters.find(c => c.id === id);
+			selectedCharacter = getActiveCharacters().find(c => c.id === id);
 
 			// ★★★ 修复：如果在真·大多数模式下选择了其他角色，关闭真·大多数模式 ★★★
 			// ★★★ 只更新状态和中心按钮，不调用renderCharacterGrid()以避免预览面板闪烁 ★★★
@@ -1066,6 +1083,13 @@
 		async function startGame() {
 			if (!selectedCharacter) return;
 
+			// ★★★ 文科版：检查学科选择 ★★★
+			if (IS_LIBERAL_ARTS && !selectedDiscipline) {
+				showModal('⚠️ 请先选择学科', '<p>请先选择你的学科方向，再开始游戏。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
 			// ★★★ 增加游戏局数计数 ★★★
 			incrementGamesPlayed();
 			recordGameStart();
@@ -1074,6 +1098,11 @@
 			clearAutoSaves();
 
 			gameState = getInitialState();
+
+			// ★★★ 文科版：应用学科配置 ★★★
+			if (IS_LIBERAL_ARTS && typeof applyDisciplineConfig === 'function') {
+				applyDisciplineConfig();
+			}
 
 			resetAchievementShop();
 			const achievementCount = getPlayerAchievementCount();

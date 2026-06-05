@@ -6999,3 +6999,37 @@ body.season-winter .time-display-panel {
     }
 }
 
+/* ==================== 文科版学科选择样式 ==================== */
+
+.discipline-card.selected {
+    background: var(--card-bg) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.discipline-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.category-header:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 文科版学科标识 */
+.la-discipline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(139, 69, 19, 0.1);
+    color: #8B4513;
+}
+
+.la-discipline-badge.social-science {
+    background: rgba(46, 139, 87, 0.1);
+    color: #2E8B57;
+}
+
