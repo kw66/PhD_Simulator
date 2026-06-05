@@ -818,7 +818,7 @@
 							<span class="talent-item-name">大牛联培</span>
 							<span class="talent-item-status ${hasBigBull ? 'active' : 'inactive'}">${hasBigBull ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：导师科研资源+2，想idea+5，做实验+5</div>
+						<div class="talent-item-desc">效果：导师科研资源+2，选题+5，资料搜集+5</div>
 						<div class="talent-item-current">成长：每500引用科研上限+2（最多+10）</div>
 						<div class="talent-item-next">累计：${bigBullCitations}引用，科研上限+${bigBullCitationBonus}</div>
 						${!hasBigBull ? `<div class="talent-item-how">获取：科研≥12且总引用≥500后，在开会时与大牛深入交流2次</div>` : ''}
@@ -842,7 +842,7 @@
 							<span class="talent-item-name">企业实习</span>
 							<span class="talent-item-status ${hasInternship ? 'active' : 'inactive'}">${hasInternship ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：每月SAN-2，做实验×1.25，每月工资+2</div>
+						<div class="talent-item-desc">效果：每月SAN-2，资料搜集×1.25，每月工资+2</div>
 						<div class="talent-item-current">成长：工资=2+A会×0.5+引用/500×0.5（上限6）</div>
 						<div class="talent-item-next">累计：当前工资${internshipIncome.toFixed(1)}/月，A会${currentAPaperCount}篇，引用${currentTotalCitations}</div>
 						${!hasInternship ? `<div class="talent-item-how">获取：在开会时与企业交流3次后触发邀请</div>` : ''}
@@ -871,7 +871,7 @@
 							<span class="talent-item-name">实验室互帮互助</span>
 							<span class="talent-item-status ${labTalentActive ? 'active' : 'inactive'}">${labTalentActive ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：想idea/做实验/写论文分数+团队人数</div>
+						<div class="talent-item-desc">效果：选题/资料搜集/写论文分数+团队人数</div>
 						<div class="talent-item-current">成长：每12月，恋人及同门科研+(组内科研>TA的人数)/2</div>
 						<div class="talent-item-next">当前：团队${teamSize}人，每次操作+${labBonus}分</div>
 						${!labTalentActive ? `<div class="talent-item-how">获取：同时拥有导师、师兄/师姐、师弟/师妹</div>` : ''}
@@ -903,9 +903,9 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status active">已激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
-						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，想idea+${smartIdeaTimes}次，做实验+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，选题+${smartIdeaTimes}次，资料搜集+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
 					</div>
 				</div>
 				<div class="talent-item inactive">
@@ -943,8 +943,8 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status inactive">未激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
 						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
 					</div>
 				</div>
@@ -959,8 +959,8 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status inactive">未激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
 						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
 					</div>
 				</div>
@@ -1004,7 +1004,7 @@
 				gameState.furnitureBought?.chair ? '✓椅' : '○椅',
 				gameState.furnitureBought?.monitor ? '✓显' : '○显',
 				gameState.furnitureBought?.keyboard ? '✓键' : '○键',
-				(gameState.gpuServersBought || 0) >= 1 ? '✓GPU' : '○GPU',
+				(gameState.gpuServersBought || 0) >= 1 ? '✓书架' : '○书架',
 				gameState.hasCoffeeMachine ? '✓咖' : '○咖'
 			].join(' ');
 			html += `
@@ -1016,9 +1016,9 @@
 							<span class="talent-item-status ${hasLuxuryWorkstation ? 'active' : 'inactive'}">${hasLuxuryWorkstation ? '已激活' : '未激活'}</span>
 						</div>
 						<div class="talent-item-desc">效果：每5点永久buff分数，增加1点对应操作的保底分数</div>
-						<div class="talent-item-current">进度：想idea+${ideaFloorBonus}，做实验+${expFloorBonus}，写论文+${writeFloorBonus}</div>
+						<div class="talent-item-current">进度：选题+${ideaFloorBonus}，资料搜集+${expFloorBonus}，写论文+${writeFloorBonus}</div>
 						<div class="talent-item-equip">装备：${luxuryEquipStatus}</div>
-						${!hasLuxuryWorkstation ? `<div class="talent-item-how">获取：同时拥有工学椅+显示器+键盘+GPU服务器+咖啡机</div>` : ''}
+						${!hasLuxuryWorkstation ? `<div class="talent-item-how">获取：同时拥有护眼台灯+大屏显示器+舒适键盘+二手书架+绿植盆栽</div>` : ''}
 					</div>
 				</div>
 			`;
@@ -1117,13 +1117,13 @@
 			
 			// debuff显示名称
 			const specialBuffNames = {
-				'idea_exhaustion': '💫 灵感枯竭：下次想idea总分÷2',
-				'exp_overheat': '🔥 主机发烫：下次做实验总分÷2',
+				'idea_exhaustion': '💫 灵感枯竭：下次选题总分÷2',
+				'exp_overheat': '🔥 数据丢失：下次资料搜集总分÷2',
 				'write_block': '✏️ 无从下笔：下次写论文总分÷2',
 				'slack_debuff': '😴 松懈：下月所有操作总分÷2',
-				'idea_stolen': '😈 被偷idea：下次想idea总分÷2',
-				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+5',
-				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+5',
+				'idea_stolen': '😈 被偷选题：下次选题总分÷2',
+				'idea_san_reduce': '🤖 Gemini：本月选题 SAN-1,分+5',
+				'exp_san_reduce': '🤖 GPT：本月资料搜集 SAN-1,分+5',
 				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+5'
 			};
 			
@@ -1208,11 +1208,11 @@
 				let name = '';
 				const prefix = buff.permanent ? '每次' : '下次';
 				const typeNames = {
-					'idea_bonus': '想idea分数',
-					'exp_bonus': '做实验分数',
+					'idea_bonus': '选题分数',
+					'exp_bonus': '资料搜集分数',
 					'write_bonus': '写论文分数',
-					'idea_times': '想idea',
-					'exp_times': '做实验',
+					'idea_times': '选题',
+					'exp_times': '资料搜集',
 					'write_times': '写论文',
 					'monthly_san': '每月SAN',
 					'monthly_san_2': '每月SAN',

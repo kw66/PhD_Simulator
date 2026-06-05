@@ -563,12 +563,12 @@
 						if (paper.ideaScore > 1) {
 							const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
 							paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
-							decayInfo.push(`idea-${ideaDecay}`);
+							decayInfo.push(`选题-${ideaDecay}`);
 						}
 						if (paper.expScore > 1) {
 							const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
 							paper.expScore = Math.max(1, paper.expScore - expDecay);
-							decayInfo.push(`实验-${expDecay}`);
+							decayInfo.push(`资料-${expDecay}`);
 						}
 
 						// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
@@ -706,7 +706,7 @@
 			if (gameState.noDecay) {
 				// 每5个月提示一次，避免日志刷屏
 				if (gameState.totalMonths % 5 === 0) {
-					addLog('预见热点', '论文分数保持稳定', 'idea和实验分数不衰减');
+					addLog('预见热点', '论文分数保持稳定', '选题和资料搜集分数不衰减');
 				}
 			} else if (decayLogs.length > 0) {
 				addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
