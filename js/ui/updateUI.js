@@ -75,15 +75,15 @@
 		window.savePreMonthAttributes = savePreMonthAttributes;  // ★★★ 暴露到全局 ★★★
 
         function updateAllUI() {
-            updateTimeDisplay();
-            updateAttributes();
-            updateGraduation();
-            updateBuffs();
-            updateResearchResults();
-            updateActionButtons();
-            updateEventPreview();
-            renderRelationshipPanel();  // ★★★ 新增：更新人际关系面板 ★★★
-            updatePeakStats();          // ★★★ 新增：更新峰值/谷值记录 ★★★
+            try { updateTimeDisplay(); } catch(e) { console.error('updateTimeDisplay错误:', e); }
+            try { updateAttributes(); } catch(e) { console.error('updateAttributes错误:', e); }
+            try { updateGraduation(); } catch(e) { console.error('updateGraduation错误:', e); }
+            try { updateBuffs(); } catch(e) { console.error('updateBuffs错误:', e); }
+            try { updateResearchResults(); } catch(e) { console.error('updateResearchResults错误:', e); }
+            try { updateActionButtons(); } catch(e) { console.error('updateActionButtons错误:', e); }
+            try { updateEventPreview(); } catch(e) { console.error('updateEventPreview错误:', e); }
+            try { renderRelationshipPanel(); } catch(e) { console.error('renderRelationshipPanel错误:', e); }
+            try { updatePeakStats(); } catch(e) { console.error('updatePeakStats错误:', e); }
         }
 
 		// ★★★ 月份变化追踪（用于动画） ★★★
