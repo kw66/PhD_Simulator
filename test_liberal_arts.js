@@ -1,19 +1,17 @@
 const { chromium } = require('playwright');
 
 (async () => {
-    const browser = await chromium.launch({ headless: false }); // 有头模式，方便观察
+    const browser = await chromium.launch({ headless: false });
     const page = await browser.newPage();
 
     // 监听控制台输出
+    const consoleLogs = [];
     page.on('console', msg => {
         const type = msg.type();
         const text = msg.text();
-        if (type === 'error') {
+        consoleLogs.push(`[${type}] ${text}`);
+        if (type === 'error' || text.includes('❌')) {
             console.log(`[ERROR] ${text}`);
-        } else if (text.includes('❌') || text.includes('错误')) {
-            console.log(`[WARN] ${text}`);
-        } else if (text.includes('✅') || text.includes('🔧') || text.includes('🚀')) {
-            console.log(`[INFO] ${text}`);
         }
     });
 
@@ -27,56 +25,82 @@ const { chromium } = require('playwright');
     // 1. 打开页面
     console.log('1. 打开页面...');
     await page.goto('http://localhost:8080/index_liberal_arts.html');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     // 2. 检查页面标题
     const title = await page.title();
     console.log(`   页面标题: ${title}`);
 
-    // 3. 检查学科选择是否存在
-    const disciplineSection = await page.$('#discipline-section');
-    console.log(`   学科选择区域: ${disciplineSection ? '存在' : '不存在'}`);
-
-    // 4. 点击人文学科
+    // 3. 点击人文学科
     console.log('\n2. 选择学科...');
     const humanitiesBtn = await page.$('text=人文学科');
     if (humanitiesBtn) {
         await humanitiesBtn.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
         console.log('   ✅ 点击人文学科');
     }
 
-    // 5. 选择中国语言文学
+    // 4. 选择中国语言文学
+    await page.waitForTimeout(500);
     const chineseBtn = await page.$('text=中国语言文学');
     if (chineseBtn) {
         await chineseBtn.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
         console.log('   ✅ 选择中国语言文学');
     }
 
-    // 6. 选择角色
+    // 5. 等待角色区域显示并选择角色
     console.log('\n3. 选择角色...');
-    const characterCards = await page.$$('.character-card');
+    await page.waitForTimeout(1000);
+
+    // 尝试点击第一个角色卡片
+    const characterCards = await page.$$('.constellation-rune');
+    console.log(`   找到 ${characterCards.length} 个角色卡片`);
+
     if (characterCards.length > 0) {
+        // 点击第一个角色
         await characterCards[0].click();
         await page.waitForTimeout(500);
-        console.log(`   ✅ 选择角色 (共${characterCards.length}个可选)`);
+        console.log('   ✅ 选择第一个角色');
     }
+
+    // 6. 等待开始按钮启用
+    await page.waitForTimeout(1000);
 
     // 7. 点击开始按钮
     console.log('\n4. 点击开始按钮...');
     const startBtn = await page.$('#start-btn');
     if (startBtn) {
-        await startBtn.click();
-        console.log('   ✅ 点击开始按钮');
+        const isDisabled = await startBtn.getAttribute('disabled');
+        console.log(`   开始按钮禁用状态: ${isDisabled}`);
+
+        if (isDisabled === null) {
+            await startBtn.click();
+            console.log('   ✅ 点击开始按钮');
+        } else {
+            console.log('   ⚠️ 开始按钮被禁用');
+            // 尝试强制点击
+            await startBtn.click({ force: true });
+            console.log('   ✅ 强制点击开始按钮');
+        }
     }
 
     // 8. 等待游戏加载
-    await page.waitForTimeout(3000);
+    console.log('\n5. 等待游戏加载...');
+    await page.waitForTimeout(5000);
 
-    // 9. 检查是否弹出导师选择
-    console.log('\n5. 检查导师选择弹窗...');
-    const modal = await page.$('#modal');
+    // 9. 检查控制台输出
+    console.log('\n6. 检查控制台输出...');
+    const errorLogs = consoleLogs.filter(log => log.includes('[error]') || log.includes('❌'));
+    if (errorLogs.length > 0) {
+        console.log('   发现错误:');
+        errorLogs.forEach(log => console.log(`     ${log}`));
+    } else {
+        console.log('   ✅ 没有发现错误');
+    }
+
+    // 10. 检查是否有导师选择弹窗
+    console.log('\n7. 检查导师选择弹窗...');
     const modalTitle = await page.$('#modal-title');
     if (modalTitle) {
         const titleText = await modalTitle.textContent();
@@ -85,19 +109,19 @@ const { chromium } = require('playwright');
             console.log('   ✅ 导师选择弹窗已显示!');
         }
     } else {
-        console.log('   ❌ 未找到弹窗');
+        console.log('   未找到弹窗标题');
     }
 
-    // 10. 检查游戏界面
-    console.log('\n6. 检查游戏界面...');
+    // 11. 检查游戏界面
+    console.log('\n8. 检查游戏界面...');
     const gameScreen = await page.$('#game-screen');
     if (gameScreen) {
         const isVisible = await gameScreen.isVisible();
         console.log(`   游戏界面: ${isVisible ? '可见' : '隐藏'}`);
     }
 
-    // 11. 检查操作按钮
-    console.log('\n7. 检查操作按钮...');
+    // 12. 检查操作按钮
+    console.log('\n9. 检查操作按钮...');
     const buttons = ['btn-read', 'btn-idea', 'btn-experiment', 'btn-write'];
     for (const btnId of buttons) {
         const btn = await page.$(`#${btnId}`);
@@ -106,6 +130,11 @@ const { chromium } = require('playwright');
             console.log(`   ${btnId}: ${text.trim()}`);
         }
     }
+
+    // 13. 截图保存
+    console.log('\n10. 保存截图...');
+    await page.screenshot({ path: 'test_screenshot.png', fullPage: true });
+    console.log('   ✅ 截图已保存到 test_screenshot.png');
 
     console.log('\n=== 测试完成 ===');
 

@@ -1091,6 +1091,9 @@
 			return impactFactor;
 		}
 
+		// ★★★ 导出函数供其他模块使用 ★★★
+		window.getConferenceImpactFactor = getConferenceImpactFactor;
+
 		function updateCitations() {
 			gameState.publishedPapers.forEach(paper => {
 				paper.monthsSincePublish = (paper.monthsSincePublish || 0) + 1;
