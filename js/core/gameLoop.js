@@ -1,6 +1,15 @@
 ﻿        // ==================== 下一个月 ====================
 		let isNextMonthProcessing = false;  // ★★★ 新增：防止重复点击 ★★★
 
+		// ★★★ 文科版事件触发包装函数 ★★★
+		function triggerRandomEventByMode() {
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsRandomEvent === 'function') {
+				triggerLiberalArtsRandomEvent();
+			} else {
+				triggerOtherRandomEvent();
+			}
+		}
+
 		function nextMonth() {
 			// ★★★ 新增：防止重复点击导致月份跳跃或不刷新 ★★★
 			if (isNextMonthProcessing) {
@@ -724,7 +733,7 @@
 							triggerWinterVacationEvent();
 						}
 					} else if (gameState.month === 7) {
-						triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+						triggerRandomEventByMode();  // ★★★ 新增：第7月随机事件 ★★★
 					} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
 						triggerFeedbackEvent();  // ★★★ 第3年第3月留言事件 ★★★
 					} else if (gameState.month === 3 && gameState.year === 4) {
@@ -744,7 +753,7 @@
 					} else if (gameState.month === 2) {
 						triggerTeachersDayEvent();
 					} else if (gameState.month % 2 === 0) {
-						triggerOtherRandomEvent();
+						triggerRandomEventByMode();
 					}
 					
 					// 非12月时检查毕业
@@ -789,7 +798,7 @@
 					triggerWinterVacationEvent();
 				}
 			} else if (gameState.month === 7) {
-				triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+				triggerRandomEventByMode();  // ★★★ 新增：第7月随机事件 ★★★
 			} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
 				triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
 			} else if (gameState.month === 9) {
@@ -807,7 +816,7 @@
 			} else if (gameState.month === 2) {
 				triggerTeachersDayEvent();
 			} else if (gameState.month % 2 === 0) {
-				triggerOtherRandomEvent();
+				triggerRandomEventByMode();
 			}
 
 			checkGraduation();

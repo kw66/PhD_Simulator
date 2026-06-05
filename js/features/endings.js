@@ -41,7 +41,10 @@
 					}
 					break;
                 case 'phd':
-                    const e = getPhDEndingType();
+                    // ★★★ 文科版：使用文科版结局判定 ★★★
+                    const e = (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsPhdEndingType === 'function')
+                        ? getLiberalArtsPhdEndingType()
+                        : getPhDEndingType();
                     title = e.title; desc = e.desc; emoji = e.emoji;
                     endingType = e.type;
                     break;
@@ -53,7 +56,10 @@
             
             recordEnding(endingType, title);
 
-            const achievements = collectAchievements(endingType);
+            // ★★★ 文科版：使用文科版成就收集 ★★★
+            const achievements = (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof collectLiberalArtsAchievements === 'function')
+                ? collectLiberalArtsAchievements(endingType)
+                : collectAchievements(endingType);
             recordAchievements(achievements);
 
             // ★★★ 游戏结束时批量写入投稿数据（节省数据库流量）★★★
