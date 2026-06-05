@@ -65,7 +65,7 @@
 				const config = LA_DISCIPLINE_CONFIGS[selectedDiscipline];
 				if (config && config.characters) return config.characters;
 			}
-			return characters;
+			return window.characters || characters;
 		}
 
 		function init() {

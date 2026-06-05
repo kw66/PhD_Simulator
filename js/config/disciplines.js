@@ -261,42 +261,42 @@ function applyDisciplineConfig() {
     if (!config) return;
 
     // 覆盖论文标题生成器
-    if (config.paperTitleWords) {
-        Object.assign(paperTitleWords, config.paperTitleWords);
+    if (config.paperTitleWords && window.paperTitleWords) {
+        Object.assign(window.paperTitleWords, config.paperTitleWords);
     }
 
     // 覆盖会议/期刊
-    if (config.conferences) {
-        Object.assign(CONFERENCES, config.conferences);
+    if (config.conferences && window.CONFERENCES) {
+        Object.assign(window.CONFERENCES, config.conferences);
     }
 
     // 覆盖商店
-    if (config.shopItems) {
+    if (config.shopItems && window.shopItems) {
         // 清空原数组并填充新数据
-        shopItems.length = 0;
-        config.shopItems.forEach(item => shopItems.push(item));
+        window.shopItems.length = 0;
+        config.shopItems.forEach(item => window.shopItems.push(item));
     }
 
     // 覆盖角色（合并通用角色和学科角色）
-    if (config.characters) {
-        characters.length = 0;
-        config.characters.forEach(c => characters.push(c));
+    if (config.characters && window.characters) {
+        window.characters.length = 0;
+        config.characters.forEach(c => window.characters.push(c));
     }
 
     // 覆盖成就
-    if (config.achievements) {
-        ALL_ACHIEVEMENTS.length = 0;
-        config.achievements.forEach(a => ALL_ACHIEVEMENTS.push(a));
+    if (config.achievements && window.ALL_ACHIEVEMENTS) {
+        window.ALL_ACHIEVEMENTS.length = 0;
+        config.achievements.forEach(a => window.ALL_ACHIEVEMENTS.push(a));
     }
 
     // 覆盖结局名称
-    if (config.endingNames) {
-        Object.assign(ENDING_NAMES, config.endingNames);
+    if (config.endingNames && window.ENDING_NAMES) {
+        Object.assign(window.ENDING_NAMES, config.endingNames);
     }
 
     // 覆盖结局要求
-    if (config.endingRequirements) {
-        Object.assign(ENDING_REQUIREMENTS, config.endingRequirements);
+    if (config.endingRequirements && window.ENDING_REQUIREMENTS) {
+        Object.assign(window.ENDING_REQUIREMENTS, config.endingRequirements);
     }
 
     // 存储学科信息到游戏状态
