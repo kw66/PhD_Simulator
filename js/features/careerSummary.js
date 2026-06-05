@@ -361,11 +361,11 @@
 							</div>
 						</div>
 						<div class="stats-extra animate-fade-up delay-2">
-							<div class="extra-item"><span class="extra-icon">💡</span><span>想idea ${gameState.ideaClickCount || 0}次</span></div>
-							<div class="extra-item"><span class="extra-icon">🔬</span><span>做实验 ${gameState.expClickCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">💡</span><span>选题 ${gameState.ideaClickCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">🔬</span><span>资料搜集 ${gameState.expClickCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">✍️</span><span>写论文 ${gameState.writeClickCount || 0}次</span></div>
-							<div class="extra-item"><span class="extra-icon">📚</span><span>看论文 ${gameState.readCount || 0}次</span></div>
-							<div class="extra-item"><span class="extra-icon">☕</span><span>喝咖啡 ${gameState.coffeeBoughtCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">📚</span><span>读文献 ${gameState.readCount || 0}次</span></div>
+							<div class="extra-item"><span class="extra-icon">☕</span><span>喝奶茶 ${gameState.coffeeBoughtCount || 0}次</span></div>
 							<div class="extra-item"><span class="extra-icon">💼</span><span>打工 ${gameState.workCount || 0}次</span></div>
 						</div>
 					</div>

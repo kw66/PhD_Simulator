@@ -1220,10 +1220,10 @@
 					'monthly_san_current_20': '每月SAN',
 					'monthly_san_recovery': '每月SAN',
 					'lover_monthly_san': '每月SAN',
-					'lover_extra_idea': '想idea',
-					'lover_extra_experiment': '做实验',
+					'lover_extra_idea': '选题',
+					'lover_extra_experiment': '资料搜集',
 					'lover_extra_write': '写论文',
-					'read_san_reduce': '看论文SAN',
+					'read_san_reduce': '读文献SAN',
 					'write_san_reduce': '写论文SAN',
 					'citation_multiply': '中稿引用',
 					'citation_halved': '引用速度'
@@ -1247,13 +1247,13 @@
 				} else if (buff.type === 'lover_monthly_san') {
 					name = buff.desc || `每月SAN+1 (恋人)`;
 				} else if (buff.type === 'lover_extra_idea') {
-					name = buff.desc || `每次想idea多想1次 (恋人)`;
+					name = buff.desc || `每次选题多想1次 (恋人)`;
 				} else if (buff.type === 'lover_extra_experiment') {
-					name = buff.desc || `每次做实验多做1次 (恋人)`;
+					name = buff.desc || `每次资料搜集多做1次 (恋人)`;
 				} else if (buff.type === 'lover_extra_write') {
 					name = buff.desc || `每次写论文多写1次 (恋人)`;
 				} else if (buff.type === 'read_san_reduce') {
-					name = `看论文SAN-1`;
+					name = `读文献SAN-1`;
 				} else if (buff.type === 'write_san_reduce') {
 					name = `写论文SAN-3`;
 				} else if (buff.type === 'citation_multiply') {
@@ -1306,7 +1306,7 @@
 			// 师兄师姐救我技能
 			if (gameState.hasSeniorHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'senior' && gameState.nextActionBonusType
-					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '选题' : gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文'}）`
 					: '';
 				// 显示剩余免费次数或当前社交值
 				const statusText = gameState.seniorHelpUses > 0
@@ -1322,7 +1322,7 @@
 			// 导师救我技能
 			if (gameState.hasTeacherHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'teacher' && gameState.nextActionBonusType
-					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '选题' : gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文'}）`
 					: '';
 				// 显示剩余免费次数或当前好感度
 				const statusText = gameState.teacherHelpUses > 0
@@ -1410,8 +1410,8 @@
 
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'senior') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
-					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				const actionName = gameState.nextActionBonusType === 'idea' ? '选题'
+					: gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文';
 				const statusText = gameState.seniorHelpUses > 0 ? `免费${gameState.seniorHelpUses}/3` : `当前社交${gameState.social}`;
 				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用师兄师姐救我。</p>
@@ -1439,10 +1439,10 @@
 				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+					{ text: '💡 用于选题', class: 'btn-primary', action: () => {
 						applySkillBonus('senior', 'idea', bonusValue);
 					}},
-					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+					{ text: '🔬 用于资料搜集', class: 'btn-success', action: () => {
 						applySkillBonus('senior', 'exp', bonusValue);
 					}},
 					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
@@ -1468,8 +1468,8 @@
 
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'teacher') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
-					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				const actionName = gameState.nextActionBonusType === 'idea' ? '选题'
+					: gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文';
 				const statusText = gameState.teacherHelpUses > 0 ? `免费${gameState.teacherHelpUses}/3` : `当前好感度${gameState.favor}`;
 				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用导师救我。</p>
@@ -1497,10 +1497,10 @@
 				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+					{ text: '💡 用于选题', class: 'btn-primary', action: () => {
 						applySkillBonus('teacher', 'idea', bonusValue);
 					}},
-					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+					{ text: '🔬 用于资料搜集', class: 'btn-success', action: () => {
 						applySkillBonus('teacher', 'exp', bonusValue);
 					}},
 					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
@@ -1540,7 +1540,7 @@
 			gameState.nextActionBonusType = actionType;
 
 			const sourceName = source === 'senior' ? '师兄师姐救我' : '导师救我';
-			const actionName = actionType === 'idea' ? '想idea' : actionType === 'exp' ? '做实验' : '写论文';
+			const actionName = actionType === 'idea' ? '选题' : actionType === 'exp' ? '资料搜集' : '写论文';
 
 			addLog('主动技能', sourceName, `下次${actionName}时科研能力+${bonusValue}，${costInfo}`);
 			closeModal();
@@ -1653,23 +1653,23 @@
 						</div>
 						${statsInfo}
 						<div class="paper-promotions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;">
-							<button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'arxiv')" 
+							<button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'arxiv')"
 								${p.promotions?.arxiv ? 'disabled' : ''}>
-								${p.promotions?.arxiv ? '✓arxiv' : '挂arxiv'}
+								${p.promotions?.arxiv ? '✓预印本' : '挂预印本'}
 							</button>
-							<button class="btn ${p.promotions?.github ? '' : 'btn-success'}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'github')" 
+							<button class="btn ${p.promotions?.github ? '' : 'btn-success'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'github')"
 								${p.promotions?.github ? 'disabled' : ''}>
-								${p.promotions?.github ? '✓开源' : 'github开源'}
+								${p.promotions?.github ? '✓开源' : '开源数据'}
 							</button>
 							<button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}"
 								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
 								onclick="promotePaper(${index}, 'xiaohongshu')"
 								${p.promotions?.xiaohongshu ? 'disabled' : ''}>
-								${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
+								${p.promotions?.xiaohongshu ? '✓自媒体' : '自媒体推广'}
 							</button>
 							${(p.grade === 'A' || p.grade === 'S') ? `
 							<button class="btn ${p.promotions?.quantumbit ? '' : 'btn-warning'}"
@@ -1739,16 +1739,16 @@
 			
 			// 改为2行布局：第一行图标+文字，第二行效果
 			document.getElementById('btn-read').innerHTML = `
-				<div class="action-top"><i class="fas fa-book-open"></i><span>看论文${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-book-open"></i><span>读文献${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.read)}</span>`;
 			document.getElementById('btn-work').innerHTML = `
 				<div class="action-top"><i class="fas fa-briefcase"></i><span>打工${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.work)}</span>`;
 			document.getElementById('btn-idea').innerHTML = `
-				<div class="action-top"><i class="fas fa-lightbulb"></i><span>想idea${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-lightbulb"></i><span>选题${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.idea)}</span>`;
 			document.getElementById('btn-experiment').innerHTML = `
-				<div class="action-top"><i class="fas fa-vial"></i><span>做实验${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-vial"></i><span>资料搜集${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.experiment)}</span>`;
 			document.getElementById('btn-write').innerHTML = `
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
