@@ -1740,7 +1740,7 @@
 			const allUsed = actionsRemaining <= 0;
 
 			// 调试日志
-			console.log(`🔧 updateActionButtons: actionCount=${actionCount}, actionLimit=${actionLimit}, allUsed=${allUsed}`);
+			console.log(`🔧 updateActionButtons: actionCount=${actionCount}, actionLimit=${actionLimit}, allUsed=${allUsed}, month=${gameState.month}, year=${gameState.year}`);
 
 			const costs = getActionCosts();
 
