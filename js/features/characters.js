@@ -616,36 +616,37 @@
 				`;
 			};
 
-			// 4×4网格布局 - 正位在左半边，逆位在右半边，同角色中轴对称，围成一圈
+			// ★★★ 动态生成4×4网格布局（支持文科版角色）★★★
+			const c = charOrder; // 角色ID数组
 			const gridHtml = `
 				<div class="constellation-grid-4x4">
 					<!-- 第一行: 正位2个 + 逆位2个 (对称) -->
 					<div class="grid-row row-mixed">
-						${generateRune('normal', false, 0, 0)}
-						${generateRune('genius', false, 1, 0)}
-						${generateRune('genius', true, 2, 0)}
-						${generateRune('normal', true, 3, 0)}
+						${generateRune(c[0], false, 0, 0)}
+						${generateRune(c[1], false, 1, 0)}
+						${generateRune(c[1], true, 2, 0)}
+						${generateRune(c[0], true, 3, 0)}
 					</div>
 					<!-- 第二行: 正位1个 + 中心区 + 逆位1个 -->
 					<div class="grid-row row-mixed">
-						${generateRune('social', false, 4, 1)}
+						${generateRune(c[2], false, 4, 1)}
 						<div class="center-zone center-top-left" onclick="toggleTrueNormalMode()"></div>
 						<div class="center-zone center-top-right" onclick="toggleTrueNormalMode()"></div>
-						${generateRune('social', true, 7, 1)}
+						${generateRune(c[2], true, 7, 1)}
 					</div>
 					<!-- 第三行: 正位1个 + 中心区 + 逆位1个 -->
 					<div class="grid-row row-mixed">
-						${generateRune('rich', false, 8, 2)}
+						${generateRune(c[3], false, 8, 2)}
 						<div class="center-zone center-bottom-left" onclick="toggleTrueNormalMode()"></div>
 						<div class="center-zone center-bottom-right" onclick="toggleTrueNormalMode()"></div>
-						${generateRune('rich', true, 11, 2)}
+						${generateRune(c[3], true, 11, 2)}
 					</div>
 					<!-- 第四行: 正位2个 + 逆位2个 (对称) -->
 					<div class="grid-row row-mixed">
-						${generateRune('teacher-child', false, 12, 3)}
-						${generateRune('chosen', false, 13, 3)}
-						${generateRune('chosen', true, 14, 3)}
-						${generateRune('teacher-child', true, 15, 3)}
+						${generateRune(c[4], false, 12, 3)}
+						${generateRune(c[5], false, 13, 3)}
+						${generateRune(c[5], true, 14, 3)}
+						${generateRune(c[4], true, 15, 3)}
 					</div>
 					<!-- 中心核心按钮 -->
 					<div class="center-core-overlay" onclick="toggleTrueNormalMode()">

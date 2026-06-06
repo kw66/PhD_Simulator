@@ -451,7 +451,7 @@
 			}
 
 			// 然后再查找普通角色
-			const charData = characters.find(c => c.id === gameState.character);
+			const charData = (window.characters || characters).find(c => c.id === gameState.character);
 			if (!charData) return;
 
 			const displayData = gameState.isReversed && charData.reversed ? charData.reversed : charData;
