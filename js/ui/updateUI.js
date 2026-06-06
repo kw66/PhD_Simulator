@@ -1702,15 +1702,24 @@
             // ★★★ 修改：计算动态SAN消耗和金钱奖励（1-8次基础，9次起每8次提升1档）★★★
             const nextWorkCount = (gameState.workCount || 0) + 1;
             const workTier = Math.floor((nextWorkCount - 1) / 8);
-            const workSan = -(5 + workTier);  // -5, -6, -7...
+            const baseWorkSan = gameState.laWorkSanCost || 5;
+            const workSan = -(baseWorkSan + workTier);
             const workGold = 2 + workTier;    // 2, 3, 4...
 
+            // ★★★ 文科版：使用文科版SAN消耗 ★★★
+            const readSan = gameState.laReadSanCost !== undefined
+                ? (has4K ? Math.max(0, gameState.laReadSanCost - 1) : gameState.laReadSanCost)
+                : (has4K ? -1 : -2);
+            const ideaSan = gameState.laIdeaSanCost || -2;
+            const expSan = gameState.laExpSanCost || -3;
+            const writeSan = gameState.laWriteSanCost || (hasKeyboard ? -3 : -4);
+
             return {
-                read: { san: has4K ? -1 : -2 },
+                read: { san: -readSan },
                 work: { san: workSan, gold: workGold },
-                idea: { san: -2 },
-                experiment: { san: -3 },
-                write: { san: hasKeyboard ? -3 : -4 }
+                idea: { san: -ideaSan },
+                experiment: { san: -expSan },
+                write: { san: -writeSan }
             };
         }
 
