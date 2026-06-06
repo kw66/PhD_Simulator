@@ -1739,6 +1739,9 @@
 			const actionsRemaining = actionLimit - actionCount;
 			const allUsed = actionsRemaining <= 0;
 
+			// 调试日志
+			console.log(`🔧 updateActionButtons: actionCount=${actionCount}, actionLimit=${actionLimit}, allUsed=${allUsed}`);
+
 			const costs = getActionCosts();
 
 			// 显示剩余行动次数
