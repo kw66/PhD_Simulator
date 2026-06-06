@@ -893,7 +893,12 @@
 					}
 				});
 
-				// ★★★ 强制刷新人际关系面板 ★★★
+				// ★★★ 强制重置人际关系任务状态并刷新面板 ★★★
+				if (gameState.relationships) {
+					gameState.relationships.forEach(person => {
+						person.taskUsedThisMonth = false;
+					});
+				}
 				if (typeof renderRelationshipPanel === 'function') {
 					renderRelationshipPanel();
 				}
