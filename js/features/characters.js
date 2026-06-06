@@ -1280,17 +1280,11 @@
 					renderRelationshipPanel();
 					updateAllUI();
 
-					// ★★★ 文科版：显示新手引导（延迟到玩家第一次操作后）★★★
+					// ★★★ 文科版：显示新手引导 ★★★
 					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof shouldShowGuide === 'function' && typeof showLiberalArtsGuide === 'function') {
 						if (shouldShowGuide()) {
-							// 延迟更长时间，确保玩家已完成初始操作
-							setTimeout(() => {
-								// 只有在没有其他弹窗时才显示引导
-								const overlay = document.getElementById('modal-overlay');
-								if (!overlay || !overlay.classList.contains('active')) {
-									showLiberalArtsGuide();
-								}
-							}, 3000);
+							// 立即显示引导，不延迟
+							showLiberalArtsGuide();
 						}
 					}
 				});
