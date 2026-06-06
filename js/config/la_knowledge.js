@@ -104,9 +104,15 @@ function showKnowledgeCard(discipline) {
 function maybeShowKnowledgeCard() {
     if (!gameState.discipline) return;
 
-    // 10%概率显示知识卡片
+    // 10%概率显示知识卡片，但不阻塞操作
     if (Math.random() < 0.1) {
-        showKnowledgeCard(gameState.discipline);
+        // 延迟显示，确保UI更新完成
+        setTimeout(() => {
+            const overlay = document.getElementById('modal-overlay');
+            if (!overlay || !overlay.classList.contains('active')) {
+                showKnowledgeCard(gameState.discipline);
+            }
+        }, 1000);
     }
 }
 
