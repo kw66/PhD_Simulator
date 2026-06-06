@@ -1,4 +1,4 @@
-﻿        // ==================== 模式切换 ====================
+        // ==================== 模式切换 ====================
 		function switchMode(reversed) {
 			isReversedMode = reversed;
 			isTrueNormalMode = false;  // ★★★ 切换模式时重置真·大多数状态 ★★★
@@ -514,6 +514,26 @@
 			updateRuneSelection(charId, isReversedMode);
 		}
 
+		// ★★★ 生成动态角色数据（支持文科版）★★★
+		function generateCharacterMaps() {
+			const activeChars = getActiveCharacters();
+			const normalIcons = {};
+			const reversedIcons = {};
+			const normalNameMap = {};
+			const reversedNameMap = {};
+
+			activeChars.forEach(char => {
+				normalIcons[char.id] = char.icon;
+				normalNameMap[char.id] = char.name.length > 2 ? char.name.substring(0, 2) : char.name;
+				if (char.reversed) {
+					reversedIcons[char.id] = char.reversed.icon;
+					reversedNameMap[char.id] = char.reversed.name.length > 2 ? char.reversed.name.substring(0, 2) : char.reversed.name;
+				}
+			});
+
+			return { normalIcons, reversedIcons, normalNameMap, reversedNameMap, charOrder: activeChars.map(c => c.id) };
+		}
+
 		function renderCharacterGrid() {
 			const grid = document.getElementById('character-grid');
 			if (!grid) return;  // ★★★ 修复：添加null检查 ★★★
@@ -566,47 +586,8 @@
 			const totalUnlocked = normalUnlocked + reversedUnlocked;
 			const progressPercent = (totalUnlocked / 12 * 100).toFixed(0);
 
-			// 正位角色图标
-			const normalIcons = {
-				'normal': '👤',
-				'genius': '🔬',
-				'social': '🤝',
-				'rich': '💰',
-				'teacher-child': '👨‍👧',
-				'chosen': '⭐'
-			};
-
-			// 逆位角色图标
-			const reversedIcons = {
-				'normal': '😴',
-				'genius': '🤡',
-				'social': '🐍',
-				'rich': '🏴‍☠️',
-				'teacher-child': '🎪',
-				'chosen': '🌀'
-			};
-
-			// 角色名称缩写
-			const normalNameMap = {
-				'normal': '大多数',
-				'genius': '院士',
-				'social': '社交',
-				'rich': '富豪',
-				'teacher-child': '子女',
-				'chosen': '天选'
-			};
-
-			const reversedNameMap = {
-				'normal': '怠惰',
-				'genius': '愚钝',
-				'social': '嫉妒',
-				'rich': '贪求',
-				'teacher-child': '玩世',
-				'chosen': '空想'
-			};
-
-			// 角色顺序 - 用于4x4网格边缘位置
-			const charOrder = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
+			// ★★★ 动态生成角色数据（支持文科版）★★★
+				const { normalIcons, reversedIcons, normalNameMap, reversedNameMap, charOrder } = generateCharacterMaps();
 
 			// 生成单个符文按钮 - 宝石质感
 			const generateRune = (charId, isReversedSide, position, rowIndex) => {
