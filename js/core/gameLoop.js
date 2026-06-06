@@ -892,6 +892,11 @@
 						btn.style.removeProperty('pointer-events');
 					}
 				});
+
+				// ★★★ 强制刷新人际关系面板 ★★★
+				if (typeof renderRelationshipPanel === 'function') {
+					renderRelationshipPanel();
+				}
 			}
 		}
 
