@@ -881,6 +881,18 @@
 
 			updateAllUI();
 			renderPaperSlots();
+
+			// ★★★ 文科版：确保操作按钮可用（兜底）★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+				['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'].forEach(id => {
+					const btn = document.getElementById(id);
+					if (btn) {
+						btn.disabled = false;
+						btn.style.removeProperty('opacity');
+						btn.style.removeProperty('pointer-events');
+					}
+				});
+			}
 		}
 
         // 空想之天选之人：属性随机交换
