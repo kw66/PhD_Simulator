@@ -1739,27 +1739,14 @@
 			const actionsRemaining = actionLimit - actionCount;
 			const allUsed = actionsRemaining <= 0;
 
-			btns.forEach(id => {
-				const btn = document.getElementById(id);
-				if (!btn) return;
-				btn.disabled = allUsed;
-				btn.style.opacity = allUsed ? '0.5' : '1';
-				// ★★★ 修复：使用 removeAttribute 确保 pointerEvents 被正确重置 ★★★
-				if (allUsed) {
-					btn.style.pointerEvents = 'none';
-				} else {
-					btn.style.removeProperty('pointer-events');
-				}
-			});
-
 			const costs = getActionCosts();
 
 			// 显示剩余行动次数
 			const actionCountDisplay = actionLimit > 1
 				? ` (${actionsRemaining}/${actionLimit})`
 				: '';
-			
-			// 改为2行布局：第一行图标+文字，第二行效果
+
+			// ★★★ 先更新innerHTML，再设置disabled状态 ★★★
 			document.getElementById('btn-read').innerHTML = `
 				<div class="action-top"><i class="fas fa-book-open"></i><span>读文献${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.read)}</span>`;
@@ -1775,6 +1762,19 @@
 			document.getElementById('btn-write').innerHTML = `
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.write)}</span>`;
+
+			// ★★★ innerHTML更新后再设置disabled状态 ★★★
+			btns.forEach(id => {
+				const btn = document.getElementById(id);
+				if (!btn) return;
+				btn.disabled = allUsed;
+				btn.style.opacity = allUsed ? '0.5' : '1';
+				if (allUsed) {
+					btn.style.pointerEvents = 'none';
+				} else {
+					btn.style.removeProperty('pointer-events');
+				}
+			});
 		}
 
         // ==================== 事件预告系统 ====================
