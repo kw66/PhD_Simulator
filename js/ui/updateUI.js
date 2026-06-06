@@ -1737,10 +1737,6 @@
 			const actionLimit = gameState.actionLimit || 1;
 			const actionCount = gameState.actionCount || 0;
 			const actionsRemaining = actionLimit - actionCount;
-			const allUsed = actionsRemaining <= 0;
-
-			// 调试日志
-			console.log(`🔧 updateActionButtons: actionCount=${actionCount}, actionLimit=${actionLimit}, allUsed=${allUsed}, month=${gameState.month}, year=${gameState.year}`);
 
 			const costs = getActionCosts();
 
@@ -1749,7 +1745,7 @@
 				? ` (${actionsRemaining}/${actionLimit})`
 				: '';
 
-			// ★★★ 先更新innerHTML，再设置disabled状态 ★★★
+			// ★★★ 更新按钮内容（不设置disabled，由操作函数自行验证）★★★
 			document.getElementById('btn-read').innerHTML = `
 				<div class="action-top"><i class="fas fa-book-open"></i><span>读文献${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.read)}</span>`;
@@ -1766,17 +1762,13 @@
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.write)}</span>`;
 
-			// ★★★ innerHTML更新后再设置disabled状态 ★★★
+			// ★★★ 确保按钮始终可用 ★★★
 			btns.forEach(id => {
 				const btn = document.getElementById(id);
 				if (!btn) return;
-				btn.disabled = allUsed;
-				btn.style.opacity = allUsed ? '0.5' : '1';
-				if (allUsed) {
-					btn.style.pointerEvents = 'none';
-				} else {
-					btn.style.removeProperty('pointer-events');
-				}
+				btn.disabled = false;
+				btn.style.removeProperty('opacity');
+				btn.style.removeProperty('pointer-events');
 			});
 		}
 
