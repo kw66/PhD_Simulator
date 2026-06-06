@@ -1744,8 +1744,12 @@
 				if (!btn) return;
 				btn.disabled = allUsed;
 				btn.style.opacity = allUsed ? '0.5' : '1';
-				// ★★★ 新增：确保禁用状态下不可点击 ★★★
-				btn.style.pointerEvents = allUsed ? 'none' : 'auto';
+				// ★★★ 修复：使用 removeAttribute 确保 pointerEvents 被正确重置 ★★★
+				if (allUsed) {
+					btn.style.pointerEvents = 'none';
+				} else {
+					btn.style.removeProperty('pointer-events');
+				}
 			});
 
 			const costs = getActionCosts();
