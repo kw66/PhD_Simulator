@@ -1083,9 +1083,7 @@
 
 			// ★★★ 文科版：应用学科配置 ★★★
 			if (IS_LIBERAL_ARTS && typeof applyDisciplineConfig === 'function') {
-				console.log('🔧 应用学科配置...');
 				applyDisciplineConfig();
-				console.log('✅ 学科配置已应用，ADVISOR_TYPES:', window.ADVISOR_TYPES ? '已导出' : '未导出');
 			}
 
 			// ★★★ 文科版：应用全局文本替换 ★★★
@@ -1164,12 +1162,10 @@
 
 		// ★★★ 修改：进入游戏后触发导师选择事件 ★★★
 		function continueGameStart() {
-			console.log('🚀 continueGameStart 开始执行');
 			// ★★★ 先切换界面，不要等待数据加载 ★★★
 			document.getElementById('start-screen').classList.add('hidden');
 			document.getElementById('game-screen').style.display = 'block';
 			document.getElementById('mobile-quick-bar').classList.add('game-active');
-			console.log('✅ 界面切换完成');
 
 			// ★★★ 停止开始页面粒子效果，启动游戏季节效果 ★★★
 			if (typeof SeasonEffects !== 'undefined') {
@@ -1178,37 +1174,18 @@
 			}
 
 			document.getElementById('log-content').innerHTML = '';
-			console.log('✅ 日志清空完成');
 			// ★★★ 重置属性追踪状态（避免进度条从0开始动画） ★★★
 			if (typeof resetAttributeTracking === 'function') {
 				resetAttributeTracking();
 			}
 			// ★★★ 修改：游戏开始时检查初始解锁状态（科研和社交）★★★
-			console.log('🔓 检查解锁状态...');
 			checkResearchUnlock(true);
 			checkSocialUnlock(true);
-			console.log('✅ 解锁状态检查完成');
 			// ★★★ 修复：游戏开始时为第一个月生成会议地点，避免地点随机变化 ★★★
-			console.log('📍 生成会议地点...');
 			generateMonthlyConferenceLocations();
-			console.log('✅ 会议地点生成完成');
-			console.log('🔄 更新UI...');
-			try {
-				updateAllUI();
-			} catch(e) {
-				console.error('❌ updateAllUI 错误:', e);
-			}
-			try {
-				renderPaperSlots();
-			} catch(e) {
-				console.error('❌ renderPaperSlots 错误:', e);
-			}
-			try {
-				renderRelationshipPanel();
-			} catch(e) {
-				console.error('❌ renderRelationshipPanel 错误:', e);
-			}
-			console.log('✅ UI更新完成');
+			updateAllUI();
+			renderPaperSlots();
+			renderRelationshipPanel();
 
 			// ★★★ 修改：合并游戏开始日志和难度诅咒/祝福日志 ★★★
 			let startLogDetail = `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`;
@@ -1268,10 +1245,7 @@
 			loadSubmissionStatsAsync();
 
 			// ★★★ 第一年第一月固定事件：选择导师 ★★★
-			console.log('⏰ 准备显示导师选择弹窗...');
 			setTimeout(() => {
-				console.log('📞 调用showAdvisorSelectionModal...');
-				console.log('  ADVISOR_TYPES:', window.ADVISOR_TYPES ? Object.keys(window.ADVISOR_TYPES).join(', ') : '未定义');
 				showAdvisorSelectionModal((selectedAdvisor) => {
 					// 选择导师后显示毕业目标
 					const requirements = getAdvisorRequirements();
@@ -1396,4 +1370,5 @@
 		window.resetRandomEventPool = resetRandomEventPool;
 		window.yearlyResetRandomEventPool = yearlyResetRandomEventPool;
 		window.openV2Preview = openV2Preview;
+		window.init = init;
 

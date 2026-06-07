@@ -1,5 +1,10 @@
 ﻿        // ==================== 游戏状态 ====================
         let gameState = {};
+        // ★★★ 修复：暴露gameState到window供调试和外部脚本访问 ★★★
+        Object.defineProperty(window, 'gameState', {
+            get() { return gameState; },
+            configurable: true
+        });
         let selectedCharacter = null;
         let isReversedMode = false;
         let characterDifficultyData = {};
@@ -55,6 +60,12 @@
 				smartCount: 0,
 				availableRandomEvents: [],
 				usedRandomEvents: [],
+				// ★★★ 文科版事件池状态 ★★★
+				availableLAEvents: [],
+				usedLAEvents: [],
+				// ★★★ 文科版特殊状态 ★★★
+				isExhausted: false,   // 颓废状态（SAN归零但未Game Over）
+				isBroke: false,       // 贫困状态（金币归零但未Game Over）
 				triggeredBuffTypes: [],
 				coffeeBoughtCount: 0,
 				isReversed: false,

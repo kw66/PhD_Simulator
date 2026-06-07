@@ -24,7 +24,7 @@ const LA_ADVISOR_TYPES = {
     level2: {
         id: 'level2',
         name: '二级教授',
-        titles: ['万人计划', '新世纪人才', '青年长江'],
+        title: '万人计划/新世纪人才/青年长江',
         icon: '🌟',
         color: '#e67e22',
         probability: 0.10,

@@ -1131,10 +1131,7 @@
         // ==================== 导师选择界面 ====================
 
         function showAdvisorSelectionModal(onSelected) {
-            console.log('🎯 showAdvisorSelectionModal 被调用');
-            try {
             const options = generateAdvisorOptions();
-            console.log('📋 生成导师选项:', options.length, '个');
             window._advisorOptions = options;
             window._advisorOnSelected = onSelected;
 
@@ -1185,16 +1182,6 @@
                 </div>`,
                 [] // 没有按钮，必须选择一个导师
             );
-            console.log('✅ 导师选择弹窗已显示');
-            } catch (e) {
-                console.error('❌ showAdvisorSelectionModal 错误:', e);
-                // 降级：显示简单弹窗
-                showModal('🎓 选择导师', '<p>导师选择加载失败，请点击确定继续。</p>',
-                    [{ text: '确定', class: 'btn-primary', action: () => {
-                        closeModal();
-                        if (onSelected) onSelected({ advisorType: 'level5', name: '副教授', title: '副教授' });
-                    }}]);
-            }
         }
 
         function selectAdvisor(index) {

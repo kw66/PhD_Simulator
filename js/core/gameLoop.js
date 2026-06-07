@@ -502,7 +502,8 @@
 					// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
 					addLog('月度结算', '难度诅咒', '诅咒效果累积导致金币耗尽');
 					triggerEnding('poor');
-				return;
+					return;
+				}
 			}
 			if (gameState.favor < 0) {
 				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
@@ -902,7 +903,6 @@
 				if (typeof renderRelationshipPanel === 'function') {
 					renderRelationshipPanel();
 				}
-			}
 		}
 
         // 空想之天选之人：属性随机交换

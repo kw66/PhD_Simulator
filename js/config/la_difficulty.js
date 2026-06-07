@@ -274,7 +274,7 @@ function applyLiberalArtsDifficulty() {
     // 调整录取率
     gameState.laAcceptanceRateBonus = 0.10;  // 录取率+10%
 
-    addLog('难度调整', '文科版难度', 'SAN上限+10，初始金币+2，操作消耗降低');
+    addLog('难度调整', '文科版难度', 'SAN上限+10，初始金币+2，初始科研+1，毕业要求-2，录取率+10%');
 }
 
 // 全局导出

@@ -75,7 +75,6 @@
 		window.savePreMonthAttributes = savePreMonthAttributes;  // ★★★ 暴露到全局 ★★★
 
         function updateAllUI() {
-            console.log('🔧 updateAllUI 开始执行');
             const steps = [
                 ['updateTimeDisplay', updateTimeDisplay],
                 ['updateAttributes', updateAttributes],
@@ -94,7 +93,6 @@
                     console.error(`❌ ${name} 错误:`, e.message);
                 }
             }
-            console.log('✅ updateAllUI 执行完成');
         }
 
 		// ★★★ 月份变化追踪（用于动画） ★★★
@@ -1733,7 +1731,6 @@
         }
 
 		function updateActionButtons() {
-			console.log('🔧 updateActionButtons 执行');
 			const btns = ['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'];
 
 			// ★★★ 修复：添加默认值，防止 undefined 导致 NaN 计算 ★★★

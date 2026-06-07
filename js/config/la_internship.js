@@ -224,6 +224,8 @@ function applyInternshipEffects() {
 
     if (effects.gold) {
         gameState.gold += effects.gold;
+        // ★★★ 修复：调用clampGold()尊重赤贫学子诅咒的金币上限 ★★★
+        if (typeof clampGold === 'function') clampGold();
         logDetail += `金币+${effects.gold}`;
     }
     if (effects.research) {
@@ -260,10 +262,10 @@ function showInternshipSelectionModal() {
         return;
     }
 
-    const buttons = availableOptions.map(opt => {
+    const buttons = availableOptions.map((opt, i) => {
         return {
             text: `${opt.icon} ${opt.name}（${opt.desc}）`,
-            class: 'btn-primary',
+            class: i === 0 ? 'btn-primary' : (i === 1 ? 'btn-info' : 'btn-warning'),
             action: () => {
                 gameState.internship = opt;
                 addLog('实习', `开始${opt.name}实习`, opt.desc);

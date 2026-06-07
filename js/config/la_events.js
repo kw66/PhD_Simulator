@@ -357,13 +357,13 @@ function applyLARandomEventResult(event, result) {
     }
     if (result.research) {
         changeResearch(result.research);
-        logDetail += `${logDetail ? '，' : ''}科研+${result.research}`;
+        logDetail += `${logDetail ? '，' : ''}科研${result.research > 0 ? '+' : ''}${result.research}`;
     }
-    if (result.social) {
+    if (result.social && !result.socialCheck) {
         changeSocial(result.social);
         logDetail += `${logDetail ? '，' : ''}社交${result.social > 0 ? '+' : ''}${result.social}`;
     }
-    if (result.favor) {
+    if (result.favor && !result.favorCheck) {
         changeFavor(result.favor);
         logDetail += `${logDetail ? '，' : ''}好感${result.favor > 0 ? '+' : ''}${result.favor}`;
     }
@@ -395,16 +395,41 @@ function applyLARandomEventResult(event, result) {
     }
 
     // 概率事件
-    if (result.chance && Math.random() < result.chance) {
-        // 成功
-        if (result.buff === 'write_bonus') {
-            gameState.buffs.temporary.push({
-                type: 'write_bonus',
-                name: '写作工作坊buff',
-                value: 3,
-                permanent: false
-            });
-            logDetail += '，获得写作buff+3';
+    if (result.chance) {
+        if (Math.random() < result.chance) {
+            // 成功
+            if (result.buff === 'write_bonus') {
+                gameState.buffs.temporary.push({
+                    type: 'write_bonus',
+                    name: '写作工作坊buff',
+                    value: 3,
+                    permanent: false
+                });
+                logDetail += '，获得写作buff+3';
+            } else if (result.buff) {
+                gameState.buffs.temporary.push({
+                    type: result.buff,
+                    name: result.buff + 'buff',
+                    value: result.buffValue || 1,
+                    permanent: false
+                });
+                logDetail += `，获得${result.buff}buff`;
+            } else {
+                logDetail += '，概率成功';
+            }
+        } else {
+            // 失败
+            if (result.failurePenalty) {
+                const fp = result.failurePenalty;
+                if (fp.san) { changeSan(fp.san); }
+                if (fp.research) { changeResearch(fp.research); }
+                if (fp.social) { changeSocial(fp.social); }
+                if (fp.favor) { changeFavor(fp.favor); }
+                if (fp.gold) { changeGold(fp.gold); }
+                logDetail += '，概率失败';
+            } else {
+                logDetail += '，概率失败';
+            }
         }
     }
 
