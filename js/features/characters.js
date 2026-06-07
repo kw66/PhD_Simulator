@@ -81,6 +81,16 @@
 				initDisciplineSelection();
 			}
 
+			// ★★★ 文科版：初始化音频系统 ★★★
+			if (IS_LIBERAL_ARTS && typeof initAudioSystem === 'function') {
+				initAudioSystem();
+			}
+
+			// ★★★ 文科版：初始化移动端优化 ★★★
+			if (IS_LIBERAL_ARTS && typeof initMobileOptimization === 'function') {
+				initMobileOptimization();
+			}
+
 			renderCharacterGrid();
 			document.getElementById('start-btn').addEventListener('click', startGame);
 

@@ -2015,7 +2015,9 @@
 			const fullGearDiscount = hasFullGear ? Math.min(2 + Math.floor(meetingCount / 4), 6) : 0;
 			const selfPayDiscount = fullGearDiscount;
 			const actualSelfPay = Math.max(0, costs.selfPay - selfPayDiscount);
-			const selfPayText = hasFullGear ? `${actualSelfPay}金（原${costs.selfPay}，整装待发-${fullGearDiscount}）` : `${costs.selfPay}金`;
+			// ★★★ 文科版成就商店：免费会议 - 自费参会免单（仅在点击自己出钱时消耗）★★★
+			const finalSelfPay = gameState.freeConference ? 0 : actualSelfPay;
+			const selfPayText = hasFullGear ? `${finalSelfPay}金（原${costs.selfPay}，整装待发-${fullGearDiscount}）` : `${costs.selfPay}金`;
 
 			// 构建论文列表显示
 			let papersListHtml = '';
@@ -2054,10 +2056,14 @@
 				 ${papersListHtml}
 				 <p>请选择参会方式：</p>`,
 				[
-				{ text: `💰 自己出钱（金钱-${actualSelfPay}${hasFullGear ? '🎒' : ''}）`, class: 'btn-warning', action: () => {
-					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${actualSelfPay}${hasFullGear ? `（整装待发-${fullGearDiscount}）` : ''}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+				{ text: `💰 自己出钱（金钱-${finalSelfPay}${hasFullGear ? '🎒' : ''}）`, class: 'btn-warning', action: () => {
+					if (gameState.freeConference) {
+						gameState.freeConference = false; // 一次性效果
+						addLog('免费会议', '成就商品生效', `本次参会免单`);
+					}
+					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${finalSelfPay}${hasFullGear ? `（整装待发-${fullGearDiscount}）` : ''}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
 					closeModal();
-					if (changeGold(-actualSelfPay)) {
+					if (changeGold(-finalSelfPay)) {
 						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
 					} else {
 						// 金钱不足导致游戏结束

@@ -18,8 +18,8 @@ const LA_TEXT_REPLACEMENTS = {
     endings: {
         '诺奖之始': '学术巅峰',
         '真·诺奖之始': '真·学术巅峰',
-        '发表Nature论文，你已踏上诺奖之路': '发表顶级期刊论文，你已踏上学术巅峰之路',
-        '没有任何外挂，你凭借自己的努力发表了Nature论文': '没有任何外挂，你凭借自己的努力发表了顶级期刊论文'
+        '发表Nature论文，你已踏上诺奖之路！': '发表顶级期刊论文，你已踏上学术巅峰之路！',
+        '没有任何外挂，你凭借自己的努力发表了Nature论文！': '没有任何外挂，你凭借自己的努力发表了顶级期刊论文！'
     },
 
     // === 日志事件替换 ===
@@ -99,9 +99,22 @@ function applyAllLATextReplacements() {
     // 替换结局名称
     if (typeof ENDING_NAMES !== 'undefined') {
         for (const [key, value] of Object.entries(LA_TEXT_REPLACEMENTS.endings)) {
-            for (const [endingKey, endingValue] of Object.entries(ENDING_NAMES)) {
+            for (const endingKey of Object.keys(ENDING_NAMES)) {
+                const endingValue = ENDING_NAMES[endingKey];
                 if (endingValue.includes(key)) {
                     ENDING_NAMES[endingKey] = endingValue.replace(key, value);
+                }
+            }
+        }
+    }
+
+    // ★★★ 修复：替换结局描述（在 ENDING_REQUIREMENTS 中）★★★
+    if (typeof ENDING_REQUIREMENTS !== 'undefined') {
+        for (const [key, value] of Object.entries(LA_TEXT_REPLACEMENTS.endings)) {
+            for (const reqKey of Object.keys(ENDING_REQUIREMENTS)) {
+                const reqValue = ENDING_REQUIREMENTS[reqKey];
+                if (reqValue && reqValue.includes(key)) {
+                    ENDING_REQUIREMENTS[reqKey] = reqValue.replace(key, value);
                 }
             }
         }

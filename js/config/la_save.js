@@ -15,11 +15,17 @@ const LA_SAVE_DATA_STRUCTURE = {
 function saveLiberalArtsGame(slotName = 'auto') {
     if (!gameState || !gameState.discipline) return false;
 
+    // ★★★ 修复：paperTypeCollection 是 Set，JSON.stringify 会序列化为 {} ★★★
+    const safeGameState = { ...gameState };
+    if (safeGameState.paperTypeCollection instanceof Set) {
+        safeGameState.paperTypeCollection = [...safeGameState.paperTypeCollection];
+    }
+
     const saveData = {
         ...LA_SAVE_DATA_STRUCTURE,
         discipline: gameState.discipline,
         disciplineCategory: gameState.disciplineCategory,
-        gameState: { ...gameState },
+        gameState: safeGameState,
         achievements: gameState.achievements || [],
         statistics: {
             totalScore: gameState.totalScore || 0,
@@ -54,6 +60,31 @@ function loadLiberalArtsGame(slotName = 'auto') {
         if (!saveData.gameState || !saveData.discipline) {
             console.warn('存档数据无效');
             return null;
+        }
+
+        // ★★★ 新增：版本兼容与迁移 ★★★
+        const SAVE_VERSION = '1.0';
+        if (!saveData.version) {
+            saveData.version = '1.0';
+        }
+        if (saveData.version !== SAVE_VERSION) {
+            // 旧版本迁移逻辑
+            if (saveData.version === '0.9' || !saveData.disciplineCategory) {
+                saveData.disciplineCategory = saveData.gameState.disciplineCategory || null;
+            }
+            saveData.version = SAVE_VERSION;
+        }
+
+        // ★★★ 修复：将 paperTypeCollection 数组还原为 Set ★★★
+        if (saveData.gameState.paperTypeCollection) {
+            if (Array.isArray(saveData.gameState.paperTypeCollection)) {
+                saveData.gameState.paperTypeCollection = new Set(saveData.gameState.paperTypeCollection);
+            } else {
+                // 兼容旧存档（序列化为 {} 的情况）
+                saveData.gameState.paperTypeCollection = new Set();
+            }
+        } else {
+            saveData.gameState.paperTypeCollection = new Set();
         }
 
         return saveData;

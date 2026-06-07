@@ -54,6 +54,13 @@
         }
 		
 		function generateReviewer() {
+			// ★★★ 文科版成就商店：审稿人情 - 下次投稿所有审稿人变为心软（一次性）★★★
+			if (gameState.allKindReviewers) {
+				gameState.allKindReviewers = false; // 一次性效果
+				addLog('审稿人情', '下次投稿生效', '本篇论文所有审稿人变为心软');
+				return { type: 'kind', name: '心软审稿人' };
+			}
+
 			// ★★★ 社交达人觉醒后使用固定的概率分布 ★★★
 			if (gameState.socialAwakened && gameState.reviewerDistribution) {
 				const dist = gameState.reviewerDistribution;

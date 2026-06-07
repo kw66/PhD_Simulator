@@ -5,7 +5,8 @@
 一个从 0 开始用 AI 持续迭代的浏览器小游戏。  
 体验研究生生涯，在科研、导师、社交、金钱与 SAN 之间做平衡，努力顺利毕业。
 
-[🎮 点击即玩](https://kw66.github.io/PhD_Simulator/) ·
+[🎮 理工版](https://kw66.github.io/PhD_Simulator/) ·
+[📚 文科版](https://kw66.github.io/PhD_Simulator/index_liberal_arts.html) ·
 [🏠 个人主页](https://kw66.github.io/) ·
 [📝 初始 Prompt](./promopt.txt)
 
@@ -34,6 +35,29 @@
   - 💰 金钱资源
 - 任一关键属性跌破底线，都可能触发不良结局。
 
+## 📚 文科版
+
+文科版基于理工版扩展，面向中国文科类研究生，采用**二分法学科架构**：
+
+```
+📖 人文学科：中国语言文学 / 历史学 / 哲学 / 外国语言文学
+📊 社会学科：新闻传播学 / 信息资源管理 / 社会学 / 教育学
+```
+
+与理工版的主要差异：
+
+| 维度 | 理工版 | 文科版 |
+|------|--------|--------|
+| SAN 归零 | Game Over | 进入颓废状态（debuff） |
+| 金币归零 | Game Over | 进入贫困状态（可借钱/打工） |
+| 论文分数 | 每月衰减 10% | 只增不减 |
+| 录取率 | 基准 | +10% 加成 |
+| 事件系统 | CS 科研事件 | 35 个文科专属事件 + 16 个通用事件 |
+| 角色系统 | 6 个角色 | 4 通用 + 4 学科特色 + 8 逆位 |
+| 结局 | 通用结局 | 28 个结局（含 11 个学科特色结局） |
+
+详细设计见 [文科版设计方案](./文科版研究生模拟器_统一设计方案.md)。
+
 ## 🧠 系统亮点
 
 | 系统 | 内容 |
@@ -57,9 +81,11 @@
 
 | 路径 | 说明 |
 | --- | --- |
-| [index.html](./index.html) | 当前主版本入口 |
+| [index.html](./index.html) | 理工版入口 |
+| [index_liberal_arts.html](./index_liberal_arts.html) | 文科版入口（8 个学科可选） |
 | [css/styles.css](./css/styles.css) | 全局样式与界面视觉 |
 | [js/](./js) | 核心逻辑、系统、UI 与各类玩法模块 |
+| [文科版研究生模拟器_统一设计方案.md](./文科版研究生模拟器_统一设计方案.md) | 文科版完整设计文档 |
 | [promopt.txt](./promopt.txt) | 最初用于生成游戏原型的 prompt |
 | [gemini.html](./gemini.html) | 早期 AI 生成版本存档 |
 | [index_v0.5.html](./index_v0.5.html) / [index0.html](./index0.html) | 历史快照 |
@@ -71,7 +97,8 @@
 - 最初版本来自 [promopt.txt](./promopt.txt) 中的 prompt
 - 早期尝试保留在 [gemini.html](./gemini.html)
 - 后续逐步从单文件原型演进为 `css/ + js/` 的模块化结构
-- 近期主要开发与维护工作以 **GPT-5.4** 为主
+- 近期主要开发与维护工作以 **GPT-5.4** 和 **Claude** 为主
+- 文科版由 Claude 辅助完成架构设计与代码实现
 
 <details open>
 <summary><strong>📝 开发心得</strong></summary>

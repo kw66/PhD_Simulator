@@ -87,11 +87,43 @@ const LA_ENDING_REQUIREMENTS = {
     'true_life': '使用真·大多数角色，顺利毕业且达成≥12个成就'
 };
 
+// 文科版硕士结局判定
+function getLiberalArtsMasterEndingType() {
+    const { social, favor, gold, publishedPapers, isTrueNormal, discipline, disciplineCategory } = gameState;
+    const totalPapers = publishedPapers.length;
+
+    // 真实结局判定（优先级最高）
+    if (isTrueNormal) {
+        const tempAchievements = collectLiberalArtsAchievements('master');
+        const achievementCount = tempAchievements.length;
+        if (totalCitations >= 1000) {
+            return { type: 'true_devotion', title: '真·投身学术', desc: '你用最朴素的方式，达到了学术的巅峰。', emoji: '💫' };
+        }
+        if (achievementCount >= 12) {
+            return { type: 'true_life', title: '真·感受生活', desc: '科研不是全部，你体验了丰富多彩的研究生生活。', emoji: '🌈' };
+        }
+    }
+
+    // 文科特色硕士结局
+    if (disciplineCategory === 'humanities') {
+        if ((social || 0) >= 15 && (favor || 0) >= 12) {
+            return { type: 'cultural_official', title: '文化官员', desc: '你以深厚的人文素养，进入文化部门工作。', emoji: '🏛️' };
+        }
+    } else if (disciplineCategory === 'social_science') {
+        if ((social || 0) >= 15 && (gold || 0) >= 15) {
+            return { type: 'enterprise_consultant', title: '企业顾问', desc: '你的社科背景让你在企业咨询领域如鱼得水。', emoji: '💼' };
+        }
+    }
+
+    return null; // 返回 null 表示走通用硕士逻辑
+}
+
 // 文科版博士结局判定
 function getLiberalArtsPhdEndingType() {
     const { paperA, totalCitations, bigBullCooperation, publishedPapers, isTrueNormal, discipline, disciplineCategory } = gameState;
     const totalPapers = publishedPapers.length;
-    const paperS = (gameState.paperS || 0) + (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
+    // ★★★ 修复：paperS 已包含 paperNature + paperNatureSub（papers.js 中同时递增），不应重复计算 ★★★
+    const paperS = (gameState.paperNature || 0) + (gameState.paperNatureSub || 0);
     const effectivePaperA = paperA + paperS;
 
     // 真实结局判定（优先级最高）
@@ -114,19 +146,19 @@ function getLiberalArtsPhdEndingType() {
     // 学科特色结局判定
     if (disciplineCategory === 'humanities') {
         // 人文学科特色结局
-        if (discipline && effectivePaperA >= 5 && totalCitations > 1000 && bigBullCooperation)
+        if (effectivePaperA >= 5 && totalCitations > 1000 && bigBullCooperation)
             return { type: 'national_scholar', title: '国学大师', desc: '你的学术成就令人瞩目，成为领域权威！', emoji: '🎓' };
-        if (discipline && totalPapers >= 10 && (gameState.research || 0) >= 15)
+        if (totalPapers >= 10 && (gameState.research || 0) >= 15)
             return { type: 'writer_scholar', title: '作家学者', desc: '学术与创作兼修，你是文坛新星！', emoji: '🖊️' };
-        if (discipline && totalPapers >= 8)
+        if (totalPapers >= 8)
             return { type: 'cultural_inheritor', title: '文化传承者', desc: '你为文化传承做出了重要贡献！', emoji: '📜' };
-        if (discipline && totalCitations > 500 && (gameState.social || 0) >= 12)
+        if (totalCitations > 500 && (gameState.social || 0) >= 12)
             return { type: 'independent_scholar', title: '独立学者', desc: '你以独立之精神，成就学术之自由！', emoji: '📖' };
     } else if (disciplineCategory === 'social_science') {
         // 社会学科特色结局
         if (discipline === 'journalism' && (gameState.social || 0) >= 15)
             return { type: 'famous_journalist', title: '知名记者', desc: '你用笔记录时代，成为媒体人！', emoji: '📰' };
-        if (discipline && totalPapers >= 8 && totalCitations > 500)
+        if (totalPapers >= 8 && totalCitations > 500)
             return { type: 'think_tank_expert', title: '智库专家', desc: '你的研究为政策制定提供了重要参考！', emoji: '📊' };
         if (discipline === 'sociology' && (gameState.social || 0) >= 20)
             return { type: 'social_activist', title: '社会活动家', desc: '你推动了社会进步！', emoji: '👥' };
@@ -172,8 +204,7 @@ function collectLiberalArtsAchievements(endingType) {
 
     // 文科特色成就
     if ((gameState.readCount || 0) >= 30) a.push('📖 书虫');
-    if (gameState.publishedPapers.length >= 10) a.push('✍️ 文采飞扬');
-    if ((gameState.research || 0) >= 15) a.push('🖊️ 文采飞扬');
+    if (gameState.publishedPapers.length >= 10 || (gameState.research || 0) >= 15) a.push('✍️ 文采飞扬');
     if (gameState.achievementConditions && gameState.achievementConditions.tripleRejected) a.push('📝 修改达人');
 
     // 毕业相关成就
@@ -192,5 +223,6 @@ function collectLiberalArtsAchievements(endingType) {
 // 全局导出
 window.LA_ENDING_NAMES = LA_ENDING_NAMES;
 window.LA_ENDING_REQUIREMENTS = LA_ENDING_REQUIREMENTS;
+window.getLiberalArtsMasterEndingType = getLiberalArtsMasterEndingType;
 window.getLiberalArtsPhdEndingType = getLiberalArtsPhdEndingType;
 window.collectLiberalArtsAchievements = collectLiberalArtsAchievements;

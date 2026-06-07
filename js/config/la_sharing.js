@@ -152,6 +152,7 @@ function shareToPlatform(platform) {
 
     // 复制到剪贴板
     navigator.clipboard.writeText(text).then(() => {
+        window.currentShareData = null; // 复制完成后清洗
         showModal('✅ 复制成功', `<p>分享内容已复制到剪贴板！</p><p>请打开<strong>${config.name}</strong>粘贴发布。</p>`,
             [{ text: '确定', class: 'btn-primary', action: closeModal }]);
     }).catch(() => {
@@ -162,6 +163,7 @@ function shareToPlatform(platform) {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
+        window.currentShareData = null; // 复制完成后清洗
 
         showModal('✅ 复制成功', `<p>分享内容已复制到剪贴板！</p><p>请打开<strong>${config.name}</strong>粘贴发布。</p>`,
             [{ text: '确定', class: 'btn-primary', action: closeModal }]);

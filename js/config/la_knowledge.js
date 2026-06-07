@@ -62,7 +62,7 @@ const LA_KNOWLEDGE_CARDS = {
 // 当前知识卡片索引
 let currentKnowledgeIndex = {};
 
-// 获取随机知识卡片
+// 获取下一张知识卡片（无放回顺序遍历，遍历完一轮后重置）
 function getRandomKnowledgeCard(discipline) {
     const pool = [...LA_KNOWLEDGE_CARDS.common, ...(LA_KNOWLEDGE_CARDS[discipline] || [])];
 

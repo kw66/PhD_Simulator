@@ -64,6 +64,7 @@ function initLongPress(element, callback, duration = 500) {
 // 移动端适配样式
 function applyMobileStyles() {
     if (!isMobileDevice()) return;
+    if (document.getElementById('la-mobile-styles')) return; // 防重复注入
 
     const style = document.createElement('style');
     style.id = 'la-mobile-styles';

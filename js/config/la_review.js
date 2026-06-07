@@ -69,15 +69,6 @@ const LA_REVIEW_CYCLES = {
     D: { min: 1, max: 2, desc: '学报' }
 };
 
-// 文科版录取率配置
-const LA_ACCEPTANCE_RATES = {
-    S: { min: 0.05, max: 0.15, target: 0.10 },
-    A: { min: 0.15, max: 0.25, target: 0.20 },
-    B: { min: 0.25, max: 0.35, target: 0.30 },
-    C: { min: 0.40, max: 0.55, target: 0.45 },
-    D: { min: 0.55, max: 0.70, target: 0.60 }
-};
-
 // 文科版审稿阈值配置
 const LA_REVIEW_THRESHOLDS = {
     S: {
@@ -201,7 +192,6 @@ function generateLAReviewComment(reviewerType, result) {
 // 全局导出
 window.LA_REVIEWER_TYPES = LA_REVIEWER_TYPES;
 window.LA_REVIEW_CYCLES = LA_REVIEW_CYCLES;
-window.LA_ACCEPTANCE_RATES = LA_ACCEPTANCE_RATES;
 window.LA_REVIEW_THRESHOLDS = LA_REVIEW_THRESHOLDS;
 window.getLAReviewCycle = getLAReviewCycle;
 window.generateLAReviewer = generateLAReviewer;

@@ -19,7 +19,9 @@
         <div class="start-container">
 			<h1 class="game-title"><span style="filter:grayscale(100%);">🎓</span> 文科研究生模拟器v1.0</h1>
 			<p class="game-author">
-				作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>
+				作者：<a href="https://xhslink.com/m/A2DFslJF4mb" target="_blank" style="color:var(--primary-color);text-decoration:none;">落星峦</a>（原项目）
+				&nbsp;|&nbsp;
+				文科版：<strong>木叶</strong>
 				&nbsp;|&nbsp;
 				项目：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a>
 				&nbsp;|&nbsp;
@@ -444,9 +446,25 @@
 			<i class="fas fa-users"></i>
 			<span>关系</span>
 		</button>
-        <button class="quick-btn next-month-btn" onclick="nextMonth()">
+		<button class="quick-btn next-month-btn" onclick="nextMonth()">
             <i class="fas fa-forward"></i>
             <span>下月</span>
+        </button>
+		<button class="quick-btn" onclick="showSaveManagement()">
+            <i class="fas fa-save"></i>
+            <span>存档</span>
+        </button>
+		<button class="quick-btn" onclick="showLiberalArtsAchievementShop()">
+            <i class="fas fa-trophy"></i>
+            <span>成就商店</span>
+        </button>
+		<button class="quick-btn" onclick="showLiberalArtsStatsPanel()">
+            <i class="fas fa-globe"></i>
+            <span>云端排行</span>
+        </button>
+		<button class="quick-btn" onclick="showCrossDisciplineAchievements()">
+            <i class="fas fa-flask"></i>
+            <span>跨学科</span>
         </button>
     </div>
 	<!-- 快速折叠/展开按钮（移动端） -->

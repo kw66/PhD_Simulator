@@ -1150,7 +1150,7 @@
 										<span class="p-year">${baseYear}.9入学</span>
 									</div>
 									<div class="journey-arrow-p">
-										<span class="arrow-text">${gameState.totalMonths}个月</span>
+										<span class="arrow-text">${years > 0 ? `${years}年${months > 0 ? months + '个月' : ''}` : `${months}个月`}</span>
 										<div class="arrow-line-p"></div>
 									</div>
 									<div class="journey-to">

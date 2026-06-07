@@ -87,16 +87,6 @@ const LA_ADVISOR_DESCRIPTIONS = {
         desc: '要求不高，自由发展。给你充分的自由度，但也意味着你需要自己摸索前进的方向。',
         quote: '"你自己看着办吧，有问题再来找我。"'
     },
-    'level6': {
-        title: '青年教师',
-        desc: '刚起步的课题组，资源有限但关系亲近，一起成长的感觉。',
-        quote: '"我们一起努力，把这个方向做起来！"'
-    },
-    'level7': {
-        title: '项目导师',
-        desc: '课题多、经费充足，但可能会被拉去做项目，学术产出要自己抓。',
-        quote: '"这个月的项目进度怎么样了？"'
-    },
     'default': {
         title: '普通导师',
         desc: '中规中矩，该有的都有，该管的都管。',
@@ -113,7 +103,8 @@ function getLiberalArtsCharacterQuote(character, discipline, isPositiveEnding) {
         return isPositiveEnding ? charQuotes.positive : charQuotes.negative;
     }
 
-    const charQuotes = disciplineQuotes[character] || disciplineQuotes['normal'];
+    const charQuotes = disciplineQuotes[character] || disciplineQuotes['normal']
+        || LA_CHARACTER_QUOTES.chinese.normal;
     return isPositiveEnding ? charQuotes.positive : charQuotes.negative;
 }
 

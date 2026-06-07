@@ -21,7 +21,7 @@ const LA_ACHIEVEMENT_SHOP_ITEMS = [
         category: 'consumable'
     },
     {
-        id: 'san急救包',
+        id: 'san_kit',
         name: 'SAN急救包',
         icon: '💊',
         desc: 'SAN+5',
@@ -30,7 +30,7 @@ const LA_ACHIEVEMENT_SHOP_ITEMS = [
         category: 'consumable'
     },
     {
-        id: 'research加速器',
+        id: 'research_booster',
         name: '科研加速器',
         icon: '🚀',
         desc: '科研+2',
@@ -39,7 +39,7 @@ const LA_ACHIEVEMENT_SHOP_ITEMS = [
         category: 'consumable'
     },
     {
-        id: 'social达人卡',
+        id: 'social_card',
         name: '社交达人卡',
         icon: '🤝',
         desc: '社交+3',
@@ -48,7 +48,7 @@ const LA_ACHIEVEMENT_SHOP_ITEMS = [
         category: 'consumable'
     },
     {
-        id: 'gold红包',
+        id: 'gold_pack',
         name: '金币红包',
         icon: '🧧',
         desc: '金币+5',
@@ -85,7 +85,7 @@ const LA_ACHIEVEMENT_SHOP_ITEMS = [
     },
     {
         id: 'write_buff',
-        name: '写作buff',
+        name: '写作灵感',
         icon: '✍️',
         desc: '下次写作分数+8',
         price: 2,
