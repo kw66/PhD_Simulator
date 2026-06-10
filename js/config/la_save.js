@@ -243,6 +243,54 @@ function confirmDeleteSave(slotName) {
     );
 }
 
+// 清空所有文科版数据（存档 + 统计缓存 + 玩家统计 + 跨学科成就等）
+// 策略：清空所有 graduateSimulator* / graduate_simulator* / la_* / phdsim* 前缀的 key
+// 例外：版本标记 phdsim_la_data_version（用于下次访问时不再触发自动清理）
+const LA_DATA_VERSION_KEY = 'phdsim_la_data_version';
+function clearAllLiberalArtsData() {
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key !== LA_DATA_VERSION_KEY && (
+                key.startsWith('graduateSimulator') ||
+                key.startsWith('graduate_simulator') ||
+                key.startsWith('la_save_') ||
+                key.startsWith('la_stats_') ||
+                key.startsWith('la_achievement_') ||
+                key.startsWith('la_cross_') ||
+                key.startsWith('la_guide_') ||
+                key.startsWith('phdsim_')
+            )) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        console.log(`已清空 ${keysToRemove.length} 个数据项`);
+        return keysToRemove.length;
+    } catch (e) {
+        console.error('清空数据失败:', e);
+        return 0;
+    }
+}
+
+// 文科版版本号（变更时触发自动清理）
+const LA_DATA_VERSION = '2.0';
+function checkLiberalArtsDataVersion() {
+    try {
+        const stored = localStorage.getItem(LA_DATA_VERSION_KEY);
+        if (stored !== LA_DATA_VERSION) {
+            const count = clearAllLiberalArtsData();
+            localStorage.setItem(LA_DATA_VERSION_KEY, LA_DATA_VERSION);
+            if (count > 0) {
+                console.log(`文科版数据迁移：清空 ${count} 个旧数据项`);
+            }
+        }
+    } catch (e) {
+        console.error('版本检查失败:', e);
+    }
+}
+
 // 全局导出
 window.LA_SAVE_DATA_STRUCTURE = LA_SAVE_DATA_STRUCTURE;
 window.saveLiberalArtsGame = saveLiberalArtsGame;
@@ -252,3 +300,5 @@ window.deleteLiberalArtsSave = deleteLiberalArtsSave;
 window.showSaveManagement = showSaveManagement;
 window.loadSaveAndStart = loadSaveAndStart;
 window.confirmDeleteSave = confirmDeleteSave;
+window.clearAllLiberalArtsData = clearAllLiberalArtsData;
+window.checkLiberalArtsDataVersion = checkLiberalArtsDataVersion;

@@ -53,10 +53,18 @@
 | 论文分数 | 每月衰减 10% | 只增不减 |
 | 录取率 | 基准 | +10% 加成 |
 | 事件系统 | CS 科研事件 | 35 个文科专属事件 + 16 个通用事件 |
-| 角色系统 | 6 个角色 | 4 通用 + 4 学科特色 + 8 逆位 |
-| 结局 | 通用结局 | 28 个结局（含 11 个学科特色结局） |
+| 角色系统 | 6 个角色 | 4 通用 + 16 学科特色（8 学科×2）+ 8 逆位 |
+| 结局 | 通用结局 | 33 个结局（含 15 个学科特色结局 + 3 个真实结局） |
+| 商店 | 通用道具 | 12 通用 + 32 学科专属（8 学科×4）+ 10 成就币商品 |
+| 难度 | 通用诅咒/祝福 | 12 诅咒 + 12 祝福（文科定制） |
+| 审稿 | 标准审稿人 | 8 种审稿人类型（含格式审查员、引用绑架者等） |
+| 导师 | 标准导师 | 5 级导师等级 × 7 种学校类型 |
+| 恋人 | 无 | 2 种恋人类型（聪慧/活泼），各有独立 buff 机制 |
+| 实习 | AI Lab | 18 种实习选项（3 通用 + 15 学科专属） |
+| 成就 | 通用成就 | 23 通用 + 11 跨学科成就 |
 
 详细设计见 [文科版设计方案](./文科版研究生模拟器_统一设计方案.md)。
+功能需求见 [文科版 FRD](./文科版研究生模拟器_FRD.md)。
 
 ## 🧠 系统亮点
 
@@ -71,11 +79,12 @@
 
 ## 🚀 快速开始
 
-| 方式 | 说明 |
-| --- | --- |
-| 在线试玩 | 直接打开 [kw66.github.io/PhD_Simulator](https://kw66.github.io/PhD_Simulator/) |
-| 本地运行 | 直接用浏览器打开仓库中的 [index.html](./index.html) |
-| 历史版本 | 可查看 [gemini.html](./gemini.html)、[index_v0.5.html](./index_v0.5.html)、[index0.html](./index0.html) |
+| 方式 | 理工版 | 文科版 |
+| --- | --- | --- |
+| 在线试玩 | [kw66.github.io/PhD_Simulator](https://kw66.github.io/PhD_Simulator/) | [kw66.github.io/PhD_Simulator/index_liberal_arts.html](https://kw66.github.io/PhD_Simulator/index_liberal_arts.html) |
+| 本地运行 | 浏览器打开 [index.html](./index.html) | 浏览器打开 [index_liberal_arts.html](./index_liberal_arts.html) |
+
+历史版本：[gemini.html](./gemini.html)、[index_v0.5.html](./index_v0.5.html)、[index0.html](./index0.html)
 
 ## 🗂️ 仓库结构
 
@@ -86,6 +95,7 @@
 | [css/styles.css](./css/styles.css) | 全局样式与界面视觉 |
 | [js/](./js) | 核心逻辑、系统、UI 与各类玩法模块 |
 | [文科版研究生模拟器_统一设计方案.md](./文科版研究生模拟器_统一设计方案.md) | 文科版完整设计文档 |
+| [文科版研究生模拟器_FRD.md](./文科版研究生模拟器_FRD.md) | 文科版功能需求文档 |
 | [promopt.txt](./promopt.txt) | 最初用于生成游戏原型的 prompt |
 | [gemini.html](./gemini.html) | 早期 AI 生成版本存档 |
 | [index_v0.5.html](./index_v0.5.html) / [index0.html](./index0.html) | 历史快照 |

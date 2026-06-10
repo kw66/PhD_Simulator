@@ -23,7 +23,7 @@
 				&nbsp;|&nbsp;
 				文科版：<strong>木叶</strong>
 				&nbsp;|&nbsp;
-				项目：<a href="https://github.com/kw66/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a>
+				项目：<a href="https://github.com/mengyuchun/PhD_Simulator" target="_blank" style="color:var(--primary-color);text-decoration:none;">GitHub</a>
 				&nbsp;|&nbsp;
 				测试：雁栖湖
 			</p>
@@ -90,6 +90,13 @@
 
 			<!-- 玩家统计显示（选择角色栏之上）-->
 			<div id="player-stats-start" class="player-stats-section"></div>
+
+			<!-- 文科版数据管理（清空存档 / 重置统计）-->
+			<div style="text-align:center;margin-top:10px;">
+				<button class="quick-btn" onclick="confirmClearAllData()" style="font-size:0.75rem;padding:6px 12px;background:var(--light-bg);color:var(--text-secondary);">
+					<i class="fas fa-trash-alt"></i> 清空所有数据
+				</button>
+			</div>
 
 			<!-- 角色选择区块 -->
 			<div class="collapsible-section" id="character-section">
@@ -519,5 +526,40 @@
     <script src="js/systems/online.js"></script>
     <script src="js/ui/instructions.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // 文科版数据版本检查：升级时自动清空旧存档/旧统计
+        (function() {
+            if (typeof checkLiberalArtsDataVersion === 'function') {
+                checkLiberalArtsDataVersion();
+            }
+        })();
+
+        // 确认清空所有文科版数据
+        function confirmClearAllData() {
+            if (typeof showModal !== 'function') return;
+            showModal('⚠️ 清空所有数据',
+                `<p>这将清空：</p>
+                <ul style="text-align:left;margin:10px 0;padding-left:20px;">
+                    <li>所有存档（la_save_*）</li>
+                    <li>通关数 / 游玩次数等本地统计</li>
+                    <li>成就 / 跨学科成就等缓存</li>
+                </ul>
+                <p style="color:var(--warning-color);"><strong>注意：此操作不可恢复！</strong></p>`,
+                [
+                    { text: '取消', class: 'btn-info', action: closeModal },
+                    { text: '确认清空', class: 'btn-danger', action: () => {
+                        const count = clearAllLiberalArtsData();
+                        closeModal();
+                        setTimeout(() => {
+                            showModal('✅ 已清空', `<p>已清空 <strong>${count}</strong> 项数据。</p>`,
+                                [{ text: '刷新页面', class: 'btn-primary', action: () => location.reload() }]);
+                        }, 200);
+                        // 2秒后自动刷新，给用户看反馈
+                        setTimeout(() => location.reload(), 2000);
+                    }}
+                ]
+            );
+        }
+    </script>
 </body>
 </html>
