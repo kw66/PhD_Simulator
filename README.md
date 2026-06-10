@@ -6,7 +6,7 @@
 体验研究生生涯，在科研、导师、社交、金钱与 SAN 之间做平衡，努力顺利毕业。
 
 [🎮 原版](https://kw66.github.io/PhD_Simulator/) ·
-[📚 文科版](https://kw66.github.io/PhD_Simulator/index_liberal_arts.html) ·
+[📚 文科版](mengyuchun.github.io/PhD_Simulator/index_liberal_arts.html) ·
 [🏠 原版作者主页](https://kw66.github.io/) ·
 [📝 原版作者初始 Prompt](./promopt.txt)
 
