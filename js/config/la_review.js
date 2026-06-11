@@ -129,19 +129,26 @@ function getLAReviewCycle(grade) {
     return cycle.min + Math.floor(Math.random() * (cycle.max - cycle.min + 1));
 }
 
-// 生成文科版审稿人
+// 生成文科版审稿人（返回 { type, name } 与原版 generateReviewer 一致）
 function generateLAReviewer() {
+    // ★★★ 文科版成就商店：审稿人情 - 下次投稿所有审稿人变为心软（一次性）★★★
+    if (gameState.allKindReviewers) {
+        gameState.allKindReviewers = false;
+        addLog('审稿人情', '下次投稿生效', '本篇论文所有审稿人变为心软');
+        return { type: 'kind', name: LA_REVIEWER_TYPES.kind.name };
+    }
+
     const rand = Math.random();
     let cumulative = 0;
 
     for (const [type, config] of Object.entries(LA_REVIEWER_TYPES)) {
         cumulative += config.probability;
         if (rand < cumulative) {
-            return type;
+            return { type, name: config.name };
         }
     }
 
-    return 'normal'; // 默认
+    return { type: 'normal', name: LA_REVIEWER_TYPES.normal.name };
 }
 
 // 获取文科版审稿阈值

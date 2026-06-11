@@ -1,6 +1,6 @@
 ﻿        // ==================== 游戏状态 ====================
         let gameState = {};
-        // ★★★ 修复：暴露gameState到window供调试和外部脚本访问 ★★★
+        // ★★★ 只读暴露gameState到window供调试和学科配置访问 ★★★
         Object.defineProperty(window, 'gameState', {
             get() { return gameState; },
             configurable: true
