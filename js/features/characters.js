@@ -1,4 +1,4 @@
-﻿        // ==================== 模式切换 ====================
+        // ==================== 模式切换 ====================
 		function switchMode(reversed) {
 			isReversedMode = reversed;
 			isTrueNormalMode = false;  // ★★★ 切换模式时重置真·大多数状态 ★★★
@@ -56,12 +56,39 @@
             renderCharacterGrid();
         }
 
+		// 检测是否为文科版页面
+		const IS_LIBERAL_ARTS = window.location.pathname.includes('liberal_arts') || document.title.includes('文科');
+
+		// 获取当前角色列表（文科版使用学科配置，原版使用默认）
+		function getActiveCharacters() {
+			if (IS_LIBERAL_ARTS && selectedDiscipline) {
+				const config = LA_DISCIPLINE_CONFIGS[selectedDiscipline];
+				if (config && config.characters) return config.characters;
+			}
+			return window.characters || characters;
+		}
+
 		function init() {
 			// 初始化折叠状态
 			initCollapseStates();
 			initStartSectionStates();
 			if (typeof initWheelScrollFix === 'function') {
 				initWheelScrollFix();
+			}
+
+			// ★★★ 文科版：初始化学科选择 ★★★
+			if (IS_LIBERAL_ARTS && typeof initDisciplineSelection === 'function') {
+				initDisciplineSelection();
+			}
+
+			// ★★★ 文科版：初始化音频系统 ★★★
+			if (IS_LIBERAL_ARTS && typeof initAudioSystem === 'function') {
+				initAudioSystem();
+			}
+
+			// ★★★ 文科版：初始化移动端优化 ★★★
+			if (IS_LIBERAL_ARTS && typeof initMobileOptimization === 'function') {
+				initMobileOptimization();
 			}
 
 			renderCharacterGrid();
@@ -191,7 +218,7 @@
 				return;
 			}
 
-			const char = characters.find(c => c.id === charId);
+			const char = getActiveCharacters().find(c => c.id === charId);
 			if (!char) return;
 
 			const trueNormalUnlocked = isTrueNormalUnlocked();
@@ -497,6 +524,26 @@
 			updateRuneSelection(charId, isReversedMode);
 		}
 
+		// ★★★ 生成动态角色数据（支持文科版）★★★
+		function generateCharacterMaps() {
+			const activeChars = getActiveCharacters();
+			const normalIcons = {};
+			const reversedIcons = {};
+			const normalNameMap = {};
+			const reversedNameMap = {};
+
+			activeChars.forEach(char => {
+				normalIcons[char.id] = char.icon;
+				normalNameMap[char.id] = char.name.length > 2 ? char.name.substring(0, 2) : char.name;
+				if (char.reversed) {
+					reversedIcons[char.id] = char.reversed.icon;
+					reversedNameMap[char.id] = char.reversed.name.length > 2 ? char.reversed.name.substring(0, 2) : char.reversed.name;
+				}
+			});
+
+			return { normalIcons, reversedIcons, normalNameMap, reversedNameMap, charOrder: activeChars.map(c => c.id) };
+		}
+
 		function renderCharacterGrid() {
 			const grid = document.getElementById('character-grid');
 			if (!grid) return;  // ★★★ 修复：添加null检查 ★★★
@@ -549,47 +596,8 @@
 			const totalUnlocked = normalUnlocked + reversedUnlocked;
 			const progressPercent = (totalUnlocked / 12 * 100).toFixed(0);
 
-			// 正位角色图标
-			const normalIcons = {
-				'normal': '👤',
-				'genius': '🔬',
-				'social': '🤝',
-				'rich': '💰',
-				'teacher-child': '👨‍👧',
-				'chosen': '⭐'
-			};
-
-			// 逆位角色图标
-			const reversedIcons = {
-				'normal': '😴',
-				'genius': '🤡',
-				'social': '🐍',
-				'rich': '🏴‍☠️',
-				'teacher-child': '🎪',
-				'chosen': '🌀'
-			};
-
-			// 角色名称缩写
-			const normalNameMap = {
-				'normal': '大多数',
-				'genius': '院士',
-				'social': '社交',
-				'rich': '富豪',
-				'teacher-child': '子女',
-				'chosen': '天选'
-			};
-
-			const reversedNameMap = {
-				'normal': '怠惰',
-				'genius': '愚钝',
-				'social': '嫉妒',
-				'rich': '贪求',
-				'teacher-child': '玩世',
-				'chosen': '空想'
-			};
-
-			// 角色顺序 - 用于4x4网格边缘位置
-			const charOrder = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
+			// ★★★ 动态生成角色数据（支持文科版）★★★
+				const { normalIcons, reversedIcons, normalNameMap, reversedNameMap, charOrder } = generateCharacterMaps();
 
 			// 生成单个符文按钮 - 宝石质感
 			const generateRune = (charId, isReversedSide, position, rowIndex) => {
@@ -618,36 +626,37 @@
 				`;
 			};
 
-			// 4×4网格布局 - 正位在左半边，逆位在右半边，同角色中轴对称，围成一圈
+			// ★★★ 动态生成4×4网格布局（支持文科版角色）★★★
+			const c = charOrder; // 角色ID数组
 			const gridHtml = `
 				<div class="constellation-grid-4x4">
 					<!-- 第一行: 正位2个 + 逆位2个 (对称) -->
 					<div class="grid-row row-mixed">
-						${generateRune('normal', false, 0, 0)}
-						${generateRune('genius', false, 1, 0)}
-						${generateRune('genius', true, 2, 0)}
-						${generateRune('normal', true, 3, 0)}
+						${generateRune(c[0], false, 0, 0)}
+						${generateRune(c[1], false, 1, 0)}
+						${generateRune(c[1], true, 2, 0)}
+						${generateRune(c[0], true, 3, 0)}
 					</div>
 					<!-- 第二行: 正位1个 + 中心区 + 逆位1个 -->
 					<div class="grid-row row-mixed">
-						${generateRune('social', false, 4, 1)}
+						${generateRune(c[2], false, 4, 1)}
 						<div class="center-zone center-top-left" onclick="toggleTrueNormalMode()"></div>
 						<div class="center-zone center-top-right" onclick="toggleTrueNormalMode()"></div>
-						${generateRune('social', true, 7, 1)}
+						${generateRune(c[2], true, 7, 1)}
 					</div>
 					<!-- 第三行: 正位1个 + 中心区 + 逆位1个 -->
 					<div class="grid-row row-mixed">
-						${generateRune('rich', false, 8, 2)}
+						${generateRune(c[3], false, 8, 2)}
 						<div class="center-zone center-bottom-left" onclick="toggleTrueNormalMode()"></div>
 						<div class="center-zone center-bottom-right" onclick="toggleTrueNormalMode()"></div>
-						${generateRune('rich', true, 11, 2)}
+						${generateRune(c[3], true, 11, 2)}
 					</div>
 					<!-- 第四行: 正位2个 + 逆位2个 (对称) -->
 					<div class="grid-row row-mixed">
-						${generateRune('teacher-child', false, 12, 3)}
-						${generateRune('chosen', false, 13, 3)}
-						${generateRune('chosen', true, 14, 3)}
-						${generateRune('teacher-child', true, 15, 3)}
+						${generateRune(c[4], false, 12, 3)}
+						${generateRune(c[5], false, 13, 3)}
+						${generateRune(c[5], true, 14, 3)}
+						${generateRune(c[4], true, 15, 3)}
 					</div>
 					<!-- 中心核心按钮 -->
 					<div class="center-core-overlay" onclick="toggleTrueNormalMode()">
@@ -730,7 +739,7 @@
 		}
 			
 			// 渲染角色卡片
-			grid.innerHTML = characters.map(char => {
+			grid.innerHTML = getActiveCharacters().map(char => {
 				const isTrueNormalAvailable = char.id === 'normal' && !isReversedMode && trueNormalUnlocked;
 				
 				let data, displayIcon, displayName, displayDesc, displayBonus, displayAwaken;
@@ -990,7 +999,7 @@
 			const states = getCharacterCardCollapseStates();
 			const mode = isReversedMode ? 'reversed' : 'normal';
 			
-			characters.forEach(char => {
+			getActiveCharacters().forEach(char => {
 				const cardKey = `${char.id}_${mode}`;
 				states[cardKey] = collapse;
 			});
@@ -1045,7 +1054,7 @@
 		}
 
 		function selectCharacter(id) {
-			selectedCharacter = characters.find(c => c.id === id);
+			selectedCharacter = getActiveCharacters().find(c => c.id === id);
 
 			// ★★★ 修复：如果在真·大多数模式下选择了其他角色，关闭真·大多数模式 ★★★
 			// ★★★ 只更新状态和中心按钮，不调用renderCharacterGrid()以避免预览面板闪烁 ★★★
@@ -1066,6 +1075,13 @@
 		async function startGame() {
 			if (!selectedCharacter) return;
 
+			// ★★★ 文科版：检查学科选择 ★★★
+			if (IS_LIBERAL_ARTS && !selectedDiscipline) {
+				showModal('⚠️ 请先选择学科', '<p>请先选择你的学科方向，再开始游戏。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
 			// ★★★ 增加游戏局数计数 ★★★
 			incrementGamesPlayed();
 			recordGameStart();
@@ -1074,6 +1090,16 @@
 			clearAutoSaves();
 
 			gameState = getInitialState();
+
+			// ★★★ 文科版：应用学科配置 ★★★
+			if (IS_LIBERAL_ARTS && typeof applyDisciplineConfig === 'function') {
+				applyDisciplineConfig();
+			}
+
+			// ★★★ 文科版：应用全局文本替换 ★★★
+			if (IS_LIBERAL_ARTS && typeof applyAllLATextReplacements === 'function') {
+				applyAllLATextReplacements();
+			}
 
 			resetAchievementShop();
 			const achievementCount = getPlayerAchievementCount();
@@ -1110,7 +1136,7 @@
 				gameState.characterName = '真·大多数';
 			}
 
-			shopItems.forEach(item => {
+			(window.shopItems || shopItems).forEach(item => {
 				if (item.once) item.bought = false;
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
@@ -1169,7 +1195,7 @@
 			generateMonthlyConferenceLocations();
 			updateAllUI();
 			renderPaperSlots();
-			renderRelationshipPanel();  // ★★★ 新增：渲染人际关系面板 ★★★
+			renderRelationshipPanel();
 
 			// ★★★ 修改：合并游戏开始日志和难度诅咒/祝福日志 ★★★
 			let startLogDetail = `欢迎来到研究生模拟器！你选择了【${gameState.characterName}】`;
@@ -1238,6 +1264,14 @@
 					addLog('游戏提示', '先专注自己论文，再完成关系任务。属性≥6解锁更多选项。发表A类后论文槽可升级投Nature系列');
 					renderRelationshipPanel();
 					updateAllUI();
+
+					// ★★★ 文科版：显示新手引导 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof shouldShowGuide === 'function' && typeof showLiberalArtsGuide === 'function') {
+						if (shouldShowGuide()) {
+							// 立即显示引导，不延迟
+							showLiberalArtsGuide();
+						}
+					}
 				});
 			}, 500);
 		}
@@ -1346,4 +1380,5 @@
 		window.resetRandomEventPool = resetRandomEventPool;
 		window.yearlyResetRandomEventPool = yearlyResetRandomEventPool;
 		window.openV2Preview = openV2Preview;
+		window.init = init;
 

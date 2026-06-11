@@ -1,5 +1,31 @@
-﻿        // ==================== 下一个月 ====================
+        // ==================== 下一个月 ====================
 		let isNextMonthProcessing = false;  // ★★★ 新增：防止重复点击 ★★★
+
+		// ★★★ 文科版事件触发包装函数 ★★★
+		function triggerRandomEventByMode() {
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsRandomEvent === 'function') {
+				triggerLiberalArtsRandomEvent();
+			} else {
+				triggerOtherRandomEvent();
+			}
+		}
+
+		// ★★★ 文科版：SAN检查包装函数（SAN归零不Game Over）★★★
+		function checkSanAfterOperation() {
+			if (gameState.san < 0) {
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+					// 文科版：SAN归零进入颓废状态
+					gameState.san = 0;
+					gameState.isExhausted = true;
+					addLog('状态', '你太累了，进入了颓废状态', '所有操作SAN消耗+1，每月SAN恢复-1');
+					return false; // 不触发Game Over
+				} else {
+					triggerEnding('burnout');
+					return true; // 触发Game Over
+				}
+			}
+			return false; // 正常
+		}
 
 		function nextMonth() {
 			// ★★★ 新增：防止重复点击导致月份跳跃或不刷新 ★★★
@@ -229,7 +255,7 @@
 			// ============================================
 
 			// 基础SAN回复
-			let sanRecovery = 1;
+			let sanRecovery = gameState.laMonthlySanRecovery || 1;
 			if (gameState.isReversed && gameState.character === 'normal') {
 				if (gameState.slothAwakened) {
 					// ★★★ 修改：觉醒后每月SAN+已损SAN的10%（上取整）★★★
@@ -329,17 +355,31 @@
 				}
 
 				if (gameState.gold < 0) {
-					// ★★★ 修复：记录月度开销日志（用于失败结局显示）★★★
-					addLog('月度结算', '生活开销', `基础开销-1，恋人约会-2，金币不足`);
-					triggerEnding('poor');
-					return;
+					// ★★★ 文科版：金币归零不Game Over，进入贫困状态 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+						gameState.gold = 0;
+						gameState.isBroke = true;
+						addLog('月度结算', '生活开销', `基础开销-1，恋人约会-2，金币不足，进入贫困状态`);
+					} else {
+						// ★★★ 修复：记录月度开销日志（用于失败结局显示）★★★
+						addLog('月度结算', '生活开销', `基础开销-1，恋人约会-2，金币不足`);
+						triggerEnding('poor');
+						return;
+					}
 				}
 			} else {
 				// ★★★ 修复：没有恋人时也检查基础开销是否导致金币不足 ★★★
 				if (gameState.gold < 0) {
-					addLog('月度结算', '生活开销', `基础开销-1，金币不足`);
-					triggerEnding('poor');
-					return;
+					// ★★★ 文科版：金币归零不Game Over，进入贫困状态 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+						gameState.gold = 0;
+						gameState.isBroke = true;
+						addLog('月度结算', '生活开销', `基础开销-1，金币不足，进入贫困状态`);
+					} else {
+						addLog('月度结算', '生活开销', `基础开销-1，金币不足`);
+						triggerEnding('poor');
+						return;
+					}
 				}
 			}
 
@@ -367,10 +407,14 @@
 				// ★★★ 修复：记录实习效果日志（用于失败结局显示）★★★
 				addLog('月度结算', 'AILab实习', `金币+${internshipIncome}，SAN-${sanCost}`);
 
-				if (gameState.san < 0) {
-					triggerEnding('burnout');
-					return;
-				}
+				if (checkSanAfterOperation()) return;
+			}
+
+			// ★★★ 文科版实习效果（-SAN类）★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && gameState.internship && typeof applyInternshipEffects === 'function') {
+				applyInternshipEffects();
+
+				if (checkSanAfterOperation()) return;
 			}
 
 			// ★★★ 指导师弟师妹效果（-SAN类，可叠加）★★★
@@ -431,8 +475,7 @@
 					// ★★★ 修复：记录骑行效果日志（用于失败结局显示）★★★
 					const bikeType = gameState.bikeUpgrade === 'road' ? '弯把公路车' : '平把公路车';
 					addLog('月度结算', '骑行消耗', `${bikeType}每月消耗SAN-${bikeSanCost}，精力透支`);
-					triggerEnding('burnout');
-					return;
+					if (checkSanAfterOperation()) return;
 				}
 			}
 
@@ -447,14 +490,20 @@
 			if (gameState.san < 0) {
 				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
 				addLog('月度结算', '难度诅咒', '诅咒效果累积导致精力透支');
-				triggerEnding('burnout');
-				return;
+				if (checkSanAfterOperation()) return;
 			}
 			if (gameState.gold < 0) {
-				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
-				addLog('月度结算', '难度诅咒', '诅咒效果累积导致金币耗尽');
-				triggerEnding('poor');
-				return;
+				// ★★★ 文科版：金币归零不Game Over ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+					gameState.gold = 0;
+					gameState.isBroke = true;
+					addLog('月度结算', '难度诅咒', '诅咒效果累积导致金币耗尽，进入贫困状态');
+				} else {
+					// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
+					addLog('月度结算', '难度诅咒', '诅咒效果累积导致金币耗尽');
+					triggerEnding('poor');
+					return;
+				}
 			}
 			if (gameState.favor < 0) {
 				// ★★★ 修复：记录诅咒效果日志（用于失败结局显示）★★★
@@ -476,7 +525,7 @@
 			// ★★★ 月初结算完成，处理自动订阅 ★★★
 			// ============================================
 			// 重置月度商品
-			shopItems.forEach(item => {
+			(window.shopItems || shopItems).forEach(item => {
 				if (item.monthlyOnce) item.boughtThisMonth = false;
 			});
 
@@ -517,12 +566,9 @@
 						permanent: false,
 						thisMonthOnly: true
 					});
-					addLog('双屏显示器', '自动浏览论文', 'SAN-2，想idea分数+3');
+					addLog('双屏显示器', '自动浏览论文', 'SAN-2，选题分数+3');
 				}
-				if (gameState.san < 0) {
-					triggerEnding('burnout');
-					return;
-				}
+				if (checkSanAfterOperation()) return;
 			}
 
 			// ★★★ 修改：论文分数衰减（支持预见未来热点，期刊槽送审后不衰减）★★★
@@ -534,31 +580,36 @@
 					if (gameState.noDecay || isJournalRevising) {
 						// 不衰减（预见未来热点 或 期刊送审修改阶段）
 					} else {
-						let decayInfo = [];
+						// ★★★ 文科版：取消论文分数衰减 ★★★
+						if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+							// 文科版不衰减，跳过
+						} else {
+							let decayInfo = [];
 
-						// ★★★ 记录衰减前的分数，用于成就检测 ★★★
-						const prevIdeaScore = paper.ideaScore;
-						const prevExpScore = paper.expScore;
+							// ★★★ 记录衰减前的分数，用于成就检测 ★★★
+							const prevIdeaScore = paper.ideaScore;
+							const prevExpScore = paper.expScore;
 
-						// ★★★ 修改：基于当前分数的10%衰减，最少1 ★★★
-						if (paper.ideaScore > 1) {
-							const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
-							paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
-							decayInfo.push(`idea-${ideaDecay}`);
-						}
-						if (paper.expScore > 1) {
-							const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
-							paper.expScore = Math.max(1, paper.expScore - expDecay);
-							decayInfo.push(`实验-${expDecay}`);
-						}
+							// ★★★ 修改：基于当前分数的10%衰减，最少1 ★★★
+							if (paper.ideaScore > 1) {
+								const ideaDecay = Math.max(1, Math.floor(paper.ideaScore * 0.1));
+								paper.ideaScore = Math.max(1, paper.ideaScore - ideaDecay);
+								decayInfo.push(`选题-${ideaDecay}`);
+							}
+							if (paper.expScore > 1) {
+								const expDecay = Math.max(1, Math.floor(paper.expScore * 0.1));
+								paper.expScore = Math.max(1, paper.expScore - expDecay);
+								decayInfo.push(`资料-${expDecay}`);
+							}
 
-						// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
-						if ((prevIdeaScore > 1 || prevExpScore > 1) && paper.ideaScore === 1 && paper.expScore === 1) {
-							gameState.naturallyDried = true;
-						}
+							// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
+							if ((prevIdeaScore > 1 || prevExpScore > 1) && paper.ideaScore === 1 && paper.expScore === 1) {
+								gameState.naturallyDried = true;
+							}
 
-						if (decayInfo.length > 0) {
-							decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
+							if (decayInfo.length > 0) {
+								decayLogs.push(`槽${idx + 1}:${decayInfo.join('，')}`);
+							}
 						}
 					}
 				}
@@ -571,7 +622,8 @@
 					paper.reviewMonths--;
 
 					// ★★★ 新增：每月时效性衰减 ★★★
-					if (!gameState.noDecay) {
+					// ★★★ 文科版：取消论文分数衰减 ★★★
+					if (!gameState.noDecay && !(typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS)) {
 						// ★★★ 记录衰减前的分数，用于成就检测 ★★★
 						const prevIdeaScore = paper.ideaScore;
 						const prevExpScore = paper.expScore;
@@ -687,7 +739,7 @@
 			if (gameState.noDecay) {
 				// 每5个月提示一次，避免日志刷屏
 				if (gameState.totalMonths % 5 === 0) {
-					addLog('预见热点', '论文分数保持稳定', 'idea和实验分数不衰减');
+					addLog('预见热点', '论文分数保持稳定', '选题和资料搜集分数不衰减');
 				}
 			} else if (decayLogs.length > 0) {
 				addLog('时效性降低', '论文分数自然衰减', decayLogs.join('；'));
@@ -724,13 +776,18 @@
 							triggerWinterVacationEvent();
 						}
 					} else if (gameState.month === 7) {
-						triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+						triggerRandomEventByMode();  // ★★★ 新增：第7月随机事件 ★★★
 					} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
 						triggerFeedbackEvent();  // ★★★ 第3年第3月留言事件 ★★★
 					} else if (gameState.month === 3 && gameState.year === 4) {
 						triggerMentorAssignJuniorEvent();  // ★★★ 第4年第3月导师指派师弟师妹事件 ★★★
 					} else if (gameState.month === 9) {
-						triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
+						// ★★★ 文科版：使用文科版学术年会事件 ★★★
+						if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsConferenceEvent === 'function') {
+							triggerLiberalArtsConferenceEvent();
+						} else {
+							triggerCCIGEvent();
+						}
 					} else if (gameState.month === 11) {
 						// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
 						if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
@@ -744,7 +801,7 @@
 					} else if (gameState.month === 2) {
 						triggerTeachersDayEvent();
 					} else if (gameState.month % 2 === 0) {
-						triggerOtherRandomEvent();
+						triggerRandomEventByMode();
 					}
 					
 					// 非12月时检查毕业
@@ -789,11 +846,16 @@
 					triggerWinterVacationEvent();
 				}
 			} else if (gameState.month === 7) {
-				triggerOtherRandomEvent();  // ★★★ 新增：第7月随机事件 ★★★
+				triggerRandomEventByMode();  // ★★★ 新增：第7月随机事件 ★★★
 			} else if (gameState.month === 3 && gameState.year === gameState.feedbackEventYear && !gameState.feedbackEventTriggered) {
 				triggerFeedbackEvent();  // ★★★ 新增：第3年或第5年第3月留言事件 ★★★
 			} else if (gameState.month === 9) {
-				triggerCCIGEvent();  // ★★★ 新增：第9月CCIG事件 ★★★
+				// ★★★ 文科版：使用文科版学术年会事件 ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof triggerLiberalArtsConferenceEvent === 'function') {
+					triggerLiberalArtsConferenceEvent();
+				} else {
+					triggerCCIGEvent();
+				}
 			} else if (gameState.month === 11) {
 				// ★★★ 修改：延毕年（第6年）没有暑假事件 ★★★
 				if (!gameState.isNatureExtensionYear || gameState.year !== 6) {
@@ -807,13 +869,40 @@
 			} else if (gameState.month === 2) {
 				triggerTeachersDayEvent();
 			} else if (gameState.month % 2 === 0) {
-				triggerOtherRandomEvent();
+				triggerRandomEventByMode();
 			}
 
 			checkGraduation();
 			checkInGameAchievements();  // ★★★ 新增：检测游戏内成就 ★★★
+
+			// ★★★ 文科版：随机显示学科知识卡片 ★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof maybeShowKnowledgeCard === 'function') {
+				maybeShowKnowledgeCard();
+			}
+
 			updateAllUI();
 			renderPaperSlots();
+
+			// ★★★ 文科版：确保操作按钮可用（兜底）★★★
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+				['btn-read', 'btn-work', 'btn-idea', 'btn-experiment', 'btn-write'].forEach(id => {
+					const btn = document.getElementById(id);
+					if (btn) {
+						btn.disabled = false;
+						btn.style.removeProperty('opacity');
+						btn.style.removeProperty('pointer-events');
+					}
+				});
+
+				// ★★★ 强制重置人际关系任务状态并刷新面板 ★★★
+				if (gameState.relationships) {
+					gameState.relationships.forEach(person => {
+						person.taskUsedThisMonth = false;
+					});
+				}
+				if (typeof renderRelationshipPanel === 'function') {
+					renderRelationshipPanel();
+				}
 		}
 
         // 空想之天选之人：属性随机交换
@@ -1023,6 +1112,9 @@
 			
 			return impactFactor;
 		}
+
+		// ★★★ 导出函数供其他模块使用 ★★★
+		window.getConferenceImpactFactor = getConferenceImpactFactor;
 
 		function updateCitations() {
 			gameState.publishedPapers.forEach(paper => {
@@ -2056,4 +2148,4 @@
 				}}
 			]);
 		}
-		
+}

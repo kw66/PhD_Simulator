@@ -846,3 +846,13 @@
 		window.getConferenceLocation = getConferenceLocation;
 		window.getCurrentSeason = getCurrentSeason;
 		window.getSeasonSanModifier = getSeasonSanModifier;
+
+		// ★★★ 文科版：导出游戏数据变量（供学科配置覆盖）★★★
+		window.paperTitleWords = paperTitleWords;
+		window.CONFERENCES = CONFERENCES;
+		window.shopItems = shopItems;
+		window.characters = characters;
+		window.ALL_ACHIEVEMENTS = ALL_ACHIEVEMENTS;
+		window.ENDING_NAMES = ENDING_NAMES;
+		window.ENDING_REQUIREMENTS = ENDING_REQUIREMENTS;
+		window.ALL_BUFF_TYPES = ALL_BUFF_TYPES;

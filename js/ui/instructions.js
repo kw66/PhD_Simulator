@@ -85,10 +85,10 @@
 						<th style="padding:6px;text-align:center;border-bottom:1px solid var(--border-color);">消耗</th>
 						<th style="padding:6px;text-align:left;border-bottom:1px solid var(--border-color);">效果</th>
 					</tr>
-					<tr><td style="padding:6px;">📖 看论文</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">下次想idea+1分，每10次科研+1</td></tr>
+					<tr><td style="padding:6px;">📖 读文献</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">下次选题+1分，每10次科研+1</td></tr>
 					<tr style="background:var(--card-bg);"><td style="padding:6px;">💼 打工</td><td style="padding:6px;text-align:center;">SAN-5起</td><td style="padding:6px;">金钱+2起，每8次升1档（SAN消耗+1，收益+1）</td></tr>
-					<tr><td style="padding:6px;">💡 想idea</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">增加论文idea分数</td></tr>
-					<tr style="background:var(--card-bg);"><td style="padding:6px;">🔬 做实验</td><td style="padding:6px;text-align:center;">SAN-3</td><td style="padding:6px;">增加论文实验分数</td></tr>
+					<tr><td style="padding:6px;">💡 选题</td><td style="padding:6px;text-align:center;">SAN-2</td><td style="padding:6px;">增加论文选题分数</td></tr>
+					<tr style="background:var(--card-bg);"><td style="padding:6px;">🔬 资料搜集</td><td style="padding:6px;text-align:center;">SAN-3</td><td style="padding:6px;">增加论文资料搜集分数</td></tr>
 					<tr><td style="padding:6px;">✍️ 写论文</td><td style="padding:6px;text-align:center;">SAN-4</td><td style="padding:6px;">增加论文写作分数</td></tr>
 				</table>
 				<div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">
@@ -151,11 +151,11 @@
 			<div style="background:var(--light-bg);border-radius:10px;padding:12px;margin-bottom:12px;">
 				<h4 style="color:var(--danger-color);margin:0 0 8px 0;">⏳ 分数衰减机制</h4>
 				<div style="background:var(--card-bg);border-radius:8px;padding:10px;font-family:monospace;font-size:0.85rem;">
-					每月衰减：idea和实验分数各衰减当前值的10%（最少1，写作不衰减）<br>
+					每月衰减：选题和资料搜集分数各衰减当前值的10%（最少1，写作不衰减）<br>
 					最低衰减至：1
 				</div>
 				<div style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);">
-					⚠️ <strong>设计思路</strong>：模拟科研时效性，热点会过时，需要及时投稿<br>
+					⚠️ <strong>设计思路</strong>：模拟学术时效性，热点会过时，需要及时投稿<br>
 					💡 隐藏觉醒"预见未来热点"可以完全禁止衰减
 				</div>
 			</div>
@@ -165,16 +165,16 @@
 				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">
 						<strong>加法Buff（叠加）</strong><br>
-						• 看论文：下次idea+1<br>
-						• 导师指点：idea+5<br>
-						• 同学合作：实验+5<br>
+						• 读文献：下次选题+1<br>
+						• 导师指点：选题+5<br>
+						• 同学合作：资料搜集+5<br>
 						• 大牛合作：写作+8
 					</div>
 					<div style="padding:8px;background:var(--card-bg);border-radius:6px;">
 						<strong>乘法Buff（叠加）</strong><br>
-						• 大牛交流：idea×1.25<br>
-						• 企业交流：实验×1.25<br>
-						• AI Lab实习：实验×1.25
+						• 大牛交流：选题×1.25<br>
+						• 企业交流：资料搜集×1.25<br>
+						• 企业实习：资料搜集×1.25
 					</div>
 				</div>
 				<div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">

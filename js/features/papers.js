@@ -1,4 +1,11 @@
 ﻿        // ==================== 论文推广功能 ====================
+		// ★★★ 兼容性：如果getConferenceImpactFactor未定义，提供默认实现 ★★★
+		if (typeof getConferenceImpactFactor === 'undefined') {
+			window.getConferenceImpactFactor = function(conferenceInfo, grade, journalType) {
+				return 1.0; // 默认影响因子
+			};
+		}
+
 		function promotePaper(index, type) {
 			const paper = gameState.publishedPapers[index];
 			if (!paper) return;
@@ -110,7 +117,7 @@
 			const confInfo = getConferenceInfo(month, grade, gameState.year);
 			
 			// 计算影响因子
-			const impactFactor = getConferenceImpactFactor({ month: month }, grade);
+			const impactFactor = (window.getConferenceImpactFactor || getConferenceImpactFactor)({ month: month }, grade);
 			
 			// 计算中稿均分
 			let avgAcceptedScore = '-';
@@ -427,20 +434,25 @@
 						const jWriteCompleted = paper.writeScore > 0;
 						const jAllCompleted = jIdeaCompleted && jExpCompleted && jWriteCompleted;
 
+						// ★★★ 文科版：使用文科术语 ★★★
+						const laIdeaLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('ideaScore') : 'idea';
+						const laExpLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('expScore') : '实验';
+						const laWriteLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('writeScore') : '写作';
+
 						const journalProgressFlowHtml = `
 							<div class="paper-progress-flow">
 								<span class="step-label ${jIdeaCompleted ? 'completed' : ''}">
-									<span class="step-name">idea</span>
+									<span class="step-name">${laIdeaLabel}</span>
 									<span class="step-score">${paper.ideaScore}</span>
 								</span>
 								<span class="step-arrow ${jIdeaCompleted ? 'active' : ''}">→</span>
 								<span class="step-label ${jExpCompleted ? 'completed' : ''}">
-									<span class="step-name">实验</span>
+									<span class="step-name">${laExpLabel}</span>
 									<span class="step-score">${paper.expScore}</span>
 								</span>
 								<span class="step-arrow ${jExpCompleted ? 'active' : ''}">→</span>
 								<span class="step-label ${jWriteCompleted ? 'completed' : ''}">
-									<span class="step-name">写作</span>
+									<span class="step-name">${laWriteLabel}</span>
 									<span class="step-score">${paper.writeScore}</span>
 								</span>
 								<span class="step-arrow ${jWriteCompleted ? 'active' : ''}">→</span>
@@ -481,20 +493,25 @@
 						// 投稿状态时不闪烁
 						const showReadyPulse = allCompleted && !paper.reviewing;
 
+						// ★★★ 文科版：使用文科术语 ★★★
+						const ideaLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('ideaScore') : 'idea';
+						const expLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('expScore') : '实验';
+						const writeLabel = (typeof getLAPaperScoreLabel === 'function') ? getLAPaperScoreLabel('writeScore') : '写作';
+
 						const progressFlowHtml = `
 							<div class="paper-progress-flow">
 								<span class="step-label ${ideaCompleted ? 'completed' : ''}">
-									<span class="step-name">idea</span>
+									<span class="step-name">${ideaLabel}</span>
 									<span class="step-score">${paper.ideaScore}</span>
 								</span>
 								<span class="step-arrow ${ideaCompleted ? 'active' : ''}">→</span>
 								<span class="step-label ${expCompleted ? 'completed' : ''}">
-									<span class="step-name">实验</span>
+									<span class="step-name">${expLabel}</span>
 									<span class="step-score">${paper.expScore}</span>
 								</span>
 								<span class="step-arrow ${expCompleted ? 'active' : ''}">→</span>
 								<span class="step-label ${writeCompleted ? 'completed' : ''}">
-									<span class="step-name">写作</span>
+									<span class="step-name">${writeLabel}</span>
 									<span class="step-score">${paper.writeScore}</span>
 								</span>
 								<span class="step-arrow ${writeCompleted ? 'active' : ''}">→</span>
@@ -929,7 +946,13 @@
 		}
 
         function generatePaperTitle() {
-            const w = paperTitleWords;
+            const w = window.paperTitleWords || paperTitleWords;
+            // 如果配置了学科专属模板，使用学科模板
+            if (w.templates && typeof w.templates === 'function') {
+                const templates = w.templates(w);
+                return rand(templates);
+            }
+            // 默认英文模板（CS/理工科）
             const templates = [
                 () => `${rand(w.adjectives)} ${rand(w.nouns)} for ${rand(w.domains)} ${rand(w.verbs)}`,
                 () => `${rand(w.verbs)} ${rand(w.domains)} with ${rand(w.adjectives)} ${rand(w.nouns)}`,
@@ -1009,6 +1032,12 @@
 			const hasMonitor = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
 			let baseSanCost = hasMonitor ? 1 : 2;  // 默认: 有显示器1, 无显示器2
 
+			// ★★★ 文科版：使用文科版SAN消耗 ★★★
+			if (gameState.laReadSanCost !== undefined) {
+				baseSanCost = gameState.laReadSanCost;
+				if (hasMonitor) baseSanCost = Math.max(0, baseSanCost - 1);
+			}
+
 			if (gameState.monitorUpgrade === '4k') {
 				baseSanCost = 0;  // 4K显示器: 不消耗SAN
 			} else if (gameState.monitorUpgrade === 'smart' || gameState.monitorUpgrade === 'dual') {
@@ -1033,7 +1062,7 @@
 				gameState.smartMonitorReadCount = (gameState.smartMonitorReadCount || 0) + 1;
 			}
 
-			// ★★★ 修改：每看论文10次，idea bonus效果+1（1-10次基础，11-20次+1）★★★
+			// ★★★ 修改：每读文献10次，选题 bonus效果+1（1-10次基础，11-20次+1）★★★
 			let ideaBonus = 1 + Math.floor((gameState.readCount - 1) / 10);
 
 			// ★★★ 修改：智能显示器加成 - 使用单独的计数器，只有拥有时才累计 ★★★
@@ -1042,7 +1071,7 @@
 				smartMonitorBonus = Math.floor((gameState.smartMonitorReadCount || 0) / 10);
 				ideaBonus += smartMonitorBonus;
 			}
-			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次想idea分数+${ideaBonus}`, value: ideaBonus, permanent: false });
+			gameState.buffs.temporary.push({ type: 'idea_bonus', name: `下次选题分数+${ideaBonus}`, value: ideaBonus, permanent: false });
 
 			// ★★★ 新增：计算下次提升的阈值（11,21,31...）★★★
 			const currentTier = Math.floor((gameState.readCount - 1) / 10);
@@ -1073,7 +1102,7 @@
 			const milestoneText = gameState.monitorUpgrade === 'smart'
 				? `（${smartCount}/${smartNextMilestone}次时+${smartNextBonus}）`
 				: '';
-			result += `，获得临时buff：下次想idea分数+${ideaBonus}${milestoneText}`;
+			result += `，获得临时buff：下次选题分数+${ideaBonus}${milestoneText}`;
 
 			// ★★★ 新增：显示行动次数 ★★★
 			if (gameState.actionLimit > 1) {
@@ -1083,10 +1112,10 @@
 			// ★★★ 修改：每10次阅读（11,21,31...）科研+1 ★★★
 			if (gameState.readCount % 10 === 1 && gameState.readCount >= 11) {
 				changeResearch(1);
-				result += `，看论文达到${gameState.readCount}次，科研能力+1`;
+				result += `，读文献达到${gameState.readCount}次，科研能力+1`;
 			}
 
-			addLog('看论文', `[第${gameState.readCount}次] 认真阅读了学术论文`, result);
+			addLog('读文献', `[第${gameState.readCount}次] 认真阅读了学术文献`, result);
 			updateBuffs();
 			changeSan(-baseSanCost);
 		}
@@ -1102,7 +1131,7 @@
 			// ★★★ 修改：先计算下次打工的档位，SAN消耗和金钱奖励都随档位提升 ★★★
 			const nextWorkCount = (gameState.workCount || 0) + 1;
 			const currentTier = Math.floor((nextWorkCount - 1) / 8);  // 1-8次=0档, 9-16次=1档...
-			const baseSanCost = 5 + currentTier;  // 5, 6, 7, 8...
+			const baseSanCost = (gameState.laWorkSanCost || 5) + currentTier;  // 文科版: 3, 4, 5, 6...
 			const goldReward = 2 + currentTier;   // 2, 3, 4, 5...
 			const { actualCost, explanation } = getSanCostExplanation(baseSanCost);
 
@@ -1153,7 +1182,7 @@
 
 
 		function thinkIdea() {
-			// ★★★ 新增：处理预购订阅（想idea时购买gemini）★★★
+			// ★★★ 新增：处理预购订阅（选题时购买gemini）★★★
 			processSubscriptions('idea');
 
 			// ★★★ 修改：检查行动次数 ★★★
@@ -1173,7 +1202,7 @@
 			const hasGeminiSub = !!geminiSub;
 			
 			// SAN消耗计算
-			let baseSanCost = 2;
+			let baseSanCost = gameState.laIdeaSanCost || 2;
 			if (hasGeminiSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}
@@ -1196,20 +1225,20 @@
 				return;
 			}
 			
-			showPaperSelectModal('想idea', available, (index) => {
+			showPaperSelectModal('选题', available, (index) => {
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.ideaClickCount = (gameState.ideaClickCount || 0) + 1;
 
-				// ★★★ 新增：每10次想idea获得永久buff ★★★
+				// ★★★ 新增：每10次选题获得永久buff ★★★
 				if (gameState.ideaClickCount % 10 === 0) {
 					const masteryLevel = gameState.ideaClickCount / 10;
 					gameState.buffs.permanent.push({
 						type: 'idea_bonus',
 						value: 1,
-						desc: `精通加成：想idea分数+1（${masteryLevel}层）`
+						desc: `精通加成：选题分数+1（${masteryLevel}层）`
 					});
-					addLog('✨ 精通提升', '想idea精通', `累计想idea ${gameState.ideaClickCount}次，每次想idea永久+1分（共${masteryLevel}层）`);
+					addLog('✨ 精通提升', '选题精通', `累计选题 ${gameState.ideaClickCount}次，每次选题永久+1分（共${masteryLevel}层）`);
 				}
 
 				const paper = gameState.papers[index];
@@ -1255,7 +1284,7 @@
 				const luxuryDivisor = 5;  // 豪华工位：每5点永久buff增加1点保底
 				const ideaFloor = 1 + (hasLuxuryWorkstation ? Math.floor(permanentIdeaBonus / luxuryDivisor) : 0);
 
-				// ★★★ 新增：4K显示器加成（每10次看论文+1分）★★★
+				// ★★★ 新增：4K显示器加成（每10次读文献+1分）★★★
 				const monitorBonus = (typeof getMonitorIdeaBonus === 'function') ? getMonitorIdeaBonus() : 0;
 
 				// ★★★ 新增：实验室互帮互助天赋加成 ★★★
@@ -1314,12 +1343,12 @@
 				if (gameState.ideaClickCount % 5 === 0) {
 					gameState.buffs.temporary.push({ 
 						type: 'idea_exhaustion', 
-						name: '灵感枯竭：下次想idea总分÷2', 
+						name: '灵感枯竭：下次选题总分÷2',
 						value: 0.5, 
 						multiply: true, 
 						permanent: false 
 					});
-					addLog('⚠️ 疲劳累积', '灵感枯竭', '连续想idea5次，下次想idea总分除以2');
+					addLog('⚠️ 疲劳累积', '灵感枯竭', '连续选题5次，下次选题总分除以2');
 				}
 				
 				// 消耗临时buff
@@ -1359,7 +1388,7 @@
 					gameState.achievementConditions.floorBoost20 = true;
 				}
 
-				addLog('想idea', `[第${gameState.ideaClickCount}次] 为"${paper.title.substring(0, 15)}..."思考idea`, result);
+				addLog('选题', `[第${gameState.ideaClickCount}次] 为"${paper.title.substring(0, 15)}..."思考选题`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
 				updateBuffs();
@@ -1367,7 +1396,7 @@
 		}
 
 		function doExperiment() {
-			// ★★★ 新增：处理预购订阅（做实验时购买gpt和租gpu）★★★
+			// ★★★ 新增：处理预购订阅（资料搜集时购买gpt和租gpu）★★★
 			processSubscriptions('experiment');
 
 			if (gameState.actionCount >= gameState.actionLimit) {
@@ -1384,11 +1413,11 @@
 			const gptSub = gameState.buffs.temporary.find(b => b.type === 'exp_san_reduce');
 			const hasGptSub = !!gptSub;
 			
-			let baseSanCost = 3;
+			let baseSanCost = gameState.laExpSanCost || 3;
 			if (hasGptSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}
-			
+
 			const actualSanCost = Math.abs(getActualSanChange(-baseSanCost));
 			
 			const { actualCost: sanActualCost, explanation: sanExplanation } = getSanCostExplanation(baseSanCost);
@@ -1407,20 +1436,20 @@
 				return;
 			}
 			
-			showPaperSelectModal('做实验', available, (index) => {
+			showPaperSelectModal('资料搜集', available, (index) => {
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.expClickCount = (gameState.expClickCount || 0) + 1;
 
-				// ★★★ 新增：每10次做实验获得永久buff ★★★
+				// ★★★ 新增：每10次资料搜集获得永久buff ★★★
 				if (gameState.expClickCount % 10 === 0) {
 					const masteryLevel = gameState.expClickCount / 10;
 					gameState.buffs.permanent.push({
 						type: 'exp_bonus',
 						value: 1,
-						desc: `精通加成：做实验分数+1（${masteryLevel}层）`
+						desc: `精通加成：资料搜集分数+1（${masteryLevel}层）`
 					});
-					addLog('✨ 精通提升', '做实验精通', `累计做实验 ${gameState.expClickCount}次，每次做实验永久+1分（共${masteryLevel}层）`);
+					addLog('✨ 精通提升', '资料搜集精通', `累计资料搜集 ${gameState.expClickCount}次，每次资料搜集永久+1分（共${masteryLevel}层）`);
 				}
 
 				const paper = gameState.papers[index];
@@ -1508,12 +1537,12 @@
 				if (gameState.expClickCount % 5 === 0) {
 					gameState.buffs.temporary.push({ 
 						type: 'exp_overheat', 
-						name: '主机发烫：下次做实验总分÷2', 
+						name: '数据丢失：下次资料搜集总分÷2',
 						value: 0.5, 
 						multiply: true, 
 						permanent: false 
 					});
-					addLog('⚠️ 疲劳累积', '主机发烫', '连续做实验5次，下次做实验总分除以2');
+					addLog('⚠️ 疲劳累积', '数据丢失', '连续资料搜集5次，下次资料搜集总分除以2');
 				}
 				
 				consumeTempBuff('exp_times');
@@ -1550,7 +1579,7 @@
 					gameState.achievementConditions.floorBoost20 = true;
 				}
 
-				addLog('做实验', `[第${gameState.expClickCount}次] 为"${paper.title.substring(0, 15)}..."做实验`, result);
+				addLog('资料搜集', `[第${gameState.expClickCount}次] 为"${paper.title.substring(0, 15)}..."搜集资料`, result);
 				renderPaperSlots();
 				changeSan(-baseSanCost);
 				updateBuffs();
@@ -1576,8 +1605,8 @@
 			const hasClaudeSub = !!claudeSub;
 			
 			const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-			let baseSanCost = hasKeyboard ? 3 : 4;
-			
+			let baseSanCost = gameState.laWriteSanCost || (hasKeyboard ? 3 : 4);
+
 			if (hasClaudeSub) {
 				baseSanCost = Math.max(1, baseSanCost - 1);
 			}
@@ -1986,7 +2015,9 @@
 			const fullGearDiscount = hasFullGear ? Math.min(2 + Math.floor(meetingCount / 4), 6) : 0;
 			const selfPayDiscount = fullGearDiscount;
 			const actualSelfPay = Math.max(0, costs.selfPay - selfPayDiscount);
-			const selfPayText = hasFullGear ? `${actualSelfPay}金（原${costs.selfPay}，整装待发-${fullGearDiscount}）` : `${costs.selfPay}金`;
+			// ★★★ 文科版成就商店：免费会议 - 自费参会免单（仅在点击自己出钱时消耗）★★★
+			const finalSelfPay = gameState.freeConference ? 0 : actualSelfPay;
+			const selfPayText = hasFullGear ? `${finalSelfPay}金（原${costs.selfPay}，整装待发-${fullGearDiscount}）` : `${costs.selfPay}金`;
 
 			// 构建论文列表显示
 			let papersListHtml = '';
@@ -2025,10 +2056,14 @@
 				 ${papersListHtml}
 				 <p>请选择参会方式：</p>`,
 				[
-				{ text: `💰 自己出钱（金钱-${actualSelfPay}${hasFullGear ? '🎒' : ''}）`, class: 'btn-warning', action: () => {
-					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${actualSelfPay}${hasFullGear ? `（整装待发-${fullGearDiscount}）` : ''}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
+				{ text: `💰 自己出钱（金钱-${finalSelfPay}${hasFullGear ? '🎒' : ''}）`, class: 'btn-warning', action: () => {
+					if (gameState.freeConference) {
+						gameState.freeConference = false; // 一次性效果
+						addLog('免费会议', '成就商品生效', `本次参会免单`);
+					}
+					addLog('开会', `自费参加 ${confInfo.name} ${confInfo.year} @ ${confLocation.city}`, `金钱-${finalSelfPay}${hasFullGear ? `（整装待发-${fullGearDiscount}）` : ''}（${regionInfo.name}）${isMultiple ? `，展示${paperCount}篇论文` : ''}`);
 					closeModal();
-					if (changeGold(-actualSelfPay)) {
+					if (changeGold(-finalSelfPay)) {
 						setTimeout(() => showConferenceEventModalMerged(confInfo, confLocation, papers), 200);
 					} else {
 						// 金钱不足导致游戏结束
@@ -2107,48 +2142,48 @@
 					addLog('开会事件', '茶歇+晚宴', 'SAN值+1，社交能力+1');
 					return changeStats({ san: 1, social: 1 });
 				}},
-				{ text: '🔬 同行交流（下次实验+2次）', fn: () => {
-					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次做实验多做3次', value: 3, permanent: false });
-					addLog('开会事件', '同行交流', '临时buff-下次做实验多做3次');
+				{ text: '🔬 同行交流（下次资料搜集+2次）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'exp_times', name: '下次资料搜集多做3次', value: 3, permanent: false });
+					addLog('开会事件', '同行交流', '临时buff-下次资料搜集多做3次');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '💡 广泛交流（下次想idea+2次）', fn: () => {
-					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想3次', value: 3, permanent: false });
-					addLog('开会事件', '广泛交流', '临时buff-下次想idea多想3次');
+				{ text: '💡 广泛交流（下次选题+2次）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'idea_times', name: '下次选题多想3次', value: 3, permanent: false });
+					addLog('开会事件', '广泛交流', '临时buff-下次选题多想3次');
 					updateBuffs();
 					return true;
 				}},
-				{ text: '🤝 找同学合作（下次实验+5）', fn: () => {
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数+5', value: 5, permanent: false });
-					addLog('开会事件', '找同学合作', '临时buff-下次做实验分数+5');
+				{ text: '🤝 找同学合作（下次资料搜集+5）', fn: () => {
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次资料搜集分数+5', value: 5, permanent: false });
+					addLog('开会事件', '找同学合作', '临时buff-下次资料搜集分数+5');
 					updateBuffs();
 					return true;
 				}},
 				{ text: '🌟 找著名学者交流（下次idea×1.25）', fn: () => {
-					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次想idea分数×1.25', value: 1.25, multiply: true, permanent: false });
+					gameState.buffs.temporary.push({ type: 'idea_bonus', name: '下次选题分数×1.25', value: 1.25, multiply: true, permanent: false });
 					gameState.metBigBull = true;
-					addLog('开会事件', '找著名学者交流', '临时buff-下次想idea分数×1.25');
+					addLog('开会事件', '找著名学者交流', '临时buff-下次选题分数×1.25');
 					updateBuffs();
 					return true;
 				}},
 				// 找企业交流是基础选项
 				{ text: '🏢 找企业交流（下次实验×1.25）', fn: () => {
 					gameState.enterpriseCount = (gameState.enterpriseCount || 0) + 1;
-					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次做实验分数×1.25', value: 1.25, multiply: true, permanent: false });
+					gameState.buffs.temporary.push({ type: 'exp_bonus', name: '下次资料搜集分数×1.25', value: 1.25, multiply: true, permanent: false });
 
 					// ★★★ 新增：企业实习成长性 - 每次找企业交流提升永久buff效果+0.05 ★★★
 					if (gameState.ailabInternship) {
 						const internshipBuff = gameState.buffs.permanent.find(b => b.name && b.name.includes('实习加成'));
 						if (internshipBuff) {
 							internshipBuff.value = Math.round((internshipBuff.value + 0.05) * 100) / 100;  // 避免浮点精度问题
-							internshipBuff.name = `实习加成：做实验分数×${internshipBuff.value}`;
-							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25，实习永久buff提升至×${internshipBuff.value}（第${gameState.enterpriseCount}次）`);
+							internshipBuff.name = `实习加成：资料搜集分数×${internshipBuff.value}`;
+							addLog('开会事件', '找企业交流', `临时buff-下次资料搜集分数×1.25，实习永久buff提升至×${internshipBuff.value}（第${gameState.enterpriseCount}次）`);
 						} else {
-							addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+							addLog('开会事件', '找企业交流', `临时buff-下次资料搜集分数×1.25（第${gameState.enterpriseCount}次）`);
 						}
 					} else {
-						addLog('开会事件', '找企业交流', `临时buff-下次做实验分数×1.25（第${gameState.enterpriseCount}次）`);
+						addLog('开会事件', '找企业交流', `临时buff-下次资料搜集分数×1.25（第${gameState.enterpriseCount}次）`);
 					}
 					updateBuffs();
 
@@ -2213,12 +2248,12 @@
 				// 和聪慧的异性学者交流
 				if (!gameState.metSmart && !gameState.permanentlyBlockedSmartLover && !gameState.hasLover) {
 					advancedOptions.push({
-						text: '🧠 和聪慧的异性学者交流【社交≥6】（SAN+1，社交+1，下次想idea+1次）',
+						text: '🧠 和聪慧的异性学者交流【社交≥6】（SAN+1，社交+1，下次选题+1次）',
 						fn: () => { 
-							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次想idea多想2次', value: 2, permanent: false });
+							gameState.buffs.temporary.push({ type: 'idea_times', name: '下次选题多想2次', value: 2, permanent: false });
 							gameState.metSmart = true;
 							gameState.smartCount = 1;
-							addLog('开会事件', '【社交>=6】和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次想idea多想2次');
+							addLog('开会事件', '【社交>=6】和聪慧的异性学者交流', 'SAN值+1，社交能力+1，临时buff-下次选题多想2次');
 							updateBuffs();
 							return changeStats({ san: 1, social: 1 });
 						},
@@ -2348,9 +2383,9 @@
 			);
 		}
 
-		// ==================== 自动看论文buff（双屏显示器）====================
+		// ==================== 自动读文献buff（双屏显示器）====================
 		/**
-		 * 应用看论文buff效果（供双屏显示器自动阅读调用）
+		 * 应用读文献buff效果（供双屏显示器自动阅读调用）
 		 * @param {boolean} isAuto - 是否是自动阅读（双屏显示器）
 		 * @returns {string} - buff描述文本
 		 */
@@ -2366,7 +2401,7 @@
 			// 添加临时buff
 			gameState.buffs.temporary.push({
 				type: 'idea_bonus',
-				name: isAuto ? `自动阅读：想idea+${ideaBonus}` : `下次想idea分数+${ideaBonus}`,
+				name: isAuto ? `自动阅读：选题+${ideaBonus}` : `下次选题分数+${ideaBonus}`,
 				value: ideaBonus,
 				permanent: false,
 				thisMonthOnly: isAuto  // 自动阅读的buff本月有效
@@ -2375,20 +2410,20 @@
 			// 检查是否达到科研提升里程碑
 			if (gameState.readCount % 10 === 1 && gameState.readCount >= 11) {
 				changeResearch(1);
-				return `想idea分数+${ideaBonus}，科研能力+1`;
+				return `选题分数+${ideaBonus}，科研能力+1`;
 			}
 
-			return `想idea分数+${ideaBonus}`;
+			return `选题分数+${ideaBonus}`;
 		}
 
-		// ==================== 4K显示器加成（想idea时）====================
+		// ==================== 4K显示器加成（选题时）====================
 		/**
-		 * 获取4K显示器的想idea加成
+		 * 获取4K显示器的选题加成
 		 * @returns {number} - 加成值（每10次看论文+1）
 		 */
 		function getMonitorIdeaBonus() {
 			if (gameState.monitorUpgrade === '4k') {
-				// 4K显示器：每10次看论文，想idea时+1分
+				// 4K显示器：每10次读文献，选题时+1分
 				return Math.floor((gameState.readCount || 0) / 10);
 			}
 			return 0;

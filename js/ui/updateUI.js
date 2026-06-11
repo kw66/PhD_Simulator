@@ -75,15 +75,24 @@
 		window.savePreMonthAttributes = savePreMonthAttributes;  // ★★★ 暴露到全局 ★★★
 
         function updateAllUI() {
-            updateTimeDisplay();
-            updateAttributes();
-            updateGraduation();
-            updateBuffs();
-            updateResearchResults();
-            updateActionButtons();
-            updateEventPreview();
-            renderRelationshipPanel();  // ★★★ 新增：更新人际关系面板 ★★★
-            updatePeakStats();          // ★★★ 新增：更新峰值/谷值记录 ★★★
+            const steps = [
+                ['updateTimeDisplay', updateTimeDisplay],
+                ['updateAttributes', updateAttributes],
+                ['updateGraduation', updateGraduation],
+                ['updateBuffs', updateBuffs],
+                ['updateResearchResults', updateResearchResults],
+                ['updateActionButtons', updateActionButtons],
+                ['updateEventPreview', updateEventPreview],
+                ['renderRelationshipPanel', renderRelationshipPanel],
+                ['updatePeakStats', updatePeakStats]
+            ];
+            for (const [name, fn] of steps) {
+                try {
+                    fn();
+                } catch(e) {
+                    console.error(`❌ ${name} 错误:`, e.message);
+                }
+            }
         }
 
 		// ★★★ 月份变化追踪（用于动画） ★★★
@@ -442,7 +451,7 @@
 			}
 
 			// 然后再查找普通角色
-			const charData = characters.find(c => c.id === gameState.character);
+			const charData = (window.characters || characters).find(c => c.id === gameState.character);
 			if (!charData) return;
 
 			const displayData = gameState.isReversed && charData.reversed ? charData.reversed : charData;
@@ -818,7 +827,7 @@
 							<span class="talent-item-name">大牛联培</span>
 							<span class="talent-item-status ${hasBigBull ? 'active' : 'inactive'}">${hasBigBull ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：导师科研资源+2，想idea+5，做实验+5</div>
+						<div class="talent-item-desc">效果：导师科研资源+2，选题+5，资料搜集+5</div>
 						<div class="talent-item-current">成长：每500引用科研上限+2（最多+10）</div>
 						<div class="talent-item-next">累计：${bigBullCitations}引用，科研上限+${bigBullCitationBonus}</div>
 						${!hasBigBull ? `<div class="talent-item-how">获取：科研≥12且总引用≥500后，在开会时与大牛深入交流2次</div>` : ''}
@@ -842,7 +851,7 @@
 							<span class="talent-item-name">企业实习</span>
 							<span class="talent-item-status ${hasInternship ? 'active' : 'inactive'}">${hasInternship ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：每月SAN-2，做实验×1.25，每月工资+2</div>
+						<div class="talent-item-desc">效果：每月SAN-2，资料搜集×1.25，每月工资+2</div>
 						<div class="talent-item-current">成长：工资=2+A会×0.5+引用/500×0.5（上限6）</div>
 						<div class="talent-item-next">累计：当前工资${internshipIncome.toFixed(1)}/月，A会${currentAPaperCount}篇，引用${currentTotalCitations}</div>
 						${!hasInternship ? `<div class="talent-item-how">获取：在开会时与企业交流3次后触发邀请</div>` : ''}
@@ -871,7 +880,7 @@
 							<span class="talent-item-name">实验室互帮互助</span>
 							<span class="talent-item-status ${labTalentActive ? 'active' : 'inactive'}">${labTalentActive ? '已激活' : '未激活'}</span>
 						</div>
-						<div class="talent-item-desc">效果：想idea/做实验/写论文分数+团队人数</div>
+						<div class="talent-item-desc">效果：选题/资料搜集/写论文分数+团队人数</div>
 						<div class="talent-item-current">成长：每12月，恋人及同门科研+(组内科研>TA的人数)/2</div>
 						<div class="talent-item-next">当前：团队${teamSize}人，每次操作+${labBonus}分</div>
 						${!labTalentActive ? `<div class="talent-item-how">获取：同时拥有导师、师兄/师姐、师弟/师妹</div>` : ''}
@@ -903,9 +912,9 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status active">已激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
-						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，想idea+${smartIdeaTimes}次，做实验+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-next">累计：已约会${smartTasksCompleted}次，选题+${smartIdeaTimes}次，资料搜集+${smartExpTimes}次，写论文+${smartWriteTimes}次</div>
 					</div>
 				</div>
 				<div class="talent-item inactive">
@@ -943,8 +952,8 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status inactive">未激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
 						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
 					</div>
 				</div>
@@ -959,8 +968,8 @@
 							<span class="talent-item-name">聪慧恋人</span>
 							<span class="talent-item-status inactive">未激活</span>
 						</div>
-						<div class="talent-item-desc">效果：科研+2，每月金币-2，想idea/做实验/写论文增加</div>
-						<div class="talent-item-current">循环：想idea+1次→做实验+1次→写论文+1次，初始+1次</div>
+						<div class="talent-item-desc">效果：科研+2，每月金币-2，选题/资料搜集/写论文增加</div>
+						<div class="talent-item-current">循环：选题+1次→资料搜集+1次→写论文+1次，初始+1次</div>
 						<div class="talent-item-how">获取：社交≥12后在开会时多次交流同一异性学者</div>
 					</div>
 				</div>
@@ -1004,7 +1013,7 @@
 				gameState.furnitureBought?.chair ? '✓椅' : '○椅',
 				gameState.furnitureBought?.monitor ? '✓显' : '○显',
 				gameState.furnitureBought?.keyboard ? '✓键' : '○键',
-				(gameState.gpuServersBought || 0) >= 1 ? '✓GPU' : '○GPU',
+				(gameState.gpuServersBought || 0) >= 1 ? '✓书架' : '○书架',
 				gameState.hasCoffeeMachine ? '✓咖' : '○咖'
 			].join(' ');
 			html += `
@@ -1016,9 +1025,9 @@
 							<span class="talent-item-status ${hasLuxuryWorkstation ? 'active' : 'inactive'}">${hasLuxuryWorkstation ? '已激活' : '未激活'}</span>
 						</div>
 						<div class="talent-item-desc">效果：每5点永久buff分数，增加1点对应操作的保底分数</div>
-						<div class="talent-item-current">进度：想idea+${ideaFloorBonus}，做实验+${expFloorBonus}，写论文+${writeFloorBonus}</div>
+						<div class="talent-item-current">进度：选题+${ideaFloorBonus}，资料搜集+${expFloorBonus}，写论文+${writeFloorBonus}</div>
 						<div class="talent-item-equip">装备：${luxuryEquipStatus}</div>
-						${!hasLuxuryWorkstation ? `<div class="talent-item-how">获取：同时拥有工学椅+显示器+键盘+GPU服务器+咖啡机</div>` : ''}
+						${!hasLuxuryWorkstation ? `<div class="talent-item-how">获取：同时拥有护眼台灯+大屏显示器+舒适键盘+二手书架+绿植盆栽</div>` : ''}
 					</div>
 				</div>
 			`;
@@ -1117,13 +1126,13 @@
 			
 			// debuff显示名称
 			const specialBuffNames = {
-				'idea_exhaustion': '💫 灵感枯竭：下次想idea总分÷2',
-				'exp_overheat': '🔥 主机发烫：下次做实验总分÷2',
+				'idea_exhaustion': '💫 灵感枯竭：下次选题总分÷2',
+				'exp_overheat': '🔥 数据丢失：下次资料搜集总分÷2',
 				'write_block': '✏️ 无从下笔：下次写论文总分÷2',
 				'slack_debuff': '😴 松懈：下月所有操作总分÷2',
-				'idea_stolen': '😈 被偷idea：下次想idea总分÷2',
-				'idea_san_reduce': '🤖 Gemini：本月想idea SAN-1,分+5',
-				'exp_san_reduce': '🤖 GPT：本月做实验 SAN-1,分+5',
+				'idea_stolen': '😈 被偷选题：下次选题总分÷2',
+				'idea_san_reduce': '🤖 Gemini：本月选题 SAN-1,分+5',
+				'exp_san_reduce': '🤖 GPT：本月资料搜集 SAN-1,分+5',
 				'write_san_reduce_temp': '🤖 Claude：本月写论文 SAN-1,分+5'
 			};
 			
@@ -1208,11 +1217,11 @@
 				let name = '';
 				const prefix = buff.permanent ? '每次' : '下次';
 				const typeNames = {
-					'idea_bonus': '想idea分数',
-					'exp_bonus': '做实验分数',
+					'idea_bonus': '选题分数',
+					'exp_bonus': '资料搜集分数',
 					'write_bonus': '写论文分数',
-					'idea_times': '想idea',
-					'exp_times': '做实验',
+					'idea_times': '选题',
+					'exp_times': '资料搜集',
 					'write_times': '写论文',
 					'monthly_san': '每月SAN',
 					'monthly_san_2': '每月SAN',
@@ -1220,10 +1229,10 @@
 					'monthly_san_current_20': '每月SAN',
 					'monthly_san_recovery': '每月SAN',
 					'lover_monthly_san': '每月SAN',
-					'lover_extra_idea': '想idea',
-					'lover_extra_experiment': '做实验',
+					'lover_extra_idea': '选题',
+					'lover_extra_experiment': '资料搜集',
 					'lover_extra_write': '写论文',
-					'read_san_reduce': '看论文SAN',
+					'read_san_reduce': '读文献SAN',
 					'write_san_reduce': '写论文SAN',
 					'citation_multiply': '中稿引用',
 					'citation_halved': '引用速度'
@@ -1247,13 +1256,13 @@
 				} else if (buff.type === 'lover_monthly_san') {
 					name = buff.desc || `每月SAN+1 (恋人)`;
 				} else if (buff.type === 'lover_extra_idea') {
-					name = buff.desc || `每次想idea多想1次 (恋人)`;
+					name = buff.desc || `每次选题多想1次 (恋人)`;
 				} else if (buff.type === 'lover_extra_experiment') {
-					name = buff.desc || `每次做实验多做1次 (恋人)`;
+					name = buff.desc || `每次资料搜集多做1次 (恋人)`;
 				} else if (buff.type === 'lover_extra_write') {
 					name = buff.desc || `每次写论文多写1次 (恋人)`;
 				} else if (buff.type === 'read_san_reduce') {
-					name = `看论文SAN-1`;
+					name = `读文献SAN-1`;
 				} else if (buff.type === 'write_san_reduce') {
 					name = `写论文SAN-3`;
 				} else if (buff.type === 'citation_multiply') {
@@ -1306,7 +1315,7 @@
 			// 师兄师姐救我技能
 			if (gameState.hasSeniorHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'senior' && gameState.nextActionBonusType
-					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '选题' : gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文'}）`
 					: '';
 				// 显示剩余免费次数或当前社交值
 				const statusText = gameState.seniorHelpUses > 0
@@ -1322,7 +1331,7 @@
 			// 导师救我技能
 			if (gameState.hasTeacherHelpSkill) {
 				const pendingText = gameState.nextActionBonusSource === 'teacher' && gameState.nextActionBonusType
-					? `（已选：${gameState.nextActionBonusType === 'idea' ? '想idea' : gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文'}）`
+					? `（已选：${gameState.nextActionBonusType === 'idea' ? '选题' : gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文'}）`
 					: '';
 				// 显示剩余免费次数或当前好感度
 				const statusText = gameState.teacherHelpUses > 0
@@ -1410,8 +1419,8 @@
 
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'senior') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
-					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				const actionName = gameState.nextActionBonusType === 'idea' ? '选题'
+					: gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文';
 				const statusText = gameState.seniorHelpUses > 0 ? `免费${gameState.seniorHelpUses}/3` : `当前社交${gameState.social}`;
 				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用师兄师姐救我。</p>
@@ -1439,10 +1448,10 @@
 				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+					{ text: '💡 用于选题', class: 'btn-primary', action: () => {
 						applySkillBonus('senior', 'idea', bonusValue);
 					}},
-					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+					{ text: '🔬 用于资料搜集', class: 'btn-success', action: () => {
 						applySkillBonus('senior', 'exp', bonusValue);
 					}},
 					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
@@ -1468,8 +1477,8 @@
 
 			// ★★★ 检查是否已经有待生效的加成 ★★★
 			if (gameState.nextActionBonus > 0 && gameState.nextActionBonusSource === 'teacher') {
-				const actionName = gameState.nextActionBonusType === 'idea' ? '想idea'
-					: gameState.nextActionBonusType === 'exp' ? '做实验' : '写论文';
+				const actionName = gameState.nextActionBonusType === 'idea' ? '选题'
+					: gameState.nextActionBonusType === 'exp' ? '资料搜集' : '写论文';
 				const statusText = gameState.teacherHelpUses > 0 ? `免费${gameState.teacherHelpUses}/3` : `当前好感度${gameState.favor}`;
 				showModal('⚠️ 技能待生效',
 					`<p>你已经选择了对【${actionName}】使用导师救我。</p>
@@ -1497,10 +1506,10 @@
 				</div>`,
 				[
 					{ text: '取消', class: 'btn-info', action: closeModal },
-					{ text: '💡 用于想idea', class: 'btn-primary', action: () => {
+					{ text: '💡 用于选题', class: 'btn-primary', action: () => {
 						applySkillBonus('teacher', 'idea', bonusValue);
 					}},
-					{ text: '🔬 用于做实验', class: 'btn-success', action: () => {
+					{ text: '🔬 用于资料搜集', class: 'btn-success', action: () => {
 						applySkillBonus('teacher', 'exp', bonusValue);
 					}},
 					{ text: '✍️ 用于写论文', class: 'btn-warning', action: () => {
@@ -1540,7 +1549,7 @@
 			gameState.nextActionBonusType = actionType;
 
 			const sourceName = source === 'senior' ? '师兄师姐救我' : '导师救我';
-			const actionName = actionType === 'idea' ? '想idea' : actionType === 'exp' ? '做实验' : '写论文';
+			const actionName = actionType === 'idea' ? '选题' : actionType === 'exp' ? '资料搜集' : '写论文';
 
 			addLog('主动技能', sourceName, `下次${actionName}时科研能力+${bonusValue}，${costInfo}`);
 			closeModal();
@@ -1653,23 +1662,23 @@
 						</div>
 						${statsInfo}
 						<div class="paper-promotions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;">
-							<button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'arxiv')" 
+							<button class="btn ${p.promotions?.arxiv ? '' : 'btn-info'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.arxiv ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'arxiv')"
 								${p.promotions?.arxiv ? 'disabled' : ''}>
-								${p.promotions?.arxiv ? '✓arxiv' : '挂arxiv'}
+								${p.promotions?.arxiv ? '✓预印本' : '挂预印本'}
 							</button>
-							<button class="btn ${p.promotions?.github ? '' : 'btn-success'}" 
-								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}" 
-								onclick="promotePaper(${index}, 'github')" 
+							<button class="btn ${p.promotions?.github ? '' : 'btn-success'}"
+								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.github ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
+								onclick="promotePaper(${index}, 'github')"
 								${p.promotions?.github ? 'disabled' : ''}>
-								${p.promotions?.github ? '✓开源' : 'github开源'}
+								${p.promotions?.github ? '✓开源' : '开源数据'}
 							</button>
 							<button class="btn ${p.promotions?.xiaohongshu ? '' : 'btn-accent'}"
 								style="padding:2px 5px;font-size:0.6rem;${p.promotions?.xiaohongshu ? 'opacity:0.5;background:#ccc;color:#666;cursor:default;' : ''}"
 								onclick="promotePaper(${index}, 'xiaohongshu')"
 								${p.promotions?.xiaohongshu ? 'disabled' : ''}>
-								${p.promotions?.xiaohongshu ? '✓小红书' : '小红书宣传'}
+								${p.promotions?.xiaohongshu ? '✓自媒体' : '自媒体推广'}
 							</button>
 							${(p.grade === 'A' || p.grade === 'S') ? `
 							<button class="btn ${p.promotions?.quantumbit ? '' : 'btn-warning'}"
@@ -1693,15 +1702,24 @@
             // ★★★ 修改：计算动态SAN消耗和金钱奖励（1-8次基础，9次起每8次提升1档）★★★
             const nextWorkCount = (gameState.workCount || 0) + 1;
             const workTier = Math.floor((nextWorkCount - 1) / 8);
-            const workSan = -(5 + workTier);  // -5, -6, -7...
+            const baseWorkSan = gameState.laWorkSanCost || 5;
+            const workSan = -(baseWorkSan + workTier);
             const workGold = 2 + workTier;    // 2, 3, 4...
 
+            // ★★★ 文科版：使用文科版SAN消耗 ★★★
+            const readSan = gameState.laReadSanCost !== undefined
+                ? (has4K ? Math.max(0, gameState.laReadSanCost - 1) : gameState.laReadSanCost)
+                : (has4K ? -1 : -2);
+            const ideaSan = gameState.laIdeaSanCost || -2;
+            const expSan = gameState.laExpSanCost || -3;
+            const writeSan = gameState.laWriteSanCost || (hasKeyboard ? -3 : -4);
+
             return {
-                read: { san: has4K ? -1 : -2 },
+                read: { san: -readSan },
                 work: { san: workSan, gold: workGold },
-                idea: { san: -2 },
-                experiment: { san: -3 },
-                write: { san: hasKeyboard ? -3 : -4 }
+                idea: { san: -ideaSan },
+                experiment: { san: -expSan },
+                write: { san: -writeSan }
             };
         }
 
@@ -1719,16 +1737,6 @@
 			const actionLimit = gameState.actionLimit || 1;
 			const actionCount = gameState.actionCount || 0;
 			const actionsRemaining = actionLimit - actionCount;
-			const allUsed = actionsRemaining <= 0;
-
-			btns.forEach(id => {
-				const btn = document.getElementById(id);
-				if (!btn) return;
-				btn.disabled = allUsed;
-				btn.style.opacity = allUsed ? '0.5' : '1';
-				// ★★★ 新增：确保禁用状态下不可点击 ★★★
-				btn.style.pointerEvents = allUsed ? 'none' : 'auto';
-			});
 
 			const costs = getActionCosts();
 
@@ -1736,23 +1744,32 @@
 			const actionCountDisplay = actionLimit > 1
 				? ` (${actionsRemaining}/${actionLimit})`
 				: '';
-			
-			// 改为2行布局：第一行图标+文字，第二行效果
+
+			// ★★★ 更新按钮内容（不设置disabled，由操作函数自行验证）★★★
 			document.getElementById('btn-read').innerHTML = `
-				<div class="action-top"><i class="fas fa-book-open"></i><span>看论文${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-book-open"></i><span>读文献${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.read)}</span>`;
 			document.getElementById('btn-work').innerHTML = `
 				<div class="action-top"><i class="fas fa-briefcase"></i><span>打工${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.work)}</span>`;
 			document.getElementById('btn-idea').innerHTML = `
-				<div class="action-top"><i class="fas fa-lightbulb"></i><span>想idea${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-lightbulb"></i><span>选题${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.idea)}</span>`;
 			document.getElementById('btn-experiment').innerHTML = `
-				<div class="action-top"><i class="fas fa-vial"></i><span>做实验${actionCountDisplay}</span></div>
+				<div class="action-top"><i class="fas fa-vial"></i><span>资料搜集${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.experiment)}</span>`;
 			document.getElementById('btn-write').innerHTML = `
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.write)}</span>`;
+
+			// ★★★ 确保按钮始终可用 ★★★
+			btns.forEach(id => {
+				const btn = document.getElementById(id);
+				if (!btn) return;
+				btn.disabled = false;
+				btn.style.removeProperty('opacity');
+				btn.style.removeProperty('pointer-events');
+			});
 		}
 
         // ==================== 事件预告系统 ====================
@@ -1896,10 +1913,17 @@
 					}
 				}
 				if (month === 9) {
-					// ★★★ 新增：CCIG事件 ★★★
-					const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
-					const ccigLocation = ccigLocations[(year - 1) % 5];
-					events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
+					// ★★★ 文科版：使用文科版学术年会名称 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLAConferenceName === 'function') {
+						const laConfLocations = ['北京', '上海', '南京', '武汉', '成都', '广州', '西安', '杭州'];
+						const laConfLocation = laConfLocations[(year - 1) % laConfLocations.length];
+						const laConfName = getLAConferenceName();
+						events.push({ icon: '📚', name: '学术年会', desc: `${laConfName} @ ${laConfLocation}`, color: 'rgba(231,76,60,0.25)' });
+					} else {
+						const ccigLocations = ['合肥', '成都', '苏州', '西安', '重庆'];
+						const ccigLocation = ccigLocations[(year - 1) % 5];
+						events.push({ icon: '🏛️', name: '领域年会', desc: `中国图象图形学学会年会 @ ${ccigLocation}`, color: 'rgba(231,76,60,0.25)' });
+					}
 				}
 				if (month === 11) {
 					if (isYear6) {

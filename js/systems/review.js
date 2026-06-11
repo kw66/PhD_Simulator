@@ -604,10 +604,14 @@
 			const { effectiveScore, weightInfo } = calculateEffectiveScore(
 				reviewer.type, ideaScore, expScore, writeScore
 			);
-			
-			// 获取阈值（可能已调整）
-			const threshold = adjustment.thresholds[reviewer.type];
-			
+
+			// 文科版使用 LA 阈值与评语
+			const libArtsMode = typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS;
+			const reviewerTypeKey = libArtsMode ? reviewer.type : reviewer.type;
+			const threshold = libArtsMode
+				? getLAReviewThreshold(grade, reviewer.type)
+				: adjustment.thresholds[reviewer.type];
+
 			// 判定结果
 			let decision, reviewScore;
 			if (effectiveScore < threshold.reject) {
@@ -620,10 +624,13 @@
 				decision = 'Accept';
 				reviewScore = 1;
 			}
-			
-			// 生成评语
-			const comment = generateReviewComment(decision, reviewer.type);
-			
+
+			// 生成评语（文科版用 LA 评语）
+			const decisionKey = decision === 'Accept' ? 'accept' : decision === 'Reject' ? 'reject' : 'borderline';
+			const comment = libArtsMode
+				? generateLAReviewComment(reviewer.type, decisionKey)
+				: generateReviewComment(decision, reviewer.type);
+
 			// 改进建议（仅特定审稿人提供）
 			let improvement = 0, improvementType = '';
 			if (reviewer.type === 'normal') {
@@ -633,7 +640,7 @@
 				improvement = 8;
 				improvementType = Math.random() < 0.5 ? 'idea' : 'exp';
 			}
-			
+
 			return {
 				reviewer,
 				decision,
@@ -742,8 +749,11 @@
 				total: paper.submittedScore || (paper.ideaScore + paper.expScore + paper.writeScore)
 			};
 			
-			// 生成审稿人并获取评审结果
-			const reviewers = [generateReviewer(), generateReviewer(), generateReviewer()];
+			// 生成审稿人并获取评审结果（文科版使用 LA 审稿人类型）
+			const libArtsMode = typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS;
+			const reviewers = libArtsMode
+				? [generateLAReviewer(), generateLAReviewer(), generateLAReviewer()]
+				: [generateReviewer(), generateReviewer(), generateReviewer()];
 			const results = reviewers.map(reviewer => 
 				getReviewResultV2(
 					reviewer, grade, submittedScore,
@@ -777,6 +787,14 @@
 				accepted = Math.random() < borderlineChance;
 			} else {
 				accepted = false;
+			}
+
+			// ★★★ 文科版成就商店：学术锦鲤 - 保证中稿（仅匹配对应等级）★★★
+			if (!accepted && gameState.guaranteedAccept && gameState.guaranteedAccept === grade) {
+				accepted = true;
+				borderlineChance = 1.0;
+				gameState.guaranteedAccept = null; // 一次性效果
+				addLog('学术锦鲤', '保证中稿生效', `本篇${grade}类论文已保证中稿`);
 			}
 			
 			if (accepted) {

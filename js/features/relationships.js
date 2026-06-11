@@ -154,23 +154,24 @@
         // 生成随机导师
         function generateRandomAdvisor() {
             const r = Math.random();
+            const advisorTypes = window.ADVISOR_TYPES || ADVISOR_TYPES;
             let selectedType = null;
 
             // ★★★ 修复：使用明确的顺序，从最常见到最稀有 ★★★
             // level5: 40%, level4: 25%, level3: 20%, level2: 10%, level1: 5%
             if (r < 0.40) {
-                selectedType = ADVISOR_TYPES.level5;  // 副教授 40%
+                selectedType = advisorTypes.level5;  // 副教授 40%
             } else if (r < 0.65) {
-                selectedType = ADVISOR_TYPES.level4;  // 四级教授 25%
+                selectedType = advisorTypes.level4;  // 四级教授 25%
             } else if (r < 0.85) {
-                selectedType = ADVISOR_TYPES.level3;  // 三级教授 20%
+                selectedType = advisorTypes.level3;  // 三级教授 20%
             } else if (r < 0.95) {
-                selectedType = ADVISOR_TYPES.level2;  // 二级教授 10%
+                selectedType = advisorTypes.level2;  // 二级教授 10%
             } else {
-                selectedType = ADVISOR_TYPES.level1;  // 一级教授 5%
+                selectedType = advisorTypes.level1;  // 一级教授 5%
             }
 
-            if (!selectedType) selectedType = ADVISOR_TYPES.level5;
+            if (!selectedType) selectedType = advisorTypes.level5;
 
             const [minRes, maxRes] = selectedType.researchResourceRange;
             const researchResource = Math.floor(Math.random() * (maxRes - minRes + 1)) + minRes;
@@ -234,7 +235,7 @@
 
         // 生成指定类型的导师
         function generateAdvisorOfType(typeId) {
-            const selectedType = ADVISOR_TYPES[typeId];
+            const selectedType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[typeId];
             if (!selectedType) return generateRandomAdvisor();
 
             const [minRes, maxRes] = selectedType.researchResourceRange;
@@ -307,12 +308,13 @@
         // 获取当前导师的要求（已应用难度诅咒修正）
         function getAdvisorRequirements() {
             const advisor = gameState.relationships.find(r => r.type === 'advisor');
+            const advisorTypes = window.ADVISOR_TYPES || ADVISOR_TYPES;
             let baseRequirements;
             if (!advisor || !advisor.advisorType) {
                 // 默认使用副教授的要求（向后兼容）
-                baseRequirements = ADVISOR_TYPES.level5.requirements;
+                baseRequirements = advisorTypes.level5.requirements;
             } else {
-                baseRequirements = ADVISOR_TYPES[advisor.advisorType].requirements;
+                baseRequirements = advisorTypes[advisor.advisorType].requirements;
             }
 
             // ★★★ 应用难度诅咒修正 ★★★
@@ -335,7 +337,7 @@
             if (!advisor || !advisor.advisorType) {
                 return degree === 'phd' ? 3 : 1;
             }
-            const advisorType = ADVISOR_TYPES[advisor.advisorType];
+            const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[advisor.advisorType];
             const baseSalary = advisorType.salary[degree] || (degree === 'phd' ? 3 : 1);
 
             // 整数工资直接返回
@@ -610,7 +612,7 @@
         // 渲染人物属性
         function renderPersonStats(person) {
             if (person.type === 'advisor') {
-                const advisorType = ADVISOR_TYPES[person.advisorType];
+                const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[person.advisorType];
                 return `
                     <div style="background:var(--light-bg);border-radius:8px;padding:10px;margin:10px 0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -1059,7 +1061,7 @@
             // 导师特殊显示
             let advisorInfo = '';
             if (person.type === 'advisor' && person.advisorType) {
-                const advisorType = ADVISOR_TYPES[person.advisorType];
+                const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[person.advisorType];
                 const req = advisorType.requirements;
                 // 使用person.title而非advisorType.title，因为level2使用titles数组
                 const personTitle = person.title || advisorType.title || '';
@@ -1134,7 +1136,7 @@
             window._advisorOnSelected = onSelected;
 
             let optionsHtml = options.map((advisor, idx) => {
-                const advisorType = ADVISOR_TYPES[advisor.advisorType];
+                const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[advisor.advisorType];
                 const req = advisorType.requirements;
                 // 工资显示格式化
                 const masterSalary = advisorType.salary.master;
@@ -1170,6 +1172,7 @@
                 `;
             }).join('');
 
+            console.log('📝 显示导师选择弹窗...');
             showModal('🎓 选择导师',
                 `<p style="text-align:center;margin-bottom:8px;color:var(--text-primary);font-size:0.85rem;">
                     🎉 <strong>这些老师都抢着要你，你选择追随谁？</strong>
@@ -1193,7 +1196,7 @@
             gameState.relationships = [selectedAdvisor];
             gameState.selectedAdvisor = selectedAdvisor;
 
-            const advisorType = ADVISOR_TYPES[selectedAdvisor.advisorType];
+            const advisorType = (window.ADVISOR_TYPES || ADVISOR_TYPES)[selectedAdvisor.advisorType];
             // ★★★ 新增：学校信息 ★★★
             const uni = selectedAdvisor.university || { name: '理工大学', type: 'tech', desc: '科研上限+1' };
             gameState.university = uni;  // 保存学校信息到游戏状态
@@ -1955,3 +1958,7 @@
         window.animateTaskProgress = animateTaskProgress;
         window.animateRelationProgress = animateRelationProgress;
         window.playPendingRelationAnimations = playPendingRelationAnimations;
+
+        // ★★★ 文科版：导出导师和学校类型（供学科配置覆盖）★★★
+        window.ADVISOR_TYPES = ADVISOR_TYPES;
+        window.UNIVERSITY_TYPES = UNIVERSITY_TYPES;

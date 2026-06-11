@@ -71,6 +71,13 @@
             }
             updateAllUI();
             if (gameState.san < 0) {
+                // ★★★ 文科版：SAN归零进入颓废状态而非Game Over ★★★
+                if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+                    gameState.san = 0;
+                    gameState.isExhausted = true;
+                    addLog('状态', '你太累了，进入了颓废状态', '所有操作SAN消耗+1，每月SAN恢复-1');
+                    return true; // 不触发Game Over
+                }
                 triggerEnding('burnout');
                 return false;
             }
@@ -106,6 +113,13 @@
 			clampGold();
 			updateAllUI();
 			if (gameState.gold < 0) {
+				// ★★★ 文科版：金币归零进入贫困状态而非Game Over ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+					gameState.gold = 0;
+					gameState.isBroke = true;
+					addLog('状态', '经济困难', '金币耗尽，进入贫困状态');
+					return true; // 不触发Game Over
+				}
 				triggerEnding('poor');
 				return false;
 			}
@@ -200,6 +214,12 @@
 
 			updateAllUI();
 			if (gameState.favor < 0) {
+				// ★★★ 文科版：好感度归零仅记录日志，不触发退学 ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+					gameState.favor = 0;
+					addLog('状态', '导师关系紧张', '好感度归零，文科版不触发退学');
+					return true; // 不触发Game Over
+				}
 				triggerEnding('expelled');
 				return false;
 			}
@@ -288,6 +308,12 @@
 
 			// 检查社交能力是否为负数
 			if (gameState.social < 0) {
+				// ★★★ 文科版：社交归零仅记录日志，不触发被孤立结局 ★★★
+				if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+					gameState.social = 0;
+					addLog('状态', '社交孤立', '社交能力归零，文科版不触发被孤立');
+					return true; // 不触发Game Over
+				}
 				triggerEnding('isolated'); // 触发"被孤立"结局
 				return false;
 			}
@@ -523,9 +549,27 @@
 
             // ★★★ 重新检查是否还需要触发结局 ★★★
             gameOver = false;
-            if (gameState.san < 0) gameOver = 'burnout';
-            if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
-            if (gameState.favor < 0 && !gameOver && !(gameState.isReversed && gameState.character === 'teacher-child')) gameOver = 'expelled';
+            // ★★★ 文科版：归零不Game Over，进入特殊状态 ★★★
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS) {
+                if (gameState.san < 0) {
+                    gameState.san = 0;
+                    gameState.isExhausted = true;
+                    addLog('状态', '你太累了，进入了颓废状态', '所有操作SAN消耗+1，每月SAN恢复-1');
+                }
+                if (gameState.gold < 0) {
+                    gameState.gold = 0;
+                    gameState.isBroke = true;
+                    addLog('状态', '经济困难', '金币耗尽，进入贫困状态');
+                }
+                if (gameState.favor < 0 && !(gameState.isReversed && gameState.character === 'teacher-child')) {
+                    gameState.favor = 0;
+                    addLog('状态', '导师关系紧张', '好感度归零，文科版不触发退学');
+                }
+            } else {
+                if (gameState.san < 0) gameOver = 'burnout';
+                if (gameState.gold < 0 && !gameOver) gameOver = 'poor';
+                if (gameState.favor < 0 && !gameOver && !(gameState.isReversed && gameState.character === 'teacher-child')) gameOver = 'expelled';
+            }
 
             if (gameOver) {
                 triggerEnding(gameOver);

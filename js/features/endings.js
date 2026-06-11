@@ -18,6 +18,17 @@
                 case 'delay': title = '延毕'; desc = '你没能在规定时间内完成毕业要求，只能延期毕业...'; emoji = '⏰'; break;
                 case 'quit': title = '主动退学'; desc = '你决定放弃学业，开启人生新篇章...也许这也是一种勇气。'; emoji = '🚪'; break;
 				case 'master':
+					// ★★★ 文科版：使用文科版硕士结局判定 ★★★
+					if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsMasterEndingType === 'function') {
+						const laMaster = getLiberalArtsMasterEndingType();
+						if (laMaster) {
+							title = laMaster.title;
+							desc = laMaster.desc;
+							emoji = laMaster.emoji;
+							endingType = laMaster.type;
+							break;
+						}
+					}
 					if (gameState.isTrueNormal) {
 						const tempAchievements = collectAchievements('master');
 						const achievementCount = tempAchievements.length;
@@ -29,19 +40,22 @@
 							break;
 						}
 					}
-					if (gameState.totalScore >= 4) { 
-						title = '优秀硕士毕业'; 
-						desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！'; 
-						emoji = '🌟'; 
+					if (gameState.totalScore >= 4) {
+						title = '优秀硕士毕业';
+						desc = '恭喜！你以优异的成绩完成了硕士学业，未来可期！';
+						emoji = '🌟';
 						endingType = 'excellent_master';
-					} else { 
-						title = '硕士毕业'; 
-						desc = '恭喜！你顺利完成了硕士学业！'; 
-						emoji = '🎓'; 
+					} else {
+						title = '硕士毕业';
+						desc = '恭喜！你顺利完成了硕士学业！';
+						emoji = '🎓';
 					}
 					break;
                 case 'phd':
-                    const e = getPhDEndingType();
+                    // ★★★ 文科版：使用文科版结局判定 ★★★
+                    const e = (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof getLiberalArtsPhdEndingType === 'function')
+                        ? getLiberalArtsPhdEndingType()
+                        : getPhDEndingType();
                     title = e.title; desc = e.desc; emoji = e.emoji;
                     endingType = e.type;
                     break;
@@ -53,11 +67,19 @@
             
             recordEnding(endingType, title);
 
-            const achievements = collectAchievements(endingType);
+            // ★★★ 文科版：使用文科版成就收集 ★★★
+            const achievements = (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof collectLiberalArtsAchievements === 'function')
+                ? collectLiberalArtsAchievements(endingType)
+                : collectAchievements(endingType);
             recordAchievements(achievements);
 
             // ★★★ 游戏结束时批量写入投稿数据（节省数据库流量）★★★
             batchRecordSubmissions();
+
+            // ★★★ 文科版：记录在线统计 ★★★
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof recordLiberalArtsStats === 'function') {
+                recordLiberalArtsStats(gameState, endingType);
+            }
 
             showEndingModal(title, desc, emoji, endingType);
         }
@@ -122,7 +144,7 @@
 			const a = [];
 
 			// 定义顺利毕业的结局类型
-			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life'];
+			const graduationEndings = ['master', 'excellent_master', 'phd', 'excellent_phd', 'green_pepper', 'become_advisor', 'academic_star', 'future_academician', 'nobel_start', 'true_nobel_start', 'true_phd', 'true_devotion', 'true_life', 'academic_newstar', 'university_teacher', 'field_expert', 'intellectual', 'national_scholar', 'writer_scholar', 'cultural_inheritor', 'independent_scholar', 'cultural_official', 'famous_journalist', 'think_tank_expert', 'social_activist', 'education_reformer', 'data_scientist', 'enterprise_consultant'];
 			const isGraduated = graduationEndings.includes(endingType);
 
 			// ★★★ 以下成就不需要顺利毕业也可以获得 ★★★
@@ -618,6 +640,19 @@
 					<i class="fas fa-history"></i>
 					我要回溯
 				</button>
+				${typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof showShareModal === 'function' ? `
+				<button onclick="showShareModal(gameState, '${endingType}')"
+						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
+							   background:linear-gradient(135deg,#10b981,#34d399);
+							   color:white;border:none;border-radius:25px;font-size:1rem;font-weight:600;
+							   cursor:pointer;box-shadow:0 4px 15px rgba(16,185,129,0.35);
+							   transition:all 0.3s ease;font-family:inherit;"
+						onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
+						onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(16,185,129,0.35)'">
+					<i class="fas fa-share-alt"></i>
+					分享成绩
+				</button>
+				` : ''}
 			</div>`;
 
 			showModal('', html, []);
@@ -705,7 +740,12 @@
                     <div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;">
             `;
             
-            for (const [type, name] of Object.entries(ENDING_NAMES)) {
+            // ★★★ 修复：合并 ENDING_NAMES 和 LA_ENDING_NAMES，避免文科版结局缺失 ★★★
+            const allEndingNames = { ...ENDING_NAMES };
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof LA_ENDING_NAMES !== 'undefined') {
+                Object.assign(allEndingNames, LA_ENDING_NAMES);
+            }
+            for (const [type, name] of Object.entries(allEndingNames)) {
                 const count = modeStats.endings[type] || 0;
                 const percent = totalEndings > 0 ? ((count / totalEndings) * 100).toFixed(1) : 0;
                 const barWidth = totalEndings > 0 ? (count / totalEndings) * 100 : 0;
@@ -766,9 +806,19 @@
 
         function showEndingRequirements() {
             let html = '<div style="max-height:60vh;overflow-y:auto;">';
-            
-            for (const [type, name] of Object.entries(ENDING_NAMES)) {
-                const req = ENDING_REQUIREMENTS[type] || '未知';
+
+            // ★★★ 修复：合并 ENDING_NAMES 和 LA_ENDING_NAMES，避免文科版结局缺失 ★★★
+            const allEndingNames = { ...ENDING_NAMES };
+            const allEndingReqs = { ...ENDING_REQUIREMENTS };
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof LA_ENDING_NAMES !== 'undefined') {
+                Object.assign(allEndingNames, LA_ENDING_NAMES);
+            }
+            if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof LA_ENDING_REQUIREMENTS !== 'undefined') {
+                Object.assign(allEndingReqs, LA_ENDING_REQUIREMENTS);
+            }
+
+            for (const [type, name] of Object.entries(allEndingNames)) {
+                const req = allEndingReqs[type] || '未知';
                 html += `
                     <div style="padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
                         <div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">${name}</div>
@@ -793,8 +843,13 @@
         }
 
         function showSingleEndingRequirement(type) {
-            const name = ENDING_NAMES[type];
-            const req = ENDING_REQUIREMENTS[type] || '未知';
+            // ★★★ 修复：文科版结局类型在 ENDING_NAMES 中可能不存在，回退到 LA_ENDING_NAMES ★★★
+            const name = ENDING_NAMES[type]
+                || (typeof LA_ENDING_NAMES !== 'undefined' && LA_ENDING_NAMES[type])
+                || '未知';
+            const req = ENDING_REQUIREMENTS[type]
+                || (typeof LA_ENDING_REQUIREMENTS !== 'undefined' && LA_ENDING_REQUIREMENTS[type])
+                || '未知';
             
             showModal('📜 结局要求', `
                 <div style="text-align:center;margin-bottom:15px;">

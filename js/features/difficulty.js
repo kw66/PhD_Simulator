@@ -1,5 +1,20 @@
 		// ==================== 难度选择系统 ====================
 
+		// ★★★ 文科版：获取当前诅咒/祝福配置 ★★★
+		function getActiveCurses() {
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof LA_CURSES !== 'undefined') {
+				return LA_CURSES;
+			}
+			return CURSES;
+		}
+
+		function getActiveBlessings() {
+			if (typeof IS_LIBERAL_ARTS !== 'undefined' && IS_LIBERAL_ARTS && typeof LA_BLESSINGS !== 'undefined') {
+				return LA_BLESSINGS;
+			}
+			return BLESSINGS;
+		}
+
 		// 诅咒定义（按应用顺序排列）
 		const CURSES = {
 			anxiety: {
@@ -288,7 +303,7 @@
 		// 初始化诅咒选择（从已保存的设置加载）
 		function initCurseSelection() {
 			selectedCurses = {};
-			Object.keys(CURSES).forEach(id => {
+			Object.keys(getActiveCurses()).forEach(id => {
 				selectedCurses[id] = 0;
 			});
 			// 从已保存的设置恢复
@@ -300,7 +315,7 @@
 		// ★★★ 新增：初始化祝福选择 ★★★
 		function initBlessingSelection() {
 			selectedBlessings = {};
-			Object.keys(BLESSINGS).forEach(id => {
+			Object.keys(getActiveBlessings()).forEach(id => {
 				selectedBlessings[id] = 0;
 			});
 			// 从已保存的设置恢复
@@ -342,7 +357,7 @@
 
 		// 切换诅咒选择（点击骷髅头）
 		function toggleCurse(curseId, level) {
-			const curse = CURSES[curseId];
+			const curse = getActiveCurses()[curseId];
 			if (!curse) return;
 
 			const currentCount = selectedCurses[curseId] || 0;
@@ -361,7 +376,7 @@
 
 		// ★★★ 新增：切换祝福选择（点击星星）★★★
 		function toggleBlessing(blessingId, level) {
-			const blessing = BLESSINGS[blessingId];
+			const blessing = getActiveBlessings()[blessingId];
 			if (!blessing) return;
 
 			const currentCount = selectedBlessings[blessingId] || 0;
@@ -448,7 +463,7 @@
 			const scoreColor = totalPoints < 0 ? '#10b981' : (totalPoints > 0 ? '#ef4444' : '#6b7280');
 
 			// 生成诅咒列表HTML
-			const sortedCurses = Object.values(CURSES).sort((a, b) => a.order - b.order);
+			const sortedCurses = Object.values(getActiveCurses()).sort((a, b) => a.order - b.order);
 			let cursesHtml = '';
 			sortedCurses.forEach(curse => {
 				const count = selectedCurses[curse.id] || 0;
@@ -485,7 +500,7 @@
 			});
 
 			// 生成祝福列表HTML
-			const sortedBlessings = Object.values(BLESSINGS).sort((a, b) => a.order - b.order);
+			const sortedBlessings = Object.values(getActiveBlessings()).sort((a, b) => a.order - b.order);
 			let blessingsHtml = '';
 			sortedBlessings.forEach(blessing => {
 				const count = selectedBlessings[blessing.id] || 0;
