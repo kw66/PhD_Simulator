@@ -6,7 +6,7 @@
 体验研究生生涯，在科研、导师、社交、金钱与 SAN 之间做平衡，努力顺利毕业。
 
 [🎮 点击即玩](https://kw66.github.io/PhD_Simulator/) ·
-[🏠 作者主页](https://kw66.github.io/) ·
+[🎲 作者游戏合集](https://kw66.github.io/games/) ·
 [📝 初始 Prompt](./promopt.txt)
 
 </div>
