@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     /* 蓝白学院风配色 */
     --primary-color: #2563eb;
     --secondary-color: #3b82f6;
@@ -405,19 +405,20 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* 特殊模式按钮（未实装） */
+/* 新版预览入口 */
 .special-mode-btn {
-    background: transparent !important;
-    border: 1px dashed var(--text-secondary) !important;
-    color: var(--text-secondary) !important;
-    opacity: 0.7;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    border: 1px solid var(--primary-color) !important;
+    color: #fff !important;
+    opacity: 1;
+    box-shadow: 0 3px 8px rgba(108, 92, 231, 0.28);
 }
 
 .special-mode-btn:hover {
-    opacity: 1;
-    border-color: var(--primary-color) !important;
-    color: var(--primary-color) !important;
-    background: rgba(108, 92, 231, 0.05) !important;
+    border-color: var(--secondary-color) !important;
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)) !important;
+    box-shadow: 0 5px 12px rgba(108, 92, 231, 0.36);
 }
 
 .mode-description {

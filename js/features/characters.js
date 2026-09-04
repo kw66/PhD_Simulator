@@ -1,4 +1,4 @@
-﻿        // ==================== 模式切换 ====================
+        // ==================== 模式切换 ====================
 		function switchMode(reversed) {
 			isReversedMode = reversed;
 			isTrueNormalMode = false;  // ★★★ 切换模式时重置真·大多数状态 ★★★
@@ -702,7 +702,7 @@
 							</div>
 							<div class="button-row">
 								<button class="btn start-btn-small special-mode-btn" onclick="openV2Preview()">
-									<i class="fas fa-external-link-alt"></i> 新版预览（暂不可玩）
+									<i class="fas fa-external-link-alt"></i> 新版预览（开发中）
 								</button>
 							</div>
 						</div>
@@ -1336,7 +1336,7 @@
 
 		// ==================== 新版预览入口 ====================
 		function openV2Preview() {
-			window.open('https://kw-game-graduate-simulator-v2.vercel.app/', '_blank', 'noopener,noreferrer');
+			window.open('https://kw66.github.io/PhD_Simulator_V2/', '_blank', 'noopener,noreferrer');
 		}
 
 		// ==================== 全局函数暴露（供onclick调用）====================
