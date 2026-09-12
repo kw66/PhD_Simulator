@@ -34,6 +34,8 @@ html {
     /* 防止滚动时地址栏隐藏导致的高度变化 */
     overflow-x: hidden;
     overflow-y: scroll;
+    /* 在实际滚动的根元素上限制回弹，避免 body 拦截单指滚动 */
+    overscroll-behavior: none;
 }
 
 body {
@@ -48,8 +50,6 @@ body {
     overflow-y: auto;
     /* 防止双击缩放 */
     touch-action: manipulation;
-    /* 防止iOS橡皮筋效果导致的视觉跳动 */
-    overscroll-behavior: none;
     margin: 0;
     padding: 0;
 }
