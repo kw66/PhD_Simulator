@@ -702,7 +702,7 @@
 							</div>
 							<div class="button-row">
 								<button class="btn start-btn-small special-mode-btn" onclick="openV2Preview()">
-									<i class="fas fa-external-link-alt"></i> 新版预览（开发中）
+									<i class="fas fa-external-link-alt"></i> 游玩新版 v2.0
 								</button>
 							</div>
 						</div>
@@ -1334,7 +1334,7 @@
 			addLog('事件轮换', '新的一年开始', '随机事件池已重置');
 		}
 
-		// ==================== 新版预览入口 ====================
+		// ==================== 新版入口 ====================
 		function openV2Preview() {
 			window.open('https://kw66.github.io/PhD_Simulator_V2/', '_blank', 'noopener,noreferrer');
 		}
