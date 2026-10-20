@@ -1,0 +1,14 @@
+{
+  "name": "研究生模拟器 v1.0",
+  "short_name": "研究生模拟器 v1.0",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6ebd8",
+  "theme_color": "#f6ebd8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
