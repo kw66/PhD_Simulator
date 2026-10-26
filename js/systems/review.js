@@ -868,16 +868,6 @@
 			showReviewResultPage(1);
 		}
 
-		/*** 渲染分页指示器 */
-		function renderPageIndicator(currentPage, totalPages) {
-			let dots = '';
-			for (let i = 1; i <= totalPages; i++) {
-				const isActive = i === currentPage;
-				dots += `<span style="display:inline-block;width:10px;height:10px;background:${isActive ? 'var(--primary-color)' : 'var(--border-color)'};border-radius:50%;margin:0 3px;"></span>`;
-			}
-			return `<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.8rem;">${dots}</div>`;
-		}
-
 		/*** 渲染增强版全球统计*/
 		function renderGlobalStatsEnhanced(confInfo, monthStats, grade) {
 			if (!monthStats || monthStats.submissions < 20) {
@@ -913,85 +903,31 @@
 				avgAcceptedScore = Math.round(weightedSum / totalAccepted);
 			}
 			
-			return `
-			<div style="padding:12px;background:linear-gradient(135deg,rgba(116,185,255,0.1),rgba(162,155,254,0.1));border-radius:8px;margin-bottom:12px;font-size:0.8rem;border:1px solid rgba(116,185,255,0.3);">
-				<div style="font-weight:600;color:var(--info-color);margin-bottom:10px;">
-					<i class="fas fa-globe"></i> ${confInfo.name} ${confInfo.year} 全球统计
+			return `<div class="review-global-stats">
+				<div class="review-stats-overview">
+					<span>总投稿 <strong>${monthStats.submissions}</strong></span>
+					<span>总录用 <strong>${monthStats.accepted || 0}</strong></span>
+					<span>录用率 <strong>${acceptRate}%</strong></span>
 				</div>
-				
-				<!-- 投稿概况 -->
-				<div style="background:var(--card-bg);border-radius:6px;padding:10px;margin-bottom:8px;border:1px solid var(--border-color);">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">📊 投稿概况</div>
-					<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-						<div>
-							<div style="font-size:1.1rem;font-weight:700;color:var(--primary-color);">${monthStats.submissions}</div>
-							<div style="font-size:0.65rem;color:var(--text-secondary);">总投稿</div>
-						</div>
-						<div>
-							<div style="font-size:1.1rem;font-weight:700;color:var(--success-color);">${monthStats.accepted || 0}</div>
-							<div style="font-size:0.65rem;color:var(--text-secondary);">总录用</div>
-						</div>
-						<div>
-							<div style="font-size:1.1rem;font-weight:700;color:var(--warning-color);">${acceptRate}%</div>
-							<div style="font-size:0.65rem;color:var(--text-secondary);">录用率</div>
-						</div>
-					</div>
-				</div>
-				
-				<!-- 录用分布 -->
-				<div style="background:var(--card-bg);border-radius:6px;padding:10px;margin-bottom:8px;border:1px solid var(--border-color);">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">🏆 录用分布</div>
-					<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-						<div style="padding:6px;background:rgba(116,185,255,0.1);border-radius:4px;">
-							<div style="font-size:0.9rem;font-weight:600;color:#74b9ff;">${monthStats.poster || 0}</div>
-							<div style="font-size:0.6rem;color:var(--text-secondary);">Poster (${posterRate}%)</div>
-						</div>
-						<div style="padding:6px;background:rgba(253,203,110,0.1);border-radius:4px;">
-							<div style="font-size:0.9rem;font-weight:600;color:#fdcb6e;">${monthStats.oral || 0}</div>
-							<div style="font-size:0.6rem;color:var(--text-secondary);">Oral (${oralRate}%)</div>
-						</div>
-						<div style="padding:6px;background:rgba(253,121,168,0.1);border-radius:4px;">
-							<div style="font-size:0.9rem;font-weight:600;color:#fd79a8;">${monthStats.bestPaper || 0}</div>
-							<div style="font-size:0.6rem;color:var(--text-secondary);">Best (${bpRate}%)</div>
-						</div>
-					</div>
-				</div>
-				
-				<!-- 分数参考 -->
-				<div style="background:var(--card-bg);border-radius:6px;padding:10px;border:1px solid var(--border-color);">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:6px;">📈 分数参考（投稿时总分）</div>
-					<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:0.75rem;">
-						<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(225,112,85,0.1);border-radius:4px;">
-							<span>❌ 拒稿均分</span>
-							<strong style="color:var(--danger-color);">${Math.round(avgRejected)}</strong>
-						</div>
-						<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(0,184,148,0.1);border-radius:4px;">
-							<span>✅ 中稿均分</span>
-							<strong style="color:var(--success-color);">${avgAcceptedScore}</strong>
-						</div>
-						<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(116,185,255,0.1);border-radius:4px;">
-							<span>📄 Poster参考</span>
-							<strong style="color:#74b9ff;">≥${Math.round(avgPoster)}</strong>
-						</div>
-						<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(253,203,110,0.1);border-radius:4px;">
-							<span>🎤 Oral参考</span>
-							<strong style="color:#d68910;">≥${Math.round(avgOral)}</strong>
-						</div>
-						<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(253,121,168,0.1);border-radius:4px;grid-column:span 2;">
-							<span>🏆 Best Paper参考</span>
-							<strong style="color:#fd79a8;">≥${Math.round(avgBP)}</strong>
-						</div>
-					</div>
-					<div style="margin-top:6px;font-size:0.65rem;color:var(--text-secondary);text-align:center;">
-						P90阈值: ${monthStats.p90AcceptedScore || '-'} | P99阈值: ${monthStats.p99AcceptedScore || '-'}
-					</div>
-				</div>
+				<table class="review-stats-table">
+					<thead><tr><th>类型</th><th>录用数 / 占比</th><th>参考分</th></tr></thead>
+					<tbody>
+						<tr><td>Poster</td><td>${monthStats.poster || 0} / ${posterRate}%</td><td>≥${Math.round(avgPoster)}</td></tr>
+						<tr><td>Oral</td><td>${monthStats.oral || 0} / ${oralRate}%</td><td>≥${Math.round(avgOral)}</td></tr>
+						<tr><td>Best Paper</td><td>${monthStats.bestPaper || 0} / ${bpRate}%</td><td>≥${Math.round(avgBP)}</td></tr>
+					</tbody>
+				</table>
+				<div class="review-stats-footnote"><span>拒稿均分 <strong>${Math.round(avgRejected)}</strong></span><span>中稿均分 <strong>${avgAcceptedScore}</strong></span></div>
+				<div class="review-stats-footnote"><span>P90阈值 ${monthStats.p90AcceptedScore || '-'}</span><span>P99阈值 ${monthStats.p99AcceptedScore || '-'}</span></div>
 			</div>`;
 		}
 
 		/*** 显示审稿结果指定页*/
 		function showReviewResultPage(pageNum) {
-			const { paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo } = currentReviewData;
+			if (!currentReviewData) return;
+			const reviewData = currentReviewData;
+			const closeReview = () => finishReviewResult(reviewData);
+			const { paper, grade, results, totalReviewScore, acceptType, accepted, slot, beforeScores, afterScores, extraInfo } = reviewData;
 			const { adjustment, adjustedTarget, borderlineChance, monthStats, ideaDecay, expDecay } = extraInfo;
 			
 			// 获取会议信息
@@ -999,32 +935,24 @@
 			
 			let html = '';
 			let pageTitle = '';
-			const totalPages = 3;
 			
-			if (pageNum === 1) {
-				// ==================== 第一页：会议信息 + 全球统计 ====================
-				pageTitle = '📝 审稿结果 (1/3)';
+			if (pageNum === 3) {
+				// ==================== 第三页：会议信息 + 全球统计 ====================
+				pageTitle = '📊 会议情况 (3/3)';
 				
-				// 会议和论文信息
-				html += `<div style="padding:12px;background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.1));border-radius:10px;margin-bottom:12px;border:1px solid rgba(108,92,231,0.2);">
-					<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">投稿会议</div>
-					<div style="font-size:1.1rem;font-weight:700;color:var(--primary-color);margin-bottom:2px;">${confInfo.name} ${confInfo.year}</div>
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;">${confInfo.fullName} (${grade}类)</div>
-					<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">论文标题</div>
-					<div style="font-size:0.9rem;font-weight:500;word-break:break-word;">${paper.title}</div>
-					<div style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);">
-						投稿时总分：<strong style="color:var(--primary-color);">${paper.submittedScore}</strong>
-					</div>
+				// 标签与内容同行；长标题自然换行。
+				html += `<div class="review-submission-summary">
+					<div class="review-summary-row"><span class="review-summary-label">投稿会议</span><strong class="review-conference-name">${confInfo.name} ${confInfo.year}</strong><span class="review-summary-label">${grade}类</span></div>
+					<div class="review-conference-fullname">${confInfo.fullName}</div>
+					<div class="review-summary-row"><span class="review-summary-label">论文标题</span><span class="review-paper-title">${paper.title}</span></div>
 				</div>`;
-				
+
 				// 增强版全球统计
 				html += renderGlobalStatsEnhanced(confInfo, monthStats, grade);
 				
-				// 分页指示
-				html += renderPageIndicator(1, totalPages);
-				
 				showModal(pageTitle, html, [
-					{ text: '查看审稿详情 →', class: 'btn-primary', action: () => showReviewResultPage(2) }
+					{ text: '← 审稿意见', class: 'btn-info review-nav', action: () => showReviewResultPage(2) },
+					{ text: '关闭', class: 'btn-primary review-nav', action: closeReview }
 				]);
 				
 			} else if (pageNum === 2) {
@@ -1072,196 +1000,145 @@
 					</div>`;
 				});
 				
-				// 分页指示
-				html += renderPageIndicator(2, totalPages);
-				
 				showModal(pageTitle, html, [
-					{ text: '← 返回结果', class: 'btn-info', action: () => showReviewResultPage(1) },
-					{ text: '查看PC决定 →', class: 'btn-primary', action: () => showReviewResultPage(3) }
+					{ text: '← 结果', class: 'btn-info review-nav', action: () => showReviewResultPage(1) },
+					{ text: '会议情况 →', class: 'btn-info review-nav', action: () => showReviewResultPage(3) },
+					{ text: '关闭', class: 'btn-primary review-nav', action: closeReview }
 				]);
 				
-			} else if (pageNum === 3) {
-				// ==================== 第三页：分数变化 + PC决定 ====================
-				pageTitle = '📝 PC决定 (3/3)';
+			} else if (pageNum === 1) {
+				// ==================== 第一页：录用结果 + PC决定 + 分数变化 ====================
+				pageTitle = '📝 论文结果 (1/3)';
 				
-				// 分数变化说明
-				html += renderScoreChangeInfo(beforeScores, afterScores, results, ideaDecay, expDecay);
-				
-				// PC Meta Review
-				html += renderPCMetaReview(totalReviewScore, accepted, acceptType, borderlineChance, adjustment, paper.submittedScore);
-				
-				// 最终结果
 				html += renderFinalResult(accepted, acceptType, confInfo, totalReviewScore, borderlineChance);
-				
-				// 分页指示
-				html += renderPageIndicator(3, totalPages);
-				
+				html += renderPCMetaReview(totalReviewScore, accepted, acceptType, borderlineChance, adjustment, paper.submittedScore);
+				html += renderScoreChangeInfo(beforeScores, afterScores, results, ideaDecay, expDecay);
+
 				showModal(pageTitle, html, [
-					{ text: '← 返回详情', class: 'btn-info', action: () => showReviewResultPage(2) },
-					{ text: '✓ 确定', class: 'btn-primary', action: () => {
-						// 恶意审稿人惩罚
-						if (extraInfo.badReviewerCount > 0) {
-							const sanLoss = extraInfo.badReviewerCount;
-							if (!changeSan(-sanLoss)) {
-								currentReviewData = null;
-								return;
-							}
-							addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
-						}
-
-						// ★★★ 新增：记录恶意审稿人和39个问题审稿人统计 ★★★
-						if (extraInfo.hostileCount > 0) {
-							gameState.maliciousReviewerCount = (gameState.maliciousReviewerCount || 0) + extraInfo.hostileCount;
-						}
-						if (extraInfo.questionsCount > 0) {
-							gameState.thirtyNineQuestionsCount = (gameState.thirtyNineQuestionsCount || 0) + extraInfo.questionsCount;
-						}
-
-						if (accepted) {
-							if (totalReviewScore === -1) {
-								gameState.achievementConditions = gameState.achievementConditions || {};
-								gameState.achievementConditions.savedByPC = true;
-								addLog('🎣 力挽狂澜', '审稿意见负面但被PC捞起', '达成隐藏成就条件！');
-							}
-							handlePaperAccepted(paper, grade, acceptType, slot, extraInfo);
-						} else {
-							// 记录拒稿数据
-							recordSubmission(
-								extraInfo.submittedMonth || gameState.month,
-								grade,
-								paper.submittedScore,
-								'rejected',
-								gameState.isReversed
-							);
-
-							// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
-							gameState.submissionHistory = gameState.submissionHistory || [];
-							gameState.submissionHistory.push({
-								title: paper.title,
-								grade: grade,
-								accepted: false,
-								month: extraInfo.submittedMonth || gameState.month,
-								year: gameState.year
-							});
-
-							// ★★★ 新增：更新拒稿统计 ★★★
-							gameState.totalRejects = (gameState.totalRejects || 0) + 1;
-							if (gameState.totalRejects === 1) {
-								addCareerMilestone('first_reject', '第一次被拒', `${paper.conferenceInfo?.name || grade + '类会议'} - 科研路上的必经之坎`);
-							}
-
-							gameState.rejectedCount++;
-							gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
-
-							if (gameState.rejectedPapers[paper.title] >= 3) {
-								gameState.achievementConditions.tripleRejected = true;
-								// ★★★ 新增：记录连续被拒里程碑 ★★★
-								addCareerMilestone('triple_reject', '三连拒稿', `"${paper.title.substring(0, 10)}..." 屡败屡战`);
-							}
-							
-							if (extraInfo.hasExpert) {
-								const expertCount = extraInfo.expertCount || 1;
-								const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name && b.name.includes('指点迷津'));
-								if (existingBuff) {
-									// 已有buff，累加数值
-									existingBuff.value += expertCount;
-									existingBuff.name = `指点迷津：每次想idea分数+${existingBuff.value}`;
-									addLog('因祸得福', '资深大牛的指点迷津', `永久buff升级-每次想idea分数+${existingBuff.value}`);
-								} else {
-									gameState.buffs.permanent.push({
-										type: 'idea_bonus',
-										name: `指点迷津：每次想idea分数+${expertCount}`,
-										value: expertCount,
-										permanent: true
-									});
-									addLog('因祸得福', '资深大牛的指点迷津', `永久buff-每次想idea分数+${expertCount}`);
-								}
-							}
-							
-							gameState.consecutiveAccepts = 0;
-							
-							paper.reviewing = false;
-							paper.submittedGrade = null;
-							paper.submittedScore = null;
-							paper.reviewMonths = 0;
-							paper.submittedMonth = null;
-							paper.conferenceInfo = null;
-							paper.conferenceLocation = null;
-							
-							// ★★★ 关键修改：拒稿时也要继续处理队列 ★★★
-							if (gameState._reviewProcessing) {
-								setTimeout(() => processNextReviewInQueue(), 100);
-							}
-						}
-						
-						currentReviewData = null;
-						closeModal();
-						renderPaperSlots();
-						updateAllUI();
-					}}
+					{ text: '审稿意见 →', class: 'btn-info review-nav', action: () => showReviewResultPage(2) },
+					{ text: '关闭', class: 'btn-primary review-nav', action: closeReview }
 				]);
 			}
 		}
 
-		/*** 渲染调整机制信息*/
-		function renderAdjustmentInfo(adjustment, adjustedTarget, monthStats) {
-			if (!monthStats || monthStats.submissions < 30) {
-				return '';
+		/*** 关闭任一结果页时结算一次，翻页不改变游戏状态。 */
+		function finishReviewResult(reviewData) {
+			if (!currentReviewData || currentReviewData !== reviewData) return;
+			const { paper, grade, acceptType, accepted, slot, totalReviewScore, extraInfo } = reviewData;
+			currentReviewData = null;
+			// 恶意审稿人惩罚
+			if (extraInfo.badReviewerCount > 0) {
+				const sanLoss = extraInfo.badReviewerCount;
+				if (!changeSan(-sanLoss)) {
+					currentReviewData = null;
+					return;
+				}
+				addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
 			}
-			
-			const popularity = adjustedTarget.popularity;
-			const popularityText = {
-				'very_hot': '🔥 非常热门',
-				'hot': '🌡️ 热门',
-				'normal': '📊 正常',
-				'cold': '❄️ 冷门',
-				'very_cold': '🧊 非常冷门'
-			}[popularity?.category] || '📊 正常';
-			
-			const adjustmentStatus = adjustment.adjustmentEnabled 
-				? `<span style="color:var(--success-color);">✓ 已启用</span>` 
-				: `<span style="color:var(--text-secondary);">○ 未启用(需≥${MIN_SUBMISSIONS_FOR_ADJUSTMENT}篇)</span>`;
-			
-			// ★★★ 新增：会议性格显示 ★★★
+
+			// ★★★ 新增：记录恶意审稿人和39个问题审稿人统计 ★★★
+			if (extraInfo.hostileCount > 0) {
+				gameState.maliciousReviewerCount = (gameState.maliciousReviewerCount || 0) + extraInfo.hostileCount;
+			}
+			if (extraInfo.questionsCount > 0) {
+				gameState.thirtyNineQuestionsCount = (gameState.thirtyNineQuestionsCount || 0) + extraInfo.questionsCount;
+			}
+
+			if (accepted) {
+				if (totalReviewScore === -1) {
+					gameState.achievementConditions = gameState.achievementConditions || {};
+					gameState.achievementConditions.savedByPC = true;
+					addLog('🎣 力挽狂澜', '审稿意见负面但被PC捞起', '达成隐藏成就条件！');
+				}
+				handlePaperAccepted(paper, grade, acceptType, slot, extraInfo);
+			} else {
+				// 记录拒稿数据
+				recordSubmission(
+					extraInfo.submittedMonth || gameState.month,
+					grade,
+					paper.submittedScore,
+					'rejected',
+					gameState.isReversed
+				);
+
+				// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
+				gameState.submissionHistory = gameState.submissionHistory || [];
+				gameState.submissionHistory.push({
+					title: paper.title,
+					grade: grade,
+					accepted: false,
+					month: extraInfo.submittedMonth || gameState.month,
+					year: gameState.year
+				});
+
+				// ★★★ 新增：更新拒稿统计 ★★★
+				gameState.totalRejects = (gameState.totalRejects || 0) + 1;
+				if (gameState.totalRejects === 1) {
+					addCareerMilestone('first_reject', '第一次被拒', `${paper.conferenceInfo?.name || grade + '类会议'} - 科研路上的必经之坎`);
+				}
+
+				gameState.rejectedCount++;
+				gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
+
+				if (gameState.rejectedPapers[paper.title] >= 3) {
+					gameState.achievementConditions.tripleRejected = true;
+					// ★★★ 新增：记录连续被拒里程碑 ★★★
+					addCareerMilestone('triple_reject', '三连拒稿', `"${paper.title.substring(0, 10)}..." 屡败屡战`);
+				}
+				
+				if (extraInfo.hasExpert) {
+					const expertCount = extraInfo.expertCount || 1;
+					const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name && b.name.includes('指点迷津'));
+					if (existingBuff) {
+						// 已有buff，累加数值
+						existingBuff.value += expertCount;
+						existingBuff.name = `指点迷津：每次想idea分数+${existingBuff.value}`;
+						addLog('因祸得福', '资深大牛的指点迷津', `永久buff升级-每次想idea分数+${existingBuff.value}`);
+					} else {
+						gameState.buffs.permanent.push({
+							type: 'idea_bonus',
+							name: `指点迷津：每次想idea分数+${expertCount}`,
+							value: expertCount,
+							permanent: true
+						});
+						addLog('因祸得福', '资深大牛的指点迷津', `永久buff-每次想idea分数+${expertCount}`);
+					}
+				}
+				
+				gameState.consecutiveAccepts = 0;
+				
+				paper.reviewing = false;
+				paper.submittedGrade = null;
+				paper.submittedScore = null;
+				paper.reviewMonths = 0;
+				paper.submittedMonth = null;
+				paper.conferenceInfo = null;
+				paper.conferenceLocation = null;
+				
+				// ★★★ 关键修改：拒稿时也要继续处理队列 ★★★
+				if (gameState._reviewProcessing) {
+					setTimeout(() => processNextReviewInQueue(), 100);
+				}
+			}
+
+			currentReviewData = null;
+			closeModal();
+			renderPaperSlots();
+			updateAllUI();
+		}
+
+		/*** 渲染会议性格；录用统计集中在会议情况页。 */
+		function renderAdjustmentInfo(adjustment, adjustedTarget, monthStats) {
+			if (!monthStats || monthStats.submissions < 30) return '';
 			const personality = adjustment.personality;
 			const personalityDesc = personality ? getConferencePersonalityDescription(personality) : '⚖️ 中庸';
-			
-			return `
-			<div style="padding:10px;background:linear-gradient(135deg,rgba(253,203,110,0.1),rgba(243,156,18,0.1));border-radius:8px;margin-bottom:12px;font-size:0.8rem;">
-				<div style="font-weight:600;color:#d68910;margin-bottom:6px;">
-					<i class="fas fa-balance-scale"></i> 会议特性 ${adjustmentStatus}
-				</div>
-				<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-					<div>
-						${popularityText}<br>
-						<span style="font-size:0.7rem;color:var(--text-secondary);">
-							投稿${monthStats.submissions}篇 / 平均${popularity?.avgSubmissions || '-'}篇
-						</span>
-					</div>
-					<div>
-						目标录取率：${(adjustedTarget.target * 100).toFixed(1)}%<br>
-						<span style="font-size:0.7rem;color:var(--text-secondary);">
-							实际：${((monthStats.acceptRate || 0) * 100).toFixed(1)}%
-						</span>
-					</div>
-				</div>
-				
-				<!-- ★★★ 新增：会议性格标签 ★★★ -->
-				<div style="margin-top:8px;padding:6px;background:var(--card-bg);border-radius:4px;border:1px solid var(--border-color);">
-					<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:4px;">📋 会议性格</div>
-					<div style="font-size:0.85rem;font-weight:500;">${personalityDesc}</div>
-					${personality ? `
-					<div style="font-size:0.65rem;color:var(--text-secondary);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
-						<span>严格度:${(personality.strictness*100).toFixed(0)}%</span>
-						<span>BL范围:${(personality.borderlineWidth*100).toFixed(0)}%</span>
-						<span>BL友好:${(personality.borderlineLeniency*100).toFixed(0)}%</span>
-						<span>波动性:${(personality.volatility*100).toFixed(0)}%</span>
-					</div>` : ''}
-				</div>
-				
-				${adjustment.adjustmentEnabled ? `
-				<div style="margin-top:6px;font-size:0.7rem;color:var(--text-secondary);border-top:1px dashed rgba(243,156,18,0.3);padding-top:6px;">
-					${adjustment.adjustmentDetails.reason}
+			return `<div class="review-personality">
+				<div class="review-personality-heading"><span class="review-summary-label">📋 会议性格</span><strong>${personalityDesc}</strong></div>
+				${personality ? `<div class="review-personality-metrics">
+					<span>严格度 ${(personality.strictness*100).toFixed(0)}%</span>
+					<span>BL范围 ${(personality.borderlineWidth*100).toFixed(0)}%</span>
+					<span>BL友好 ${(personality.borderlineLeniency*100).toFixed(0)}%</span>
+					<span>波动性 ${(personality.volatility*100).toFixed(0)}%</span>
 				</div>` : ''}
 			</div>`;
 		}
@@ -1293,9 +1170,6 @@
 				html += `<div style="margin-bottom:8px;padding:8px;background:rgba(225,112,85,0.1);border-radius:6px;border-left:3px solid var(--danger-color);">
 					<div style="font-size:0.8rem;color:var(--danger-color);">
 						⏳ 时效性降低（4个月累计）：Idea-${ideaDecay}, 实验-${expDecay}
-					</div>
-					<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:4px;">
-						每月衰减当前分数的10%（最少1），高分论文衰减更快
 					</div>
 				</div>`;
 			}

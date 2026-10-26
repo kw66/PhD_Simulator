@@ -696,9 +696,6 @@
 								<button class="btn btn-secondary start-btn-small difficulty-btn" onclick="openDifficultyModal()">
 									难度调整 <span>0</span>
 								</button>
-								<button class="btn btn-info start-btn-small" onclick="openAutoSaveModal()">
-									<i class="fas fa-history"></i> 回溯
-								</button>
 							</div>
 							<div class="button-row">
 								<button class="btn start-btn-small special-mode-btn" onclick="openV2Preview()">

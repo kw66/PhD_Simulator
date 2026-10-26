@@ -87,11 +87,12 @@
 			showModal('💾 存档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
 		}
 
-		function openLoadModal() {
+		function openLoadModal(tab = 'auto') {
+			if (tab === 'auto') { openAutoSaveModal(); return; }
 			const saves = getValidSaves(); // 使用过滤后的存档
 
 			if (saves.filter(s => s).length === 0) {
-				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-15 08:00前的存档已失效</p>',
+				showLoadBrowser('manual', '<p style="text-align:center;color:var(--text-secondary);">暂无手动存档</p>',
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
 				return;
 			}
@@ -125,45 +126,19 @@
 			}
 
 			html += '</div>';  // 关闭滚动容器
-			showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+			showLoadBrowser('manual', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
 		}
 
 		function openLoadModalFromStart() {
-			const saves = getValidSaves(); // 使用过滤后的存档
+			openLoadModal();
+		}
 
-			if (saves.filter(s => s).length === 0) {
-				showModal('📂 读档', '<p style="text-align:center;color:var(--text-secondary);">暂无有效存档</p><p style="text-align:center;font-size:0.8rem;color:var(--danger-color);">注：2025-12-15 08:00前的存档已失效</p>',
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-
-			let html = '<div style="margin-bottom:15px;color:var(--text-secondary);font-size:0.85rem;">选择要读取的存档（最多10个）：</div>';
-			html += '<div style="max-height:400px;overflow-y:auto;">';
-
-			for (let i = 0; i < MAX_SAVES; i++) {
-				const save = saves[i];
-				if (save) {
-					const modeIcon = save.isReversed ? '🌑' : '☀️';
-					html += `
-						<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--light-bg);border-radius:8px;margin-bottom:8px;">
-							<div style="flex:1;">
-								<div style="font-weight:600;font-size:0.9rem;">${modeIcon} 槽位 ${i + 1}: ${save.characterName}</div>
-								<div style="font-size:0.75rem;color:var(--text-secondary);">
-									${save.degree === 'master' ? '硕士' : '博士'} | 第${save.year}年第${save.month}月 | 科研分:${save.totalScore}
-								</div>
-								<div style="font-size:0.7rem;color:var(--text-secondary);">
-									A类:${save.paperA} B类:${save.paperB} C类:${save.paperC} | 保存于: ${save.saveTime}
-								</div>
-							</div>
-							<button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="loadGame(${i})">
-								<i class="fas fa-folder-open"></i> 读取
-							</button>
-						</div>`;
-				}
-			}
-
-			html += '</div>';  // 关闭滚动容器
-			showModal('📂 读档', html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
+		function showLoadBrowser(tab, content, buttons) {
+			const tabs = `<div class="save-source-tabs" aria-label="存档类型">
+				<button type="button" class="btn ${tab === 'auto' ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${tab === 'auto'}" onclick="openLoadModal('auto')">自动存档</button>
+				<button type="button" class="btn ${tab === 'manual' ? 'btn-primary' : 'btn-secondary'}" aria-pressed="${tab === 'manual'}" onclick="openLoadModal('manual')">手动存档</button>
+			</div>`;
+			showModal('📂 读档', tabs + content, buttons);
 		}
 
         function saveGame(slot) {
@@ -877,7 +852,7 @@
                         saves[slot] = null;
                         saveSaves(saves);
                         closeModal();
-                        openLoadModal();
+                        openLoadModal('manual');
                     }}
                 ]
             );
@@ -1256,7 +1231,7 @@
 			const autoSaves = getAutoSaves();
 
 			if (!latestSave && autoSaves.length === 0) {
-				showModal('🔄 自动存档',
+				showLoadBrowser('auto',
 					`<p style="text-align:center;color:var(--text-secondary);">暂无自动存档</p>
 					 <p style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">游戏每月自动保存最近进度，每3个月保存历史存档</p>`,
 					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
@@ -1321,7 +1296,7 @@
 
 			html += '</div>';
 
-			showModal('🔄 自动存档', html, [
+			showLoadBrowser('auto', html, [
 				{ text: '清空全部', class: 'btn-danger', action: confirmClearAutoSaves },
 				{ text: '关闭', class: 'btn-info', action: closeModal }
 			]);

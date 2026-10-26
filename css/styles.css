@@ -246,8 +246,6 @@ html:has(#modal-overlay.active), body:has(#modal-overlay.active) { overflow: hid
     z-index: 1;
     background: var(--card-bg);
     padding-top: 10px;
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -5px 12px rgba(30, 41, 59, 0.04);
 }
 #modal > .modal-buttons:empty { display: none; }
 #modal > .modal-buttons [data-modal-footer] { margin: 0 !important; }
@@ -271,6 +269,40 @@ html:has(#modal-overlay.active), body:has(#modal-overlay.active) { overflow: hid
 #modal-content::-webkit-scrollbar-button, #career-summary-container .slide-inner::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 #modal-content::-webkit-scrollbar-corner { background: transparent; }
 #career-summary-container .slide-inner > .relation-list-container { max-height: none; overflow: visible; }
+
+.save-source-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.save-source-tabs .btn { flex: 1; justify-content: center; padding: 8px 10px; font-size: 0.8rem; }
+
+/* Compact review pages keep labels inline and statistics in one panel. */
+.modal-buttons .review-nav { flex: 1 1 auto; justify-content: center; padding: 10px 8px; font-size: 0.8rem; white-space: nowrap; }
+.review-submission-summary, .review-global-stats, .review-personality {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+.review-submission-summary { background: rgba(108, 92, 231, 0.06); }
+.review-summary-row { display: flex; align-items: baseline; gap: 8px; }
+.review-summary-label { color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+.review-conference-name { color: var(--primary-color); min-width: 0; overflow-wrap: anywhere; }
+.review-conference-fullname { color: var(--text-secondary); font-size: 0.7rem; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.review-paper-title { min-width: 0; overflow-wrap: anywhere; }
+.review-personality { background: var(--card-bg); }
+.review-personality-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
+.review-personality-heading strong { font-weight: 600; color: var(--text-primary); }
+.review-personality-metrics { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 4px; font-size: 0.7rem; color: var(--text-secondary); }
+.review-personality-metrics span { white-space: nowrap; }
+.review-global-stats { background: var(--light-bg); }
+.review-stats-overview, .review-stats-footnote { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.review-stats-overview { padding-bottom: 6px; }
+.review-stats-overview span, .review-stats-footnote span { white-space: nowrap; }
+.review-stats-overview strong { color: var(--primary-color); }
+.review-stats-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.review-stats-table th, .review-stats-table td { padding: 5px 2px; text-align: right; border-top: 1px solid var(--border-color); }
+.review-stats-table th { color: var(--text-secondary); font-size: 0.7rem; font-weight: 500; }
+.review-stats-table th:first-child, .review-stats-table td:first-child { text-align: left; }
+.review-stats-footnote { margin-top: 5px; font-size: 0.7rem; color: var(--text-secondary); }
 
 .modal-buttons {
     display: flex;

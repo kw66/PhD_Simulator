@@ -984,15 +984,15 @@
                             </div>
 
                             <!-- 操作按钮 -->
-                            <div style="display:flex;justify-content:flex-end;gap:4px;">
+                            <div style="display:flex;gap:4px;">
                                 <button class="btn ${interactBtnClass}" ${canInteract ? '' : 'disabled'}
                                         onclick="event.stopPropagation();interactWithPerson('${person.id}')"
-                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex-shrink:0;">
+                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex:1 0 auto;justify-content:center;">
                                     ${interactBtnText}
                                 </button>
                                 <button class="btn ${taskBtnClass}" ${taskBtnDisabled}
                                         onclick="event.stopPropagation();advanceTask('${person.id}')"
-                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex-shrink:0;">
+                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex:1 0 auto;justify-content:center;">
                                     ${canUseTask ? `${taskIcon} ${taskName} ${taskCost}` : '✓ 本月已用'}
                                 </button>
                             </div>
