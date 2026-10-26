@@ -584,8 +584,8 @@
 						paper.expScore = Math.max(1, paper.expScore - expDecay);
 
 						// 记录累计衰减（用于显示）
-						paper.totalIdeaDecay = (paper.totalIdeaDecay || 0) + ideaDecay;
-						paper.totalExpDecay = (paper.totalExpDecay || 0) + expDecay;
+						paper.totalIdeaDecay = (paper.totalIdeaDecay || 0) + (prevIdeaScore - paper.ideaScore);
+						paper.totalExpDecay = (paper.totalExpDecay || 0) + (prevExpScore - paper.expScore);
 
 						// ★★★ 新增：自然风干成就检测（衰减前至少有一个>1，衰减后都=1）★★★
 						if ((prevIdeaScore > 1 || prevExpScore > 1) && paper.ideaScore === 1 && paper.expScore === 1) {

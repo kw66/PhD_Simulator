@@ -450,7 +450,7 @@
 								</span>
 							</div>`;
 
-						html += `<div class="paper-slot active upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
+						html += `<div class="paper-slot active upgraded-slot" data-paper-index="${i}" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
 							<div class="slot-header">
 								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽</span>
 								${statusBadge}
@@ -504,7 +504,7 @@
 								</span>
 							</div>`;
 
-						html += `<div class="paper-slot active">
+						html += `<div class="paper-slot active" data-paper-index="${i}">
 							<div class="slot-header">
 								${reviewingInfo}
 							</div>
@@ -530,6 +530,8 @@
 				}
 			}
 			container.innerHTML = html;
+            if (typeof renderResearchTargetButtons === 'function') renderResearchTargetButtons();
+            if (typeof updateQuickStatus === 'function') updateQuickStatus();
 		}
 
 		// ★★★ 新增：槽位升级功能 ★★★
@@ -1153,8 +1155,6 @@
 
 
 		function thinkIdea() {
-			// ★★★ 新增：处理预购订阅（想idea时购买gemini）★★★
-			processSubscriptions('idea');
 
 			// ★★★ 修改：检查行动次数 ★★★
 			if (gameState.actionCount >= gameState.actionLimit) {
@@ -1163,6 +1163,17 @@
 				return;
 			}
 			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			showPaperSelectModal('想idea', available, (index) => {
+				if (!validateResearchAction('idea', index)) return;
+				processSubscriptions('idea');
 			// 检查debuff存在性（只在第一次生效）
 			const hasExhaustion = gameState.buffs.temporary.some(b => b.type === 'idea_exhaustion');
 			const hasStolen = gameState.buffs.temporary.some(b => b.type === 'idea_stolen');
@@ -1188,15 +1199,7 @@
 				return;
 			}
 
-			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-				.filter(({ paper }) => paper && !paper.reviewing);
-			if (available.length === 0) {
-				showModal('无法操作', '<p>没有可用的论文！请先开启一篇新论文。</p>', 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			showPaperSelectModal('想idea', available, (index) => {
+
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.ideaClickCount = (gameState.ideaClickCount || 0) + 1;
@@ -1367,8 +1370,6 @@
 		}
 
 		function doExperiment() {
-			// ★★★ 新增：处理预购订阅（做实验时购买gpt和租gpu）★★★
-			processSubscriptions('experiment');
 
 			if (gameState.actionCount >= gameState.actionLimit) {
 				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
@@ -1376,6 +1377,17 @@
 				return;
 			}
 			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			showPaperSelectModal('做实验', available, (index) => {
+				if (!validateResearchAction('experiment', index)) return;
+				processSubscriptions('experiment');
 			// 检查debuff（只在第一次生效）
 			const hasOverheat = gameState.buffs.temporary.some(b => b.type === 'exp_overheat');
 			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
@@ -1399,15 +1411,7 @@
 				return;
 			}
 
-			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-				.filter(({ paper }) => paper && !paper.reviewing && paper.ideaScore > 0);
-			if (available.length === 0) {
-				showModal('无法操作', '<p>没有可用的论文！需要先有idea分大于0的论文。</p>', 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			showPaperSelectModal('做实验', available, (index) => {
+
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.expClickCount = (gameState.expClickCount || 0) + 1;
@@ -1558,8 +1562,6 @@
 		}
 
 		function writePaper() {
-			// ★★★ 新增：处理预购订阅（写论文时购买claude）★★★
-			processSubscriptions('write');
 
 			if (gameState.actionCount >= gameState.actionLimit) {
 				showModal('❌ 操作失败', `<p>本月行动次数已用完！（${gameState.actionCount}/${gameState.actionLimit}）</p>`,
@@ -1567,6 +1569,17 @@
 				return;
 			}
 			
+			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
+				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
+			if (available.length === 0) {
+				showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>',
+					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
+				return;
+			}
+
+			showPaperSelectModal('写论文', available, (index) => {
+				if (!validateResearchAction('write', index)) return;
+				processSubscriptions('write');
 			// 检查debuff（只在第一次生效）
 			const hasWritersBlock = gameState.buffs.temporary.some(b => b.type === 'write_block');
 			const hasSlack = gameState.buffs.temporary.some(b => b.type === 'slack_debuff');
@@ -1592,15 +1605,7 @@
 				return;
 			}
 
-			const available = gameState.papers.map((p, i) => ({ paper: p, index: i }))
-				.filter(({ paper }) => paper && !paper.reviewing && paper.expScore > 0);
-			if (available.length === 0) {
-				showModal('无法操作', '<p>没有可用的论文！需要先有实验分大于0的论文。</p>', 
-					[{ text: '确定', class: 'btn-primary', action: closeModal }]);
-				return;
-			}
-			
-			showPaperSelectModal('写论文', available, (index) => {
+
 				gameState.actionCount++;
 				gameState.actionUsed = gameState.actionCount >= gameState.actionLimit;
 				gameState.writeClickCount = (gameState.writeClickCount || 0) + 1;

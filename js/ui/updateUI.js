@@ -1687,21 +1687,17 @@
 		}
 
         function getActionCosts() {
-            const has4K = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
-            const hasKeyboard = gameState.buffs.permanent.some(b => b.type === 'write_san_reduce');
-
-            // ★★★ 修改：计算动态SAN消耗和金钱奖励（1-8次基础，9次起每8次提升1档）★★★
-            const nextWorkCount = (gameState.workCount || 0) + 1;
-            const workTier = Math.floor((nextWorkCount - 1) / 8);
-            const workSan = -(5 + workTier);  // -5, -6, -7...
-            const workGold = 2 + workTier;    // 2, 3, 4...
-
+            const hasMonitor = gameState.buffs.permanent.some(b => b.type === 'read_san_reduce');
+            let read = hasMonitor ? 1 : 2;
+            if (gameState.monitorUpgrade === '4k') read = 0;
+            else if (['smart', 'dual'].includes(gameState.monitorUpgrade)) read = 2;
+            const tier = Math.floor((gameState.workCount || 0) / 8);
             return {
-                read: { san: has4K ? -1 : -2 },
-                work: { san: workSan, gold: workGold },
-                idea: { san: -2 },
-                experiment: { san: -3 },
-                write: { san: hasKeyboard ? -3 : -4 }
+                read: { san: -getSanCostExplanation(read).actualCost },
+                work: { san: -getSanCostExplanation(5 + tier).actualCost, gold: (2 + tier) * (gameState.incomeDoubled ? 2 : 1) },
+                idea: { san: -getResearchActionCost('idea') },
+                experiment: { san: -getResearchActionCost('experiment') },
+                write: { san: -getResearchActionCost('write') }
             };
         }
 
@@ -1733,9 +1729,8 @@
 			const costs = getActionCosts();
 
 			// 显示剩余行动次数
-			const actionCountDisplay = actionLimit > 1
-				? ` (${actionsRemaining}/${actionLimit})`
-				: '';
+			const actionCountDisplay = '';
+
 			
 			// 改为2行布局：第一行图标+文字，第二行效果
 			document.getElementById('btn-read').innerHTML = `
@@ -1753,6 +1748,7 @@
 			document.getElementById('btn-write').innerHTML = `
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.write)}</span>`;
+            if (typeof updateQuickStatus === 'function') updateQuickStatus();
 		}
 
         // ==================== 事件预告系统 ====================

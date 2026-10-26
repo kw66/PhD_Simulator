@@ -1,0 +1,142 @@
+/* Compact, readable presentation; keep V1's blue/white visual identity. */
+html,body,#start-screen,#game-screen {min-width:0!important;}
+html,body {overflow-x:hidden!important;}
+.game-container {min-width:0!important;}
+.start-container {max-width:960px;padding:24px;}
+.game-title {margin-bottom:6px;}
+.game-author {margin-bottom:8px;}
+.quick-motion-option {display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;cursor:pointer;}
+.constellation-wrapper .btn.special-mode-btn {background:transparent!important;color:#2563eb!important;border:1px solid #d6e0ee;box-shadow:none!important;}
+.quick-intro {margin:10px 0;font-size:13px;}
+.quick-intro summary,.role-brief summary {cursor:pointer;color:var(--primary-color);padding:8px 0;}
+.constellation-wrapper {display:grid;grid-template-columns:1fr 1fr;grid-template-rows:min-content min-content;gap:12px 16px;align-items:start;max-width:820px;margin:auto;}
+.constellation-select-panel {grid-column:1;grid-row:1/3;}
+.constellation-preview-panel {grid-column:2;grid-row:1;}
+.constellation-wrapper>.constellation-buttons {grid-column:2;grid-row:2;background:white;border:1px solid #d6e0ee;border-radius:12px;padding:12px;align-self:start;}
+.constellation-panel {min-width:0;width:100%;max-width:none;}
+.constellation-preview-panel {align-self:start;}
+.preview-content {padding:16px;min-height:0;}
+.role-brief {width:100%;font-size:14px;line-height:1.7;text-align:left;}
+.role-brief-title {display:flex;align-items:center;gap:8px;font-size:18px;flex-wrap:wrap;}
+.role-brief-title>span {font-size:30px;}
+.role-brief-title small {font-size:12px;color:var(--text-secondary);margin-left:auto;}
+.role-brief p {margin:8px 0;color:var(--text-secondary);}
+.role-brief-bonus {padding:10px;background:var(--light-bg);border-radius:8px;}
+.role-brief details {margin-top:8px;border-top:1px solid var(--border-color);}
+.constellation-rune.available {filter:none;opacity:1;}
+.constellation-rune.available .rune-icon {filter:none;}
+.constellation-rune.available .rune-circle {background:#edf3ff;color:#2563eb;}
+.constellation-rune.available .rune-icon {background:transparent!important;}
+.constellation-rune.available .rune-icon::before,.constellation-rune.available .rune-icon::after {background:transparent!important;}
+.constellation-rune.available .rune-circle {border-radius:50%;}
+.constellation-rune.reversed-rune.available .rune-circle {background:#f4edfb;color:#7e22ce;}
+.constellation-rune:focus-visible {outline:3px solid var(--accent-color);outline-offset:2px;}
+.constellation-buttons .btn {min-height:38px;border-radius:8px;box-shadow:none;}
+.constellation-buttons .btn-warning,.constellation-buttons .btn-info,.constellation-buttons .btn-secondary {background:#eef3fa;color:#334155;border:1px solid #d6e0ee;}
+.constellation-buttons .special-mode-btn {background:transparent;color:#2563eb;border:1px solid #d6e0ee;}
+.constellation-footer {padding:8px 0;}
+.progress-text-mini {white-space:nowrap;}
+#player-stats-start {margin-top:16px;}
+.panel:hover {transform:none;}
+.panel-title {font-size:14px;}
+#quick-action-status {display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:10px;color:var(--text-secondary);}
+#quick-action-status strong {color:var(--primary-color);}
+#quick-next-status {display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--text-secondary);padding:8px 0;line-height:1.6;}
+#quick-paper-note {font-size:12px;line-height:1.6;color:var(--text-secondary);margin:0 0 8px;}
+#quick-paper-note.is-warning {color:#b45309;background:#fff7df;padding:6px;border-radius:6px;}
+.action-reason {display:block;font-size:11px;line-height:1.4;color:#64748b;}
+.action-reason:empty {display:none;}
+.research-target-button {font:inherit;font-size:11px;background:#edf3ff;color:#2563eb;border:1px solid #cbdaf5;border-radius:6px;padding:5px 8px;margin:4px 0 8px;cursor:pointer;}
+.research-target-button[aria-pressed=true] {background:#2563eb;color:white;}
+.paper-slot.is-research-target {outline:2px solid #2563eb;outline-offset:-2px;}
+.action-btn:disabled {cursor:not-allowed;}
+.action-btn-next,.quick-btn.next-month-btn {background:var(--gradient-primary);color:white;border-color:var(--primary-color);}
+.action-btn-next i,.quick-btn.next-month-btn i {color:inherit;}
+.utility-btn {min-height:36px;}
+.utility-buttons {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));}
+.action-btn {min-height:68px;padding:10px 6px;}
+.paper-slot.locked,.relationship-slot.locked,.relationship-slot.empty {min-height:0!important;padding:10px!important;font-size:12px!important;}
+.paper-slot.locked,.relationship-slot.locked {max-height:40px;align-self:start;}
+.paper-slot.locked>i {font-size:15px!important;margin:0 6px 0 0!important;}
+.paper-slot.locked {display:flex;flex-direction:row;justify-content:center;gap:6px;}
+.advisor-option {padding:12px!important;}
+.advisor-option>div:last-child {font-size:12px!important;line-height:1.7;}
+.advisor-option>div:first-child>div>div:nth-child(2) {font-size:11px!important;}
+.quick-review-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.quick-review-heading strong {font-size:22px;}
+.quick-review-heading span {font-size:13px;color:var(--text-secondary);}
+.quick-paper-title {font-size:13px;margin:10px 0;overflow-wrap:anywhere;}
+.quick-review-score,.quick-review-change {padding:10px;background:var(--light-bg);border-radius:8px;font-size:13px;line-height:1.7;}
+.quick-review-row {display:grid;grid-template-columns:1fr auto;gap:4px;padding:9px 0;border-bottom:1px solid var(--border-color);font-size:13px;}
+.quick-review-row p {grid-column:1/-1;font-size:12px;color:var(--text-secondary);margin:0;}
+.quick-review-change {margin-top:10px;}
+.positive {color:#047857;}.negative {color:#b91c1c;}
+.quiet-motion #season-particles,.quiet-motion #celebration-particles {display:none!important;}
+.quiet-motion *, .quiet-motion *::before,.quiet-motion *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+#collapse-all-btn {display:none!important;}
+.time-main,.time-year,.time-month,.time-remaining,.currency-item {white-space:nowrap;}
+.currency-item {padding:6px!important;gap:4px!important;}
+.currency-display {gap:5px;}
+.time-display-content {gap:6px;}
+.time-main {gap:5px;}
+.time-year,.time-month {font-size:14px;}
+.time-remaining {font-size:11px;}
+.time-season {padding:2px 4px;}
+#action-panel .quick-motion-option {margin:6px 0 0;}
+@media (min-width:1001px) {
+ .game-container {grid-template-columns:235px minmax(350px,1fr) 260px;align-items:start;max-width:1560px;}
+ .left-column {grid-column:1;grid-row:1/5;min-width:0;}
+ .middle-column,.right-column,.rightmost-column {display:contents;}
+ #workstation-panel {grid-column:2;grid-row:1;}
+ #action-panel {grid-column:2;grid-row:2;}
+ #log-panel {grid-column:2;grid-row:3;}
+ #relationship-panel {grid-column:3;grid-row:1/3;}
+ #buff-panel {grid-column:3;grid-row:3;}
+ .log-content {height:180px;}
+ #paper-slots {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+ #paper-slots>.conference-info-bar {grid-column:1/-1;}
+ #paper-slots .paper-slot {margin:0;min-width:0;}
+ .action-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media (max-width:1000px) {
+ .game-container {display:flex;flex-direction:column;min-width:0!important;width:100%;max-width:100%;}
+ #game-screen {min-width:0!important;}
+ .panel {max-width:100%;overflow-wrap:anywhere;}
+ .log-content {min-width:0!important;}
+ .left-column,.middle-column,.right-column,.rightmost-column {display:contents;}
+ .game-container>.panel,.game-container .panel {width:100%;min-width:0;}
+ #time-display-panel {order:0;} #attributes-panel {order:1;} #action-panel {order:2;}
+ #workstation-panel {order:3;} #relationship-panel {order:4;} #buff-panel {order:5;}
+ #log-panel {order:6;} #research-panel {order:7;}
+ .log-content {height:180px;}
+}
+@media (max-width:700px) {
+ #start-screen {padding:0;}
+ .start-container {width:calc(100% - 16px);margin:8px;padding:14px;border-radius:16px;}
+ .game-title {font-size:22px;}.game-author {font-size:11px;line-height:1.8;}
+ .constellation-wrapper {display:flex;flex-direction:column;gap:10px;}
+ .constellation-select-panel {order:0;width:100%;max-width:none;}
+ .constellation-wrapper>.constellation-buttons {order:1;width:100%;}
+ .constellation-preview-panel {order:2;width:100%;max-width:none;}
+ .constellation-grid-area {padding:8px 14px;}
+ .constellation-grid-4x4 {max-width:300px;margin:auto;}
+ .constellation-buttons {padding:10px 14px;gap:6px;}
+ .constellation-panel-header {padding:8px 12px;}
+ .preview-content {padding:10px 12px;}
+ .role-brief {font-size:13px;}.role-brief-title {font-size:16px;}
+ .role-brief p {margin:4px 0;}.role-brief-bonus {padding:8px;}
+ .action-grid {grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+ .action-btn {padding:8px 3px;min-height:66px;font-size:13px;}
+ .action-btn i {font-size:16px;}
+ .utility-buttons {gap:4px;}.utility-btn {padding:6px 3px!important;font-size:11px!important;}
+ #quick-action-status {font-size:12px;}
+ #attributes-panel-content {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;}
+ #attributes-panel-content .attribute-bar {margin:0;}
+ #attributes-panel-content .currency-display {grid-column:1/-1;margin-top:4px;}
+ #game-screen {padding-bottom:calc(85px + env(safe-area-inset-bottom));}
+ .mobile-quick-bar {gap:4px;padding:6px;}
+ .quick-btn {flex:1;min-width:0;padding:7px 3px;min-height:44px;}
+ .panel {scroll-margin-top:60px;}
+ .modal {padding:16px;max-height:calc(100dvh - 24px);}
+ .modal-buttons .btn {min-height:40px;}
+}

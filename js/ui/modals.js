@@ -140,6 +140,13 @@
         });
 
         function showPaperSelectModal(action, papers, callback) {
+            const selected = typeof selectedResearchPaper !== 'undefined' && papers.find(p => p.paper === selectedResearchPaper);
+            if (selected) { callback(selected.index); return; }
+            if (typeof selectedResearchPaper !== 'undefined' && selectedResearchPaper && gameState.papers.includes(selectedResearchPaper) && !selectedResearchPaper.reviewing) {
+                const actionId = {'想idea':'idea','做实验':'experiment','写论文':'write'}[action];
+                if (actionId && !validateResearchAction(actionId, gameState.papers.indexOf(selectedResearchPaper))) return;
+            }
+            if (papers.length === 1) { callback(papers[0].index); return; }
             let html = `<p style="font-size:0.9rem;">请选择要进行"${action}"的论文：</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
             papers.forEach(({ paper, index }) => {
                 const total = paper.ideaScore + paper.expScore + paper.writeScore;
@@ -157,7 +164,7 @@
                 </div>`;
             });
             html += '</div>';
-            window.paperSelectCallback = (idx) => { closeModal(); callback(idx); };
+            window.paperSelectCallback = (idx) => { selectedResearchPaper = gameState.papers[idx]; closeModal(); callback(idx); };
             showModal(`📝 选择论文 - ${action}`, html, [{ text: '取消', class: 'btn-info', action: closeModal }]);
         }
 
