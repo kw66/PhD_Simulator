@@ -696,10 +696,8 @@
 								<button class="btn btn-secondary start-btn-small difficulty-btn" onclick="openDifficultyModal()">
 									难度调整 <span>0</span>
 								</button>
-							</div>
-							<div class="button-row">
 								<button class="btn start-btn-small special-mode-btn" onclick="openV2Preview()">
-									<i class="fas fa-external-link-alt"></i> 游玩新版 v2.0
+									<i class="fas fa-external-link-alt"></i> 新版 v2.0
 								</button>
 							</div>
 						</div>

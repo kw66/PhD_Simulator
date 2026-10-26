@@ -385,13 +385,16 @@ html:has(#modal-overlay.active), body:has(#modal-overlay.active) { overflow: hid
 }
 
 .constellation-buttons .button-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 0;
 }
 
 .constellation-buttons .button-row .btn {
-    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    white-space: nowrap;
 }
 
 .button-row {
@@ -3442,6 +3445,22 @@ body.season-winter .time-display-panel {
 
 .constellation-buttons {
     border-top-color: rgba(59, 130, 246, 0.15);
+}
+
+@media (max-width: 400px) {
+    .constellation-buttons {
+        padding: 12px 8px;
+    }
+
+    .constellation-buttons .button-row {
+        gap: 8px;
+    }
+
+    .constellation-buttons .button-row .btn {
+        font-size: 0.75rem;
+        gap: 4px;
+        padding: 8px 4px;
+    }
 }
 
 /* 4×4网格容器 */
