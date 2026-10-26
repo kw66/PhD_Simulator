@@ -592,7 +592,16 @@
 			const charOrder = ['normal', 'genius', 'social', 'rich', 'teacher-child', 'chosen'];
 
 			// 生成单个符文按钮 - 宝石质感
+			const escapeRuneAttr = (value) => String(value)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/\\/g, '\\\\')
+				.replace(/'/g, "\\'");
+
 			const generateRune = (charId, isReversedSide, position, rowIndex) => {
+				const safeCharId = escapeRuneAttr(charId);
 				const detail = unlockProgress.details.find(d => d.id === charId);
 				const isUnlocked = isReversedSide ? detail?.reversedUnlocked : detail?.normalUnlocked;
 				const icons = isReversedSide ? reversedIcons : normalIcons;
@@ -606,9 +615,9 @@
 				return `
 					<div class="constellation-rune gem-rune ${isUnlocked ? 'unlocked' : 'locked'} ${isReversedSide ? 'reversed-rune' : 'normal-rune'} ${rowClass} ${isSelected ? 'selected' : ''}"
 						 data-position="${position}"
-						 data-char="${charId}"
+						 data-char="${safeCharId}"
 						 data-reversed="${isReversedSide}"
-						 onclick="event.stopPropagation(); selectCharacterFromRune('${charId}', ${isReversedSide})">
+						 onclick="event.stopPropagation(); selectCharacterFromRune('${safeCharId}', ${isReversedSide})">
 						<div class="gem-glow"></div>
 						<div class="rune-circle">
 							<span class="rune-icon">${icon}</span>
