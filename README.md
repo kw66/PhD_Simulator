@@ -47,15 +47,11 @@
 
 ## 🚀 快速开始
 
-2026-10-26 操作体验更新：开始页优先选角，手机与平板布局更紧凑；单篇论文直接操作，审稿结果先显示结论并保留详细评审。常驻行动次数、毕业进度与跨月固定项，支持简洁动画。修复预购在操作失败前扣费、保底论文分数的衰减记录不准确问题，原有玩法数值、觉醒与随机规则保持不变。
-
 | 方式 | 说明 |
 | --- | --- |
 | 在线试玩 | 直接打开 [kw66.github.io/PhD_Simulator](https://kw66.github.io/PhD_Simulator/) |
 | 本地运行 | 直接用浏览器打开仓库中的 [index.html](./index.html) |
 | 历史版本 | 可查看 [gemini.html](./gemini.html)、[index_v0.5.html](./index_v0.5.html)、[index0.html](./index0.html) |
-
-浏览器回归检查：安装 Node.js 与 Playwright（`npm install --no-save --package-lock=false playwright`、`npx playwright install chromium`），在仓库目录启动 `python -m http.server 4320 --bind 127.0.0.1`，另开终端运行 `node --test tests/quick-play.test.cjs`。测试使用独立浏览器存储，并阻止测试对局写入线上数据库；旧版对照需要 Git 仓库中保留原始提交。
 
 ## 🗂️ 仓库结构
 

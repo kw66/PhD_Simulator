@@ -39,7 +39,7 @@
                     <p>📝 <strong>论文科研分</strong>：C=1分，B=2分，A=4分，子刊=10分，Nature=25分</p>
                     <p>📈 <strong>论文槽升级</strong>：发表A类论文后，槽位可升级为期刊槽（可投Nature系列）</p>
                     <p>💡 <strong>游戏提示</strong>：先专注自己的论文，再完成关系网的任务。属性≥6可解锁更多选项</p>
-                    <p>⚠️ <strong>注意</strong>：SAN、导师好感或金币低于0会触发对应坏结局；0仍可继续。</p>
+                    <p>⚠️ <strong>注意</strong>：保持SAN值、导师好感度和金钱为正数，否则将触发不良结局！</p>
                 `;
             }
             
@@ -175,23 +175,276 @@
 		}
 
 		// 更新右侧角色预览面板
-        function updateCharacterPreview(charId, isReversedSide, isLocked = false) {
-            const container = document.getElementById('selected-char-preview');
-            const char = characters.find(c => c.id === charId);
-            if (!container || !char) return;
-            const data = isReversedSide ? char.reversed : char;
-            const trueMode = isTrueNormalMode && charId === 'normal' && !isReversedSide;
-            const record = getCharacterLocalRecord(trueMode ? 'true-normal' : charId, isReversedSide);
-            const globalRecord = globalCharacterRecords?.[isReversedSide ? 'reversed' : 'normal']?.[trueMode ? 'true-normal' : charId]?.history;
-            container.innerHTML = `<div class="role-brief">
-                <div class="role-brief-title"><span>${data.icon}</span><strong>${trueMode ? '真·大多数' : data.name}</strong><small>${isReversedSide ? '逆位' : '正位'}</small></div>
-                <p>${trueMode ? '经历过所有角色的洗礼，回归本真' : data.desc}</p><div class="role-brief-bonus">${trueMode ? '无特殊能力，一切靠自己' : data.bonus}</div>
-                <details><summary>转博觉醒与玩法</summary><p><strong>${trueMode ? '往昔荣光' : data.awakenName}</strong> · ${trueMode ? '成就币翻倍' : data.awakenDesc}</p>
-                ${!trueMode && !isReversedSide && char.hiddenAwakenName ? `<p><strong>隐藏觉醒：${char.hiddenAwakenName}</strong> · ${char.hiddenAwakenDesc}</p>` : ''}</details>
-                <details><summary>最佳纪录</summary><p>个人 · 科研分 ${record.maxScore || 0} · 引用 ${record.maxCitations || 0} · 成就 ${record.maxAchievements || 0}</p>${globalRecord ? `<p>全球 · 科研分 ${globalRecord.maxScore || 0} · 引用 ${globalRecord.maxCitations || 0} · 成就 ${globalRecord.maxAchievements || 0}</p>` : ''}</details>
-            </div>`;
-        }
+		function updateCharacterPreview(charId, isReversedSide, isLocked = false) {
+			const previewContainer = document.getElementById('selected-char-preview');
+			if (!previewContainer) return;
 
+			// 显示锁定状态
+			if (isLocked) {
+				previewContainer.innerHTML = `
+					<div class="preview-card-placeholder">
+						<div class="placeholder-icon">🔒</div>
+						<div class="placeholder-text">角色未解锁</div>
+						<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:8px;">完成博士毕业以解锁此角色</div>
+					</div>
+				`;
+				return;
+			}
+
+			const char = characters.find(c => c.id === charId);
+			if (!char) return;
+
+			const trueNormalUnlocked = isTrueNormalUnlocked();
+			const isTrueNormalAvailable = charId === 'normal' && !isReversedSide && trueNormalUnlocked && isTrueNormalMode;
+
+			let displayIcon, displayName, displayDesc, displayBonus, displayAwaken;
+			let statsCharId = charId;
+			let statsIsReversed = isReversedSide;
+
+			if (isTrueNormalAvailable) {
+				displayIcon = '<span class="gold-icon">👤</span>';
+				displayName = '真·大多数';
+				displayDesc = '经历过所有角色的洗礼，回归本真';
+				displayBonus = '无特殊能力，一切靠自己';
+				displayAwaken = { icon: '✨', name: '往昔荣光', desc: '成就币翻倍' };
+				statsCharId = 'true-normal';
+				statsIsReversed = false;
+			} else if (isReversedSide && char.reversed) {
+				displayIcon = char.reversed.icon;
+				displayName = char.reversed.name;
+				displayDesc = char.reversed.desc;
+				displayBonus = char.reversed.bonus;
+				displayAwaken = {
+					icon: char.reversed.awakenIcon,
+					name: char.reversed.awakenName,
+					desc: char.reversed.awakenDesc
+				};
+			} else {
+				displayIcon = char.icon;
+				displayName = char.name;
+				displayDesc = char.desc;
+				displayBonus = char.bonus;
+				displayAwaken = {
+					icon: char.awakenIcon,
+					name: char.awakenName,
+					desc: char.awakenDesc
+				};
+			}
+
+			// 获取难度数据
+			const diffKey = `${statsCharId}_${statsIsReversed ? 'reversed' : 'normal'}`;
+			const diffData = characterDifficultyData[diffKey] || { stars: null, rate: null, total: 0 };
+
+			// 获取本地最高记录
+			const localRecord = getCharacterLocalRecord(statsCharId, statsIsReversed);
+			const hasLocalRecord = localRecord.maxScore > 0;
+
+			// 获取全球记录
+			const mode = statsIsReversed ? 'reversed' : 'normal';
+			const globalRecord = globalCharacterRecords?.[mode]?.[statsCharId] || {
+				today: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 },
+				history: { maxScore: 0, maxCitations: 0, maxAchievements: 0, maxDifficulty: 0 }
+			};
+			const hasGlobalRecord = globalRecord.history.maxScore > 0;
+
+			// 难度显示
+			let starsHtml, badgeHtml, rateText, totalGames;
+			if (statsCharId === 'true-normal') {
+				starsHtml = renderDifficultyStars(12);
+				badgeHtml = '<span class="difficulty-badge legendary">传说</span>';
+				rateText = diffData.rate !== null ? `${(diffData.rate * 100).toFixed(1)}%` : '?';
+				totalGames = diffData.total || 0;
+			} else {
+				starsHtml = renderDifficultyStars(diffData.stars);
+				badgeHtml = getDifficultyBadge(diffData.stars);
+				rateText = diffData.rate !== null ? `${(diffData.rate * 100).toFixed(1)}%` : '?';
+				totalGames = diffData.total || 0;
+			}
+
+			const modeTag = isReversedSide
+				? '<span class="mode-tag reversed">🌑 逆位</span>'
+				: '<span class="mode-tag normal">☀️ 正位</span>';
+
+			const bonusClass = isReversedSide ? 'reversed-bonus' : 'normal-bonus';
+			const awakenClass = isReversedSide ? 'reversed-awaken' : 'normal-awaken';
+
+			const difficultyNote = (statsCharId === 'true-normal')
+				? '<div style="font-size:0.55rem;color:#9b59b6;margin-top:2px;">⚠️ 固定最高难度</div>'
+				: '';
+
+			// 判断卡牌类型，添加对应的class
+			let cardClass = 'preview-card';
+
+			// 如果是真大多数，添加金色卡牌class
+			if (isTrueNormalAvailable) {
+				cardClass += ' gold-card';
+			}
+			// 如果是逆位角色（非真大多数），添加逆位卡牌class
+			else if (isReversedSide) {
+				cardClass += ' reversed-card';
+			}
+
+			// ★★★ 生成隐藏觉醒HTML（仅正位角色且非真大多数时显示）★★★
+			let hiddenAwakenHtml = '';
+			if (!isReversedSide && !isTrueNormalAvailable && char.hiddenAwakenName) {
+				hiddenAwakenHtml = `
+					<div style="margin-top:8px;padding:6px 8px;background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(243,156,18,0.15));border-radius:6px;border:1px dashed rgba(243,156,18,0.4);text-align:left;">
+						<div style="font-size:0.65rem;color:#d68910;font-weight:600;margin-bottom:2px;">
+							<span style="margin-right:3px;">⚙️</span>隐藏觉醒: ${char.hiddenAwakenIcon} ${char.hiddenAwakenName}
+						</div>
+						<div style="font-size:0.6rem;color:var(--text-secondary);text-align:left;">${char.hiddenAwakenDesc}</div>
+					</div>
+				`;
+			}
+
+			// ★★★ 根据卡牌类型选择背面符号和样式 ★★★
+			let backSymbol = '🎴';
+			let backText = 'DESTINY';
+			let backClass = 'card-back normal-back';
+			let particleClass = 'normal-particle';
+			if (isTrueNormalAvailable) {
+				backSymbol = '👑';
+				backText = 'LEGEND';
+				backClass = 'card-back gold-back';
+				particleClass = 'gold-particle';
+			} else if (isReversedSide) {
+				backSymbol = '🌑';
+				backText = 'REVERSED';
+				backClass = 'card-back reversed-back';
+				particleClass = 'reversed-particle';
+			} else {
+				backSymbol = '☀️';
+				backText = 'UPRIGHT';
+				backClass = 'card-back normal-back';
+				particleClass = 'normal-particle';
+			}
+
+			// ★★★ 生成带翻转动画的卡牌HTML ★★★
+			previewContainer.innerHTML = `
+				<div class="card-flip-container">
+					<!-- 粒子容器 -->
+					<div class="card-particles-container" id="card-particles"></div>
+					<div class="card-flip-inner flipping">
+						<!-- 卡牌背面 -->
+						<div class="${backClass}" style="position:absolute;top:0;left:0;width:100%;">
+							<div class="card-back-pattern"></div>
+							<div class="card-back-stars">
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+								<div class="card-back-star"></div>
+							</div>
+							<div class="card-back-corner top-left"></div>
+							<div class="card-back-corner top-right"></div>
+							<div class="card-back-corner bottom-left"></div>
+							<div class="card-back-corner bottom-right"></div>
+							<div class="card-back-center">
+								<div class="card-back-symbol">${backSymbol}</div>
+								<div class="card-back-text">${backText}</div>
+							</div>
+							<div class="card-back-shine"></div>
+						</div>
+						<!-- 卡牌正面 -->
+						<div class="${cardClass}" style="max-width:280px;">
+							<!-- 1. 角落装饰 -->
+							<div class="corner-decoration top-left"></div>
+							<div class="corner-decoration top-right"></div>
+							<div class="corner-decoration bottom-left"></div>
+							<div class="corner-decoration bottom-right"></div>
+
+							<!-- 头部 -->
+							<div class="preview-header">
+								<span class="preview-icon">${displayIcon}</span>
+								<div class="preview-title-row">
+									<span class="preview-name">${displayName}</span>
+									${modeTag}
+								</div>
+							</div>
+
+							<!-- 描述 -->
+							<div class="preview-desc">${displayDesc}</div>
+
+							<!-- 加成 -->
+							<div class="preview-bonus ${bonusClass}">${displayBonus}</div>
+
+							<!-- 觉醒 -->
+							<div class="preview-awaken ${awakenClass}">
+								<div class="awaken-title">
+									<span>⚡ 转博觉醒:</span>
+									<span>${displayAwaken.icon} ${displayAwaken.name}</span>
+								</div>
+								<div class="awaken-desc">${displayAwaken.desc}</div>
+							</div>
+
+							<!-- ★★★ 隐藏觉醒 ★★★ -->
+							${hiddenAwakenHtml}
+
+							<!-- 记录统计 -->
+							<div class="meta-records" style="margin-top:10px;padding:8px;border-radius:8px;">
+								<table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+									<thead>
+										<tr>
+											<th style="text-align:left;padding:2px 4px;font-weight:700;"></th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">科研分</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">引用</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">成就</th>
+											<th style="text-align:center;padding:2px 4px;font-weight:700;">难度</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">我的最佳</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord ? localRecord.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasLocalRecord && localRecord.maxDifficulty ? localRecord.maxDifficulty : '-'}</td>
+										</tr>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">今日全球</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxScore > 0 ? globalRecord.today.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxCitations > 0 ? globalRecord.today.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxAchievements > 0 ? globalRecord.today.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${globalRecord.today.maxDifficulty > 0 ? globalRecord.today.maxDifficulty : '-'}</td>
+										</tr>
+										<tr>
+											<td style="padding:3px 4px;font-weight:600;">历史全球</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxScore : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxCitations : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord ? globalRecord.history.maxAchievements : '-'}</td>
+											<td style="text-align:center;padding:3px 4px;">${hasGlobalRecord && globalRecord.history.maxDifficulty ? globalRecord.history.maxDifficulty : '-'}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<!-- 难度 -->
+							<div class="difficulty-container" style="margin-top:10px;">
+								<div>
+									<span class="difficulty-label">难度</span>
+									<div class="difficulty-stars">${starsHtml}</div>
+									${difficultyNote}
+								</div>
+								<div style="text-align:right;">
+									${badgeHtml}
+									<div class="difficulty-rate">
+										博士率:${rateText} (${totalGames}局)
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+
+			// ★★★ 延迟触发粒子效果（在背面展示阶段结束时） ★★★
+			setTimeout(() => {
+				createCardParticles(particleClass);
+			}, 300); // 0.3秒后（背面展示阶段结束时）触发粒子
+		}
+
+		// ★★★ 生成卡牌粒子效果 ★★★
 		function createCardParticles(particleClass) {
 			const container = document.getElementById('card-particles');
 			if (!container) return;
@@ -351,9 +604,8 @@
 
 				// ★★★ 移除🔒图标，通关状态通过边框颜色区分（正位蓝/逆位红，由CSS处理）★★★
 				return `
-					<div class="constellation-rune gem-rune ${isUnlocked ? 'unlocked' : 'available'} ${isReversedSide ? 'reversed-rune' : 'normal-rune'} ${rowClass} ${isSelected ? 'selected' : ''}"
-						 role="button" tabindex="0" aria-label="${shortName}，${isReversedSide ? '逆位' : '正位'}，${isUnlocked ? '已博士通关' : '可游玩'}"
-                         data-position="${position}"
+					<div class="constellation-rune gem-rune ${isUnlocked ? 'unlocked' : 'locked'} ${isReversedSide ? 'reversed-rune' : 'normal-rune'} ${rowClass} ${isSelected ? 'selected' : ''}"
+						 data-position="${position}"
 						 data-char="${charId}"
 						 data-reversed="${isReversedSide}"
 						 onclick="event.stopPropagation(); selectCharacterFromRune('${charId}', ${isReversedSide})">
@@ -415,7 +667,7 @@
 						<div class="progress-bar-mini">
 							<div class="progress-fill-mini" style="width:${progressPercent}%;"></div>
 						</div>
-						<span class="progress-text-mini">博士通关 ${totalUnlocked}/12</span>
+						<span class="progress-text-mini">${totalUnlocked}/12 解锁</span>
 					</div>
 				</div>
 			`;
@@ -433,7 +685,7 @@
 						</div>
 						<div class="constellation-buttons">
 							<div class="button-row">
-								<button class="btn btn-primary start-btn-small" id="start-btn">
+								<button class="btn btn-primary start-btn-small" id="start-btn" disabled>
 									<i class="fas fa-play"></i> 我要入学
 								</button>
 								<button class="btn btn-warning start-btn-small" onclick="openLoadModalFromStart()">
@@ -470,10 +722,6 @@
 			`;
 
 			progressContainer.style.display = 'block';
-            progressContainer.querySelector('.constellation-wrapper').append(progressContainer.querySelector('.constellation-buttons'));
-            if (!selectedCharacter) selectedCharacter = characters.find(c => c.id === 'normal');
-            updateCharacterPreview(selectedCharacter.id, isReversedMode);
-            updateRuneSelection(selectedCharacter.id, isReversedMode);
 
 			// 更新难度按钮显示
 			if (typeof updateDifficultyButton === 'function') {

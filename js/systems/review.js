@@ -864,8 +864,8 @@
 				beforeScores, afterScores, extraInfo
 			};
 			
-			// 默认只展示结论，完整评审仍可查看。
-			showCompactReviewResult();
+			// 显示第一页
+			showReviewResultPage(1);
 		}
 
 		/*** 渲染分页指示器 */
@@ -1098,7 +1098,107 @@
 				
 				showModal(pageTitle, html, [
 					{ text: '← 返回详情', class: 'btn-info', action: () => showReviewResultPage(2) },
-					{ text: '✓ 确定', class: 'btn-primary', action: finalizeReviewResult }
+					{ text: '✓ 确定', class: 'btn-primary', action: () => {
+						// 恶意审稿人惩罚
+						if (extraInfo.badReviewerCount > 0) {
+							const sanLoss = extraInfo.badReviewerCount;
+							if (!changeSan(-sanLoss)) {
+								currentReviewData = null;
+								return;
+							}
+							addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
+						}
+
+						// ★★★ 新增：记录恶意审稿人和39个问题审稿人统计 ★★★
+						if (extraInfo.hostileCount > 0) {
+							gameState.maliciousReviewerCount = (gameState.maliciousReviewerCount || 0) + extraInfo.hostileCount;
+						}
+						if (extraInfo.questionsCount > 0) {
+							gameState.thirtyNineQuestionsCount = (gameState.thirtyNineQuestionsCount || 0) + extraInfo.questionsCount;
+						}
+
+						if (accepted) {
+							if (totalReviewScore === -1) {
+								gameState.achievementConditions = gameState.achievementConditions || {};
+								gameState.achievementConditions.savedByPC = true;
+								addLog('🎣 力挽狂澜', '审稿意见负面但被PC捞起', '达成隐藏成就条件！');
+							}
+							handlePaperAccepted(paper, grade, acceptType, slot, extraInfo);
+						} else {
+							// 记录拒稿数据
+							recordSubmission(
+								extraInfo.submittedMonth || gameState.month,
+								grade,
+								paper.submittedScore,
+								'rejected',
+								gameState.isReversed
+							);
+
+							// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
+							gameState.submissionHistory = gameState.submissionHistory || [];
+							gameState.submissionHistory.push({
+								title: paper.title,
+								grade: grade,
+								accepted: false,
+								month: extraInfo.submittedMonth || gameState.month,
+								year: gameState.year
+							});
+
+							// ★★★ 新增：更新拒稿统计 ★★★
+							gameState.totalRejects = (gameState.totalRejects || 0) + 1;
+							if (gameState.totalRejects === 1) {
+								addCareerMilestone('first_reject', '第一次被拒', `${paper.conferenceInfo?.name || grade + '类会议'} - 科研路上的必经之坎`);
+							}
+
+							gameState.rejectedCount++;
+							gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
+
+							if (gameState.rejectedPapers[paper.title] >= 3) {
+								gameState.achievementConditions.tripleRejected = true;
+								// ★★★ 新增：记录连续被拒里程碑 ★★★
+								addCareerMilestone('triple_reject', '三连拒稿', `"${paper.title.substring(0, 10)}..." 屡败屡战`);
+							}
+							
+							if (extraInfo.hasExpert) {
+								const expertCount = extraInfo.expertCount || 1;
+								const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name && b.name.includes('指点迷津'));
+								if (existingBuff) {
+									// 已有buff，累加数值
+									existingBuff.value += expertCount;
+									existingBuff.name = `指点迷津：每次想idea分数+${existingBuff.value}`;
+									addLog('因祸得福', '资深大牛的指点迷津', `永久buff升级-每次想idea分数+${existingBuff.value}`);
+								} else {
+									gameState.buffs.permanent.push({
+										type: 'idea_bonus',
+										name: `指点迷津：每次想idea分数+${expertCount}`,
+										value: expertCount,
+										permanent: true
+									});
+									addLog('因祸得福', '资深大牛的指点迷津', `永久buff-每次想idea分数+${expertCount}`);
+								}
+							}
+							
+							gameState.consecutiveAccepts = 0;
+							
+							paper.reviewing = false;
+							paper.submittedGrade = null;
+							paper.submittedScore = null;
+							paper.reviewMonths = 0;
+							paper.submittedMonth = null;
+							paper.conferenceInfo = null;
+							paper.conferenceLocation = null;
+							
+							// ★★★ 关键修改：拒稿时也要继续处理队列 ★★★
+							if (gameState._reviewProcessing) {
+								setTimeout(() => processNextReviewInQueue(), 100);
+							}
+						}
+						
+						currentReviewData = null;
+						closeModal();
+						renderPaperSlots();
+						updateAllUI();
+					}}
 				]);
 			}
 		}
@@ -1380,108 +1480,3 @@
             }
         }
 
-
-function finalizeReviewResult() {
-    if (!currentReviewData) return;
-    const { paper, grade, results, totalReviewScore, acceptType, accepted, slot, extraInfo } = currentReviewData;
-
-						// 恶意审稿人惩罚
-						if (extraInfo.badReviewerCount > 0) {
-							const sanLoss = extraInfo.badReviewerCount;
-							if (!changeSan(-sanLoss)) {
-								currentReviewData = null;
-								return;
-							}
-							addLog('审稿压力', `${extraInfo.badReviewerCount}个刁难审稿人`, `SAN-${sanLoss}`);
-						}
-
-						// ★★★ 新增：记录恶意审稿人和39个问题审稿人统计 ★★★
-						if (extraInfo.hostileCount > 0) {
-							gameState.maliciousReviewerCount = (gameState.maliciousReviewerCount || 0) + extraInfo.hostileCount;
-						}
-						if (extraInfo.questionsCount > 0) {
-							gameState.thirtyNineQuestionsCount = (gameState.thirtyNineQuestionsCount || 0) + extraInfo.questionsCount;
-						}
-
-						if (accepted) {
-							if (totalReviewScore === -1) {
-								gameState.achievementConditions = gameState.achievementConditions || {};
-								gameState.achievementConditions.savedByPC = true;
-								addLog('🎣 力挽狂澜', '审稿意见负面但被PC捞起', '达成隐藏成就条件！');
-							}
-							handlePaperAccepted(paper, grade, acceptType, slot, extraInfo);
-						} else {
-							// 记录拒稿数据
-							recordSubmission(
-								extraInfo.submittedMonth || gameState.month,
-								grade,
-								paper.submittedScore,
-								'rejected',
-								gameState.isReversed
-							);
-
-							// ★★★ 新增：记录投稿历史（用于百发百中成就）★★★
-							gameState.submissionHistory = gameState.submissionHistory || [];
-							gameState.submissionHistory.push({
-								title: paper.title,
-								grade: grade,
-								accepted: false,
-								month: extraInfo.submittedMonth || gameState.month,
-								year: gameState.year
-							});
-
-							// ★★★ 新增：更新拒稿统计 ★★★
-							gameState.totalRejects = (gameState.totalRejects || 0) + 1;
-							if (gameState.totalRejects === 1) {
-								addCareerMilestone('first_reject', '第一次被拒', `${paper.conferenceInfo?.name || grade + '类会议'} - 科研路上的必经之坎`);
-							}
-
-							gameState.rejectedCount++;
-							gameState.rejectedPapers[paper.title] = (gameState.rejectedPapers[paper.title] || 0) + 1;
-
-							if (gameState.rejectedPapers[paper.title] >= 3) {
-								gameState.achievementConditions.tripleRejected = true;
-								// ★★★ 新增：记录连续被拒里程碑 ★★★
-								addCareerMilestone('triple_reject', '三连拒稿', `"${paper.title.substring(0, 10)}..." 屡败屡战`);
-							}
-
-							if (extraInfo.hasExpert) {
-								const expertCount = extraInfo.expertCount || 1;
-								const existingBuff = gameState.buffs.permanent.find(b => b.type === 'idea_bonus' && b.name && b.name.includes('指点迷津'));
-								if (existingBuff) {
-									// 已有buff，累加数值
-									existingBuff.value += expertCount;
-									existingBuff.name = `指点迷津：每次想idea分数+${existingBuff.value}`;
-									addLog('因祸得福', '资深大牛的指点迷津', `永久buff升级-每次想idea分数+${existingBuff.value}`);
-								} else {
-									gameState.buffs.permanent.push({
-										type: 'idea_bonus',
-										name: `指点迷津：每次想idea分数+${expertCount}`,
-										value: expertCount,
-										permanent: true
-									});
-									addLog('因祸得福', '资深大牛的指点迷津', `永久buff-每次想idea分数+${expertCount}`);
-								}
-							}
-
-							gameState.consecutiveAccepts = 0;
-
-							paper.reviewing = false;
-							paper.submittedGrade = null;
-							paper.submittedScore = null;
-							paper.reviewMonths = 0;
-							paper.submittedMonth = null;
-							paper.conferenceInfo = null;
-							paper.conferenceLocation = null;
-
-							// ★★★ 关键修改：拒稿时也要继续处理队列 ★★★
-							if (gameState._reviewProcessing) {
-								setTimeout(() => processNextReviewInQueue(), 100);
-							}
-						}
-
-						currentReviewData = null;
-						closeModal();
-						renderPaperSlots();
-						updateAllUI();
-}

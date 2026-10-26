@@ -1729,8 +1729,9 @@
 			const costs = getActionCosts();
 
 			// 显示剩余行动次数
-			const actionCountDisplay = '';
-
+			const actionCountDisplay = actionLimit > 1
+				? ` (${actionsRemaining}/${actionLimit})`
+				: '';
 			
 			// 改为2行布局：第一行图标+文字，第二行效果
 			document.getElementById('btn-read').innerHTML = `
@@ -1748,7 +1749,6 @@
 			document.getElementById('btn-write').innerHTML = `
 				<div class="action-top"><i class="fas fa-pen-fancy"></i><span>写论文${actionCountDisplay}</span></div>
 				<span class="action-cost">${formatCost(costs.write)}</span>`;
-            if (typeof updateQuickStatus === 'function') updateQuickStatus();
 		}
 
         // ==================== 事件预告系统 ====================

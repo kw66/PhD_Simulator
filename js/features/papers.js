@@ -450,7 +450,7 @@
 								</span>
 							</div>`;
 
-						html += `<div class="paper-slot active upgraded-slot" data-paper-index="${i}" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
+						html += `<div class="paper-slot active upgraded-slot" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:2px solid #c4b5fd;border-left:4px solid #a78bfa;">
 							<div class="slot-header">
 								<span class="slot-title" style="color:#6d28d9;"><i class="fas fa-crown"></i> 期刊槽</span>
 								${statusBadge}
@@ -504,7 +504,7 @@
 								</span>
 							</div>`;
 
-						html += `<div class="paper-slot active" data-paper-index="${i}">
+						html += `<div class="paper-slot active">
 							<div class="slot-header">
 								${reviewingInfo}
 							</div>
@@ -530,8 +530,6 @@
 				}
 			}
 			container.innerHTML = html;
-            if (typeof renderResearchTargetButtons === 'function') renderResearchTargetButtons();
-            if (typeof updateQuickStatus === 'function') updateQuickStatus();
 		}
 
 		// ★★★ 新增：槽位升级功能 ★★★

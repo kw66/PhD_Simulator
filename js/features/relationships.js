@@ -330,7 +330,7 @@
         // 获取当前导师的工资
         // 1.5 = 偶数月发2元，奇数月发1元
         // 1.25 = 4,8,12月发2元，其他月发1元
-        function getAdvisorSalary(degree, month = gameState.month) {
+        function getAdvisorSalary(degree) {
             const advisor = gameState.relationships.find(r => r.type === 'advisor');
             if (!advisor || !advisor.advisorType) {
                 return degree === 'phd' ? 3 : 1;
@@ -343,7 +343,7 @@
                 return baseSalary;
             }
 
-            const currentMonth = month;
+            const currentMonth = gameState.month;
 
             // 1.5 = 偶数月发2元，奇数月发1元
             if (baseSalary === 1.5) {
