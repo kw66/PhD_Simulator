@@ -953,7 +953,7 @@
                     // ★★★ 交流按钮状态：根据 canInteract 标志判断 ★★★
                     const canInteract = person.canInteract || false;
                     const interactBtnClass = canInteract ? 'btn-success' : 'btn-info';
-                    const interactBtnText = canInteract ? '💬 交流 (可用!)' : '💬 交流';
+                    const interactBtnText = '💬 交流';
 
                     html += `
                         <div class="relationship-slot filled"
@@ -984,16 +984,16 @@
                             </div>
 
                             <!-- 操作按钮 -->
-                            <div style="display:flex;justify-content:flex-end;gap:8px;">
-                                <button class="btn ${interactBtnClass}"
+                            <div style="display:flex;justify-content:flex-end;gap:4px;">
+                                <button class="btn ${interactBtnClass}" ${canInteract ? '' : 'disabled'}
                                         onclick="event.stopPropagation();interactWithPerson('${person.id}')"
-                                        style="padding:5px 12px;font-size:0.75rem;">
+                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex-shrink:0;">
                                     ${interactBtnText}
                                 </button>
                                 <button class="btn ${taskBtnClass}" ${taskBtnDisabled}
                                         onclick="event.stopPropagation();advanceTask('${person.id}')"
-                                        style="padding:5px 12px;font-size:0.75rem;">
-                                    ${canUseTask ? `${taskIcon} ${taskName} (${taskCost})` : '✓ 本月已用'}
+                                        style="padding:5px 6px;font-size:0.7rem;white-space:nowrap;flex-shrink:0;">
+                                    ${canUseTask ? `${taskIcon} ${taskName} ${taskCost}` : '✓ 本月已用'}
                                 </button>
                             </div>
                         </div>
