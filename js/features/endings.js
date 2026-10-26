@@ -584,7 +584,7 @@
 
 			// ★★★ 生涯回顾、重开和回溯按钮（同一行）★★★
 			html += `
-			<div style="display:flex;justify-content:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+			<div data-modal-footer style="display:flex;justify-content:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
 				<button onclick="showCareerSummary()"
 						style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;
 							   background:linear-gradient(135deg,#667eea,#764ba2);

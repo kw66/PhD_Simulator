@@ -96,6 +96,18 @@
                 `<button class="btn ${b.class}" onclick="modalCallbacks[${i}]()">${b.text}</button>`
             ).join('');
             overlayEl.classList.add('active');
+            // One vertical scroll owner per dialog; keep title and actions outside it.
+            const contentEl = document.getElementById('modal-content');
+            contentEl.querySelectorAll('*').forEach(el => {
+                if (el.matches('textarea, input, select, style, script')) return;
+                if (['auto', 'scroll'].includes(getComputedStyle(el).overflowY)) {
+                    el.classList.add('modal-flow-content');
+                }
+            });
+            const customFooter = contentEl.querySelector('[data-modal-footer]');
+            if (customFooter) document.getElementById('modal-buttons').append(customFooter);
+            contentEl.scrollTop = 0;
+            modalEl.scrollTop = 0;
 
             // 触发庆祝特效
             if (typeof SeasonEffects !== 'undefined') {

@@ -273,26 +273,26 @@
 			// 在所有槽之前添加统一的会议信息栏（点击显示弹窗）
 			html += `<div class="conference-info-bar">
 				<div class="conference-info-title"><i class="fas fa-calendar-alt"></i> 本月可投会议（4个月后开会）</div>
-				<div class="conference-info-list" style="flex-direction:column;gap:4px;">
-					<div class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
-						<span>A: ${confA.name}</span>
-						<span style="display:flex;align-items:center;gap:6px;">
-							<span style="font-size:0.65rem;color:#e74c3c;background:rgba(231,76,60,0.1);padding:2px 5px;border-radius:8px;">均分${statsA.hasEnoughData ? statsA.avgAcceptedScore : '?'}</span>
-							<span style="font-size:0.7rem;color:${regionA.color};background:${regionA.color}15;padding:2px 6px;border-radius:10px;">${regionA.icon} ${locA.city}</span>
+				<div class="conference-info-list">
+					<div class="conf-item conf-a" onclick="showConferenceInfoModal(${gameState.month}, 'A', ${gameState.isReversed})">
+						<span class="conf-name">A: ${confA.name}</span>
+						<span class="conf-metrics">
+							<span class="conf-average">均分${statsA.hasEnoughData ? statsA.avgAcceptedScore : '?'}</span>
+							<span class="conf-location">${regionA.icon} ${locA.city}</span>
 						</span>
 					</div>
-					<div class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
-						<span>B: ${confB.name}</span>
-						<span style="display:flex;align-items:center;gap:6px;">
-							<span style="font-size:0.65rem;color:#3498db;background:rgba(52,152,219,0.1);padding:2px 5px;border-radius:8px;">均分${statsB.hasEnoughData ? statsB.avgAcceptedScore : '?'}</span>
-							<span style="font-size:0.7rem;color:${regionB.color};background:${regionB.color}15;padding:2px 6px;border-radius:10px;">${regionB.icon} ${locB.city}</span>
+					<div class="conf-item conf-b" onclick="showConferenceInfoModal(${gameState.month}, 'B', ${gameState.isReversed})">
+						<span class="conf-name">B: ${confB.name}</span>
+						<span class="conf-metrics">
+							<span class="conf-average">均分${statsB.hasEnoughData ? statsB.avgAcceptedScore : '?'}</span>
+							<span class="conf-location">${regionB.icon} ${locB.city}</span>
 						</span>
 					</div>
-					<div class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 8px;">
-						<span>C: ${confC.name}</span>
-						<span style="display:flex;align-items:center;gap:6px;">
-							<span style="font-size:0.65rem;color:#2ecc71;background:rgba(46,204,113,0.1);padding:2px 5px;border-radius:8px;">均分${statsC.hasEnoughData ? statsC.avgAcceptedScore : '?'}</span>
-							<span style="font-size:0.7rem;color:${regionC.color};background:${regionC.color}15;padding:2px 6px;border-radius:10px;">${regionC.icon} ${locC.city}</span>
+					<div class="conf-item conf-c" onclick="showConferenceInfoModal(${gameState.month}, 'C', ${gameState.isReversed})">
+						<span class="conf-name">C: ${confC.name}</span>
+						<span class="conf-metrics">
+							<span class="conf-average">均分${statsC.hasEnoughData ? statsC.avgAcceptedScore : '?'}</span>
+							<span class="conf-location">${regionC.icon} ${locC.city}</span>
 						</span>
 					</div>
 				</div>
